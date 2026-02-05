@@ -1,0 +1,94 @@
+@model CeyPASS.Web.Models.CanliIzleme.MisafirKartGuncelleModel
+@{
+    var items = ViewBag.Assignments as List<CeyPASS.Entities.Concrete.PuantajsizKartAtama> ?? new List<CeyPASS.Entities.Concrete.PuantajsizKartAtama>();
+}
+
+@if (!items.Any())
+{
+    <div class="alert alert-info mb-0">Bugün aktif misafir kart ataması bulunamadı.</div>
+}
+else
+{
+    <form id="misafirGuncelleForm" method="post" asp-controller="CanliIzleme" asp-action="MisafirKartGuncelle">
+        @Html.AntiForgeryToken()
+
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label class="form-label">Atama</label>
+                <select id="atamaSelect" class="form-select" required>
+                    @foreach (var a in items)
+                    {
+                        <option value="@a.AtamaId"
+                                data-misafir="@a.MisafirAdSoyad"
+                                data-aciklama="@a.Notlar"
+                                data-giris="@a.Baslangic.ToString("yyyy-MM-ddTHH:mm")">
+                            @a.KartAdi - @a.MisafirAdSoyad
+                        </option>
+                    }
+                </select>
+                <input type="hidden" name="AtamaId" id="AtamaId" value="@items.First().AtamaId" />
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Çıkış Saati</label>
+                <input type="datetime-local" class="form-control" name="CikisSaati"
+                       value="@((Model.CikisSaati ?? System.DateTime.Now).ToString("yyyy-MM-ddTHH:mm"))" />
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Giriş Saati</label>
+                <input type="datetime-local" class="form-control" name="GirisSaati" id="GirisSaati" required
+                       value="@(items.Any() ? items.First().Baslangic.ToString("yyyy-MM-ddTHH:mm") : "")" />
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Misafir Ad Soyad</label>
+                <input class="form-control" name="MisafirAdSoyad" id="MisafirAdSoyad" required />
+            </div>
+            <div class="col-md-12">
+                <label class="form-label">Açıklama</label>
+                <textarea class="form-control" name="Aciklama" id="Aciklama" rows="3"></textarea>
+            </div>
+            <div class="col-12 d-flex justify-content-end gap-2">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                <button type="submit" class="btn btn-primary">Güncelle</button>
+            </div>
+        </div>
+    </form>
+
+    <script>
+        (function () {
+            const form = document.getElementById('misafirGuncelleForm');
+            const select = document.getElementById('atamaSelect');
+            const atamaId = document.getElementById('AtamaId');
+            const giris = document.getElementById('GirisSaati');
+            const misafir = document.getElementById('MisafirAdSoyad');
+            const aciklama = document.getElementById('Aciklama');
+
+            function applyFromOption() {
+                const opt = select.options[select.selectedIndex];
+                if (!opt) return;
+                atamaId.value = opt.value;
+                misafir.value = opt.getAttribute('data-misafir') || opt.dataset?.misafir || '';
+                aciklama.value = opt.getAttribute('data-aciklama') || opt.dataset?.aciklama || '';
+                var girisVal = opt.getAttribute('data-giris') || opt.dataset?.giris || '';
+                giris.value = girisVal;
+            }
+
+            select.addEventListener('change', applyFromOption);
+            applyFromOption();
+
+            form.addEventListener('submit', async function (e) {
+                e.preventDefault();
+                const fd = new FormData(form);
+                const res = await fetch(form.action, { method: 'POST', body: fd });
+                const data = await res.json();
+                if (!data.ok) {
+                    toastr.error(data.message || 'İşlem başarısız.');
+                    return;
+                }
+                toastr.success(data.message || 'Tamamlandı.');
+                const modalEl = document.getElementById('misafirModal');
+                bootstrap.Modal.getInstance(modalEl)?.hide();
+            });
+        })();
+    </script>
+}
+

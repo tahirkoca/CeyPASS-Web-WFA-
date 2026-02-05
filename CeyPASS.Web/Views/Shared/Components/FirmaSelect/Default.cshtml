@@ -1,0 +1,21 @@
+@model CeyPASS.Web.Models.FirmaSelectViewModel
+@if (Model.ShowCombo && Model.Firmalar != null && Model.Firmalar.Any())
+{
+    <div class="header-firma-wrap d-flex align-items-center gap-2">
+        <label class="mb-0 small text-muted">Firma:</label>
+        <select id="headerFirmaSelect" class="form-select form-select-sm header-firma-select" 
+                data-set-firma-url="@Url.Action("SetFirma", "Home")">
+            @foreach (var f in Model.Firmalar)
+            {
+                @if (f.FirmaId == Model.SelectedFirmaId)
+                {
+                    <option value="@f.FirmaId" selected="selected">@f.FirmaAdi</option>
+                }
+                else
+                {
+                    <option value="@f.FirmaId">@f.FirmaAdi</option>
+                }
+            }
+        </select>
+    </div>
+}

@@ -1,0 +1,56 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <RootNamespace>CeyPASS.DataAccess</RootNamespace>
+    <AssemblyName>CeyPASS.DataAccess</AssemblyName>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\CeyPASS.Entities\CeyPASS.Entities.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Data.SqlClient" Version="5.2.2" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.2" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.2" />
+    <PackageReference Include="System.ComponentModel.Annotations" Version="5.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="CeyPASSDataModel.Context.cs" />
+    <Compile Remove="CeyPASSDataModel.Designer.cs" />
+    <Compile Remove="CeyPASSDataModel.cs" />
+    <!-- Eski EF6 repository implementasyonları derlenmez; sadece *RepositoryCore (EF Core) kullanılıyor. -->
+    <Compile Remove="Repositories\AuthorizationRepository.cs" />
+    <Compile Remove="Repositories\BolumRepository.cs" />
+    <Compile Remove="Repositories\CalismaSekliRepository.cs" />
+    <Compile Remove="Repositories\CalismaStatuRepository.cs" />
+    <Compile Remove="Repositories\CanliIzlemeRepository.cs" />
+    <Compile Remove="Repositories\CihazRepository.cs" />
+    <Compile Remove="Repositories\DashboardRepository.cs" />
+    <Compile Remove="Repositories\DepartmanRepository.cs" />
+    <Compile Remove="Repositories\FirmaRepository.cs" />
+    <Compile Remove="Repositories\IsyeriRepository.cs" />
+    <Compile Remove="Repositories\IzinTipRepository.cs" />
+    <Compile Remove="Repositories\KisiHareketRepository.cs" />
+    <Compile Remove="Repositories\KisiIzinlerRepository.cs" />
+    <Compile Remove="Repositories\KisiRepository.cs" />
+    <Compile Remove="Repositories\KullaniciRepository.cs" />
+    <Compile Remove="Repositories\MailRepository.cs" />
+    <Compile Remove="Repositories\PozisyonRepository.cs" />
+    <Compile Remove="Repositories\PuantajRepository.cs" />
+    <Compile Remove="Repositories\PuantajsizKartAtamaRepository.cs" />
+    <Compile Remove="Repositories\PuantajsizKartRepository.cs" />
+    <Compile Remove="Repositories\RaporRepository.cs" />
+    <Compile Remove="Repositories\ResmiTatilRepository.cs" />
+    <Compile Remove="Repositories\SistemLogRepository.cs" />
+    <Compile Remove="Repositories\YemekhaneRepository.cs" />
+  </ItemGroup>
+
+
+</Project>

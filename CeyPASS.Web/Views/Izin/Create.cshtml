@@ -1,0 +1,174 @@
+@model CeyPASS.Entities.Concrete.KisiIzin
+@{
+    ViewData["Title"] = "Yeni İzin Ekle";
+    var firmalar = ViewBag.Firmalar as List<CeyPASS.Entities.Concrete.Firma> ?? new List<CeyPASS.Entities.Concrete.Firma>();
+    var kisiler = ViewBag.Kisiler as List<CeyPASS.Entities.Concrete.KisiListItem> ?? new List<CeyPASS.Entities.Concrete.KisiListItem>();
+    var izinTipleri = ViewBag.IzinTipleri as List<CeyPASS.Entities.Concrete.IzinTip> ?? new List<CeyPASS.Entities.Concrete.IzinTip>();
+}
+
+<div class="container-fluid">
+    <div class="row mb-3">
+        <div class="col-12">
+            <h2>Yeni İzin Ekle</h2>
+            <a href="@Url.Action("Index")" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Geri Dön
+            </a>
+        </div>
+    </div>
+
+    @if (!ViewData.ModelState.IsValid)
+    {
+        <div class="alert alert-danger">
+            <ul class="mb-0">
+                @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                {
+                    <li>@error.ErrorMessage</li>
+                }
+            </ul>
+        </div>
+    }
+
+    <form asp-action="Create" method="post">
+        @Html.AntiForgeryToken()
+        
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h5 class="mb-0">İzin Bilgileri</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label asp-for="FirmaId" class="form-label">Firma <span class="text-danger">*</span></label>
+                            <select asp-for="FirmaId" class="form-select" required id="firmaSelect">
+                                <option value="">-- Seçiniz --</option>
+                                @foreach (var firma in firmalar)
+                                {
+                                    <option value="@firma.FirmaId">@firma.FirmaAdi</option>
+                                }
+                            </select>
+                            <span asp-validation-for="FirmaId" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="PersonelId" class="form-label">Personel <span class="text-danger">*</span></label>
+                            <select asp-for="PersonelId" class="form-select" required id="personelSelect">
+                                <option value="">-- Önce Firma Seçiniz --</option>
+                            </select>
+                            <span asp-validation-for="PersonelId" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="IzinId" class="form-label">İzin Tipi <span class="text-danger">*</span></label>
+                            <select asp-for="IzinId" class="form-select" required>
+                                <option value="">-- Seçiniz --</option>
+                                @foreach (var tip in izinTipleri)
+                                {
+                                    <option value="@tip.IzinTipId">@tip.Ad</option>
+                                }
+                            </select>
+                            <span asp-validation-for="IzinId" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" asp-for="SaatlikIzinMi" class="form-check-input" id="saatlikIzinMi" />
+                            <label class="form-check-label" for="saatlikIzinMi">
+                                Saatlik İzin
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h5 class="mb-0">Tarih ve Saat Bilgileri</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label asp-for="Baslangic" class="form-label">Başlangıç Tarihi <span class="text-danger">*</span></label>
+                            <input asp-for="Baslangic" type="date" class="form-control" required id="baslangicTarih" />
+                            <span asp-validation-for="Baslangic" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3" id="baslangicSaatDiv" style="display: none;">
+                            <label for="baslangicSaati" class="form-label">Başlangıç Saati</label>
+                            <input type="time" name="baslangicSaati" id="baslangicSaati" class="form-control" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Bitis" class="form-label">Bitiş Tarihi <span class="text-danger">*</span></label>
+                            <input asp-for="Bitis" type="date" class="form-control" required id="bitisTarih" />
+                            <span asp-validation-for="Bitis" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3" id="bitisSaatDiv" style="display: none;">
+                            <label for="bitisSaati" class="form-label">Bitiş Saati</label>
+                            <input type="time" name="bitisSaati" id="bitisSaati" class="form-control" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Aciklama" class="form-label">Açıklama</label>
+                            <textarea asp-for="Aciklama" class="form-control" rows="3" placeholder="İzinler için açıklamaları buradan giriniz"></textarea>
+                            <span asp-validation-for="Aciklama" class="text-danger"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-12">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-save"></i> Kaydet
+                </button>
+                <a href="@Url.Action("Index")" class="btn btn-secondary">
+                    <i class="bi bi-x-circle"></i> İptal
+                </a>
+            </div>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <script src="https://cdn.jsdelivr.net/npm/jquery-validation@1.19.5/dist/jquery.validate.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jquery-validation-unobtrusive@3.2.12/dist/jquery.validate.unobtrusive.min.js"></script>
+    
+    <script>
+        // Firma değiştiğinde personel listesini güncelle
+        $('#firmaSelect').change(function() {
+            var firmaId = $(this).val();
+            if (firmaId) {
+                $.get('@Url.Action("GetKisiler")', { firmaId: firmaId }, function(data) {
+                    $('#personelSelect').empty().append('<option value="">-- Seçiniz --</option>');
+                    $.each(data, function(i, item) {
+                        $('#personelSelect').append($('<option>', { value: item.personelId, text: item.adSoyad }));
+                    });
+                });
+            } else {
+                $('#personelSelect').empty().append('<option value="">-- Önce Firma Seçiniz --</option>');
+            }
+        });
+
+        // Saatlik izin checkbox değiştiğinde saat alanlarını göster/gizle
+        $('#saatlikIzinMi').change(function() {
+            if ($(this).is(':checked')) {
+                $('#baslangicSaatDiv').show();
+                $('#bitisSaatDiv').show();
+            } else {
+                $('#baslangicSaatDiv').hide();
+                $('#bitisSaatDiv').hide();
+            }
+        });
+
+        // İlk yüklemede firma seçiliyse personelleri yükle
+        $(document).ready(function() {
+            var firmaId = $('#firmaSelect').val();
+            if (firmaId) {
+                $('#firmaSelect').trigger('change');
+            }
+        });
+    </script>
+}

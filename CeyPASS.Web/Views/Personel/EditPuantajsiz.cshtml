@@ -1,0 +1,68 @@
+@model CeyPASS.Entities.Concrete.PuantajsizKart
+@{
+    ViewData["Title"] = "Puantajsız Kart Düzenle";
+    var kartTipi = ViewBag.KartTipi as string;
+    var firmaId = ViewBag.SelectedFirmaId as int?;
+}
+
+<div class="container-fluid">
+    <div class="row mb-3">
+        <div class="col-12">
+            <h2>Puantajsız Kart Düzenle</h2>
+            <a href="@Url.Action("Index", new { kartTipi, firmaId })" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Geri Dön
+            </a>
+        </div>
+    </div>
+
+    <form asp-action="EditPuantajsiz" method="post">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="kartId" value="@Model?.KartId" />
+        <input type="hidden" name="kartTipi" value="@kartTipi" />
+        <input type="hidden" name="firmaId" value="@firmaId" />
+
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h5 class="mb-0">Kart Bilgileri</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label">Sicil No (Kart Id)</label>
+                            <input type="text" class="form-control" value="@Model?.KartId" readonly />
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="kartAdi" class="form-label">Kart Adı <span class="text-danger">*</span></label>
+                            <input type="text" id="kartAdi" name="kartAdi" class="form-control" value="@Model?.KartAdi" required />
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="kartNo" class="form-label">Kart No</label>
+                            <input type="text" id="kartNo" name="kartNo" class="form-control" value="@Model?.KartNo" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="calismaSekli" class="form-label">Çalışma Şekli</label>
+                            <input type="text" id="calismaSekli" name="calismaSekli" class="form-control" value="@Model?.CalismaSekli" placeholder="Örn: 21.22" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-12">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-check-lg"></i> Kaydet
+                </button>
+                <a href="@Url.Action("Details", new { id = Model?.KartId, kartTipi, firmaId })" class="btn btn-secondary">İptal</a>
+            </div>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+}

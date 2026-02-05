@@ -1,0 +1,46 @@
+@model CeyPASS.Web.Models.POY.PozisyonFormModel
+@{
+    ViewData["Title"] = "Yeni Pozisyon";
+}
+
+<div class="container-fluid">
+    <div class="row mb-3">
+        <div class="col-12">
+            <h2>Yeni Pozisyon</h2>
+            <a class="btn btn-secondary" asp-controller="Pozisyon" asp-action="Index">Geri</a>
+        </div>
+    </div>
+
+    <form method="post" asp-controller="Pozisyon" asp-action="Create">
+        @Html.AntiForgeryToken()
+        @Html.HiddenFor(m => m.ReturnUrl)
+
+        <div class="row">
+            <div class="col-lg-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Pozisyon Bilgileri</h5>
+                    </div>
+                    <div class="card-body">
+                        <div asp-validation-summary="All" class="text-danger mb-2"></div>
+
+                        <div class="mb-3">
+                            <label asp-for="PozisyonAdi" class="form-label">Pozisyon Adı</label>
+                            <input asp-for="PozisyonAdi" class="form-control" required />
+                            <span asp-validation-for="PozisyonAdi" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Aciklama" class="form-label">Açıklama</label>
+                            <textarea asp-for="Aciklama" class="form-control" rows="3"></textarea>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">Kaydet</button>
+                        <a class="btn btn-secondary" asp-controller="Pozisyon" asp-action="Index">İptal</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+

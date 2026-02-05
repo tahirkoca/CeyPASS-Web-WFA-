@@ -1,0 +1,67 @@
+@model CeyPASS.Web.Models.POY.IsyeriFormModel
+@{
+    ViewData["Title"] = "Yeni İşyeri";
+    var firmalar = ViewBag.Firmalar as List<CeyPASS.Entities.Concrete.LookupItem> ?? new List<CeyPASS.Entities.Concrete.LookupItem>();
+}
+
+<div class="container-fluid">
+    <div class="row mb-3">
+        <div class="col-12">
+            <h2>Yeni İşyeri</h2>
+            <a class="btn btn-secondary" asp-controller="Isyeri" asp-action="Index">Geri</a>
+        </div>
+    </div>
+
+    <form method="post" asp-controller="Isyeri" asp-action="Create">
+        @Html.AntiForgeryToken()
+        @Html.HiddenFor(m => m.ReturnUrl)
+
+        <div class="row">
+            <div class="col-lg-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">İşyeri Bilgileri</h5>
+                    </div>
+                    <div class="card-body">
+                        <div asp-validation-summary="All" class="text-danger mb-2"></div>
+
+                        <div class="mb-3">
+                            <label asp-for="FirmaId" class="form-label">Firma</label>
+                            <select asp-for="FirmaId" class="form-select" required>
+                                <option value="">-- Seçiniz --</option>
+                                @foreach (var f in firmalar)
+                                {
+                                    if (Model.FirmaId == f.Id)
+                                    {
+                                        <option value="@f.Id" selected="selected">@f.Ad</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@f.Id">@f.Ad</option>
+                                    }
+                                }
+                            </select>
+                            <span asp-validation-for="FirmaId" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="IsyeriId" class="form-label">İşyeri Id</label>
+                            <input asp-for="IsyeriId" class="form-control" required />
+                            <span asp-validation-for="IsyeriId" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="IsyeriAdi" class="form-label">İşyeri Adı</label>
+                            <input asp-for="IsyeriAdi" class="form-control" required />
+                            <span asp-validation-for="IsyeriAdi" class="text-danger"></span>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">Kaydet</button>
+                        <a class="btn btn-secondary" asp-controller="Isyeri" asp-action="Index">İptal</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+

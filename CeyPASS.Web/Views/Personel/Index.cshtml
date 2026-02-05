@@ -1,0 +1,370 @@
+@model List<CeyPASS.Entities.Concrete.KisiListItem>
+@{
+    ViewData["Title"] = "Personel Yönetimi";
+    var search = ViewBag.Search as string;
+    var selectedFirmaId = ViewBag.SelectedFirmaId as int? ?? 0;
+    var selectedIsyeriId = ViewBag.SelectedIsyeriId as int?;
+    var kartTipi = ViewBag.KartTipi as string ?? "puantaj";
+    var firmalar = ViewBag.Firmalar as List<CeyPASS.Entities.Concrete.Firma>;
+    var isyerleri = ViewBag.Isyerleri as List<CeyPASS.Entities.Concrete.LookupItem>;
+    var isAdmin = ViewBag.IsAdmin as bool? ?? false;
+    var canCreate = ViewBag.CanCreate as bool? ?? false;
+    var canUpdate = ViewBag.CanUpdate as bool? ?? false;
+    var canDelete = ViewBag.CanDelete as bool? ?? false;
+    var listeBaslik = kartTipi == "puantajsiz" ? "Puantaj Yapılmayan Kartlar" : "Puantaj Yapılan Kartlar";
+}
+
+<div class="container-fluid">
+    <div class="row mb-3">
+        <div class="col-12">
+            <h2>Personel Yönetimi</h2>
+            
+            @if (TempData["Success"] != null)
+            {
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    @TempData["Success"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+            
+            @if (TempData["Error"] != null)
+            {
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    @TempData["Error"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="row mb-3">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-body">
+                    <form method="get" action="@Url.Action("Index")" class="row g-3">
+                        <div class="col-md-3">
+                            <label for="kartTipi" class="form-label">Kart tipi:</label>
+                            <select name="kartTipi" id="kartTipi" class="form-select">
+                                @if (kartTipi == "puantaj")
+                                {
+                                    <option value="puantaj" selected="selected">Puantaj Yapılan Kartlar</option>
+                                    <option value="puantajsiz">Puantaj Yapılmayan Kartlar</option>
+                                }
+                                else
+                                {
+                                    <option value="puantaj">Puantaj Yapılan Kartlar</option>
+                                    <option value="puantajsiz" selected="selected">Puantaj Yapılmayan Kartlar</option>
+                                }
+                            </select>
+                        </div>
+                        @if (isAdmin && firmalar != null && firmalar.Any())
+                        {
+                            <div class="col-md-3">
+                                <label for="firmaId" class="form-label">Firma:</label>
+                                <select name="firmaId" id="firmaId" class="form-select">
+                                    @foreach (var firma in firmalar)
+                                    {
+                                        if (firma.FirmaId == selectedFirmaId)
+                                        {
+                                            <option value="@firma.FirmaId" selected="selected">@firma.FirmaAdi</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="@firma.FirmaId">@firma.FirmaAdi</option>
+                                        }
+                                    }
+                                </select>
+                            </div>
+                        }
+                        else
+                        {
+                            <input type="hidden" name="firmaId" value="@selectedFirmaId" />
+                        }
+
+                        <div class="col-md-3">
+                            <label for="isyeriId" class="form-label">İşyeri:</label>
+                            <select name="isyeriId" id="isyeriId" class="form-select">
+                                <option value="">Tümü</option>
+                                @if (isyerleri != null && isyerleri.Any())
+                                {
+                                    foreach (var i in isyerleri)
+                                    {
+                                        if (selectedIsyeriId.HasValue && i.Id == selectedIsyeriId.Value)
+                                        {
+                                            <option value="@i.Id" selected="selected">@i.Ad</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="@i.Id">@i.Ad</option>
+                                        }
+                                    }
+                                }
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-3">
+                            <label for="search" class="form-label">Ara:</label>
+                            <input type="text" name="search" id="search" class="form-control" value="@search" placeholder="Personel adı, soyadı veya sicil no ile ara..." />
+                        </div>
+                        
+                        <div class="col-md-2 d-flex align-items-end">
+                            <button type="submit" class="btn btn-primary me-2">
+                                <i class="bi bi-search"></i> Ara
+                            </button>
+                            <a href="@Url.Action("Index", new { kartTipi, firmaId = selectedFirmaId })" class="btn btn-secondary">
+                                <i class="bi bi-x-circle"></i> Temizle
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Actions -->
+    @if (canCreate)
+    {
+        <div class="row mb-3">
+            <div class="col-12">
+                <a href="@Url.Action("Create")" class="btn btn-success">
+                    <i class="bi bi-plus-circle"></i> Yeni Personel Ekle
+                </a>
+            </div>
+        </div>
+    }
+
+    <!-- Personel List -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">@listeBaslik (@Model.Count kayıt)</h5>
+                </div>
+                <div class="card-body">
+                    @if (Model.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Sicil No</th>
+                                        <th>Ad Soyad</th>
+                                        <th>İşlemler</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var personel in Model)
+                                    {
+                                        <tr>
+                                            <td>@personel.PersonelId</td>
+                                            <td>@personel.AdSoyad</td>
+                                            <td>
+                                                <div class="btn-group" role="group">
+                                                    <a href="@Url.Action("Details", new { id = personel.PersonelId, kartTipi, firmaId = selectedFirmaId })" class="btn btn-sm btn-info" title="Detaylar">
+                                                        <i class="bi bi-eye"></i> Detay
+                                                    </a>
+                                                    @if (canUpdate)
+                                                    {
+                                                        <a href="@Url.Action("Edit", new { id = personel.PersonelId, kartTipi, firmaId = selectedFirmaId })" class="btn btn-sm btn-warning" title="Düzenle">
+                                                            <i class="bi bi-pencil"></i> Düzenle
+                                                        </a>
+                                                    }
+                                                    @if (canDelete && kartTipi != "puantajsiz")
+                                                    {
+                                                        <button type="button" class="btn btn-sm btn-danger btn-isten-cikar" title="İşten Çıkar"
+                                                                data-bs-toggle="modal" data-bs-target="#istenCikarModal"
+                                                                data-personel-id="@personel.PersonelId" data-ad-soyad="@personel.AdSoyad">
+                                                            <i class="bi bi-trash"></i> İşten Çıkar
+                                                        </button>
+                                                    }
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle"></i> Kayıt bulunamadı.
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (canDelete)
+    {
+        <div class="modal fade" id="istenCikarModal" tabindex="-1" aria-labelledby="istenCikarModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="istenCikarModalLabel"><i class="bi bi-trash me-2"></i>İşten Çıkar</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+                    </div>
+                    <form id="istenCikarForm" method="post" action="@Url.Action("Delete")">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="kartTipi" value="@kartTipi" />
+                        <input type="hidden" name="firmaId" value="@selectedFirmaId" />
+                        <div class="modal-body">
+                            <p class="text-muted small mb-3">İşten çıkış tarihini seçin, isteğe bağlı firma dışı kart numarasını girin ve <strong>Kaydet</strong> butonuna basın.</p>
+                            <input type="hidden" name="id" id="modalIstenCikarPersonelId" />
+                            <div class="mb-3">
+                                <label for="modalIstenCikarTarih" class="form-label">İşten çıkış tarihi</label>
+                                <input type="date" name="cikisTarihi" id="modalIstenCikarTarih" class="form-control" required />
+                            </div>
+                            <div class="mb-3">
+                                <label for="modalIstenCikarFirmaDisiKartNo" class="form-label">Firma dışı kart no <span class="text-muted">(isteğe bağlı)</span></label>
+                                <input type="text" name="firmaDisiKartNo" id="modalIstenCikarFirmaDisiKartNo" class="form-control" placeholder="Firma dışı kart no" />
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                            <button type="submit" class="btn btn-danger"><i class="bi bi-check-lg me-1"></i>Kaydet</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal fade" id="istenCikarOnayModal" tabindex="-1" aria-labelledby="istenCikarOnayModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="istenCikarOnayModalLabel"><i class="bi bi-exclamation-triangle me-2"></i>İşten Çıkış Onayı</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+                    </div>
+                    <div class="modal-body" id="istenCikarOnayModalBody"></div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                        <button type="button" class="btn btn-danger" id="istenCikarOnayModalOnaylaBtn"><i class="bi bi-check-lg me-1"></i>Onayla</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <script>
+        document.getElementById('kartTipi')?.addEventListener('change', function() {
+            this.closest('form')?.submit();
+        });
+
+        document.getElementById('isyeriId')?.addEventListener('change', function () {
+            this.closest('form')?.submit();
+        });
+
+        (function () {
+            var firmaEl = document.getElementById('firmaId');
+            var isyeriEl = document.getElementById('isyeriId');
+            if (!firmaEl || !isyeriEl) return;
+
+            function clearIsyerleri() {
+                isyeriEl.innerHTML = '';
+                var opt = document.createElement('option');
+                opt.value = '';
+                opt.textContent = 'Tümü';
+                isyeriEl.appendChild(opt);
+            }
+
+            function fillIsyerleri(items) {
+                clearIsyerleri();
+                if (!items || !items.length) return;
+                for (var i = 0; i < items.length; i++) {
+                    var it = items[i];
+                    var o = document.createElement('option');
+                    o.value = (it.id ?? it.Id ?? '').toString();
+                    o.textContent = it.ad ?? it.Ad ?? '';
+                    isyeriEl.appendChild(o);
+                }
+            }
+
+            firmaEl.addEventListener('change', function () {
+                var fid = firmaEl.value;
+                clearIsyerleri();
+                if (!fid) {
+                    firmaEl.closest('form')?.submit();
+                    return;
+                }
+                fetch('@Url.Action("GetIsyerleri", "Personel")?firmaId=' + encodeURIComponent(fid), { credentials: 'same-origin' })
+                    .then(function (r) { return r.json(); })
+                    .then(function (data) {
+                        fillIsyerleri(data);
+                        isyeriEl.value = '';
+                        firmaEl.closest('form')?.submit();
+                    })
+                    .catch(function () {
+                        // hata olursa yine de firma değişikliğini uygula
+                        firmaEl.closest('form')?.submit();
+                    });
+            });
+        })();
+    </script>
+    @if (canDelete)
+    {
+        <script>
+            (function () {
+                var modal = document.getElementById('istenCikarModal');
+                var form = document.getElementById('istenCikarForm');
+                if (!modal || !form) return;
+
+                function todayYyyyMmDd() {
+                    var d = new Date();
+                    var y = d.getFullYear(), m = (d.getMonth() + 1), day = d.getDate();
+                    return y + '-' + (m < 10 ? '0' : '') + m + '-' + (day < 10 ? '0' : '') + day;
+                }
+                function yyyyMmDdToDdMmYyyy(s) {
+                    if (!s) return '';
+                    var p = s.split('-');
+                    if (p.length !== 3) return s;
+                    return p[2] + '.' + p[1] + '.' + p[0];
+                }
+
+                modal.addEventListener('shown.bs.modal', function (e) {
+                    var btn = e.relatedTarget;
+                    if (!btn) return;
+                    var pid = btn.getAttribute('data-personel-id');
+                    var adSoyad = btn.getAttribute('data-ad-soyad') || '';
+                    document.getElementById('modalIstenCikarPersonelId').value = pid || '';
+                    document.getElementById('modalIstenCikarTarih').value = todayYyyyMmDd();
+                    document.getElementById('modalIstenCikarFirmaDisiKartNo').value = '';
+                    form.setAttribute('data-ad-soyad', adSoyad);
+                });
+
+                form.addEventListener('submit', function (e) {
+                    e.preventDefault();
+                    var idEl = document.getElementById('modalIstenCikarPersonelId');
+                    var tarihEl = document.getElementById('modalIstenCikarTarih');
+                    var adSoyad = form.getAttribute('data-ad-soyad') || 'Bu personel';
+                    var tarihStr = tarihEl.value;
+                    if (!tarihStr) {
+                        toastr.warning('Lütfen işten çıkış tarihini seçiniz.');
+                        tarihEl.focus();
+                        return;
+                    }
+                    var msg = adSoyad + ' için işten çıkış tarihi ' + yyyyMmDdToDdMmYyyy(tarihStr) + ' olarak işlenecek. Onaylıyor musunuz?';
+                    var onayModalEl = document.getElementById('istenCikarOnayModal');
+                    var onayModalBody = document.getElementById('istenCikarOnayModalBody');
+                    var onayModalBtn = document.getElementById('istenCikarOnayModalOnaylaBtn');
+                    if (onayModalEl && onayModalBody && onayModalBtn) {
+                        onayModalBody.textContent = msg;
+                        onayModalBtn.onclick = function () {
+                            bootstrap.Modal.getInstance(onayModalEl).hide();
+                            form.submit();
+                        };
+                        var modal = new bootstrap.Modal(onayModalEl);
+                        modal.show();
+                    } else {
+                        form.submit();
+                    }
+                });
+            })();
+        </script>
+    }
+}

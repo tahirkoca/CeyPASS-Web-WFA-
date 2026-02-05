@@ -1,0 +1,231 @@
+@model CeyPASS.Entities.Concrete.KisiDetay
+@{
+    ViewData["Title"] = "Personel Detayları";
+}
+
+<div class="container-fluid">
+    <div class="row mb-3">
+        <div class="col-12">
+            <h2>Personel Detayları</h2>
+            <a href="@Url.Action("Index", new { kartTipi = ViewBag.KartTipi, firmaId = ViewBag.SelectedFirmaId })" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Geri Dön
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5 class="mb-0">Fotoğraf</h5>
+                </div>
+                <div class="card-body text-center">
+                    @if (Model?.Fotograf != null && Model.Fotograf.Length > 0)
+                    {
+                        <img src="data:image/jpeg;base64,@Convert.ToBase64String(Model.Fotograf)" 
+                             class="img-thumbnail" style="max-width: 100%;" />
+                    }
+                    else
+                    {
+                        <div class="text-muted">
+                            <i class="bi bi-person-circle" style="font-size: 150px;"></i>
+                            <p>Fotoğraf yok</p>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-8">
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5 class="mb-0">Temel Bilgiler</h5>
+                </div>
+                <div class="card-body">
+                    <dl class="row">
+                        <dt class="col-sm-4">Sicil No:</dt>
+                        <dd class="col-sm-8">@Model?.PersonelId</dd>
+
+                        <dt class="col-sm-4">Ad Soyad:</dt>
+                        <dd class="col-sm-8">@Model?.Ad @Model?.Soyad</dd>
+
+                        <dt class="col-sm-4">TC Kimlik No:</dt>
+                        <dd class="col-sm-8">@(Model?.TcKimlikNo ?? "-")</dd>
+
+                        <dt class="col-sm-4">Kart No:</dt>
+                        <dd class="col-sm-8">@(Model?.KartNo ?? "-")</dd>
+
+                        <dt class="col-sm-4">Doğum Tarihi:</dt>
+                        <dd class="col-sm-8">@(Model?.DogumTarihi?.ToString("dd.MM.yyyy") ?? "-")</dd>
+
+                        <dt class="col-sm-4">İşe Giriş Tarihi:</dt>
+                        <dd class="col-sm-8">@(Model?.IseGirisTarihi?.ToString("dd.MM.yyyy") ?? "-")</dd>
+
+                        @if (Model?.IstenCikisTarihi.HasValue == true)
+                        {
+                            <dt class="col-sm-4">İşten Çıkış Tarihi:</dt>
+                            <dd class="col-sm-8">
+                                <span class="text-danger">@Model.IstenCikisTarihi.Value.ToString("dd.MM.yyyy")</span>
+                            </dd>
+                        }
+                    </dl>
+                </div>
+            </div>
+
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5 class="mb-0">İletişim Bilgileri</h5>
+                </div>
+                <div class="card-body">
+                    <dl class="row">
+                        <dt class="col-sm-4">Cep Telefonu:</dt>
+                        <dd class="col-sm-8">@(Model?.CepTel ?? "-")</dd>
+
+                        <dt class="col-sm-4">E-posta:</dt>
+                        <dd class="col-sm-8">@(Model?.Email ?? "-")</dd>
+                    </dl>
+                </div>
+            </div>
+
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5 class="mb-0">Organizasyon Bilgileri</h5>
+                </div>
+                <div class="card-body">
+                    <dl class="row">
+                        <dt class="col-sm-4">Firma:</dt>
+                        <dd class="col-sm-8">@(ViewBag.FirmaAdi ?? "-")</dd>
+
+                        <dt class="col-sm-4">İşyeri:</dt>
+                        <dd class="col-sm-8">@(ViewBag.IsyeriAdi ?? "-")</dd>
+
+                        <dt class="col-sm-4">Departman:</dt>
+                        <dd class="col-sm-8">@(ViewBag.DepartmanAdi ?? "-")</dd>
+
+                        <dt class="col-sm-4">Pozisyon:</dt>
+                        <dd class="col-sm-8">@(ViewBag.PozisyonAdi ?? "-")</dd>
+
+                        <dt class="col-sm-4">Bölüm:</dt>
+                        <dd class="col-sm-8">@(ViewBag.BolumAdi ?? "-")</dd>
+
+                        <dt class="col-sm-4">Çalışma Statüsü:</dt>
+                        <dd class="col-sm-8">@(Model?.CalismaStatusuText ?? "-")</dd>
+                    </dl>
+                </div>
+            </div>
+
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5 class="mb-0">Özel Ayarlar</h5>
+                </div>
+                <div class="card-body">
+                    <dl class="row">
+                        <dt class="col-sm-4">Firma Personeli:</dt>
+                        <dd class="col-sm-8">
+                            @if (Model?.FirmaPersoneli == true)
+                            {
+                                <span class="badge bg-success">Evet</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary">Hayır</span>
+                            }
+                        </dd>
+
+                        <dt class="col-sm-4">Puantaj Yapılabilir:</dt>
+                        <dd class="col-sm-8">
+                            @if (Model?.PuantajYapilabilir == true)
+                            {
+                                <span class="badge bg-success">Evet</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary">Hayır</span>
+                            }
+                        </dd>
+
+                        <dt class="col-sm-4">Yemek Hakkı Var:</dt>
+                        <dd class="col-sm-8">
+                            @if (Model?.YemekHakkiVar == true)
+                            {
+                                <span class="badge bg-success">Evet</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary">Hayır</span>
+                            }
+                        </dd>
+
+                        <dt class="col-sm-4">Günlük Yemek Adedi:</dt>
+                        <dd class="col-sm-8">@(Model?.GunlukYemekAdedi ?? 0)</dd>
+
+                        <dt class="col-sm-4">Firma Dışı Kart No:</dt>
+                        <dd class="col-sm-8">@(Model?.TaseronKartNo ?? "-")</dd>
+                    </dl>
+                </div>
+            </div>
+
+            @if (ViewBag.PuantajsizKartMi == true)
+            {
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h5 class="mb-0">Puantajsız Kart Bilgileri</h5>
+                    </div>
+                    <div class="card-body">
+                        <dl class="row">
+                            <dt class="col-sm-4">Çalışma Şekli:</dt>
+                            <dd class="col-sm-8">@(ViewBag.PuantajsizCalismaSekli ?? "-")</dd>
+
+                            <dt class="col-sm-4">Ziyaretçi Kartı:</dt>
+                            <dd class="col-sm-8">
+                                @if (ViewBag.PuantajsizZiyaretciMi == true)
+                                { <span class="badge bg-success">Evet</span> }
+                                else
+                                { <span class="badge bg-secondary">Hayır</span> }
+                            </dd>
+
+                            <dt class="col-sm-4">Araç Kartı:</dt>
+                            <dd class="col-sm-8">
+                                @if (ViewBag.PuantajsizAracKartiMi == true)
+                                { <span class="badge bg-success">Evet</span> }
+                                else
+                                { <span class="badge bg-secondary">Hayır</span> }
+                            </dd>
+
+                            <dt class="col-sm-4">Taşeron Çalışan:</dt>
+                            <dd class="col-sm-8">
+                                @if (ViewBag.PuantajsizTaseronCalisanMi == true)
+                                { <span class="badge bg-success">Evet</span> }
+                                else
+                                { <span class="badge bg-secondary">Hayır</span> }
+                            </dd>
+
+                            <dt class="col-sm-4">Aktif:</dt>
+                            <dd class="col-sm-8">
+                                @if (ViewBag.PuantajsizAktifMi == true)
+                                { <span class="badge bg-success">Evet</span> }
+                                else
+                                { <span class="badge bg-secondary">Hayır</span> }
+                            </dd>
+                        </dl>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <a href="@Url.Action("Edit", new { id = Model?.PersonelId, kartTipi = ViewBag.KartTipi, firmaId = ViewBag.SelectedFirmaId })" class="btn btn-warning">
+                <i class="bi bi-pencil"></i> Düzenle
+            </a>
+            <a href="@Url.Action("Index", new { kartTipi = ViewBag.KartTipi, firmaId = ViewBag.SelectedFirmaId })" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Geri Dön
+            </a>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+}

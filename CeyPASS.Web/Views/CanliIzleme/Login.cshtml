@@ -1,0 +1,548 @@
+@model CeyPASS.Web.Models.CanliIzleme.CanliIzlemeLoginModel
+@{
+    ViewData["Title"] = "Canlı İzleme - Giriş";
+    Layout = null;
+    var firmalar = ViewBag.Firmalar as List<(int Id, string Ad)> ?? new List<(int, string)>();
+}
+
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - CeyPASS</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #dc2626 0%, #b91c1c 50%, #991b1b 100%);
+            --glass-bg: rgba(255, 255, 255, 0.95);
+            --glass-border: rgba(255, 255, 255, 0.2);
+            --shadow-color: rgba(185, 28, 28, 0.35);
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --accent-color: #b91c1c;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background-color: #991b1b;
+            background-image: linear-gradient(rgba(0, 0, 0, 0.35), rgba(0, 0, 0, 0.3)), url('@Url.Content("~/images/ceyport-tekirdag.png")');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Ana Giriş Linki - Sol Üst */
+        .ana-giris-link {
+            position: fixed;
+            top: 24px;
+            left: 24px;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 20px;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            border-radius: 50px;
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            animation: fadeInLeft 0.6s ease-out 0.3s both;
+        }
+
+        .ana-giris-link:hover {
+            background: rgba(255, 255, 255, 0.25);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+            color: white;
+        }
+
+        .ana-giris-link i {
+            font-size: 1.1rem;
+        }
+
+        @@keyframes fadeInLeft {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .bg-shapes {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .bg-shapes::before,
+        .bg-shapes::after {
+            content: '';
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.06);
+            animation: float 20s infinite ease-in-out;
+        }
+
+        .bg-shapes::before {
+            width: 600px;
+            height: 600px;
+            top: -200px;
+            left: -100px;
+        }
+
+        .bg-shapes::after {
+            width: 400px;
+            height: 400px;
+            bottom: -100px;
+            right: -100px;
+            animation-delay: -10s;
+        }
+
+        @@keyframes float {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-30px) rotate(10deg); }
+        }
+
+        .login-container {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            max-width: 420px;
+        }
+
+        .login-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 24px;
+            box-shadow: 
+                0 25px 50px -12px var(--shadow-color),
+                0 0 0 1px var(--glass-border);
+            overflow: hidden;
+            animation: slideUp 0.6s ease-out;
+        }
+
+        @@keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .login-header {
+            background: var(--primary-gradient);
+            padding: 40px 30px;
+            text-align: center;
+            position: relative;
+        }
+
+        .logo-img-wrap {
+            position: absolute;
+            bottom: -24px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 2;
+            background: white;
+            padding: 8px 16px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 48px;
+        }
+
+        .logo-img-wrap img {
+            display: block;
+            height: 48px;
+            width: auto;
+            max-width: 160px;
+            object-fit: contain;
+        }
+
+        .login-header h1 {
+            color: white;
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+            letter-spacing: -0.5px;
+        }
+
+        .login-header p {
+            color: rgba(255, 255, 255, 0.85);
+            font-size: 0.9rem;
+            font-weight: 400;
+        }
+
+        .login-body {
+            padding: 50px 35px 35px;
+        }
+
+        .alert {
+            border: none;
+            border-radius: 12px;
+            padding: 14px 18px;
+            font-size: 0.875rem;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .alert-danger {
+            background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+            color: #dc2626;
+        }
+
+        .alert i {
+            font-size: 1.1rem;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+
+        .input-group {
+            position: relative;
+        }
+
+        .input-icon {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            z-index: 3;
+            transition: color 0.3s ease;
+        }
+
+        .form-control, .form-select {
+            width: 100%;
+            padding: 14px 16px 14px 48px;
+            font-size: 0.95rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            background: #f8fafc;
+            color: var(--text-primary);
+            transition: all 0.3s ease;
+        }
+
+        .form-select {
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%2364748b' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 16px center;
+            background-size: 16px;
+            padding-right: 48px;
+        }
+
+        .form-control:focus, .form-select:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            background: white;
+            box-shadow: 0 0 0 4px rgba(185, 28, 28, 0.15);
+        }
+
+        .form-control:focus + .input-icon,
+        .form-select:focus + .input-icon,
+        .input-group:focus-within .input-icon {
+            color: var(--accent-color);
+        }
+
+        .form-control::placeholder {
+            color: #94a3b8;
+        }
+
+        .password-toggle {
+            position: absolute;
+            right: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 4px;
+            z-index: 3;
+            transition: color 0.3s ease;
+        }
+
+        .password-toggle:hover {
+            color: var(--accent-color);
+        }
+
+        .btn-login {
+            width: 100%;
+            padding: 14px 24px;
+            font-size: 1rem;
+            font-weight: 600;
+            color: white;
+            background: var(--primary-gradient);
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            margin-top: 8px;
+        }
+
+        .btn-login::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .btn-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px -10px var(--shadow-color);
+        }
+
+        .btn-login:hover::before {
+            left: 100%;
+        }
+
+        .btn-login:active {
+            transform: translateY(0);
+        }
+
+        .btn-login:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-login .spinner {
+            display: none;
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-right: 8px;
+        }
+
+        .btn-login.loading .spinner {
+            display: inline-block;
+        }
+
+        @@keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .login-footer {
+            text-align: center;
+            padding: 20px 35px 30px;
+            border-top: 1px solid #f1f5f9;
+        }
+
+        .login-footer p {
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+        }
+
+        /* Responsive */
+        @@media (max-width: 480px) {
+            .login-header {
+                padding: 30px 20px;
+            }
+            .login-body {
+                padding: 45px 25px 25px;
+            }
+            .login-header h1 {
+                font-size: 1.5rem;
+            }
+            .ana-giris-link {
+                top: 16px;
+                left: 16px;
+                padding: 10px 16px;
+                font-size: 0.85rem;
+            }
+            .ana-giris-link span {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-shapes"></div>
+    
+    <!-- Ana Giriş Sayfasına Dön -->
+    <a href="@Url.Action("Login", "Account")" class="ana-giris-link">
+        <i class="bi bi-arrow-left"></i>
+        <span>Ana Giriş</span>
+    </a>
+    
+    <div class="login-container">
+        <div class="login-card">
+            <div class="login-header">
+                <h1>Canlı İzleme</h1>
+                <p>Personel Geçiş Takip Sistemi</p>
+                <div class="logo-img-wrap">
+                    <img src="@Url.Content("~/images/logo.png")" alt="CeyPASS PDKS" 
+                         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
+                    <span class="logo-fallback" style="display:none; align-items:center; gap:6px; font-weight:700; color:#1e293b; font-size:1rem;">
+                        <i class="bi bi-broadcast" style="color:var(--accent-color);"></i> CeyPASS
+                    </span>
+                </div>
+            </div>
+            
+            <div class="login-body">
+                <div asp-validation-summary="All" class="alert alert-danger" style="display: none;"></div>
+                
+                @if (TempData["Error"] != null)
+                {
+                    <div class="alert alert-danger">
+                        <i class="bi bi-exclamation-circle"></i>
+                        <span>@TempData["Error"]</span>
+                    </div>
+                }
+                
+                <form method="post" asp-controller="CanliIzleme" asp-action="Login" id="loginForm">
+                    @Html.AntiForgeryToken()
+                    
+                    <div class="form-group">
+                        <label class="form-label">Bölge / Firma</label>
+                        <div class="input-group">
+                            <select asp-for="FirmaId" class="form-select" required>
+                                <option value="">-- Firma Seçiniz --</option>
+                                @foreach (var f in firmalar)
+                                {
+                                    if (Model.FirmaId == f.Id)
+                                    {
+                                        <option value="@f.Id" selected="selected">@f.Ad</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@f.Id">@f.Ad</option>
+                                    }
+                                }
+                            </select>
+                            <i class="bi bi-building input-icon"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Kullanıcı Adı</label>
+                        <div class="input-group">
+                            <input asp-for="KullaniciAdi" 
+                                   class="form-control" 
+                                   placeholder="Kullanıcı adınızı girin"
+                                   autocomplete="username" 
+                                   required />
+                            <i class="bi bi-person input-icon"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Şifre</label>
+                        <div class="input-group">
+                            <input asp-for="Sifre" 
+                                   type="password" 
+                                   class="form-control" 
+                                   placeholder="Şifrenizi girin"
+                                   autocomplete="current-password" 
+                                   required />
+                            <i class="bi bi-lock input-icon"></i>
+                            <button type="button" class="password-toggle" onclick="togglePassword()">
+                                <i class="bi bi-eye" id="toggleIcon"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn-login" id="loginBtn">
+                        <span class="spinner"></span>
+                        <span class="btn-text">Canlı İzlemeye Giriş Yap</span>
+                    </button>
+                </form>
+            </div>
+            
+            <div class="login-footer">
+                <p>&copy; 2026 CeyPASS - Canlı İzleme Modülü</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function togglePassword() {
+            const passwordInput = document.getElementById('Sifre');
+            const toggleIcon = document.getElementById('toggleIcon');
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                toggleIcon.classList.remove('bi-eye');
+                toggleIcon.classList.add('bi-eye-slash');
+            } else {
+                passwordInput.type = 'password';
+                toggleIcon.classList.remove('bi-eye-slash');
+                toggleIcon.classList.add('bi-eye');
+            }
+        }
+
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            const btn = document.getElementById('loginBtn');
+            btn.classList.add('loading');
+            btn.disabled = true;
+        });
+        
+        // Validation summary gösterimi
+        const validationSummary = document.querySelector('[data-valmsg-summary]');
+        if (validationSummary && validationSummary.querySelector('li')) {
+            validationSummary.style.display = 'flex';
+        }
+    </script>
+</body>
+</html>

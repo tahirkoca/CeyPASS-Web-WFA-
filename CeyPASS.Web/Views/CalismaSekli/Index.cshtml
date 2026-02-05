@@ -1,0 +1,149 @@
+@model List<CeyPASS.Entities.Concrete.CalismaSekli>
+@{
+    ViewData["Title"] = "Vardiyalar (Çalışma Şekilleri)";
+    var canCreate = ViewBag.CanCreate as bool? ?? false;
+    var canUpdate = ViewBag.CanUpdate as bool? ?? false;
+    var canDelete = ViewBag.CanDelete as bool? ?? false;
+}
+
+<div class="container-fluid">
+    <div class="row mb-3">
+        <div class="col-12">
+            <h2>Vardiyalar (Çalışma Şekilleri)</h2>
+            
+            @if (TempData["Success"] != null)
+            {
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    @TempData["Success"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+            
+            @if (TempData["Error"] != null)
+            {
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    @TempData["Error"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+        </div>
+    </div>
+
+    @if (canCreate)
+    {
+        <div class="row mb-3">
+            <div class="col-12">
+                <a href="@Url.Action("Create")" class="btn btn-success">
+                    <i class="bi bi-plus-circle"></i> Yeni Vardiya Ekle
+                </a>
+            </div>
+        </div>
+    }
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Vardiya Listesi (@Model.Count kayıt)</h5>
+                </div>
+                <div class="card-body">
+                    @if (Model.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Ad</th>
+                                        <th>Başlangıç</th>
+                                        <th>Bitiş</th>
+                                        <th>Başlangıç Tolerans</th>
+                                        <th>Bitiş Tolerans</th>
+                                        <th>Yemek Aktifleştirme</th>
+                                        <th>İşlemler</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var vardiya in Model)
+                                    {
+                                        <tr>
+                                            <td>@vardiya.Ad</td>
+                                            <td>@vardiya.Baslangic.ToString(@"hh\:mm")</td>
+                                            <td>@vardiya.Bitis.ToString(@"hh\:mm")</td>
+                                            <td>@vardiya.BaslangicTolerans.ToString(@"hh\:mm")</td>
+                                            <td>@vardiya.BitisTolerans.ToString(@"hh\:mm")</td>
+                                            <td>@vardiya.YemekAktiflestirme.ToString(@"hh\:mm")</td>
+                                            <td>
+                                                <div class="btn-group" role="group">
+                                                    @if (canUpdate)
+                                                    {
+                                                        <a href="@Url.Action("Edit", new { id = vardiya.Id })" class="btn btn-sm btn-warning">
+                                                            <i class="bi bi-pencil"></i> Düzenle
+                                                        </a>
+                                                    }
+                                                    @if (canDelete)
+                                                    {
+                                                        <form method="post" action="@Url.Action("Delete", new { id = vardiya.Id })" style="display: inline;">
+                                                            @Html.AntiForgeryToken()
+                                                            <button type="button" class="btn btn-sm btn-danger btn-sil-onay" data-msg="Bu vardiyayı silmek istediğinizden emin misiniz?">
+                                                                <i class="bi bi-trash"></i> Sil
+                                                            </button>
+                                                        </form>
+                                                    }
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle"></i> Kayıt bulunamadı.
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="silOnayModal" tabindex="-1" aria-labelledby="silOnayModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="silOnayModalLabel"><i class="bi bi-exclamation-triangle me-2"></i>Silme Onayı</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+            </div>
+            <div class="modal-body" id="silOnayModalBody"></div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                <button type="button" class="btn btn-danger" id="silOnayModalSilBtn"><i class="bi bi-trash me-1"></i>Sil</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <script>
+    (function () {
+        var silOnayModalEl = document.getElementById('silOnayModal');
+        var silOnayModalBody = document.getElementById('silOnayModalBody');
+        var silOnayModalSilBtn = document.getElementById('silOnayModalSilBtn');
+        if (silOnayModalEl && silOnayModalBody && silOnayModalSilBtn) {
+            document.querySelectorAll('.btn-sil-onay').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    var form = this.closest('form');
+                    var msg = this.getAttribute('data-msg') || 'Silmek istiyor musunuz?';
+                    silOnayModalBody.textContent = msg;
+                    var modal = new bootstrap.Modal(silOnayModalEl);
+                    silOnayModalSilBtn.onclick = function () { modal.hide(); if (form) form.submit(); };
+                    modal.show();
+                });
+            });
+        }
+    })();
+    </script>
+}

@@ -1,0 +1,321 @@
+@model CeyPASS.Entities.Concrete.Kisi
+@{
+    ViewData["Title"] = "Yeni Personel Ekle";
+    var departmanlar = ViewBag.Departmanlar as List<CeyPASS.Entities.Concrete.LookupItem> ?? new List<CeyPASS.Entities.Concrete.LookupItem>();
+    var pozisyonlar = ViewBag.Pozisyonlar as List<CeyPASS.Entities.Concrete.LookupItem> ?? new List<CeyPASS.Entities.Concrete.LookupItem>();
+    var isyerleri = ViewBag.Isyerleri as List<CeyPASS.Entities.Concrete.LookupItem> ?? new List<CeyPASS.Entities.Concrete.LookupItem>();
+    var bolumler = ViewBag.Bolumler as List<CeyPASS.Entities.Concrete.LookupItem> ?? new List<CeyPASS.Entities.Concrete.LookupItem>();
+    var calismaSekilleri = ViewBag.CalismaSekilleri as List<CeyPASS.Entities.Concrete.CalismaSekli> ?? new List<CeyPASS.Entities.Concrete.CalismaSekli>();
+    var calismaStatuleri = ViewBag.CalismaStatuleri as List<CeyPASS.Entities.Concrete.LookupItem> ?? new List<CeyPASS.Entities.Concrete.LookupItem>();
+    var firmalar = ViewBag.Firmalar as List<CeyPASS.Entities.Concrete.Firma> ?? new List<CeyPASS.Entities.Concrete.Firma>();
+}
+
+<div class="container-fluid">
+    <div class="row mb-3">
+        <div class="col-12">
+            <h2>Yeni Personel Ekle</h2>
+            <a href="@Url.Action("Index")" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Geri Dön
+            </a>
+        </div>
+    </div>
+
+    @if (!ViewData.ModelState.IsValid)
+    {
+        <div class="alert alert-danger">
+            <ul class="mb-0">
+                @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                {
+                    <li>@error.ErrorMessage</li>
+                }
+            </ul>
+        </div>
+    }
+
+    <form asp-action="Create" method="post" enctype="multipart/form-data">
+        @Html.AntiForgeryToken()
+        
+        <div class="row">
+            <!-- Sol Kolon -->
+            <div class="col-md-6">
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h5 class="mb-0">Temel Bilgiler</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label asp-for="PersonelId" class="form-label">Sicil No <span class="text-danger">*</span></label>
+                            <input asp-for="PersonelId" class="form-control" required />
+                            <span asp-validation-for="PersonelId" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Ad" class="form-label">Ad <span class="text-danger">*</span></label>
+                            <input asp-for="Ad" class="form-control" required />
+                            <span asp-validation-for="Ad" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Soyad" class="form-label">Soyad <span class="text-danger">*</span></label>
+                            <input asp-for="Soyad" class="form-control" required />
+                            <span asp-validation-for="Soyad" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="TcKimlikNo" class="form-label">TC Kimlik No</label>
+                            <input asp-for="TcKimlikNo" class="form-control" maxlength="11" placeholder="11 haneli TC Kimlik Numarası" />
+                            <span asp-validation-for="TcKimlikNo" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="KartNo" class="form-label">Kart No</label>
+                            <input asp-for="KartNo" class="form-control" />
+                            <span asp-validation-for="KartNo" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="DogumTarihi" class="form-label">Doğum Tarihi</label>
+                            <input asp-for="DogumTarihi" type="date" class="form-control" />
+                            <span asp-validation-for="DogumTarihi" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="IseGirisTarihi" class="form-label">İşe Giriş Tarihi <span class="text-danger">*</span></label>
+                            <input asp-for="IseGirisTarihi" type="date" class="form-control" required />
+                            <span asp-validation-for="IseGirisTarihi" class="text-danger"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h5 class="mb-0">İletişim Bilgileri</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label asp-for="CepTel" class="form-label">Cep Telefonu</label>
+                            <input asp-for="CepTel" class="form-control" placeholder="05.. - ... - .. - .. şeklinde giriniz" />
+                            <span asp-validation-for="CepTel" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Email" class="form-label">E-posta</label>
+                            <input asp-for="Email" type="email" class="form-control" />
+                            <span asp-validation-for="Email" class="text-danger"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sağ Kolon -->
+            <div class="col-md-6">
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h5 class="mb-0">Organizasyon Bilgileri</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label asp-for="FirmaId" class="form-label">Firma <span class="text-danger">*</span></label>
+                            <select asp-for="FirmaId" class="form-select" required>
+                                <option value="">-- Seçiniz --</option>
+                                @foreach (var firma in firmalar)
+                                {
+                                    <option value="@firma.FirmaId">@firma.FirmaAdi</option>
+                                }
+                            </select>
+                            <span asp-validation-for="FirmaId" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="IsyeriId" class="form-label">İşyeri</label>
+                            <select asp-for="IsyeriId" class="form-select">
+                                <option value="">-- Seçiniz --</option>
+                                @foreach (var isyeri in isyerleri)
+                                {
+                                    <option value="@isyeri.Id">@isyeri.Ad</option>
+                                }
+                            </select>
+                            <span asp-validation-for="IsyeriId" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="DepartmanId" class="form-label">Departman</label>
+                            <select asp-for="DepartmanId" class="form-select">
+                                <option value="">-- Seçiniz --</option>
+                                @foreach (var departman in departmanlar)
+                                {
+                                    <option value="@departman.Id">@departman.Ad</option>
+                                }
+                            </select>
+                            <span asp-validation-for="DepartmanId" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="PozisyonId" class="form-label">Pozisyon</label>
+                            <select asp-for="PozisyonId" class="form-select">
+                                <option value="">-- Seçiniz --</option>
+                                @foreach (var pozisyon in pozisyonlar)
+                                {
+                                    <option value="@pozisyon.Id">@pozisyon.Ad</option>
+                                }
+                            </select>
+                            <span asp-validation-for="PozisyonId" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="BolumId" class="form-label">Bölüm</label>
+                            <select asp-for="BolumId" class="form-select">
+                                <option value="">-- Seçiniz --</option>
+                                @foreach (var bolum in bolumler)
+                                {
+                                    <option value="@bolum.Id">@bolum.Ad</option>
+                                }
+                            </select>
+                            <span asp-validation-for="BolumId" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Çalışma Statüsü</label>
+                            <select name="CalismaStatusu" class="form-select">
+                                <option value="">-- Seçiniz --</option>
+                                @foreach (var statu in calismaStatuleri)
+                                {
+                                    <option value="@statu.Ad">@statu.Ad</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h5 class="mb-0">Çalışma Şekilleri (Vardiyalar)</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            @foreach (var vardiya in calismaSekilleri)
+                            {
+                                <div class="col-md-6 mb-2">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="VardiyaIds" value="@vardiya.Id" id="vardiya_@vardiya.Id" />
+                                        <label class="form-check-label" for="vardiya_@vardiya.Id">
+                                            @vardiya.Ad
+                                        </label>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h5 class="mb-0">Özel Ayarlar</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" name="firmaPersoneli" id="firmaPersoneli" value="true" checked />
+                            <label class="form-check-label" for="firmaPersoneli">
+                                Firma Personeli
+                            </label>
+                        </div>
+
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" name="puantajYapilabilir" id="puantajYapilabilir" value="true" checked />
+                            <label class="form-check-label" for="puantajYapilabilir">
+                                Puantaj Yapılabilir
+                            </label>
+                        </div>
+
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" name="yemekHakkiVar" id="yemekHakkiVar" value="true" />
+                            <label class="form-check-label" for="yemekHakkiVar">
+                                Yemek Hakkı Var
+                            </label>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="gunlukYemekLimiti" class="form-label">Günlük Yemek Limiti</label>
+                            <input type="number" name="gunlukYemekLimiti" id="gunlukYemekLimiti" class="form-control" min="0" value="0" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="puantajsizKartNo" class="form-label">Firma Dışı Kart No (Taseron)</label>
+                            <input type="text" name="puantajsizKartNo" id="puantajsizKartNo" class="form-control" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-12">
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h5 class="mb-0">Fotoğraf</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label for="fotograf" class="form-label">Personel Fotoğrafı</label>
+                            <input type="file" name="fotograf" id="fotograf" class="form-control" accept="image/*" />
+                            <small class="form-text text-muted">JPG, PNG veya GIF formatında yükleyebilirsiniz.</small>
+                        </div>
+                        <div id="fotoPreview" class="mt-2"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-12">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-save"></i> Kaydet
+                </button>
+                <a href="@Url.Action("Index")" class="btn btn-secondary">
+                    <i class="bi bi-x-circle"></i> İptal
+                </a>
+            </div>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <script src="https://cdn.jsdelivr.net/npm/jquery-validation@1.19.5/dist/jquery.validate.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jquery-validation-unobtrusive@3.2.12/dist/jquery.validate.unobtrusive.min.js"></script>
+    
+    <script>
+        // Firma değiştiğinde İşyeri, Bölüm listelerini güncelle
+        $('#FirmaId').change(function() {
+            var firmaId = $(this).val();
+            if (firmaId) {
+                // AJAX ile İşyeri ve Bölüm listelerini yükle
+                $.get('@Url.Action("GetIsyerleri")', { firmaId: firmaId }, function(data) {
+                    $('#IsyeriId').empty().append('<option value="">-- Seçiniz --</option>');
+                    $.each(data, function(i, item) {
+                        $('#IsyeriId').append($('<option>', { value: item.id, text: item.ad }));
+                    });
+                });
+
+                $.get('@Url.Action("GetBolumler")', { firmaId: firmaId }, function(data) {
+                    $('#BolumId').empty().append('<option value="">-- Seçiniz --</option>');
+                    $.each(data, function(i, item) {
+                        $('#BolumId').append($('<option>', { value: item.id, text: item.ad }));
+                    });
+                });
+            }
+        });
+
+        // Fotoğraf önizleme
+        $('#fotograf').change(function(e) {
+            var file = e.target.files[0];
+            if (file) {
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    $('#fotoPreview').html('<img src="' + e.target.result + '" class="img-thumbnail" style="max-width: 200px; max-height: 200px;" />');
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    </script>
+}

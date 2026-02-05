@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <RootNamespace>CeyPASS.Infrastructure</RootNamespace>
+    <AssemblyName>CeyPASS.Infrastructure</AssemblyName>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <NoWarn>$(NoWarn);CS8600;CS8601;CS8602;CS8603;CS8618;CS8625;CA1416</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\CeyPASS.Business\CeyPASS.Business.csproj" />
+    <ProjectReference Include="..\CeyPASS.Entities\CeyPASS.Entities.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="EPPlus" Version="7.7.0" />
+    <PackageReference Include="Microsoft.Data.SqlClient" Version="5.2.2" />
+    <PackageReference Include="EPPlus.System.Drawing" Version="7.7.0" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.2" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.2" />
+    <!-- Core build: .NET Standard / net8.0 uyumlu (GDI yerine) -->
+    <PackageReference Include="PDFsharp" Version="6.2.3" />
+    <PackageReference Include="PDFsharp-MigraDoc" Version="6.2.0" />
+    <PackageReference Include="System.Drawing.Common" Version="8.0.14" />
+  </ItemGroup>
+
+</Project>

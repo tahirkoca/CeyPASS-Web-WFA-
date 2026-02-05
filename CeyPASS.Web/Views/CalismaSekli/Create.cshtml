@@ -1,0 +1,94 @@
+@model CeyPASS.Entities.Concrete.CalismaSekli
+@{
+    ViewData["Title"] = "Yeni Vardiya Ekle";
+}
+
+<div class="container-fluid">
+    <div class="row mb-3">
+        <div class="col-12">
+            <h2>Yeni Vardiya Ekle</h2>
+            <a href="@Url.Action("Index")" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Geri Dön
+            </a>
+        </div>
+    </div>
+
+    @if (!ViewData.ModelState.IsValid)
+    {
+        <div class="alert alert-danger">
+            <ul class="mb-0">
+                @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                {
+                    <li>@error.ErrorMessage</li>
+                }
+            </ul>
+        </div>
+    }
+
+    <form asp-action="Create" method="post">
+        @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="FirmaId" />
+        
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Vardiya Bilgileri</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label asp-for="Ad" class="form-label">Vardiya Adı <span class="text-danger">*</span></label>
+                            <input asp-for="Ad" class="form-control" required />
+                            <span asp-validation-for="Ad" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="baslangic" class="form-label">Başlangıç Saati <span class="text-danger">*</span></label>
+                            <input type="time" name="baslangic" id="baslangic" class="form-control" 
+                                   value="@Model.Baslangic.ToString(@"hh\:mm")" required />
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="bitis" class="form-label">Bitiş Saati <span class="text-danger">*</span></label>
+                            <input type="time" name="bitis" id="bitis" class="form-control" 
+                                   value="@Model.Bitis.ToString(@"hh\:mm")" required />
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="baslangicTolerans" class="form-label">Başlangıç Tolerans</label>
+                            <input type="time" name="baslangicTolerans" id="baslangicTolerans" class="form-control" 
+                                   value="@Model.BaslangicTolerans.ToString(@"hh\:mm")" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="bitisTolerans" class="form-label">Bitiş Tolerans</label>
+                            <input type="time" name="bitisTolerans" id="bitisTolerans" class="form-control" 
+                                   value="@Model.BitisTolerans.ToString(@"hh\:mm")" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="yemekAktiflestirme" class="form-label">Yemek Aktifleştirme</label>
+                            <input type="time" name="yemekAktiflestirme" id="yemekAktiflestirme" class="form-control" 
+                                   value="@Model.YemekAktiflestirme.ToString(@"hh\:mm")" />
+                        </div>
+
+                        <div class="mb-3">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-save"></i> Kaydet
+                            </button>
+                            <a href="@Url.Action("Index")" class="btn btn-secondary">
+                                <i class="bi bi-x-circle"></i> İptal
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <script src="https://cdn.jsdelivr.net/npm/jquery-validation@1.19.5/dist/jquery.validate.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jquery-validation-unobtrusive@3.2.12/dist/jquery.validate.unobtrusive.min.js"></script>
+}

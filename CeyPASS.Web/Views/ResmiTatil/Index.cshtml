@@ -1,0 +1,169 @@
+@model List<CeyPASS.Entities.Concrete.ResmiTatilDTO>
+@{
+    ViewData["Title"] = "Resmi Tatiller";
+    var selectedYil = ViewBag.SelectedYil as int? ?? DateTime.Today.Year;
+    var canCreate = ViewBag.CanCreate as bool? ?? false;
+    var canApprove = ViewBag.CanApprove as bool? ?? false;
+}
+
+<div class="container-fluid">
+    <div class="row mb-3">
+        <div class="col-12">
+            <h2>Resmi Tatiller</h2>
+            
+            @if (TempData["Success"] != null)
+            {
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    @TempData["Success"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+            
+            @if (TempData["Error"] != null)
+            {
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    @TempData["Error"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Filtreler ve İşlemler -->
+    <div class="row mb-3">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Filtreler ve Toplu İşlemler</h5>
+                </div>
+                <div class="card-body">
+                    <form method="get" action="@Url.Action("Index")" class="row g-3 mb-3">
+                        <div class="col-md-3">
+                            <label for="yil" class="form-label">Yıl:</label>
+                            <input type="number" name="yil" id="yil" class="form-control" value="@selectedYil" min="2000" max="2100" />
+                        </div>
+                        <div class="col-md-3 d-flex align-items-end">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-search"></i> Filtrele
+                            </button>
+                        </div>
+                    </form>
+
+                    @if (canApprove)
+                    {
+                        <div class="row g-3">
+                            <div class="col-md-12">
+                                <div class="card bg-light">
+                                    <div class="card-body">
+                                        <h6 class="card-title">Sabit Resmi Tatilleri Aktar</h6>
+                                        <form method="post" action="@Url.Action("DoldurSabit")" class="row g-3">
+                                            @Html.AntiForgeryToken()
+                                            <div class="col-md-3">
+                                                <label for="baslangicYili" class="form-label">Başlangıç Yılı:</label>
+                                                <input type="number" name="baslangicYili" id="baslangicYili" class="form-control" 
+                                                       value="@selectedYil" min="2000" max="2100" required />
+                                            </div>
+                                            <div class="col-md-3">
+                                                <label for="bitisYili" class="form-label">Bitiş Yılı:</label>
+                                                <input type="number" name="bitisYili" id="bitisYili" class="form-control" 
+                                                       value="@selectedYil" min="2000" max="2100" required />
+                                            </div>
+                                            <div class="col-md-3 d-flex align-items-end">
+                                                <button type="submit" class="btn btn-warning">
+                                                    <i class="bi bi-upload"></i> Sabit Tatilleri Aktar
+                                                </button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+
+                    @if (canCreate)
+                    {
+                        <div class="row g-3 mt-2">
+                            <div class="col-md-12">
+                                <div class="card bg-light">
+                                    <div class="card-body">
+                                        <h6 class="card-title">Yeni Resmi Tatil Ekle</h6>
+                                        <form method="post" action="@Url.Action("EkleVeyaGuncelle")" class="row g-3">
+                                            @Html.AntiForgeryToken()
+                                            <div class="col-md-3">
+                                                <label for="tarih" class="form-label">Tarih:</label>
+                                                <input type="date" name="tarih" id="tarih" class="form-control" required />
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label for="ad" class="form-label">Tatil Adı:</label>
+                                                <input type="text" name="ad" id="ad" class="form-control" required />
+                                            </div>
+                                            <div class="col-md-2">
+                                                <label for="calismaSaat" class="form-label">Çalışma Saati:</label>
+                                                <input type="number" name="calismaSaat" id="calismaSaat" class="form-control" 
+                                                       step="0.25" min="0" max="24" />
+                                            </div>
+                                            <div class="col-md-3 d-flex align-items-end">
+                                                <button type="submit" class="btn btn-success">
+                                                    <i class="bi bi-plus-circle"></i> Ekle/Güncelle
+                                                </button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Resmi Tatiller Listesi -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">@selectedYil Yılı Resmi Tatiller (@Model.Count kayıt)</h5>
+                </div>
+                <div class="card-body">
+                    @if (Model.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Tarih</th>
+                                        <th>Tatil Adı</th>
+                                        <th>Çalışma Saati</th>
+                                        <th>Gün</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var tatil in Model.OrderBy(t => t.Tarih))
+                                    {
+                                        <tr>
+                                            <td>@tatil.Tarih.ToString("dd.MM.yyyy")</td>
+                                            <td>@tatil.Ad</td>
+                                            <td>@(tatil.CalismaSaati?.ToString("F2") ?? "-")</td>
+                                            <td>@tatil.Tarih.ToString("dddd", new System.Globalization.CultureInfo("tr-TR"))</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle"></i> @selectedYil yılı için resmi tatil bulunamadı.
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+}

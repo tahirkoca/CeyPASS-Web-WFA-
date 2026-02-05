@@ -1,0 +1,811 @@
+@model List<CeyPASS.Entities.Concrete.PuantajGunSatirDTO>
+@{
+    ViewData["Title"] = "Aylık Puantaj";
+    var selectedYil = ViewBag.SelectedYil as int? ?? DateTime.Today.Year;
+    var selectedAy = ViewBag.SelectedAy as int? ?? DateTime.Today.Month;
+    var selectedFirmaId = ViewBag.SelectedFirmaId as int? ?? 0;
+    var selectedIsyeriId = ViewBag.SelectedIsyeriId as int?;
+    var selectedPersonelId = ViewBag.SelectedPersonelId as string;
+    var firmalar = ViewBag.Firmalar as List<CeyPASS.Entities.Concrete.Firma> ?? new List<CeyPASS.Entities.Concrete.Firma>();
+    var isyerleri = ViewBag.Isyerleri as List<CeyPASS.Entities.Concrete.IsyeriItem> ?? new List<CeyPASS.Entities.Concrete.IsyeriItem>();
+    var kisiler = ViewBag.Kisiler as List<CeyPASS.Entities.Concrete.KisiListItem> ?? new List<CeyPASS.Entities.Concrete.KisiListItem>();
+    var puantajTipleri = ViewBag.PuantajTipleri as List<CeyPASS.Entities.Concrete.PuantajTipDTO> ?? new List<CeyPASS.Entities.Concrete.PuantajTipDTO>();
+    var ekKayitGun = ViewBag.EkKayitGun as int? ?? 0;
+    var canUpdate = ViewBag.CanUpdate as bool? ?? false;
+    var canApprove = ViewBag.CanApprove as bool? ?? false;
+    var canDelete = ViewBag.CanDelete as bool? ?? false;
+    var canExport = ViewBag.CanExport as bool? ?? false;
+}
+
+@functions {
+    private static bool IsMultiLockNote(string aciklama)
+    {
+        return !string.IsNullOrWhiteSpace(aciklama)
+               && aciklama.StartsWith("Çoklu Sicil Aktarım", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool IsLockedRow(CeyPASS.Entities.Concrete.PuantajGunSatirDTO dto)
+    {
+        if (dto == null) return true;
+        if (dto.Tarih.Date >= DateTime.Today) return true;
+        if (dto.OnayDurumu == CeyPASS.Entities.Concrete.OnayDurumu.Düzeltildi && IsMultiLockNote(dto.Aciklama))
+            return true;
+        return false;
+    }
+
+    // WinForms ile aynı kural: Bu ay her gün düzenlenebilir; geçen ay ek gün deadline'a kadar; daha eski aylar kilitli.
+    private static bool IsRowEditable(DateTime tarih, int ekKayitGun)
+    {
+        DateTime today = DateTime.Today;
+        DateTime currMonthBeg = new DateTime(today.Year, today.Month, 1);
+        DateTime prevMonthBeg = currMonthBeg.AddMonths(-1);
+        DateTime prevMonthEnd = currMonthBeg.AddDays(-1);
+
+        if (ekKayitGun < 0) ekKayitGun = 0;
+
+        // Gelecek ay tarihleri düzenlenemez
+        if (tarih >= currMonthBeg.AddMonths(1))
+            return false;
+
+        // Bu ay tarihleri düzenlenebilir
+        if (tarih >= currMonthBeg && tarih < currMonthBeg.AddMonths(1))
+            return true;
+
+        // Geçen ay için deadline kontrolü
+        DateTime deadline = prevMonthEnd.AddDays(ekKayitGun);
+        if (tarih >= prevMonthBeg && tarih <= prevMonthEnd)
+            return today <= deadline;
+
+        return false;
+    }
+}
+
+<style>
+    /* Puantaj tablosu: yatay kaydırma sadece tablo alanında olsun */
+    .puantaj-table-wrapper {
+        max-height: 600px;
+        max-width: 100%;
+        overflow: auto; /* hem x hem y */
+        border: 1px solid rgba(0, 0, 0, .125);
+        border-radius: .375rem;
+    }
+
+    .puantaj-table {
+        margin-bottom: 0;
+        width: max-content; /* kolonlar genişleyebilsin */
+        min-width: 100%;    /* dar ekranda yine 100% kalsın */
+    }
+
+    /* Header'ı wrapper içinde sabitle */
+    .puantaj-table thead th {
+        position: sticky;
+        top: 0;
+        z-index: 4;
+        /* Sticky th'ler için arka planı th seviyesinde veriyoruz (thead background'ı sticky'de kaybolabiliyor) */
+        background: var(--bs-tertiary-bg);
+        color: var(--bs-body-color);
+    }
+
+    /* İlk kolon (Tarih) sabit kalsın */
+    .puantaj-sticky-col-1 {
+        position: sticky;
+        left: 0;
+        z-index: 3;
+        background: inherit; /* zebra/secondary ile uyumlu */
+    }
+
+    /* Header'daki sabit kolon diğer header'larla aynı kalsın */
+    .puantaj-table thead th.puantaj-sticky-col-1 { z-index: 6; }
+
+    /* Sağdan sabit kolon (İşlemler) */
+    .puantaj-sticky-col-right {
+        position: sticky;
+        right: 0;
+        z-index: 3;
+        background: inherit;
+    }
+    .puantaj-table thead th.puantaj-sticky-col-right { z-index: 6; }
+
+    /* Tarih kolonunun WinForms'a yakın genişliği */
+    .puantaj-col-tarih { min-width: 170px; }
+    .puantaj-table td, .puantaj-table th { white-space: nowrap; }
+
+    /* Bilgilendirme toast - sağ üst, 5 sn sonra kapanır */
+    .puantaj-toast-container {
+        position: fixed;
+        top: 1rem;
+        right: 1rem;
+        z-index: 9999;
+        max-width: 360px;
+    }
+    .puantaj-toast {
+        padding: 0.75rem 1rem;
+        border-radius: 0.375rem;
+        box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15);
+        margin-bottom: 0.5rem;
+        animation: puantaj-toast-in 0.3s ease;
+    }
+    .puantaj-toast.success { background: #d1e7dd; color: #0f5132; }
+    .puantaj-toast.danger { background: #f8d7da; color: #842029; }
+    .puantaj-toast.info { background: #cff4fc; color: #055160; }
+    @@keyframes puantaj-toast-in { from { opacity: 0; transform: translateX(100%); } to { opacity: 1; transform: translateX(0); } }
+</style>
+
+<div class="container-fluid">
+    <div id="puantajToastContainer" class="puantaj-toast-container" aria-live="polite"></div>
+    <div class="row mb-3">
+        <div class="col-12">
+            <h2>Aylık Puantaj</h2>
+            
+            @if (TempData["Success"] != null)
+            {
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    @TempData["Success"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+            
+            @if (TempData["Error"] != null)
+            {
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    @TempData["Error"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Filtreler -->
+    <div class="row mb-3">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Filtreler</h5>
+                </div>
+                <div class="card-body">
+                    <form method="get" action="@Url.Action("Index")" id="filterForm">
+                        <div class="row g-3">
+                            <div class="col-md-2">
+                                <label for="yil" class="form-label">Yıl:</label>
+                                <input type="number" name="yil" id="yil" class="form-control" value="@selectedYil" min="2000" max="2100" required />
+                            </div>
+
+                            <div class="col-md-2">
+                                <label for="ay" class="form-label">Ay:</label>
+                                <select name="ay" id="ay" class="form-select" required>
+                                    @for (int i = 1; i <= 12; i++)
+                                    {
+                                        var ayAdi = new DateTime(2000, i, 1).ToString("MMMM", new System.Globalization.CultureInfo("tr-TR"));
+                                        if (i == selectedAy)
+                                        {
+                                            <option value="@i" selected="selected">@ayAdi</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="@i">@ayAdi</option>
+                                        }
+                                    }
+                                </select>
+                            </div>
+
+                            <div class="col-md-3">
+                                <label for="firmaId" class="form-label">Firma:</label>
+                                <select name="firmaId" id="firmaId" class="form-select">
+                                    <option value="">-- Seçiniz --</option>
+                                    @foreach (var firma in firmalar)
+                                    {
+                                        if (firma.FirmaId == selectedFirmaId)
+                                        {
+                                            <option value="@firma.FirmaId" selected="selected">@firma.FirmaAdi</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="@firma.FirmaId">@firma.FirmaAdi</option>
+                                        }
+                                    }
+                                </select>
+                            </div>
+
+                            <div class="col-md-3">
+                                <label for="isyeriId" class="form-label">İşyeri:</label>
+                                <select name="isyeriId" id="isyeriId" class="form-select">
+                                    <option value="">-- Önce Firma Seçiniz --</option>
+                                    @foreach (var isyeri in isyerleri)
+                                    {
+                                        if (isyeri.IsyeriId == selectedIsyeriId)
+                                        {
+                                            <option value="@isyeri.IsyeriId" selected="selected">@isyeri.Ad</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="@isyeri.IsyeriId">@isyeri.Ad</option>
+                                        }
+                                    }
+                                </select>
+                            </div>
+
+                            <div class="col-md-2">
+                                <label for="personelId" class="form-label">Personel:</label>
+                                <select name="personelId" id="personelId" class="form-select">
+                                    <option value="">-- Önce Firma Seçiniz --</option>
+                                    @foreach (var kisi in kisiler)
+                                    {
+                                        if (kisi.PersonelId == selectedPersonelId)
+                                        {
+                                            <option value="@kisi.PersonelId" selected="selected">@kisi.AdSoyad</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="@kisi.PersonelId">@kisi.AdSoyad</option>
+                                        }
+                                    }
+                                </select>
+                            </div>
+
+                        </div>
+
+                        <div class="row g-3 mt-2">
+                            <div class="col-md-12">
+                                @if (canUpdate)
+                                {
+                                    <button class="btn btn-outline-secondary"
+                                            type="button"
+                                            data-bs-toggle="collapse"
+                                            data-bs-target="#ekKayitGunCollapse"
+                                            aria-expanded="false"
+                                            aria-controls="ekKayitGunCollapse">
+                                        <i class="bi bi-gear"></i> Ek Kayıt Günü (@ekKayitGun)
+                                    </button>
+                                }
+                                <button type="submit" class="btn btn-primary ms-2">
+                                    <i class="bi bi-search"></i> Puantaj Getir
+                                </button>
+                                @if (canUpdate && !string.IsNullOrWhiteSpace(selectedPersonelId))
+                                {
+                                    <button type="button" class="btn btn-info ms-2" id="btnCokluSicileAktar" title="Seçili personelin bağlı sicillerine ay sonu NG 7,5 aktarır">
+                                        <i class="bi bi-arrow-left-right"></i> Çoklu Sicil Aktar
+                                    </button>
+                                }
+                                </form>
+                                @if (canExport)
+                                {
+                                    <form method="post" action="@Url.Action("ExportExcel")" class="d-inline ms-2" id="exportForm">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="yil" id="exportYil" value="@selectedYil" />
+                                        <input type="hidden" name="ay" id="exportAy" value="@selectedAy" />
+                                        <button type="submit" class="btn btn-success" id="btnPuantajExcel">
+                                            <i class="bi bi-file-earmark-excel"></i> Puantaj Exceli
+                                        </button>
+                                    </form>
+                                }
+                            </div>
+                        </div>
+
+                    @if (canUpdate)
+                    {
+                        <div class="collapse mt-3" id="ekKayitGunCollapse">
+                            <div class="border rounded p-3 bg-body-tertiary">
+                                <form method="post" action="@Url.Action("SetEkKayitGun")" class="row g-2 align-items-end">
+                                    @Html.AntiForgeryToken()
+                                    <div class="col-12 col-md-3">
+                                        <label class="form-label mb-1">Ek Kayıt Günü</label>
+                                        <input type="number" name="gun" class="form-control" value="@ekKayitGun" min="0" max="31" required />
+                                    </div>
+                                    <div class="col-12 col-md-auto">
+                                        <button type="submit" class="btn btn-warning">
+                                            <i class="bi bi-gear"></i> Kaydet
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Puantaj Tablosu -->
+    @if (Model != null && Model.Any())
+    {
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Puantaj Detayları (@Model.Count gün)</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="puantaj-table-wrapper">
+                            <table class="table table-hover table-bordered puantaj-table" id="puantajDetayTablosu">
+                                <thead>
+                                    <tr>
+                                        <th class="puantaj-sticky-col-1 puantaj-col-tarih">Tarih</th>
+                                        <th>Vardiya</th>
+                                        <th>İlk Giriş</th>
+                                        <th>Son Çıkış</th>
+                                        <th>Vardiya Başlangıç</th>
+                                        <th>Vardiya Bitiş</th>
+                                        <th>Saatlik İzin</th>
+                                        <th>Erken Giriş</th>
+                                        <th>Geç Çıkış</th>
+                                        <th>Sistem FM</th>
+                                        <th>Düzeltilmiş FM</th>
+                                        <th>Çalışma Tipi</th>
+                                        <th>Çalışma Saati</th>
+                                        <th>Onay Durumu</th>
+                                        <th>Açıklama</th>
+                                        <th class="puantaj-sticky-col-right">İşlemler</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var gun in Model.OrderBy(g => g.Tarih))
+                                    {
+                                        bool editableByRule = IsRowEditable(gun.Tarih, ekKayitGun);
+                                        bool lockedByRule = IsLockedRow(gun);
+                                        bool isEditable = editableByRule && !lockedByRule;
+                                        string trClass = !isEditable ? "table-secondary"
+                                            : gun.OnayDurumu == CeyPASS.Entities.Concrete.OnayDurumu.Onaylandı ? "table-success"
+                                            : gun.OnayDurumu == CeyPASS.Entities.Concrete.OnayDurumu.Reddedildi ? "table-danger"
+                                            : gun.OnayDurumu == CeyPASS.Entities.Concrete.OnayDurumu.Düzeltildi ? "table-info"
+                                            : "table-warning";
+
+                                        <tr class="@trClass" data-tarih="@gun.Tarih.ToString("yyyy-MM-dd")">
+                                            <td class="puantaj-sticky-col-1 puantaj-col-tarih">@gun.Tarih.ToString("dd.MM.yyyy dddd", new System.Globalization.CultureInfo("tr-TR"))</td>
+                                            <td>@gun.VardiyaTuru</td>
+                                            <td>@(gun.IlkGiris?.ToString(@"hh\:mm") ?? "-")</td>
+                                            <td>@(gun.SonCikis?.ToString(@"hh\:mm") ?? "-")</td>
+                                            <td>@(gun.VardiyaBaslangic?.ToString(@"hh\:mm") ?? "-")</td>
+                                            <td>@(gun.VardiyaBitis?.ToString(@"hh\:mm") ?? "-")</td>
+                                            <td>@gun.SaatlikIzinDakika dk</td>
+                                            <td>@gun.ErkenGirisDakika dk</td>
+                                            <td>@gun.GecCikisDakika dk</td>
+                                            <td>@gun.SistemFMDakika dk</td>
+                                            <td>@gun.DuzenlenenFMDakika dk</td>
+                                            <td>@gun.CalismaTipi</td>
+                                            <td>@gun.Saat.ToString("F2")</td>
+                                            <td>
+                                                @if (gun.OnayDurumu == CeyPASS.Entities.Concrete.OnayDurumu.Onaylandı)
+                                                {
+                                                    <span class="badge bg-success">Onaylandı</span>
+                                                }
+                                                else if (gun.OnayDurumu == CeyPASS.Entities.Concrete.OnayDurumu.Reddedildi)
+                                                {
+                                                    <span class="badge bg-danger">Reddedildi</span>
+                                                }
+                                                else if (gun.OnayDurumu == CeyPASS.Entities.Concrete.OnayDurumu.Düzeltildi)
+                                                {
+                                                    <span class="badge bg-info">Düzeltildi</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-warning">Bekliyor</span>
+                                                }
+                                            </td>
+                                            <td>@(gun.Aciklama ?? "-")</td>
+                                            <td class="puantaj-sticky-col-right">
+                                                <div class="btn-group" role="group">
+                                                    @if (canApprove && gun.OnayDurumu == CeyPASS.Entities.Concrete.OnayDurumu.Bekliyor)
+                                                    {
+                                                        <button type="button"
+                                                                class="btn btn-sm btn-success js-onayla"
+                                                                data-personel-id="@selectedPersonelId"
+                                                                data-tarih="@gun.Tarih.ToString("yyyy-MM-dd")"
+                                                                data-duzenlenmis-fm="@gun.DuzenlenenFMDakika"
+                                                                data-calisma-tipi="@gun.CalismaTipi"
+                                                                data-saat="@gun.Saat.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+                                                                @(isEditable ? "" : "disabled")
+                                                                title="@(isEditable ? "" : "Düzenlenemez")">
+                                                            <i class="bi bi-check-circle"></i> Onayla
+                                                        </button>
+                                                    }
+                                                    @if (canDelete && gun.OnayDurumu == CeyPASS.Entities.Concrete.OnayDurumu.Bekliyor)
+                                                    {
+                                                        <button type="button"
+                                                                class="btn btn-sm btn-danger js-reddet"
+                                                                data-personel-id="@selectedPersonelId"
+                                                                data-tarih="@gun.Tarih.ToString("yyyy-MM-dd")"
+                                                                @(isEditable ? "" : "disabled")
+                                                                title="@(isEditable ? "" : "Düzenlenemez")">
+                                                            <i class="bi bi-x-circle"></i> Reddet
+                                                        </button>
+                                                    }
+                                                    @if (canUpdate)
+                                                    {
+                                                        <button type="button"
+                                                                class="btn btn-sm btn-warning js-duzenle"
+                                                                data-personel-id="@selectedPersonelId"
+                                                                data-tarih="@gun.Tarih.ToString("yyyy-MM-dd")"
+                                                                data-tarih-metin="@gun.Tarih.ToString("d MMM yyyy dddd", new System.Globalization.CultureInfo("tr-TR"))"
+                                                                data-duzenlenmis-fm="@gun.DuzenlenenFMDakika"
+                                                                data-calisma-tipi="@gun.CalismaTipi"
+                                                                data-saat="@gun.Saat.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+                                                                @(isEditable ? "" : "disabled")
+                                                                title="@(isEditable ? "" : "Düzenlenemez")">
+                                                            <i class="bi bi-pencil"></i> Düzenle
+                                                        </button>
+                                                    }
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+    else if (!string.IsNullOrWhiteSpace(selectedPersonelId))
+    {
+        <div class="row">
+            <div class="col-12">
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i> Seçilen personel için @selectedAy/@selectedYil puantaj verisi bulunamadı.
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="row">
+            <div class="col-12">
+                <div class="alert alert-secondary">
+                    <i class="bi bi-info-circle"></i> Lütfen yıl, ay ve personel seçin.
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<!-- Düzenle Modal - WinForms: Puantaj Satır Düzenleyici (Seçili Tarih, Çalışma Tipi, Saat, Açıklama) -->
+@if (canUpdate)
+{
+    <div class="modal fade" id="duzenleModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form method="post" action="@Url.Action("Duzenle")" id="duzenleForm">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="personelId" id="duzenlePersonelId" />
+                    <input type="hidden" name="tarih" id="duzenleTarih" />
+                    <input type="hidden" name="duzenlenmisFm" id="duzenleDuzenlenmisFm" />
+                    <div class="modal-header">
+                        <h5 class="modal-title">Puantaj Satır Düzenleyici</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="fw-bold mb-2">Puantaj Satır Düzenleme</p>
+                        <div class="mb-3">
+                            <label class="form-label">Seçili Tarih</label>
+                            <input type="text" id="duzenleTarihGosterim" class="form-control" readonly />
+                        </div>
+                        <div class="mb-3">
+                            <label for="duzenleCalismaTipi" class="form-label">Çalışma Tipi:</label>
+                            <select name="calismaTipi" id="duzenleCalismaTipi" class="form-select" required>
+                                <option value="">-- Seçiniz --</option>
+                                @foreach (var tip in puantajTipleri)
+                                {
+                                    <option value="@tip.Kod">@tip.Ad</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="duzenleSaat" class="form-label">Çalışma Saati:</label>
+                            <input type="text" inputmode="decimal" name="saat" id="duzenleSaat" class="form-control" placeholder="7,50 veya 7.50" required />
+                        </div>
+                        <div class="mb-3">
+                            <label for="duzenleAciklama" class="form-label">Açıklama:</label>
+                            <textarea name="aciklama" id="duzenleAciklama" class="form-control" rows="3"></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-danger" data-bs-dismiss="modal">İptal</button>
+                        <button type="submit" class="btn btn-warning">Kaydet</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Reddet Modal - WinForms: Red Sebebi (Reddetme Nedeni, Sebep) -->
+@if (canDelete)
+{
+    <div class="modal fade" id="reddetModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form method="post" action="@Url.Action("Reddet")" id="reddetForm">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="personelId" id="reddetPersonelId" />
+                    <input type="hidden" name="tarih" id="reddetTarih" />
+                    <div class="modal-header">
+                        <h5 class="modal-title">Red Sebebi</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="fw-bold mb-2">Reddetme Nedeni</p>
+                        <div class="mb-3">
+                            <label for="reddetAciklama" class="form-label">Sebep:</label>
+                            <textarea name="aciklama" id="reddetAciklama" class="form-control" rows="4" required placeholder="Red sebebini giriniz..."></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-danger" data-bs-dismiss="modal">İptal</button>
+                        <button type="submit" class="btn btn-warning">Kaydet</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Çoklu Sicil Aktar Modal -->
+@if (canUpdate)
+{
+    <div class="modal fade" id="cokluSicilModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form method="post" action="@Url.Action("CokluSicileAktar")" id="cokluSicilForm">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="personelId" id="cokluSicilPersonelId" />
+                    <input type="hidden" name="yil" id="cokluSicilYil" />
+                    <input type="hidden" name="ay" id="cokluSicilAy" />
+                    <div class="modal-header">
+                        <h5 class="modal-title">Çoklu Sicil Aktar</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p id="cokluSicilMesaj"></p>
+                        <p class="text-muted small">Seçili personelin bağlı tüm sicillerine ayın son gününe <strong>NG 7,5</strong> yazılacak; ana personelin ayın son günündeki kayıtları kaldırılacaktır.</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                        <button type="submit" class="btn btn-info">Aktar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Onayla: modal yok, doğrudan satır verisiyle POST (WinForms’ta direkt o günü onaylama) -->
+@if (canApprove)
+{
+    <form method="post" action="@Url.Action("Onayla")" id="onaylaForm" style="display:none;">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="personelId" id="onaylaPersonelId" />
+        <input type="hidden" name="tarih" id="onaylaTarih" />
+        <input type="hidden" name="duzenlenmisFm" id="onaylaDuzenlenmisFm" />
+        <input type="hidden" name="calismaTipi" id="onaylaCalismaTipi" />
+        <input type="hidden" name="saat" id="onaylaSaat" />
+        <input type="hidden" name="aciklama" id="onaylaAciklama" value="" />
+    </form>
+}
+
+@section Scripts {
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    
+    <script>
+        function personelListesiniYukle() {
+            var firmaId = $('#firmaId').val();
+            var isyeriId = $('#isyeriId').val();
+            var yil = $('#yil').val();
+            var ay = $('#ay').val();
+            if (!firmaId) {
+                $('#personelId').empty().append('<option value="">-- Önce Firma Seçiniz --</option>');
+                return;
+            }
+            $.get('@Url.Action("GetKisiler")', { firmaId: firmaId, isyeriId: isyeriId || null, yil: yil, ay: ay }, function(data) {
+                $('#personelId').empty().append('<option value="">-- Seçiniz --</option>');
+                $.each(data, function(i, item) {
+                    $('#personelId').append($('<option>', { value: item.personelId, text: item.adSoyad }));
+                });
+            });
+        }
+
+        // Firma değiştiğinde İşyeri ve Personel listelerini güncelle
+        $('#firmaId').change(function() {
+            var firmaId = $(this).val();
+            if (firmaId) {
+                $.get('@Url.Action("GetIsyerleri")', { firmaId: firmaId }, function(data) {
+                    $('#isyeriId').empty().append('<option value="">-- Seçiniz --</option>');
+                    $.each(data, function(i, item) {
+                        $('#isyeriId').append($('<option>', { value: item.id, text: item.ad }));
+                    });
+                    personelListesiniYukle();
+                });
+            } else {
+                $('#isyeriId').empty().append('<option value="">-- Önce Firma Seçiniz --</option>');
+                $('#personelId').empty().append('<option value="">-- Önce Firma Seçiniz --</option>');
+            }
+        });
+
+        $('#isyeriId, #yil, #ay').change(function() { personelListesiniYukle(); });
+
+        // Satır butonları: inline onclick yerine data-* ile handler
+        $(document).on('click', '.js-onayla', function() {
+            var $b = $(this);
+            onaylaPuantaj($b.data('personelId'), $b.data('tarih'), $b.data('duzenlenmisFm'), $b.data('calismaTipi'), $b.data('saat'));
+        });
+
+        $(document).on('click', '.js-reddet', function() {
+            var $b = $(this);
+            reddetPuantaj($b.data('personelId'), $b.data('tarih'));
+        });
+
+        $(document).on('click', '.js-duzenle', function() {
+            var $b = $(this);
+            duzenlePuantaj($b.data('personelId'), $b.data('tarih'), $b.data('tarihMetin'), $b.data('duzenlenmisFm'), $b.data('calismaTipi'), $b.data('saat'));
+        });
+
+        // Export formu: güncel yıl/ay değerlerini gönder (yil/ay filtre alanlarından)
+        $('#exportForm').on('submit', function() {
+            $('#exportYil').val($('#yil').val());
+            $('#exportAy').val($('#ay').val()); // ay dropdown'dan (#ay)
+        });
+
+        function showToast(message, type) {
+            type = type || 'success';
+            var $c = $('#puantajToastContainer');
+            var $t = $('<div class="puantaj-toast ' + type + '">' + message + '</div>');
+            $c.append($t);
+            setTimeout(function() { $t.fadeOut(300, function() { $(this).remove(); }); }, 5000);
+        }
+
+        function updateRowOnayDurumu(tarih, onayDurumu) {
+            var tarihStr = (tarih || '').toString().trim();
+            if (!tarihStr) return;
+            var $row = $('#puantajDetayTablosu tbody tr[data-tarih="' + tarihStr + '"]');
+            if (!$row.length) return;
+            $row.removeClass('table-secondary table-success table-danger table-info table-warning')
+                .addClass(onayDurumu === 'Onaylandı' ? 'table-success' : onayDurumu === 'Reddedildi' ? 'table-danger' : onayDurumu === 'Düzeltildi' ? 'table-info' : 'table-warning');
+            var $badgeCell = $row.find('td').eq(13);
+            var badgeClass = onayDurumu === 'Onaylandı' ? 'bg-success' : onayDurumu === 'Reddedildi' ? 'bg-danger' : onayDurumu === 'Düzeltildi' ? 'bg-info' : 'bg-warning text-dark';
+            $badgeCell.html('<span class="badge ' + badgeClass + '">' + (onayDurumu || 'Bekliyor') + '</span>');
+            $row.find('.js-onayla, .js-reddet').remove();
+        }
+
+        function formatSaatTr(val) {
+            if (val == null || val === '') return '';
+            var n = typeof val === 'number' ? val : parseFloat(val);
+            if (isNaN(n)) return val;
+            return n.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        function updateRowAfterDuzenle(tarih, r) {
+            var tarihStr = (tarih || '').toString().trim();
+            if (!tarihStr) return;
+            var $row = $('#puantajDetayTablosu tbody tr[data-tarih="' + tarihStr + '"]');
+            if (!$row.length) return;
+            if (r.duzenlenenFmDakika != null) $row.find('td').eq(10).text(r.duzenlenenFmDakika + ' dk');
+            if (r.calismaTipi != null) $row.find('td').eq(11).text(r.calismaTipi);
+            if (r.saat != null) $row.find('td').eq(12).text(formatSaatTr(r.saat));
+            if (r.aciklama != null) $row.find('td').eq(14).text(r.aciklama || '-');
+            var $duzenleBtn = $row.find('.js-duzenle');
+            if ($duzenleBtn.length) {
+                if (r.duzenlenenFmDakika != null) $duzenleBtn.data('duzenlenmisFm', r.duzenlenenFmDakika);
+                if (r.calismaTipi != null) $duzenleBtn.data('calismaTipi', r.calismaTipi);
+                if (r.saat != null) $duzenleBtn.data('saat', r.saat);
+            }
+        }
+
+        function onaylaPuantaj(personelId, tarih, duzenlenmisFm, calismaTipi, saat) {
+            $('#onaylaPersonelId').val(parseInt(personelId));
+            $('#onaylaTarih').val(tarih);
+            $('#onaylaDuzenlenmisFm').val(duzenlenmisFm != null ? duzenlenmisFm : 0);
+            $('#onaylaCalismaTipi').val(calismaTipi || '');
+            $('#onaylaSaat').val(saat != null ? saat : '');
+            $('#onaylaAciklama').val('');
+            $('#onaylaForm').submit();
+        }
+
+        $('#onaylaForm').on('submit', function(e) {
+            e.preventDefault();
+            var $form = $(this);
+            $.ajax({
+                url: $form.attr('action'),
+                type: 'POST',
+                data: $form.serialize(),
+                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                dataType: 'json'
+            }).done(function(r) {
+                if (r.success) {
+                    showToast(r.message, 'success');
+                    updateRowOnayDurumu($('#onaylaTarih').val(), r.onayDurumu || 'Onaylandı');
+                } else showToast(r.message || 'Hata', 'danger');
+            }).fail(function(xhr) {
+                var msg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : 'İşlem sırasında hata oluştu.';
+                showToast(msg, 'danger');
+            });
+        });
+
+        function reddetPuantaj(personelId, tarih) {
+            $('#reddetPersonelId').val(parseInt(personelId));
+            $('#reddetTarih').val(tarih);
+            $('#reddetAciklama').val('');
+            var modal = new bootstrap.Modal(document.getElementById('reddetModal'));
+            modal.show();
+        }
+
+        $('#reddetForm').on('submit', function(e) {
+            e.preventDefault();
+            var $form = $(this);
+            var tarih = $('#reddetTarih').val();
+            $.ajax({
+                url: $form.attr('action'),
+                type: 'POST',
+                data: $form.serialize(),
+                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                dataType: 'json'
+            }).done(function(r) {
+                if (r.success) {
+                    bootstrap.Modal.getInstance(document.getElementById('reddetModal')).hide();
+                    showToast(r.message, 'success');
+                    updateRowOnayDurumu(tarih, r.onayDurumu || 'Reddedildi');
+                    if (r.aciklama != null) {
+                        var $row = $('#puantajDetayTablosu tbody tr[data-tarih="' + (tarih || '').toString().trim() + '"]');
+                        if ($row.length) $row.find('td').eq(14).text(r.aciklama || '-');
+                    }
+                } else showToast(r.message || 'Hata', 'danger');
+            }).fail(function(xhr) {
+                var msg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : 'İşlem sırasında hata oluştu.';
+                showToast(msg, 'danger');
+            });
+        });
+
+        function duzenlePuantaj(personelId, tarih, tarihMetin, duzenlenmisFm, calismaTipi, saat) {
+            $('#duzenlePersonelId').val(parseInt(personelId));
+            $('#duzenleTarih').val(tarih);
+            $('#duzenleTarihGosterim').val(tarihMetin || tarih);
+            $('#duzenleDuzenlenmisFm').val(duzenlenmisFm != null ? duzenlenmisFm : 0);
+            $('#duzenleCalismaTipi').val(calismaTipi || '');
+            $('#duzenleSaat').val(saat != null ? saat : '');
+            $('#duzenleAciklama').val('');
+            var modal = new bootstrap.Modal(document.getElementById('duzenleModal'));
+            modal.show();
+        }
+
+        $('#duzenleForm').on('submit', function(e) {
+            e.preventDefault();
+            var $form = $(this);
+            var tarih = $('#duzenleTarih').val();
+            // Virgüllü ondalık (7,50) sunucuda 750 olarak okunmasın diye noktaya çevir
+            var saatVal = ($('#duzenleSaat').val() || '').toString().replace(',', '.');
+            $('#duzenleSaat').val(saatVal);
+            $.ajax({
+                url: $form.attr('action'),
+                type: 'POST',
+                data: $form.serialize(),
+                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                dataType: 'json'
+            }).done(function(r) {
+                if (r.success) {
+                    bootstrap.Modal.getInstance(document.getElementById('duzenleModal')).hide();
+                    showToast(r.message, 'success');
+                    updateRowOnayDurumu(tarih, r.onayDurumu || 'Düzeltildi');
+                    updateRowAfterDuzenle(tarih, r);
+                } else showToast(r.message || 'Hata', 'danger');
+            }).fail(function(xhr) {
+                var msg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : 'İşlem sırasında hata oluştu.';
+                showToast(msg, 'danger');
+            });
+        });
+
+        $('#btnCokluSicileAktar').on('click', function() {
+            var personelId = $('#personelId').val();
+            var yil = $('#yil').val();
+            var ay = $('#ay').val();
+            if (!personelId) {
+                toastr.warning('Lütfen personel seçiniz.');
+                return;
+            }
+            var ayAdi = $('#ay option:selected').text();
+            $('#cokluSicilPersonelId').val(personelId);
+            $('#cokluSicilYil').val(yil);
+            $('#cokluSicilAy').val(ay);
+            $('#cokluSicilMesaj').text(yil + ' ' + ayAdi + ' ayının son gününe bağlı sicillere NG 7,5 aktarılacak. Onaylıyor musunuz?');
+            var modal = new bootstrap.Modal(document.getElementById('cokluSicilModal'));
+            modal.show();
+        });
+    </script>
+}

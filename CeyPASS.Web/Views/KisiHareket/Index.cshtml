@@ -1,0 +1,387 @@
+@model List<CeyPASS.Entities.Concrete.KisiHareketListRow>
+@{
+    ViewData["Title"] = "Kişi Hareketleri";
+    var selectedFirmaId = ViewBag.SelectedFirmaId as int? ?? 0;
+    var firmalar = ViewBag.Firmalar as List<CeyPASS.Entities.Concrete.Firma>;
+    var isAdmin = ViewBag.IsAdmin as bool? ?? false;
+    var personelList = ViewBag.PersonelList as List<CeyPASS.Web.Controllers.PersonelLookupItem> ?? new List<CeyPASS.Web.Controllers.PersonelLookupItem>();
+    var seciliPersonelIds = ViewBag.SeciliPersonelIds as List<int> ?? new List<int>();
+    var baslangicTarih = ViewBag.BaslangicTarih as DateTime? ?? DateTime.Today;
+    var bitisTarih = ViewBag.BitisTarih as DateTime? ?? DateTime.Today.AddDays(1).AddMinutes(-1);
+    var sadeceAktif = ViewBag.SadeceAktif as bool? ?? false;
+    var sadecePasif = ViewBag.SadecePasif as bool? ?? false;
+    var sadeceYemekhane = ViewBag.SadeceYemekhane as bool? ?? false;
+    var canCreate = ViewBag.CanCreate as bool? ?? false;
+    var canUpdate = ViewBag.CanUpdate as bool? ?? false;
+    var canDelete = ViewBag.CanDelete as bool? ?? false;
+}
+
+<div class="container-fluid">
+    <div class="row mb-3">
+        <div class="col-12">
+            <h2>Kişi Hareketleri</h2>
+            
+            @if (TempData["Success"] != null)
+            {
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    @TempData["Success"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+            
+            @if (TempData["Error"] != null)
+            {
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    @TempData["Error"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Filtreler -->
+    <div class="row mb-3">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Filtreler</h5>
+                </div>
+                <div class="card-body">
+                    <form method="get" action="@Url.Action("Index")" id="filterForm">
+                        <div class="row g-3">
+                            @if (isAdmin && firmalar != null && firmalar.Any())
+                            {
+                                <div class="col-md-3">
+                                    <label for="firmaId" class="form-label">Firma:</label>
+                                    <select name="firmaId" id="firmaId" class="form-select">
+                                        @foreach (var firma in firmalar)
+                                        {
+                                            if (firma.FirmaId == selectedFirmaId)
+                                            {
+                                                <option value="@firma.FirmaId" selected="selected">@firma.FirmaAdi</option>
+                                            }
+                                            else
+                                            {
+                                                <option value="@firma.FirmaId">@firma.FirmaAdi</option>
+                                            }
+                                        }
+                                    </select>
+                                </div>
+                            }
+                            else
+                            {
+                                <input type="hidden" name="firmaId" value="@selectedFirmaId" />
+                            }
+
+                            <div class="col-md-3">
+                                <label for="baslangic" class="form-label">Başlangıç Tarihi:</label>
+                                <input type="datetime-local" name="baslangic" id="baslangic" class="form-control" 
+                                       value="@baslangicTarih.ToString("yyyy-MM-ddTHH:mm")" />
+                            </div>
+
+                            <div class="col-md-3">
+                                <label for="bitis" class="form-label">Bitiş Tarihi:</label>
+                                <input type="datetime-local" name="bitis" id="bitis" class="form-control" 
+                                       value="@bitisTarih.ToString("yyyy-MM-ddTHH:mm")" />
+                            </div>
+
+                            <div class="col-md-3 d-flex align-items-end">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-search"></i> Ara
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="row g-3 mt-2">
+                            <div class="col-md-12">
+                                <label class="form-label">Personeller:</label>
+                                <div class="border p-2" style="max-height: 200px; overflow-y: auto;">
+                                    @foreach (var personel in personelList)
+                                    {
+                                        <div class="form-check">
+                                            <input class="form-check-input personel-checkbox" type="checkbox" 
+                                                   name="personelIds" value="@personel.Id" id="personel_@personel.Id"
+                                                   @(seciliPersonelIds.Contains(personel.Id) ? "checked" : "") />
+                                            <label class="form-check-label" for="personel_@personel.Id">
+                                                @personel.Ad
+                                            </label>
+                                        </div>
+                                    }
+                                </div>
+                                <small class="form-text text-muted">Hareketleri görmek için en az bir personel seçin.</small>
+                            </div>
+                        </div>
+
+                        <div class="row g-3 mt-2">
+                            <div class="col-md-12">
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="checkbox" name="sadeceAktif" id="sadeceAktif" value="true" @(sadeceAktif ? "checked" : "") />
+                                    <label class="form-check-label" for="sadeceAktif">Sadece Aktif Hareketler</label>
+                                </div>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="checkbox" name="sadecePasif" id="sadecePasif" value="true" @(sadecePasif ? "checked" : "") />
+                                    <label class="form-check-label" for="sadecePasif">Sadece Pasif Hareketler</label>
+                                </div>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="checkbox" name="sadeceYemekhane" id="sadeceYemekhane" value="true" @(sadeceYemekhane ? "checked" : "") />
+                                    <label class="form-check-label" for="sadeceYemekhane">Sadece Yemekhane Hareketleri</label>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hareketler Tablosu -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Hareketler (@Model.Count kayıt)</h5>
+                    @if (canCreate)
+                    {
+                        <button type="button" class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#hareketEkleModal">
+                            <i class="bi bi-plus-circle"></i> Yeni Hareket Ekle
+                        </button>
+                    }
+                </div>
+                <div class="card-body">
+                    @if (Model.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Tarih</th>
+                                        <th>Sicil No</th>
+                                        <th>Ad Soyad</th>
+                                        <th>Turnike</th>
+                                        <th>Hareket Tipi</th>
+                                        <th>Kayıt Zamanı</th>
+                                        <th>Durum</th>
+                                        <th>İşlemler</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var hareket in Model)
+                                    {
+                                        <tr class="@(!hareket.AktifMi ? "table-secondary" : "")">
+                                            <td>@hareket.Tarih.ToString("dd.MM.yyyy HH:mm:ss")</td>
+                                            <td>@hareket.SicilNo</td>
+                                            <td>@hareket.AdSoyad</td>
+                                            <td>@hareket.CihazAdi</td>
+                                            <td>
+                                                <span class="badge @(hareket.Tip == "GİRİŞ" ? "bg-success" : "bg-danger")">
+                                                    @hareket.Tip
+                                                </span>
+                                            </td>
+                                            <td>@hareket.KayitZamani.ToString("dd.MM.yyyy HH:mm:ss")</td>
+                                            <td>
+                                                @if (hareket.AktifMi)
+                                                {
+                                                    <span class="badge bg-success">Aktif</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-secondary">Pasif</span>
+                                                }
+                                            </td>
+                                            <td>
+                                                <div class="btn-group" role="group">
+                                                    @if (canUpdate && hareket.AktifMi)
+                                                    {
+                                                        <button type="button" class="btn btn-sm btn-warning" 
+                                                                onclick="hareketGuncelle(@hareket.Id, '@hareket.Tarih.ToString("yyyy-MM-ddTHH:mm")', '@hareket.Tip')">
+                                                            <i class="bi bi-pencil"></i>
+                                                        </button>
+                                                    }
+                                                    @if (canDelete && hareket.AktifMi)
+                                                    {
+                                                        <form method="post" action="@Url.Action("PasifYap", new { id = hareket.Id })" style="display: inline;">
+                                                            @Html.AntiForgeryToken()
+                                                            <button type="button" class="btn btn-sm btn-danger btn-sil-onay" data-msg="Bu hareketi pasif yapmak istediğinizden emin misiniz?" data-btn-text="Pasif Yap">
+                                                                <i class="bi bi-trash"></i>
+                                                            </button>
+                                                        </form>
+                                                    }
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle"></i> Seçilen kriterlere uygun hareket bulunamadı.
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Hareket Ekle Modal -->
+@if (canCreate)
+{
+    <div class="modal fade" id="hareketEkleModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form method="post" action="@Url.Action("Ekle")">
+                    @Html.AntiForgeryToken()
+                    <div class="modal-header">
+                        <h5 class="modal-title">Yeni Hareket Ekle</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <input type="hidden" name="firmaId" value="@selectedFirmaId" />
+                        
+                        <div class="mb-3">
+                            <label for="modalPersonelId" class="form-label">Personel <span class="text-danger">*</span></label>
+                            <select name="personelId" id="modalPersonelId" class="form-select" required>
+                                <option value="">-- Seçiniz --</option>
+                                @foreach (var personel in personelList)
+                                {
+                                    <option value="@personel.Id">@personel.Ad</option>
+                                }
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="modalTarih" class="form-label">Tarih <span class="text-danger">*</span></label>
+                            <input type="datetime-local" name="tarih" id="modalTarih" class="form-control" required 
+                                   value="@DateTime.Now.ToString("yyyy-MM-ddTHH:mm")" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="modalTip" class="form-label">Hareket Tipi <span class="text-danger">*</span></label>
+                            <select name="tip" id="modalTip" class="form-select" required>
+                                <option value="">-- Seçiniz --</option>
+                                <option value="GİRİŞ">GİRİŞ</option>
+                                <option value="ÇIKIŞ">ÇIKIŞ</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                        <button type="submit" class="btn btn-primary">Kaydet</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Hareket Güncelle Modal -->
+@if (canUpdate)
+{
+    <div class="modal fade" id="hareketGuncelleModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form method="post" action="@Url.Action("Guncelle")" id="guncelleForm">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="id" id="guncelleId" />
+                    <div class="modal-header">
+                        <h5 class="modal-title">Hareket Güncelle</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="guncelleTarih" class="form-label">Tarih <span class="text-danger">*</span></label>
+                            <input type="datetime-local" name="tarih" id="guncelleTarih" class="form-control" required />
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="guncelleTip" class="form-label">Hareket Tipi <span class="text-danger">*</span></label>
+                            <select name="tip" id="guncelleTip" class="form-select" required>
+                                <option value="">-- Seçiniz --</option>
+                                <option value="GİRİŞ">GİRİŞ</option>
+                                <option value="ÇIKIŞ">ÇIKIŞ</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                        <button type="submit" class="btn btn-primary">Güncelle</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+}
+
+<div class="modal fade" id="silOnayModal" tabindex="-1" aria-labelledby="silOnayModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="silOnayModalLabel"><i class="bi bi-exclamation-triangle me-2"></i>Onay</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+            </div>
+            <div class="modal-body" id="silOnayModalBody"></div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                <button type="button" class="btn btn-danger" id="silOnayModalSilBtn"><i class="bi bi-trash me-1"></i>Pasif Yap</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    
+    <script>
+        (function () {
+            var silOnayModalEl = document.getElementById('silOnayModal');
+            var silOnayModalBody = document.getElementById('silOnayModalBody');
+            var silOnayModalSilBtn = document.getElementById('silOnayModalSilBtn');
+            if (silOnayModalEl && silOnayModalBody && silOnayModalSilBtn) {
+                document.querySelectorAll('.btn-sil-onay').forEach(function (btn) {
+                    btn.addEventListener('click', function () {
+                        var form = this.closest('form');
+                        var msg = this.getAttribute('data-msg') || 'Emin misiniz?';
+                        var btnText = this.getAttribute('data-btn-text') || 'Onayla';
+                        silOnayModalBody.textContent = msg;
+                        silOnayModalSilBtn.innerHTML = '<i class="bi bi-trash me-1"></i>' + btnText;
+                        var modal = new bootstrap.Modal(silOnayModalEl);
+                        silOnayModalSilBtn.onclick = function () { modal.hide(); if (form) form.submit(); };
+                        modal.show();
+                    });
+                });
+            }
+        })();
+
+        // Personel checkbox'ları değiştiğinde form'u submit et
+        $('.personel-checkbox').change(function() {
+            var checkedIds = $('.personel-checkbox:checked').map(function() {
+                return $(this).val();
+            }).get().join(',');
+            
+            // Hidden input ekle veya güncelle
+            var hiddenInput = $('#filterForm input[name="personelIds"]');
+            if (hiddenInput.length === 0) {
+                $('#filterForm').append('<input type="hidden" name="personelIds" value="' + checkedIds + '" />');
+            } else {
+                hiddenInput.val(checkedIds);
+            }
+        });
+
+        // Hareket güncelle modal
+        function hareketGuncelle(id, tarih, tip) {
+            $('#guncelleId').val(id);
+            $('#guncelleTarih').val(tarih);
+            $('#guncelleTip').val(tip);
+            var modal = new bootstrap.Modal(document.getElementById('hareketGuncelleModal'));
+            modal.show();
+        }
+
+        // Firma değiştiğinde sayfayı yenile
+        $('#firmaId').change(function() {
+            $('#filterForm').submit();
+        });
+    </script>
+}

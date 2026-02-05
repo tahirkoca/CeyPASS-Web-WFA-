@@ -1,0 +1,9 @@
+namespace CeyPASS.Entities.Concrete
+{
+    public class PozisyonListDTO
+    {
+        public int Id { get; set; }
+        public string Ad { get; set; }
+        public string Aciklama { get; set; }
+    }
+}

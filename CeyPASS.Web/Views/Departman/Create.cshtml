@@ -1,0 +1,51 @@
+@model CeyPASS.Web.Models.POY.DepartmanFormModel
+@{
+    ViewData["Title"] = "Yeni Departman";
+}
+
+<div class="container-fluid">
+    <div class="row mb-3">
+        <div class="col-12">
+            <h2>Yeni Departman</h2>
+            <a class="btn btn-secondary" asp-controller="Departman" asp-action="Index">Geri</a>
+        </div>
+    </div>
+
+    <form method="post" asp-controller="Departman" asp-action="Create">
+        @Html.AntiForgeryToken()
+        @Html.HiddenFor(m => m.ReturnUrl)
+
+        <div class="row">
+            <div class="col-lg-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Departman Bilgileri</h5>
+                    </div>
+                    <div class="card-body">
+                        <div asp-validation-summary="All" class="text-danger mb-2"></div>
+
+                        <div class="mb-3">
+                            <label asp-for="DepartmanId" class="form-label">Departman Id</label>
+                            <input asp-for="DepartmanId" class="form-control" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="DepartmanAdi" class="form-label">Departman Adı</label>
+                            <input asp-for="DepartmanAdi" class="form-control" required />
+                            <span asp-validation-for="DepartmanAdi" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Aciklama" class="form-label">Açıklama</label>
+                            <textarea asp-for="Aciklama" class="form-control" rows="3"></textarea>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">Kaydet</button>
+                        <a class="btn btn-secondary" asp-controller="Departman" asp-action="Index">İptal</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+

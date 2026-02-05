@@ -1,0 +1,577 @@
+@{
+    ViewData["Title"] = "Canlı İzleme";
+    var user = ViewBag.User as CeyPASS.Entities.Concrete.AuthUserDTO;
+    var canMisafirKart = ViewBag.CanMisafirKart as bool? ?? false;
+    var initialPasses = ViewBag.LastPasses as List<CeyPASS.Entities.Concrete.LastPassDTO> ?? new List<CeyPASS.Entities.Concrete.LastPassDTO>();
+    var initialMoves = ViewBag.LastMoves as List<CeyPASS.Entities.Concrete.KisiHareketDTO> ?? new List<CeyPASS.Entities.Concrete.KisiHareketDTO>();
+}
+
+<div class="container-fluid">
+    <div class="row mb-3">
+        <div class="col-12 d-flex justify-content-between align-items-center">
+            <div>
+                <h2 class="mb-0">
+                    <i class="bi bi-camera-video-fill text-primary me-2"></i>Canlı İzleme
+                </h2>
+                <small class="text-muted">
+                    <i class="bi bi-building me-1"></i>@(string.IsNullOrEmpty(user?.FirmaAdi) ? $"Firma #{user?.FirmaId}" : user.FirmaAdi) • 
+                    <i class="bi bi-person me-1"></i>Kullanıcı: @user?.KullaniciAdi
+                </small>
+            </div>
+            <div class="d-flex gap-2">
+                @if (canMisafirKart)
+                {
+                    <button class="btn btn-outline-primary" type="button" onclick="openMisafirKartYeni()">
+                        <i class="bi bi-person-plus me-1"></i>Kişiye Kart Ata
+                    </button>
+                    <button class="btn btn-outline-secondary" type="button" onclick="openMisafirKartGuncelle()">
+                        <i class="bi bi-pencil-square me-1"></i>Atanan Kartı Güncelle
+                    </button>
+                }
+                <form method="post" asp-controller="CanliIzleme" asp-action="Logout">
+                    @Html.AntiForgeryToken()
+                    <button class="btn btn-danger" type="submit">
+                        <i class="bi bi-box-arrow-right me-1"></i>Çıkış
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Son geçenler (4 kart) - WinForms tasarımına yakın -->
+    <div class="row g-4 mb-4" id="lastPassesRow">
+        @for (int i = 0; i < 4; i++)
+        {
+            var p = i < initialPasses.Count ? initialPasses[i] : null;
+            var bgColor = p?.GirisMi == true ? "#2e7d32" : "#c62828"; // SeaGreen ve Firebrick'e yakın
+            <div class="col-xl-3 col-lg-6">
+                <div class="card shadow-lg h-100 last-pass-card border-0" data-index="@i" style="transition: transform 0.2s, box-shadow 0.2s;">
+                    <div class="card-body text-center p-4">
+                        <!-- Büyük fotoğraf (WinForms: 254x268) -->
+                        <div class="mb-3">
+                            <img class="rounded border border-2" width="200" height="240" alt="" 
+                                 src="@GetImgSrc(p?.Foto)" 
+                                 onerror="this.onerror=null; this.src=&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 240'%3E%3Crect width='200' height='240' fill='%23f1f5f9'/%3E%3Ccircle cx='100' cy='80' r='40' fill='%23cbd5e1'/%3E%3Cellipse cx='100' cy='195' rx='60' ry='45' fill='%23cbd5e1'/%3E%3C/svg%3E&quot;;"
+                                 style="object-fit: cover; border-color: #dee2e6 !important;" />
+                        </div>
+                        
+                        <!-- Ad Soyad (Bold, ortalanmış) -->
+                        <div class="fw-bold fs-5 mb-2" style="color: #212529; min-height: 28px;">
+                            @((p?.AdSoyad) ?? "-")
+                        </div>
+                        
+                        <!-- Departman (Italic) -->
+                        <div class="fst-italic text-muted mb-1" style="min-height: 20px;">
+                            @((p?.DepartmanAdi) ?? "-")
+                        </div>
+                        
+                        <!-- Unvan (Italic) -->
+                        <div class="fst-italic text-muted mb-3" style="min-height: 20px;">
+                            @((p?.Unvan) ?? "-")
+                        </div>
+                    </div>
+                    
+                    <!-- Alt bilgi paneli (WinForms pnlAltBilgi) -->
+                    <div class="text-white p-3" style="background-color: @bgColor;">
+                        <div class="d-flex align-items-center justify-content-center mb-2">
+                            <i class="bi bi-clock-history me-2"></i>
+                            <span class="fw-semibold">@((p != null) ? p.Zaman.ToString("dd.MM.yyyy HH:mm:ss") : "-")</span>
+                        </div>
+                        <div class="d-flex align-items-center justify-content-center">
+                            <i class="bi bi-door-open me-2"></i>
+                            <span class="fw-semibold">@((p?.TerminalAdi) ?? "-")</span>
+                        </div>
+                        <div class="text-center mt-2">
+                            <span class="badge bg-light text-dark px-3 py-1">
+                                @(p?.GirisMi == true ? "GİRİŞ" : "ÇIKIŞ")
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    <div class="row g-3">
+        <!-- Son hareketler -->
+        <div class="col-xl-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="bi bi-list-ul me-2"></i>Son Hareketler
+                    </h5>
+                    <small class="text-muted">1 sn’de bir güncellenir</small>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive" style="max-height: 520px; overflow-y:auto;">
+                        <table class="table table-hover table-striped mb-0" id="movesTable">
+                            <thead class="table-dark sticky-top">
+                                <tr>
+                                    <th>Tarih</th>
+                                    <th>Ad Soyad</th>
+                                    <th>Departman</th>
+                                    <th>Unvan</th>
+                                    <th>Turnike</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var m in initialMoves)
+                                {
+                                    <tr data-kisiid="@m.PersonelId" style="cursor:pointer;">
+                                        <td>@m.Tarih.ToString("dd.MM.yyyy HH:mm:ss")</td>
+                                        <td>@m.AdSoyad</td>
+                                        <td>@m.Departman</td>
+                                        <td>@m.Unvan</td>
+                                        <td>@m.CihazAdi</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Seçili kişi detayı -->
+        <div class="col-xl-4">
+            <div class="card shadow-sm h-100" style="border: 2px solid #6366f1;">
+                <div class="card-header text-white" style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);">
+                    <h5 class="mb-0">
+                        <i class="bi bi-person-circle me-2"></i>Seçili Kişi Bilgileri
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    <!-- Üst kısım - Fotoğraf ve isim -->
+                    <div class="text-center p-4" style="background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);">
+                        <div class="position-relative d-inline-block mb-3">
+                            <img id="selectedFoto" 
+                                 class="rounded-circle shadow" 
+                                 width="140" height="140" 
+                                 alt="" 
+                                 src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 240'%3E%3Crect width='200' height='240' fill='%23f1f5f9'/%3E%3Ccircle cx='100' cy='80' r='40' fill='%23cbd5e1'/%3E%3Cellipse cx='100' cy='195' rx='60' ry='45' fill='%23cbd5e1'/%3E%3C/svg%3E"
+                                 style="object-fit: cover; border: 4px solid #6366f1;" />
+                            <span id="selectedStatusBadge" class="position-absolute bottom-0 end-0 p-2 bg-secondary rounded-circle" style="display: none;">
+                                <i class="bi bi-check-lg text-white"></i>
+                            </span>
+                        </div>
+                        <h4 id="selectedAdSoyad" class="fw-bold mb-0" style="color: #1e293b;">
+                            Kişi Seçilmedi
+                        </h4>
+                    </div>
+                    
+                    <!-- Alt kısım - Detay bilgileri -->
+                    <div class="p-3">
+                        <div class="selected-info-item d-flex align-items-center p-3 mb-2 rounded" style="background: #f1f5f9;">
+                            <div class="selected-info-icon me-3" style="width: 40px; height: 40px; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+                                <i class="bi bi-briefcase text-white"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <div class="text-muted small">Pozisyon / Ünvan</div>
+                                <div id="selectedUnvan" class="fw-semibold" style="color: #334155;">-</div>
+                            </div>
+                        </div>
+                        
+                        <div class="selected-info-item d-flex align-items-center p-3 rounded" style="background: #f1f5f9;">
+                            <div class="selected-info-icon me-3" style="width: 40px; height: 40px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+                                <i class="bi bi-diagram-3 text-white"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <div class="text-muted small">Departman</div>
+                                <div id="selectedDepartman" class="fw-semibold" style="color: #334155;">-</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Misafir Kart Modal -->
+<div class="modal fade" id="misafirModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="misafirModalTitle">Misafir Kart</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="misafirModalBody">
+                <div class="text-muted">Yükleniyor...</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@functions {
+    private static readonly string DefaultAvatarSvg = CreateDefaultAvatar();
+    
+    private static string CreateDefaultAvatar()
+    {
+        // Profesyonel, minimalist avatar - gri tonlarda kişi silueti
+        var svg = @"<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 240'>
+            <rect width='200' height='240' fill='#f1f5f9'/>
+            <circle cx='100' cy='80' r='40' fill='#cbd5e1'/>
+            <ellipse cx='100' cy='195' rx='60' ry='45' fill='#cbd5e1'/>
+        </svg>";
+        return "data:image/svg+xml;base64," + Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(svg));
+    }
+    
+    private string GetImgSrc(byte[]? foto)
+    {
+        // Fotoğraf yoksa veya geçersizse default avatar döndür
+        if (foto == null || foto.Length < 100)
+        {
+            return DefaultAvatarSvg;
+        }
+        
+        // JPEG/PNG header kontrolü - bozuk veri kontrolü
+        try
+        {
+            // JPEG: FF D8 FF ile başlar
+            // PNG: 89 50 4E 47 ile başlar
+            bool isValidJpeg = foto.Length > 3 && foto[0] == 0xFF && foto[1] == 0xD8 && foto[2] == 0xFF;
+            bool isValidPng = foto.Length > 4 && foto[0] == 0x89 && foto[1] == 0x50 && foto[2] == 0x4E && foto[3] == 0x47;
+            
+            if (!isValidJpeg && !isValidPng)
+            {
+                return DefaultAvatarSvg;
+            }
+            
+            string mimeType = isValidPng ? "image/png" : "image/jpeg";
+            return $"data:{mimeType};base64," + Convert.ToBase64String(foto);
+        }
+        catch
+        {
+            return DefaultAvatarSvg;
+        }
+    }
+}
+
+@section Scripts {
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        .last-pass-card {
+            transition: all 0.3s ease;
+        }
+        .last-pass-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.3) !important;
+        }
+        .last-pass-card.updating {
+            animation: cardPulse 0.5s ease-out;
+        }
+        @@keyframes cardPulse {
+            0% { transform: scale(1); box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075); }
+            50% { transform: scale(1.02); box-shadow: 0 0 30px rgba(99, 102, 241, 0.5); }
+            100% { transform: scale(1); box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075); }
+        }
+        .new-entry-glow {
+            animation: glowEffect 1s ease-out;
+        }
+        @@keyframes glowEffect {
+            0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+            70% { box-shadow: 0 0 0 15px rgba(16, 185, 129, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+        #movesTable tbody tr {
+            transition: background-color 0.2s ease;
+        }
+        #movesTable tbody tr:hover {
+            background-color: #e0e7ff !important;
+            cursor: pointer;
+        }
+        #movesTable tbody tr.table-primary {
+            background-color: #c7d2fe !important;
+        }
+        #movesTable tbody tr.new-row {
+            animation: highlightNew 2s ease-out;
+        }
+        @@keyframes highlightNew {
+            0% { background-color: #bbf7d0; }
+            100% { background-color: transparent; }
+        }
+        .selected-info-item {
+            transition: all 0.2s ease;
+        }
+        .selected-info-item:hover {
+            background: #e2e8f0 !important;
+            transform: translateX(5px);
+        }
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+            animation: blink 2s infinite;
+        }
+        .status-indicator.online {
+            background: #10b981;
+        }
+        @@keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+    </style>
+    <script>
+        let selectedKisiId = null;
+        const pollMs = 2000; // 2 saniye - daha makul bir aralık
+        
+        // Son veriyi cache'de tut - sadece değişiklik olduğunda güncelle
+        let lastPassesCache = [];
+        let lastMovesCache = [];
+        let lastMoveTimestamp = null;
+
+        // Default avatar - minimalist gri siluet (URL encoded SVG)
+        const defaultAvatar = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 240'%3E%3Crect width='200' height='240' fill='%23f1f5f9'/%3E%3Ccircle cx='100' cy='80' r='40' fill='%23cbd5e1'/%3E%3Cellipse cx='100' cy='195' rx='60' ry='45' fill='%23cbd5e1'/%3E%3C/svg%3E";
+        
+        function setImg(imgEl, base64) {
+            if (base64 && base64.length > 100) {
+                imgEl.src = 'data:image/jpeg;base64,' + base64;
+            } else {
+                imgEl.src = defaultAvatar;
+            }
+        }
+        
+        // Bozuk resim yüklenirse default avatar göster
+        function handleImageError(img) {
+            img.onerror = null; // Sonsuz döngüyü önle
+            img.src = defaultAvatar;
+        }
+
+        // Veri değişti mi kontrolü
+        function hasDataChanged(oldData, newData) {
+            if (!oldData || !newData) return true;
+            if (oldData.length !== newData.length) return true;
+            
+            for (let i = 0; i < newData.length; i++) {
+                const oldItem = oldData[i];
+                const newItem = newData[i];
+                if (!oldItem || !newItem) return true;
+                
+                // Zaman damgası değiştiyse yeni veri gelmiş demektir
+                if (oldItem.zaman !== newItem.zaman) return true;
+                if (oldItem.personelId !== newItem.personelId) return true;
+            }
+            return false;
+        }
+
+        // Belirli bir kartı güncelle (sadece o kart için animasyon)
+        function updateCard(cardIndex, p, animate = false) {
+            const card = document.querySelectorAll('.last-pass-card')[cardIndex];
+            if (!card) return;
+
+            const img = card.querySelector('img');
+            const nameEl = card.querySelector('.fw-bold.fs-5');
+            const deptEl = card.querySelectorAll('.fst-italic.text-muted')[0];
+            const unvanEl = card.querySelectorAll('.fst-italic.text-muted')[1];
+            const timeEl = card.querySelectorAll('.fw-semibold')[0];
+            const terminalEl = card.querySelectorAll('.fw-semibold')[1];
+            const badgeEl = card.querySelector('.badge');
+            const footer = card.querySelector('.text-white.p-3');
+
+            if (!p) {
+                img.src = '@GetImgSrc(null)';
+                if (nameEl) nameEl.textContent = '-';
+                if (deptEl) deptEl.textContent = '-';
+                if (unvanEl) unvanEl.textContent = '-';
+                if (timeEl) timeEl.textContent = '-';
+                if (terminalEl) terminalEl.textContent = '-';
+                if (badgeEl) badgeEl.textContent = '-';
+                return;
+            }
+
+            // Fotoğraf kontrolü - minimum 100 karakter base64 verisi olmalı
+            if (p.fotoBase64 && p.fotoBase64.length > 100) {
+                img.src = 'data:image/jpeg;base64,' + p.fotoBase64;
+                img.onerror = function() { this.onerror=null; this.src=defaultAvatar; };
+            } else {
+                img.src = defaultAvatar;
+            }
+            if (nameEl) nameEl.textContent = p.adSoyad || '-';
+            if (deptEl) deptEl.textContent = p.departmanAdi || '-';
+            if (unvanEl) unvanEl.textContent = p.unvan || '-';
+            if (timeEl) timeEl.textContent = new Date(p.zaman).toLocaleString('tr-TR', { 
+                day: '2-digit', month: '2-digit', year: 'numeric', 
+                hour: '2-digit', minute: '2-digit', second: '2-digit' 
+            });
+            if (terminalEl) terminalEl.textContent = p.terminalAdi || '-';
+            if (badgeEl) badgeEl.textContent = p.girisMi ? 'GİRİŞ' : 'ÇIKIŞ';
+            
+            const bgColor = p.girisMi ? '#2e7d32' : '#c62828';
+            if (footer) footer.style.backgroundColor = bgColor;
+
+            // Sadece yeni veri geldiğinde animasyon
+            if (animate) {
+                card.classList.remove('updating', 'new-entry-glow');
+                void card.offsetWidth; // Force reflow
+                card.classList.add('updating', 'new-entry-glow');
+                setTimeout(() => {
+                    card.classList.remove('updating', 'new-entry-glow');
+                }, 1000);
+            }
+        }
+
+        async function refreshLastPasses() {
+            const res = await fetch('@Url.Action("LastPasses")');
+            if (!res.ok) return;
+            const data = await res.json();
+
+            // Veri değişmemişse güncelleme yapma
+            if (!hasDataChanged(lastPassesCache, data)) {
+                return; // Değişiklik yok, hiçbir şey yapma
+            }
+
+            // Hangi kartlar değişti kontrol et
+            for (let i = 0; i < 4; i++) {
+                const oldItem = lastPassesCache[i];
+                const newItem = data[i];
+                
+                // Bu kart değişti mi?
+                const cardChanged = !oldItem || !newItem || 
+                    oldItem.zaman !== newItem?.zaman || 
+                    oldItem.personelId !== newItem?.personelId;
+                
+                if (cardChanged) {
+                    updateCard(i, newItem, true); // Animasyonlu güncelle
+                }
+            }
+
+            // Cache'i güncelle
+            lastPassesCache = data;
+        }
+
+        async function refreshMoves() {
+            const res = await fetch('@Url.Action("LastMoves")');
+            if (!res.ok) return;
+            const data = await res.json();
+
+            // İlk kayıtın zamanını kontrol et - değişmediyse güncelleme
+            const newFirstTimestamp = data[0]?.tarih;
+            if (newFirstTimestamp && newFirstTimestamp === lastMoveTimestamp) {
+                return; // Yeni hareket yok
+            }
+            lastMoveTimestamp = newFirstTimestamp;
+
+            const tbody = document.querySelector('#movesTable tbody');
+            const existingIds = Array.from(tbody.querySelectorAll('tr')).map(tr => tr.dataset.kisiid + '_' + tr.querySelector('td')?.textContent);
+            
+            tbody.innerHTML = '';
+
+            for (let idx = 0; idx < data.length; idx++) {
+                const m = data[idx];
+                const tr = document.createElement('tr');
+                tr.dataset.kisiid = m.kisiId;
+                tr.style.cursor = 'pointer';
+                
+                const timeStr = new Date(m.tarih).toLocaleString('tr-TR');
+                tr.innerHTML = `
+                    <td>${timeStr}</td>
+                    <td>${m.adSoyad ?? ''}</td>
+                    <td>${m.departman ?? ''}</td>
+                    <td>${m.unvan ?? ''}</td>
+                    <td>${m.cihazAdi ?? ''}</td>
+                `;
+                
+                // Yeni satır mı kontrolü (ilk birkaç satır için)
+                const rowKey = m.kisiId + '_' + timeStr;
+                if (idx < 3 && !existingIds.includes(rowKey)) {
+                    tr.classList.add('new-row');
+                }
+                
+                if (selectedKisiId && parseInt(selectedKisiId) === parseInt(m.kisiId)) {
+                    tr.classList.add('table-primary');
+                }
+                tr.addEventListener('click', () => selectKisi(m.kisiId, tr));
+                tbody.appendChild(tr);
+            }
+        }
+
+        async function selectKisi(kisiId, trEl) {
+            selectedKisiId = kisiId;
+            document.querySelectorAll('#movesTable tbody tr').forEach(x => x.classList.remove('table-primary'));
+            if (trEl) trEl.classList.add('table-primary');
+
+            const res = await fetch('@Url.Action("KisiDetay")' + '?kisiId=' + encodeURIComponent(kisiId));
+            if (!res.ok) return;
+            const data = await res.json();
+            if (!data.ok) return;
+
+            // Seçili kişi bilgilerini güncelle
+            const adSoyadEl = document.getElementById('selectedAdSoyad');
+            const unvanEl = document.getElementById('selectedUnvan');
+            const deptEl = document.getElementById('selectedDepartman');
+            const fotoEl = document.getElementById('selectedFoto');
+
+            adSoyadEl.textContent = data.adSoyad || 'Bilinmiyor';
+            unvanEl.textContent = data.unvan || '-';
+            deptEl.textContent = data.departman || '-';
+            
+            // Fotoğraf kontrolü
+            if (data.fotoBase64 && data.fotoBase64.length > 100) {
+                fotoEl.src = 'data:image/jpeg;base64,' + data.fotoBase64;
+                fotoEl.onerror = function() { this.onerror=null; this.src=defaultAvatar; };
+            } else {
+                fotoEl.src = defaultAvatar;
+            }
+        }
+
+        async function tick() {
+            try { await refreshLastPasses(); } catch (e) { console.warn('LastPasses error:', e); }
+            try { await refreshMoves(); } catch (e) { console.warn('Moves error:', e); }
+        }
+
+        // Misafir Kart modalları
+        async function openMisafirKartYeni() {
+            document.getElementById('misafirModalTitle').textContent = 'Misafir Kart Atama - Yeni';
+            await loadModal('@Url.Action("MisafirKartYeni")');
+        }
+        async function openMisafirKartGuncelle() {
+            document.getElementById('misafirModalTitle').textContent = 'Misafir Kart Atama - Güncelleme';
+            await loadModal('@Url.Action("MisafirKartGuncelle")');
+        }
+
+        async function loadModal(url) {
+            const modalBody = document.getElementById('misafirModalBody');
+            modalBody.innerHTML = '<div class="text-muted">Yükleniyor...</div>';
+            const res = await fetch(url);
+            modalBody.innerHTML = await res.text();
+            const modal = new bootstrap.Modal(document.getElementById('misafirModal'));
+            modal.show();
+        }
+
+        // initial wiring
+        document.addEventListener('DOMContentLoaded', () => {
+            // İlk veriyi cache'e al
+            @if (initialPasses.Any())
+            {
+                <text>
+                lastPassesCache = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(initialPasses.Select(p => new { 
+                    zaman = p.Zaman, 
+                    personelId = p.PersonelId,
+                    adSoyad = p.AdSoyad,
+                    departmanAdi = p.DepartmanAdi,
+                    unvan = p.Unvan,
+                    terminalAdi = p.TerminalAdi,
+                    girisMi = p.GirisMi
+                })));
+                </text>
+            }
+            
+            @if (initialMoves.Any())
+            {
+                <text>
+                lastMoveTimestamp = '@initialMoves.First().Tarih.ToString("o")';
+                </text>
+            }
+
+            document.querySelectorAll('#movesTable tbody tr').forEach(tr => {
+                tr.addEventListener('click', () => selectKisi(tr.dataset.kisiid, tr));
+            });
+            
+            // Polling başlat
+            setInterval(tick, pollMs);
+        });
+    </script>
+}
+

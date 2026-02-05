@@ -1,0 +1,58 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.13.35931.197
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CeyPASS.Entities", "CeyPASS.Entities\CeyPASS.Entities.csproj", "{F251C0A0-89E4-449C-A518-3DD32AC37C1F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CeyPASS.DataAccess", "CeyPASS.DataAccess\CeyPASS.DataAccess.csproj", "{E4E1C9F0-447A-452D-8F6B-D593F49FEF75}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CeyPASS.Business", "CeyPASS.Business\CeyPASS.Business.csproj", "{EF6526F1-F0F0-4DAB-8C02-3858BBA17386}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CeyPASS.Infrastructure", "CeyPASS.Infrastructure\CeyPASS.Infrastructure.csproj", "{EDDAEA7B-59F4-4ED8-913A-F35933D10135}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CeyPASS.Web", "CeyPASS.Web\CeyPASS.Web.csproj", "{A1B2C3D4-E5F6-4A5B-8C9D-0E1F2A3B4C5D}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CeyPASS.WFA", "CeyPASS.WFA\CeyPASS.WFA.csproj", "{B2C3D4E5-F6A7-4B5C-9D0E-1F2A3B4C5D6E}"
+EndProject
+Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "CeyPASSDesktop.Setup", "CeyPASSDesktop.Setup\CeyPASSDesktop.Setup.vdproj", "{3003BD0F-ED58-2FC4-F38C-C085F94A654E}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{F251C0A0-89E4-449C-A518-3DD32AC37C1F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F251C0A0-89E4-449C-A518-3DD32AC37C1F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F251C0A0-89E4-449C-A518-3DD32AC37C1F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F251C0A0-89E4-449C-A518-3DD32AC37C1F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E4E1C9F0-447A-452D-8F6B-D593F49FEF75}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E4E1C9F0-447A-452D-8F6B-D593F49FEF75}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E4E1C9F0-447A-452D-8F6B-D593F49FEF75}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E4E1C9F0-447A-452D-8F6B-D593F49FEF75}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EF6526F1-F0F0-4DAB-8C02-3858BBA17386}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EF6526F1-F0F0-4DAB-8C02-3858BBA17386}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EF6526F1-F0F0-4DAB-8C02-3858BBA17386}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EF6526F1-F0F0-4DAB-8C02-3858BBA17386}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EDDAEA7B-59F4-4ED8-913A-F35933D10135}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EDDAEA7B-59F4-4ED8-913A-F35933D10135}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EDDAEA7B-59F4-4ED8-913A-F35933D10135}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EDDAEA7B-59F4-4ED8-913A-F35933D10135}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A1B2C3D4-E5F6-4A5B-8C9D-0E1F2A3B4C5D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A1B2C3D4-E5F6-4A5B-8C9D-0E1F2A3B4C5D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A1B2C3D4-E5F6-4A5B-8C9D-0E1F2A3B4C5D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A1B2C3D4-E5F6-4A5B-8C9D-0E1F2A3B4C5D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B2C3D4E5-F6A7-4B5C-9D0E-1F2A3B4C5D6E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B2C3D4E5-F6A7-4B5C-9D0E-1F2A3B4C5D6E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B2C3D4E5-F6A7-4B5C-9D0E-1F2A3B4C5D6E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B2C3D4E5-F6A7-4B5C-9D0E-1F2A3B4C5D6E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3003BD0F-ED58-2FC4-F38C-C085F94A654E}.Debug|Any CPU.ActiveCfg = Debug
+		{3003BD0F-ED58-2FC4-F38C-C085F94A654E}.Release|Any CPU.ActiveCfg = Release
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {1F1A9200-1C1A-42AE-9081-9718A386609D}
+	EndGlobalSection
+EndGlobal

@@ -1,0 +1,344 @@
+@model CeyPASS.Entities.Concrete.DashboardResult
+@{
+    ViewData["Title"] = "Ana Sayfa";
+}
+
+<!-- Page Header -->
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Ana Sayfa</h1>
+        <p class="page-subtitle">Hoş geldiniz! İşte bugünün özeti.</p>
+    </div>
+</div>
+
+<!-- Stats Cards -->
+<div class="dashboard-grid">
+    <div class="dashboard-card">
+        <div class="dashboard-card-header">
+            <div class="dashboard-card-icon blue">
+                <i class="bi bi-person-check"></i>
+            </div>
+        </div>
+        <div class="dashboard-card-value">@Model.Cards.GirisYapan.ToString("N0")</div>
+        <div class="dashboard-card-label">Giriş Yapanlar</div>
+        <div class="dashboard-card-trend">
+            <i class="bi bi-info-circle"></i>
+            <span>Bugün giriş/çıkış yapan</span>
+        </div>
+    </div>
+
+    <div class="dashboard-card">
+        <div class="dashboard-card-header">
+            <div class="dashboard-card-icon green">
+                <i class="bi bi-building"></i>
+            </div>
+        </div>
+        <div class="dashboard-card-value">@Model.Cards.Iceridekiler.ToString("N0")</div>
+        <div class="dashboard-card-label">İçeridekiler</div>
+        <div class="dashboard-card-trend">
+            <i class="bi bi-info-circle"></i>
+            <span>Şu an işyerinde</span>
+        </div>
+    </div>
+
+    <div class="dashboard-card">
+        <div class="dashboard-card-header">
+            <div class="dashboard-card-icon red">
+                <i class="bi bi-clock-history"></i>
+            </div>
+        </div>
+        <div class="dashboard-card-value">@Model.Cards.GecKalanlar.ToString("N0")</div>
+        <div class="dashboard-card-label">Geç Kalanlar</div>
+        <div class="dashboard-card-trend">
+            <i class="bi bi-info-circle"></i>
+            <span>Mesaiye geç başlayan</span>
+        </div>
+    </div>
+
+    <div class="dashboard-card">
+        <div class="dashboard-card-header">
+            <div class="dashboard-card-icon gray">
+                <i class="bi bi-box-arrow-right"></i>
+            </div>
+        </div>
+        <div class="dashboard-card-value">@Model.Cards.Disaridakiler.ToString("N0")</div>
+        <div class="dashboard-card-label">Dışarıdakiler</div>
+        <div class="dashboard-card-trend">
+            <i class="bi bi-info-circle"></i>
+            <span>Çıkış yapmış</span>
+        </div>
+    </div>
+
+    <div class="dashboard-card">
+        <div class="dashboard-card-header">
+            <div class="dashboard-card-icon purple">
+                <i class="bi bi-person-x"></i>
+            </div>
+        </div>
+        <div class="dashboard-card-value">@Model.Cards.Devamsizlar.ToString("N0")</div>
+        <div class="dashboard-card-label">Devamsızlar</div>
+        <div class="dashboard-card-trend">
+            <i class="bi bi-info-circle"></i>
+            <span>Bugün gelmemiş</span>
+        </div>
+    </div>
+
+    <div class="dashboard-card">
+        <div class="dashboard-card-header">
+            <div class="dashboard-card-icon orange">
+                <i class="bi bi-calendar-check"></i>
+            </div>
+        </div>
+        <div class="dashboard-card-value">@Model.Cards.Izinli.ToString("N0")</div>
+        <div class="dashboard-card-label">İzinliler</div>
+        <div class="dashboard-card-trend">
+            <i class="bi bi-info-circle"></i>
+            <span>Bugün izinli</span>
+        </div>
+    </div>
+
+    <div class="dashboard-card">
+        <div class="dashboard-card-header">
+            <div class="dashboard-card-icon cyan">
+                <i class="bi bi-person-plus"></i>
+            </div>
+        </div>
+        <div class="dashboard-card-value">@Model.Cards.IseBaslayan.ToString("N0")</div>
+        <div class="dashboard-card-label">İşe Başlayanlar</div>
+        <div class="dashboard-card-trend">
+            <i class="bi bi-info-circle"></i>
+            <span>Bu ay başlayan</span>
+        </div>
+    </div>
+
+    <div class="dashboard-card">
+        <div class="dashboard-card-header">
+            <div class="dashboard-card-icon pink">
+                <i class="bi bi-person-dash"></i>
+            </div>
+        </div>
+        <div class="dashboard-card-value">@Model.Cards.IstenAyrilan.ToString("N0")</div>
+        <div class="dashboard-card-label">İşten Ayrılanlar</div>
+        <div class="dashboard-card-trend">
+            <i class="bi bi-info-circle"></i>
+            <span>Bu ay ayrılan</span>
+        </div>
+    </div>
+</div>
+
+<!-- Data Tables Row -->
+<div class="row g-4">
+    <!-- Geç Gelenler -->
+    <div class="col-lg-6">
+        <div class="data-table-wrapper">
+            <div class="data-table-header">
+                <div class="data-table-title">
+                    <i class="bi bi-clock"></i>
+                    En Geç Gelen Personeller
+                    <span class="badge bg-secondary">@Model.LateList.Count</span>
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="table mb-0">
+                    <thead>
+                        <tr>
+                            <th>Ad</th>
+                            <th>Soyad</th>
+                            <th class="text-end">Gecikme (dk)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.LateList.Any())
+                        {
+                            @foreach (var item in Model.LateList)
+                            {
+                                <tr>
+                                    <td>@item.Ad</td>
+                                    <td>@item.Soyad</td>
+                                    <td class="text-end">
+                                        <span class="badge @(item.FazlaDakika >= 60 ? "bg-danger" : "bg-warning")">
+                                            @item.FazlaDakika dk
+                                        </span>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="3" class="text-center text-muted py-4">
+                                    <i class="bi bi-check-circle fs-4 d-block mb-2"></i>
+                                    Geç kalan personel yok
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Doğum Günleri -->
+    <div class="col-lg-6">
+        <div class="data-table-wrapper">
+            <div class="data-table-header">
+                <div class="data-table-title">
+                    <i class="bi bi-gift"></i>
+                    Bu Ay Doğum Günü Olanlar
+                    <span class="badge bg-secondary">@Model.Birthdays.Count</span>
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="table mb-0">
+                    <thead>
+                        <tr>
+                            <th>Ad</th>
+                            <th>Soyad</th>
+                            <th>Doğum Günü</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.Birthdays.Any())
+                        {
+                            @foreach (var item in Model.Birthdays)
+                            {
+                                <tr>
+                                    <td>@item.Ad</td>
+                                    <td>@item.Soyad</td>
+                                    <td>
+                                        <span class="badge bg-info">
+                                            <i class="bi bi-calendar3"></i>
+                                            @item.BuYilDogumGunu.ToString("dd MMMM")
+                                        </span>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="3" class="text-center text-muted py-4">
+                                    <i class="bi bi-calendar-x fs-4 d-block mb-2"></i>
+                                    Bu ay doğum günü yok
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- İşe Başlayanlar -->
+    <div class="col-lg-6">
+        <div class="data-table-wrapper">
+            <div class="data-table-header">
+                <div class="data-table-title">
+                    <i class="bi bi-person-plus"></i>
+                    Bu Ay İşe Başlayanlar
+                    <span class="badge bg-secondary">@Model.NewHires.Count</span>
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="table mb-0">
+                    <thead>
+                        <tr>
+                            <th>Ad</th>
+                            <th>Soyad</th>
+                            <th>Başlama Tarihi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.NewHires.Any())
+                        {
+                            @foreach (var item in Model.NewHires)
+                            {
+                                <tr>
+                                    <td>@item.Ad</td>
+                                    <td>@item.Soyad</td>
+                                    <td>
+                                        <span class="badge bg-success">
+                                            <i class="bi bi-calendar-check"></i>
+                                            @item.BaslamaTarihi.ToString("dd.MM.yyyy")
+                                        </span>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="3" class="text-center text-muted py-4">
+                                    <i class="bi bi-inbox fs-4 d-block mb-2"></i>
+                                    Bu ay işe başlayan yok
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- İşten Ayrılanlar -->
+    <div class="col-lg-6">
+        <div class="data-table-wrapper">
+            <div class="data-table-header">
+                <div class="data-table-title">
+                    <i class="bi bi-person-dash"></i>
+                    Bu Ay İşten Ayrılanlar
+                    <span class="badge bg-secondary">@Model.Resignations.Count</span>
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="table mb-0">
+                    <thead>
+                        <tr>
+                            <th>Ad</th>
+                            <th>Soyad</th>
+                            <th>Ayrılma Tarihi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.Resignations.Any())
+                        {
+                            @foreach (var item in Model.Resignations)
+                            {
+                                <tr>
+                                    <td>@item.Ad</td>
+                                    <td>@item.Soyad</td>
+                                    <td>
+                                        <span class="badge bg-danger">
+                                            <i class="bi bi-calendar-x"></i>
+                                            @item.AyrilmaTarihi.ToString("dd.MM.yyyy")
+                                        </span>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="3" class="text-center text-muted py-4">
+                                    <i class="bi bi-emoji-smile fs-4 d-block mb-2"></i>
+                                    Bu ay ayrılan yok
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Initialize tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+
+    </script>
+}

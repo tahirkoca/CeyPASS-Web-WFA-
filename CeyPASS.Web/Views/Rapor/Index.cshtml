@@ -1,0 +1,312 @@
+@model System.Data.DataTable
+@{
+    ViewData["Title"] = "Raporlar";
+    var raporlar = ViewBag.Raporlar as List<CeyPASS.Entities.Concrete.RaporTanimi> ?? new List<CeyPASS.Entities.Concrete.RaporTanimi>();
+    var selectedProcedureAdi = ViewBag.SelectedProcedureAdi as string;
+    var baslangicTarih = ViewBag.BaslangicTarih as DateTime? ?? new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
+    var bitisTarih = ViewBag.BitisTarih as DateTime? ?? DateTime.Today;
+    var selectedFirmaId = ViewBag.SelectedFirmaId as int? ?? 0;
+    var canExport = ViewBag.CanExport as bool? ?? false;
+    var selectedRapor = ViewBag.SelectedRapor as CeyPASS.Entities.Concrete.RaporTanimi;
+}
+<style>
+    .rapor-table-wrapper {
+        max-height: 560px;
+        overflow: auto;
+        border: 1px solid rgba(0, 0, 0, .08);
+        border-radius: .375rem;
+        background: #fff;
+    }
+    .rapor-table {
+        margin-bottom: 0;
+        width: 100%;
+    }
+    .rapor-table thead th {
+        position: sticky;
+        top: 0;
+        z-index: 2;
+        background: var(--bs-tertiary-bg);
+        color: var(--bs-body-color);
+        font-weight: 600;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.02em;
+        padding: 0.75rem;
+        border-bottom: 2px solid rgba(0, 0, 0, .08);
+    }
+    .rapor-table tbody td {
+        padding: 0.6rem 0.75rem;
+        vertical-align: middle;
+    }
+    .rapor-table tbody tr:hover {
+        background-color: rgba(0, 0, 0, .02);
+    }
+    /* Toast - sağ üst, 5 sn */
+    .rapor-toast-container {
+        position: fixed;
+        top: 1rem;
+        right: 1rem;
+        z-index: 9999;
+        max-width: 360px;
+    }
+    .rapor-toast {
+        padding: 0.75rem 1rem;
+        border-radius: 0.375rem;
+        box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15);
+        margin-bottom: 0.5rem;
+        animation: rapor-toast-in 0.3s ease;
+    }
+    .rapor-toast.success { background: #d1e7dd; color: #0f5132; }
+    .rapor-toast.danger { background: #f8d7da; color: #842029; }
+    .rapor-toast.info { background: #cff4fc; color: #055160; }
+    @@keyframes rapor-toast-in { from { opacity: 0; transform: translateX(100%); } to { opacity: 1; transform: translateX(0); } }
+</style>
+<div class="container-fluid">
+    <div id="raporToastContainer" class="rapor-toast-container" aria-live="polite"></div>
+    <div class="row mb-3">
+        <div class="col-12">
+            <h2>Raporlar</h2>
+            
+            @if (TempData["Success"] != null)
+            {
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    @TempData["Success"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+            
+            @if (TempData["Error"] != null)
+            {
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    @TempData["Error"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Rapor Seçimi ve Filtreler -->
+    <div class="row mb-3">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Rapor Seçimi ve Parametreler</h5>
+                </div>
+                <div class="card-body">
+                    <form method="get" action="@Url.Action("Index")" id="raporForm">
+                        <div class="row g-3 align-items-end">
+                            <div class="col-md-4">
+                                <label for="procedureAdi" class="form-label">Rapor Türü <span class="text-danger">*</span></label>
+                                <select name="procedureAdi" id="procedureAdi" class="form-select" required>
+                                    <option value="">-- Rapor Seçiniz --</option>
+                                    @foreach (var rapor in raporlar.Where(r => r.AktifMi))
+                                    {
+                                        if (rapor.ProcedureAdi == selectedProcedureAdi)
+                                        {
+                                            <option value="@rapor.ProcedureAdi" selected="selected">
+                                                @rapor.RaporAdi
+                                            </option>
+                                        }
+                                        else
+                                        {
+                                            <option value="@rapor.ProcedureAdi">
+                                                @rapor.RaporAdi
+                                            </option>
+                                        }
+                                    }
+                                </select>
+                            </div>
+
+                            <div class="col-md-3">
+                                <label for="tarihBaslangic" class="form-label">Başlangıç Tarihi <span class="text-danger">*</span></label>
+                                <input type="date" name="tarihBaslangic" id="tarihBaslangic" class="form-control" required 
+                                       value="@baslangicTarih.ToString("yyyy-MM-dd")" />
+                            </div>
+
+                            <div class="col-md-3">
+                                <label for="tarihBitis" class="form-label">Bitiş Tarihi <span class="text-danger">*</span></label>
+                                <input type="date" name="tarihBitis" id="tarihBitis" class="form-control" required 
+                                       value="@bitisTarih.ToString("yyyy-MM-dd")" />
+                            </div>
+
+                            <div class="col-md-2">
+                                <button type="submit" class="btn btn-primary w-100">
+                                    <i class="bi bi-search"></i> Rapor Getir
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rapor Verisi -->
+    @if (Model != null && Model.Rows.Count > 0)
+    {
+        <div class="row mb-3">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            @(selectedRapor?.RaporAdi ?? "Rapor") 
+                            <small class="text-muted">(@Model.Rows.Count kayıt)</small>
+                        </h5>
+                        @if (canExport)
+                        {
+                            <div>
+                                <button type="button" class="btn btn-sm btn-success" onclick="exportExcel()">
+                                    <i class="bi bi-file-earmark-excel"></i> Excel'e Aktar
+                                </button>
+                                <button type="button" class="btn btn-sm btn-danger" onclick="exportPdf()">
+                                    <i class="bi bi-file-earmark-pdf"></i> PDF'e Aktar
+                                </button>
+                            </div>
+                        }
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3 d-flex gap-2 flex-wrap">
+                            <input type="text" id="filterInput" class="form-control flex-grow-1" style="max-width: 320px;" placeholder="Raporlarda arama yapabilirsiniz..." />
+                        </div>
+                        <div class="rapor-table-wrapper">
+                            <table class="table table-hover table-bordered rapor-table" id="raporTable">
+                                <thead>
+                                    <tr>
+                                        @foreach (System.Data.DataColumn column in Model.Columns)
+                                        {
+                                            <th>@column.ColumnName</th>
+                                        }
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (System.Data.DataRow row in Model.Rows)
+                                    {
+                                        <tr>
+                                            @foreach (var item in row.ItemArray)
+                                            {
+                                                <td>@(item?.ToString() ?? "-")</td>
+                                            }
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+    else if (!string.IsNullOrWhiteSpace(selectedProcedureAdi))
+    {
+        <div class="row">
+            <div class="col-12">
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i> Seçilen kriterlere uygun veri bulunamadı.
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="row">
+            <div class="col-12">
+                <div class="alert alert-secondary">
+                    <i class="bi bi-info-circle"></i> Lütfen bir rapor seçin ve tarih aralığı belirleyin.
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    
+    <script>
+        function showToast(message, type) {
+            type = type || 'success';
+            var $c = $('#raporToastContainer');
+            var $t = $('<div class="rapor-toast ' + type + '">' + message + '</div>');
+            $c.append($t);
+            setTimeout(function() { $t.fadeOut(300, function() { $(this).remove(); }); }, 5000);
+        }
+
+        function readBlobAsJson(blob, callback) {
+            var reader = new FileReader();
+            reader.onload = function() {
+                try {
+                    var o = JSON.parse(reader.result);
+                    callback(o);
+                } catch (e) {
+                    callback({ message: 'Sunucu yanıtı okunamadı.' });
+                }
+            };
+            reader.readAsText(blob);
+        }
+
+        // Tablo filtreleme
+        $('#filterInput').on('keyup', function() {
+            var value = $(this).val().toLowerCase();
+            $('#raporTable tbody tr').filter(function() {
+                $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1);
+            });
+        });
+
+        // Excel export
+        function exportExcel() {
+            $.ajax({
+                url: '@Url.Action("ExportExcel")',
+                method: 'POST',
+                xhrFields: {
+                    responseType: 'blob'
+                },
+                success: function(data) {
+                    var blob = new Blob([data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+                    var link = document.createElement('a');
+                    link.href = window.URL.createObjectURL(blob);
+                    link.download = '@(selectedRapor?.RaporAdi ?? "Rapor")_' + new Date().toISOString().slice(0,10).replace(/-/g,"") + '.xlsx';
+                    link.click();
+                    showToast('Excel dosyası indirildi.', 'success');
+                },
+                error: function(xhr) {
+                    var errorMsg = 'Excel export sırasında bir hata oluştu.';
+                    if (xhr.responseType === 'blob' && xhr.response instanceof Blob) {
+                        readBlobAsJson(xhr.response, function(o) { showToast(o.message || errorMsg, 'danger'); });
+                    } else if (xhr.responseJSON && xhr.responseJSON.message) {
+                        showToast(xhr.responseJSON.message, 'danger');
+                    } else {
+                        showToast(errorMsg, 'danger');
+                    }
+                }
+            });
+        }
+
+        // PDF export
+        function exportPdf() {
+            $.ajax({
+                url: '@Url.Action("ExportPdf")',
+                method: 'POST',
+                xhrFields: {
+                    responseType: 'blob'
+                },
+                success: function(data) {
+                    var blob = new Blob([data], { type: 'application/pdf' });
+                    var link = document.createElement('a');
+                    link.href = window.URL.createObjectURL(blob);
+                    link.download = '@(selectedRapor?.RaporAdi ?? "Rapor")_' + new Date().toISOString().slice(0,10).replace(/-/g,"") + '.pdf';
+                    link.click();
+                    showToast('PDF dosyası indirildi.', 'success');
+                },
+                error: function(xhr) {
+                    var errorMsg = 'PDF export sırasında bir hata oluştu.';
+                    if (xhr.responseType === 'blob' && xhr.response instanceof Blob) {
+                        readBlobAsJson(xhr.response, function(o) { showToast(o.message || errorMsg, 'danger'); });
+                    } else if (xhr.responseJSON && xhr.responseJSON.message) {
+                        showToast(xhr.responseJSON.message, 'danger');
+                    } else {
+                        showToast(errorMsg, 'danger');
+                    }
+                }
+            });
+        }
+    </script>
+}

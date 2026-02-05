@@ -1,0 +1,60 @@
+@model CeyPASS.Web.Models.CanliIzleme.MisafirKartYeniModel
+@{
+    var cards = ViewBag.Cards as List<CeyPASS.Entities.Concrete.PuantajsizKart> ?? new List<CeyPASS.Entities.Concrete.PuantajsizKart>();
+}
+
+<form id="misafirYeniForm" method="post" asp-controller="CanliIzleme" asp-action="MisafirKartYeni">
+    @Html.AntiForgeryToken()
+
+    <div class="row g-3">
+        <div class="col-md-6">
+            <label class="form-label">Kart</label>
+            <select name="KartId" class="form-select" required>
+                <option value="">-- Seçiniz --</option>
+                @foreach (var c in cards)
+                {
+                    int id = 0;
+                    int.TryParse(c.KartId, out id);
+                    <option value="@id">@c.KartAdi</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Giriş Saati</label>
+            <input type="datetime-local" class="form-control" name="GirisSaati"
+                   value="@Model.GirisSaati.ToString("yyyy-MM-ddTHH:mm")" required />
+        </div>
+        <div class="col-md-12">
+            <label class="form-label">Misafir Ad Soyad</label>
+            <input class="form-control" name="MisafirAdSoyad" required />
+        </div>
+        <div class="col-md-12">
+            <label class="form-label">Açıklama</label>
+            <textarea class="form-control" name="Aciklama" rows="3"></textarea>
+        </div>
+        <div class="col-12 d-flex justify-content-end gap-2">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+            <button type="submit" class="btn btn-primary">Kaydet</button>
+        </div>
+    </div>
+</form>
+
+<script>
+    (function () {
+        const form = document.getElementById('misafirYeniForm');
+        form.addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const fd = new FormData(form);
+            const res = await fetch(form.action, { method: 'POST', body: fd });
+            const data = await res.json();
+            if (!data.ok) {
+                toastr.error(data.message || 'İşlem başarısız.');
+                return;
+            }
+            toastr.success(data.message || 'Tamamlandı.');
+            const modalEl = document.getElementById('misafirModal');
+            bootstrap.Modal.getInstance(modalEl)?.hide();
+        });
+    })();
+</script>
+

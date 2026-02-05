@@ -1,0 +1,50 @@
+@model CeyPASS.Web.Models.POY.FirmaFormModel
+@{
+    ViewData["Title"] = "Yeni Firma";
+}
+
+<div class="container-fluid">
+    <div class="row mb-3">
+        <div class="col-12">
+            <h2>Yeni Firma</h2>
+            <a class="btn btn-secondary" asp-controller="Firma" asp-action="Index">Geri</a>
+        </div>
+    </div>
+
+    <form method="post" asp-controller="Firma" asp-action="Create">
+        @Html.AntiForgeryToken()
+        @Html.HiddenFor(m => m.ReturnUrl)
+        <div class="row">
+            <div class="col-lg-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Firma Bilgileri</h5>
+                    </div>
+                    <div class="card-body">
+                        <div asp-validation-summary="All" class="text-danger mb-2"></div>
+
+                        <div class="mb-3">
+                            <label asp-for="FirmaId" class="form-label">Firma Id</label>
+                            <input asp-for="FirmaId" class="form-control" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="FirmaAdi" class="form-label">Firma Adı</label>
+                            <input asp-for="FirmaAdi" class="form-control" required />
+                            <span asp-validation-for="FirmaAdi" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="ITBirimMail" class="form-label">IT Birim Mail</label>
+                            <input asp-for="ITBirimMail" class="form-control" />
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">Kaydet</button>
+                        <a class="btn btn-secondary" asp-controller="Firma" asp-action="Index">İptal</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
