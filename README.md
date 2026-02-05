@@ -2,49 +2,40 @@
 
 ![CeyPASS](https://placeholder.com) <!-- Proje logosu varsa buraya eklenebilir -->
 
-🇹🇷 **CeyPASS**, Cey Holding için geliştirilmiş kapsamlı bir **Personel Devam Kontrol Sistemidir (PDKS)**. Proje, yönetim paneli olarak çalışan modern bir **Web uygulaması** ve sahadaki cihazlar/kartlar ile etkileşime giren, canlı izleme yapan güçlü bir **Masaüstü (Windows Forms) uygulamasından** oluşur.
+🇹🇷 **CeyPASS**, Cey Holding için geliştirilmiş kapsamlı bir **Personel Devam Kontrol Sistemidir (PDKS)**.
+Proje, tek bir merkezi sisteme bağlı çalışan modern bir **Web arayüzü** ve güçlü bir **Masaüstü (Windows Forms) uygulamasından** oluşur.
+Her iki platform da **birebir aynı yeteneklere sahiptir** ve kullanıcıların tercih ettikleri ortamdan tüm işlemleri gerçekleştirmesine olanak tanır.
 
-🇺🇸 **CeyPASS** is a comprehensive **Personnel Attendance Control System (PDKS)** developed for Cey Holding. The project consists of a modern **Web application** serving as an administration panel and a robust **Desktop (Windows Forms) application** for live monitoring and interaction with field devices/cards.
+🇺🇸 **CeyPASS** is a comprehensive **Personnel Attendance Control System (PDKS)** developed for Cey Holding.
+The project consists of a modern **Web interface** and a robust **Desktop (Windows Forms) application** operating on a single centralized system.
+Both platforms possess **identical capabilities (feature parity)**, allowing users to perform all operations seamlessly from their preferred environment.
 
 ---
 
 ## 🚀 Özellikler / Features
 
-### 🇹🇷 Türkçe
-*   **Web Paneli (.NET):**
-    *   Detaylı personel yönetimi ve özlük dosyaları.
-    *   İzin talebi, onayı ve takibi.
-    *   Gelişmiş raporlama seçenekleri.
-    *   Sistem genel ayarları ve kullanıcı yetkilendirme.
-*   **Masaüstü Uygulaması (Windows Forms):**
-    *   **Canlı İzleme:** Turnike ve geçiş kontrol cihazlarından gelen verilerin anlık takibi.
-    *   **Kart Yönetimi:** Hızlı kart atama, güncelleme ve yetkilendirme.
-    *   **AutoUpdater:** Otomatik güncelleme desteği ile her zaman güncel sürüm.
-    *   **SignalR:** Anlık bildirimler ve veri akışı.
-*   **Mimari:** Sürdürülebilir, çok katmanlı mimari (Business, DataAccess, Entities, Infrastructure).
+Hem Web hem de Masaüstü üzerinden aşağıdaki tüm işlemleri yapabilirsiniz:
+(You can perform all the following operations via both Web and Desktop:)
 
-### 🇺🇸 English
-*   **Web Panel (.NET):**
-    *   Detailed personnel management and files.
-    *   Leave request, approval, and tracking.
-    *   Advanced reporting options.
-    *   System settings and user authorization.
-*   **Desktop App (Windows Forms):**
-    *   **Live Monitoring:** Real-time tracking of data from turnstiles and access control devices.
-    *   **Card Management:** Fast card assignment, updates, and authorization.
-    *   **AutoUpdater:** Always up-to-date with automatic update support.
-    *   **SignalR:** Instant notifications and data streaming.
-*   **Architecture:** Maintainable, multi-layered architecture (Business, DataAccess, Entities, Infrastructure).
+*   **Personel Yönetimi (Personnel Management):** Detaylı özlük dosyaları, işe giriş-çıkış işlemleri.
+*   **İzin İşlemleri (Leave Management):** İzin talebi, onayı ve takibi.
+*   **Canlı İzleme (Live Monitoring):** Turnike ve cihazlardan anlık geçiş verilerinin takibi.
+*   **Donanım Yönetimi (Hardware Control):** Cihazlara uzaktan kart gönderme, kapı açma, veri çekme.
+*   **Raporlama (Reporting):** Gelişmiş PDKS raporları ve grafikler.
+*   **Kart İşlemleri (Card Operations):** Kart atama, yetkilendirme ve güncelleme.
+*   **Bildirimler (Notifications):** SignalR ile anlık sistem bildirimleri.
 
 ---
 
-## 🛠 Teknolojiler / Technologies
+## 🛠 Mimari ve Teknolojiler / Architecture & Technologies
 
-*   **Backend:** .NET Core / .NET Framework
-*   **Frontend:** ASP.NET Core MVC / Windows Forms
+Proje, **Business, DataAccess, Entities ve Infrastructure** katmanlarından oluşan **Nx Katmanlı Mimari (N-Layered Architecture)** üzerine inşa edilmiştir. Bu sayede tüm iş mantığı ortaktır.
+
+*   **Core:** .NET Core / .NET Framework
+*   **UI Layers:** ASP.NET Core MVC & Windows Forms
 *   **Database:** Microsoft SQL Server (Entity Framework Core)
 *   **Real-time:** SignalR
-*   **Tools:** AutoUpdater.NET, Dependency Injection
+*   **Shared Logic:** Dependency Injection, Repository Pattern
 
 ---
 
