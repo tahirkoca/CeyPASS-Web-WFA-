@@ -44,6 +44,9 @@ Bu proje, hassas verileri (Veritabanı bağlantı cümleleri, E-posta şifreleri
     *   Bu `Local` dosya içine gerçek bağlantı bilgilerinizi ve şifrelerinizi girin.
     *   `appsettings.Local.json` dosyası `.gitignore` ile engellenmiştir, böylece şifreleriniz GitHub'a gitmez.
 
+3.  **Veritabanı Kurulumu:**
+    *   `database` klasörü içindeki `CeyPASSDBScript.sql` dosyasını bir SQL Server veritabanında çalıştırarak şemayı oluşturun.
+
 ## 📞 İletişim
 
 **Tahir Koca**
@@ -93,6 +96,9 @@ This project uses a specific configuration to protect sensitive data (Connection
     *   Create a copy of `appsettings.json` and rename it to `appsettings.Local.json`.
     *   Enter your real connection details and passwords into this `Local` file.
     *   `appsettings.Local.json` is ignored by `.gitignore`, ensuring your secrets are safe.
+
+3.  **Database Setup:**
+    *   Run the `CeyPASSDBScript.sql` file located in the `database` folder on a SQL Server instance to create the schema.
 
 ## 📞 Contact
 
