@@ -18,6 +18,7 @@ namespace CeyPASS.Business.Services
             _puantajsizKartRepo = puantajsizKartRepo;
             _yemekhaneRepo = yemekhaneRepo;
         }
+
         public void YeniKisiEkle(Kisi kisi, bool firmaPersoneli, bool puantajYapilabilir, bool yemekHakkiVar, int gunlukYemekLimiti, string puantajsizKartId, string puantajsizKartNo, string puantajsizKartAdi)
         {
             if (firmaPersoneli && puantajYapilabilir)

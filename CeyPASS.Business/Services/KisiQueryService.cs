@@ -47,6 +47,7 @@ namespace CeyPASS.Business.Services
                 .OrderBy(x => x.AdSoyad, StringComparer.OrdinalIgnoreCase)
                 .ToList();
         }
+
         public KisiDetay GetKisiDetay(string personelId)
         {
             return _repo.GetDetay(personelId);

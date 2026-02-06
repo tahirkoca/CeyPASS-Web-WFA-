@@ -64,7 +64,7 @@ namespace CeyPASS.DataAccess.Repositories
         public List<PuantajsizKart> GetByFirmaOrderByName(int firmaId)
         {
             return _context.PuantajsizKartlar
-                .Where(x => x.FirmaId == firmaId && x.TaseronCalisanMi == false && x.AktifMi)
+                .Where(x => x.FirmaId == firmaId && x.AktifMi)
                 .OrderBy(x => x.KartAdi)
                 .Select(x => new PuantajsizKart
                 {
