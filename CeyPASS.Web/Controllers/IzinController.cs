@@ -75,12 +75,12 @@ namespace CeyPASS.Web.Controllers
                         AdSoyad = row["AdSoyad"]?.ToString() ?? "",
                         FirmaAdi = row["FirmaAdi"]?.ToString() ?? "",
                         IzinTipi = row["IzinTipi"]?.ToString() ?? "",
-                        IzinBaslangic = row["IzinBaslangic"] != DBNull.Value ? Convert.ToDateTime(row["IzinBaslangic"]) : DateTime.MinValue,
-                        IzinBitis = row["IzinBitis"] != DBNull.Value ? Convert.ToDateTime(row["IzinBitis"]) : DateTime.MinValue,
-                        SureGun = row["SureGun"]?.ToString() ?? "",
-                        SureSaat = row["SureSaat"] != DBNull.Value ? Convert.ToDouble(row["SureSaat"]) : 0,
-                        SaatlikIzin = row["SaatlikIzin"]?.ToString() ?? "",
-                        Aciklama = row["Aciklama"]?.ToString() ?? "",
+                        IzinBaslangic = row["Başlangıç Tarihi"] != DBNull.Value ? Convert.ToDateTime(row["Başlangıç Tarihi"]) : DateTime.MinValue,
+                        IzinBitis = row["Bitiş Tarihi"] != DBNull.Value ? Convert.ToDateTime(row["Bitiş Tarihi"]) : DateTime.MinValue,
+                        SureGun = row["Süre(Gün)"]?.ToString() ?? "",
+                        SureSaat = row["Süre(Saat)"] != DBNull.Value ? Convert.ToDouble(row["Süre(Saat)"]) : 0,
+                        SaatlikIzin = row["Saatlik İzin Mi"]?.ToString() ?? "",
+                        Aciklama = row["Açıklama"]?.ToString() ?? "",
                         IslenmeTarihi = row["IslenmeTarihi"] != DBNull.Value ? (DateTime?)Convert.ToDateTime(row["IslenmeTarihi"]) : null,
                         GuncellemeTarihi = row["GuncellemeTarihi"] != DBNull.Value ? (DateTime?)Convert.ToDateTime(row["GuncellemeTarihi"]) : null
                     });

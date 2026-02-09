@@ -170,3 +170,4 @@ __pycache__/
 # SECURITY: Ignore local config files containing secrets
 **/appsettings.Local.json
 *.Secret.config
+/CeyPASS.sln
