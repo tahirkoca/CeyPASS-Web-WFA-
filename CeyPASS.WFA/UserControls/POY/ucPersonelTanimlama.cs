@@ -834,13 +834,20 @@ namespace CeyPASS.WFA.UserControls
                         return;
                     }
 
+                    // Yeniden DB'den kesin veriyi çek ve UI'yi güncelle
+                    try
+                    {
+                        KisileriYukle(GetSeciliFirmaId());
+                        KisiyiGetir(kisi.PersonelId);
+                    }
+                    catch { /* Eğer yükleme başarısız olursa yine kullanıcıya güncelleme mesajı gösterilecek */ }
+
                     MessageBox.Show("Kayıt güncellendi.", "Bilgi", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     _originalPersonelId = kisi.PersonelId.Trim();
                     LogHelper.Info(PageName, "Guncelle", $"Kişi güncellendi. PersonelId={kisi.PersonelId}", null, cid);
 
                     _guncelleModu = false;
                     _fotoDirty = false;
-                    KisileriYukle(GetSeciliFirmaId());
                     ApplyCheckboxRules();
                     IslemButonlariniGoster(false);
                     return;

@@ -299,6 +299,15 @@ UPDATE dbo.Kisiler
                         UpsertTaseronKart(pidInt, firmaDisiKartNo);
 
                     _context.SaveChanges();
+                    // Ensure ChangeTracker does not hold stale entities so subsequent reads get fresh data
+                    try
+                    {
+                        _context.ChangeTracker.Clear();
+                    }
+                    catch
+                    {
+                        // non-fatal if clear not supported in older EF versions
+                    }
                     tx.Commit();
                     return true;
                 }
