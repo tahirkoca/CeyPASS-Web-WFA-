@@ -39,8 +39,8 @@ jobs:
           if ($content -match 'AssemblyVersion\("([^"]+)"\)') {
             $ver = $Matches[1]
             Write-Host "Version=$ver"
-            echo "VERSION=$ver" >> $env:GITHUB_ENV
-            echo "version=$ver" >> $env:GITHUB_OUTPUT
+            "VERSION=$ver" | Out-File -FilePath $env:GITHUB_ENV -Append
+            "version=$ver" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
           } else {
             Write-Error "AssemblyVersion bulunamadı."
             exit 1
