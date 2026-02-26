@@ -57,7 +57,7 @@ namespace CeyPASS.WFA
                 /*
                 AutoUpdater.Start(@"http://192.168.0.23/CeyPASS-Updates/update.xml");
                 */
-                AutoUpdater.Start(@"https://raw.githubusercontent.com/ceysoft/ceypass/main/update.xml");
+                AutoUpdater.Start(@"https://github.com/ceysoft/ceypass/releases/latest/download/update.xml");
             }
             catch (Exception)
             {
