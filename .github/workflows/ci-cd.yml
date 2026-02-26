@@ -69,8 +69,8 @@ jobs:
       - name: GitHub Release Oluştur ve Dosyaları Yükle
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: v${{ env.VERSION }}
-          name: Release v${{ env.VERSION }}
+          tag_name: v${{ steps.version.outputs.version }}
+          name: Release v${{ steps.version.outputs.version }}
           draft: false
           prerelease: false
           files: |
