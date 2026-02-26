@@ -61,6 +61,7 @@ namespace CeyPASS.WFA
             }
             catch (Exception)
             {
+                AutoUpdater.ReportErrors = true;
                 // Güncelleme kontrolü başarısız olsa bile program açılsın
             }
 
