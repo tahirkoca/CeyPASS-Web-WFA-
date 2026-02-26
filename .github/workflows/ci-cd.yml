@@ -1,3 +1,7 @@
+# CeyPASS WFA CI/CD: Build -> Zip (net8.0-windows içeriği) -> update.xml -> Sunucuya kopyala
+# Runner: Self-hosted (CeyPASS-Local-Server, label: cey-deploy)
+# Sürüm: CeyPASS.WFA/Properties/AssemblyInfo.cs içindeki AssemblyVersion kullanılır (manuel güncelleme)
+
 name: WFA Build and Deploy
 
 on:
@@ -13,13 +17,11 @@ on:
   workflow_dispatch:
 
 env:
-  UPDATE_BASE_URL: 'https://github.com/ceysoft/ceypass/releases/latest/download'
+  UPDATE_BASE_URL: 'http://192.168.0.23/CeyPASS-Updates'
 
 jobs:
   build-and-deploy:
     runs-on: [ self-hosted, cey-deploy ]
-    permissions:
-      contents: write # Release oluşturabilmek için bu yetki şart
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -47,14 +49,23 @@ jobs:
       - name: Build Release
         run: dotnet build CeyPASS.sln -c Release --no-incremental
 
-      - name: Zip Oluştur
+      - name: Zip (net8.0-windows içeriği, kökte exe/dll)
         id: zip
         shell: powershell
         run: |
           $version = $env:VERSION
           $src = "CeyPASS.WFA\bin\Release\net8.0-windows"
           $zipName = "CeyPASS.WFA.$version.zip"
+          if (-not (Test-Path $src)) {
+            Write-Error "Build çıktısı bulunamadı: $src"
+            exit 1
+          }
           Compress-Archive -Path "$src\*" -DestinationPath $zipName -Force
+          if (-not (Test-Path $zipName)) {
+            Write-Error "Zip oluşturulamadı."
+            exit 1
+          }
+          Write-Host "zip_name=$zipName"
           echo "zip_name=$zipName" >> $env:GITHUB_OUTPUT
 
       - name: update.xml oluştur
@@ -66,15 +77,16 @@ jobs:
           $xml = "<?xml version=`"1.0`" encoding=`"UTF-8`"?><item><version>$version</version><url>$url</url><mandatory>false</mandatory></item>"
           Set-Content -Path "update.xml" -Value $xml -Encoding UTF8
 
-      - name: GitHub Release Oluştur ve Dosyaları Yükle
-        uses: softprops/action-gh-release@v1
-        with:
-          tag_name: v${{ steps.version.outputs.version }}
-          name: Release v${{ steps.version.outputs.version }}
-          draft: false
-          prerelease: false
-          files: |
-            ${{ steps.zip.outputs.zip_name }}
-            update.xml
+      - name: Sunucuya kopyala (zip + update.xml)
+        shell: powershell
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Repo Secrets'ta DEPLOY_PATH tanımlıysa kullanılır; yoksa varsayılan.
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+        run: |
+          $dest = if ($env:DEPLOY_PATH) { $env:DEPLOY_PATH } else { 'C:\CeyPASS-Updates' }
+          if (-not (Test-Path $dest)) {
+            New-Item -ItemType Directory -Path $dest -Force
+          }
+          Copy-Item -Path "CeyPASS.WFA.$env:VERSION.zip" -Destination $dest -Force
+          Copy-Item -Path "update.xml" -Destination $dest -Force
+          Write-Host "Kopyalandı: $dest"

@@ -47,18 +47,15 @@ namespace CeyPASS.WFA
                 AutoUpdater.UpdateMode = Mode.ForcedDownload;
                 AutoUpdater.ShowSkipButton = true;
                 AutoUpdater.ShowRemindLaterButton = true;
-                AutoUpdater.ReportErrors = true;
+                AutoUpdater.ReportErrors = false;
                 AutoUpdater.Synchronous = false;
                 AutoUpdater.RunUpdateAsAdmin = true;
                 AutoUpdater.ApplicationExitEvent += () =>
                 {
                     try { Application.Exit(); } catch { }
-                };
-                AutoUpdater.HttpUserAgent = "CeyPASS-WFA-Updater/1.0";
-                /*
+                };               
                 AutoUpdater.Start(@"http://192.168.0.23/CeyPASS-Updates/update.xml");
-                */
-                AutoUpdater.Start(@"https://github.com/ceysoft/ceypass/releases/latest/download/update.xml");
+                
             }
             catch (Exception)
             {
