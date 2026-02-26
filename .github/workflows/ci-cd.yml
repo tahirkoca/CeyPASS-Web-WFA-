@@ -33,7 +33,7 @@ jobs:
 
       - name: AssemblyInfo'dan sürüm oku
         id: version
-        shell: pwsh
+        shell: powershell
         run: |
           $content = Get-Content 'CeyPASS.WFA\Properties\AssemblyInfo.cs' -Raw
           if ($content -match 'AssemblyVersion\("([^"]+)"\)') {
@@ -51,7 +51,7 @@ jobs:
 
       - name: Zip (net8.0-windows içeriği, kökte exe/dll)
         id: zip
-        shell: pwsh
+        shell: powershell
         run: |
           $version = $env:VERSION
           $src = "CeyPASS.WFA\bin\Release\net8.0-windows"
@@ -69,7 +69,7 @@ jobs:
           echo "zip_name=$zipName" >> $env:GITHUB_OUTPUT
 
       - name: update.xml oluştur
-        shell: pwsh
+        shell: powershell
         run: |
           $version = $env:VERSION
           $zipName = "${{ steps.zip.outputs.zip_name }}"
@@ -78,7 +78,7 @@ jobs:
           Set-Content -Path "update.xml" -Value $xml -Encoding UTF8
 
       - name: Sunucuya kopyala (zip + update.xml)
-        shell: pwsh
+        shell: powershell
         env:
           # Repo Secrets'ta DEPLOY_PATH tanımlıysa kullanılır; yoksa varsayılan.
           DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
