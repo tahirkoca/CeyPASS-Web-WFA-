@@ -35,10 +35,13 @@ namespace CeyPASS.WFA.UserControls
         private KisiListItem _sonSecilen = null;
         private string _originalPersonelId = null;
         private bool _seciliPuantajsizKartMi = false;
+        private HashSet<int> _firmaYetkileri = new HashSet<int>();
+        private List<FirmaIsyeriYetkiDTO> _kullaniciYetkileri;
+        private readonly IPuantajService _psvc;
         private const string PageName = "Personeller";
         private const string PageNameUI = "Personeller";
 
-        public ucPersonelTanimlama(ISessionContext session, IKisiService kisiSvc, IKisiQueryService kisiQuerySvc, IKisiEkraniLookUpService lookups, ICalismaSekliService calismaSekliSvc, IAuthorizationService authSvc, IFirmaService firmaSvc, IPuantajsizKartRepository puantajsizKartRepo)
+        public ucPersonelTanimlama(ISessionContext session, IKisiService kisiSvc, IKisiQueryService kisiQuerySvc, IKisiEkraniLookUpService lookups, ICalismaSekliService calismaSekliSvc, IAuthorizationService authSvc, IFirmaService firmaSvc, IPuantajsizKartRepository puantajsizKartRepo, IPuantajService psvc)
         {
             InitializeComponent();
             SendMessage(txtCepTel.Handle, EM_SETCUEBANNER, 0, "05.. - ... - .. - .. şeklinde giriniz");
@@ -61,6 +64,7 @@ namespace CeyPASS.WFA.UserControls
             _calismaSekliSvc = calismaSekliSvc;
             _auth = authSvc;
             _firmaSvc = firmaSvc;
+            _psvc = psvc;
             _puantajsizKartRepo = puantajsizKartRepo;
             authHelp = new AuthorizationHelper(_session, _auth);
 
@@ -124,6 +128,10 @@ namespace CeyPASS.WFA.UserControls
             {
                 if (cmbKartTipi.Items.Count > 0 && cmbKartTipi.SelectedIndex < 0)
                     cmbKartTipi.SelectedIndex = 0; // Puantaj Yapılanlar
+                
+                _kullaniciYetkileri = _psvc.GetKullaniciFirmaIsyeriYetkileri((int)_session.AktifKullaniciId) ?? new List<FirmaIsyeriYetkiDTO>();
+                _firmaYetkileri = _kullaniciYetkileri.Select(y => y.FirmaId).Distinct().ToHashSet();
+
                 FirmaFilteriniYukle();
 
                 int firmaId = GetSeciliFirmaId();
@@ -163,9 +171,10 @@ namespace CeyPASS.WFA.UserControls
                 else
                 {
                     liste = tumFirmalar
-                        .Where(f => f.FirmaId == _session.AktifFirmaId)
+                        .Where(f => _firmaYetkileri.Contains(f.FirmaId))
+                        .OrderBy(f => f.FirmaAdi)
                         .ToList();
-                    cmbFirmaFilter.Enabled = false;
+                    cmbFirmaFilter.Enabled = true; // Firmalar arası geçiş yapabilsin
                 }
 
                 cmbFirmaFilter.DataSource = null;
@@ -329,6 +338,27 @@ namespace CeyPASS.WFA.UserControls
             try
             {
                 var list = _iklsvc.GetIsyerleri(firmaId) ?? new List<LookupItem>();
+                
+                bool isAdmin = _session.RolId == 1 || _session.RolId == 2;
+                if (!isAdmin && _kullaniciYetkileri != null)
+                {
+                    var yetkiliIsyerleri = _kullaniciYetkileri
+                        .Where(y => y.FirmaId == firmaId)
+                        .ToList();
+
+                    bool tumIsyerleriGoster = yetkiliIsyerleri.Any(y => !y.IsyeriId.HasValue);
+
+                    if (!tumIsyerleriGoster)
+                    {
+                        var yetkiliIsyeriIdler = yetkiliIsyerleri
+                            .Where(y => y.IsyeriId.HasValue)
+                            .Select(y => y.IsyeriId.Value)
+                            .ToHashSet();
+
+                        list = list.Where(i => yetkiliIsyeriIdler.Contains(i.Id)).ToList();
+                    }
+                }
+
                 // "Tümü" seçeneği
                 var data = new List<LookupItem> { new LookupItem { Id = 0, Ad = "Tümü" } };
                 data.AddRange(list);
