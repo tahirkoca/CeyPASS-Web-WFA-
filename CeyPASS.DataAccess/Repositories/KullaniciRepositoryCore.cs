@@ -163,5 +163,13 @@ WHERE KullaniciId = {0} AND Kullanildi = 0";
 
             _context.Database.ExecuteSqlRaw(sql, kullaniciId);
         }
+
+        public List<string> GetTumKullaniciAdlari()
+        {
+            return _context.Kullanicilar
+                .OrderBy(k => k.KullaniciAdi)
+                .Select(k => k.KullaniciAdi)
+                .ToList();
+        }
     }
 }

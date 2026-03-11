@@ -23,10 +23,7 @@ namespace CeyPASS.DataAccess.Repositories
             var sql = @"
 SELECT TOP (@p0)
     KH.Tarih       AS Tarih,
-    ISNULL(CASE 
-        WHEN K.PersonelId IS NULL THEN PK.KartAdi
-        ELSE (K.Ad + ' ' + K.Soyad) 
-    END, N'')      AS AdSoyad,
+    ISNULL(RTRIM(LTRIM(ISNULL(K.Ad, N'') + N' ' + ISNULL(K.Soyad, N''))), N'') AS AdSoyad,
     ISNULL(D.DepartmanAdi, N'') AS Departman,
     ISNULL(P.PozisyonAdi, N'')  AS Unvan,
     ISNULL(C.CihazAdi, N'')     AS CihazAdi,
@@ -36,7 +33,6 @@ LEFT JOIN Kisiler         K  ON KH.PersonelId = K.PersonelId
 LEFT JOIN Departmanlar    D  ON K.DepartmanId = D.DepartmanId
 LEFT JOIN Cihazlar        C  ON KH.CihazId    = C.CihazId
 LEFT JOIN Pozisyonlar     P  ON K.PozisyonId  = P.PozisyonId
-LEFT JOIN PuantajsizKartlar PK ON KH.PersonelId = PK.KartId
 WHERE C.FirmaId = @p1 AND C.AnaGirisCikisMi=1
 ORDER BY KH.Tarih DESC";
 
@@ -52,10 +48,7 @@ ORDER BY KH.Tarih DESC";
             var sql = @"
 SELECT TOP (@p0)
     KH.Tarih       AS Tarih,
-    ISNULL(CASE 
-        WHEN K.PersonelId IS NULL THEN PK.KartAdi
-        ELSE (K.Ad + ' ' + K.Soyad) 
-    END, N'')      AS AdSoyad,
+    ISNULL(RTRIM(LTRIM(ISNULL(K.Ad, N'') + N' ' + ISNULL(K.Soyad, N''))), N'') AS AdSoyad,
     ISNULL(D.DepartmanAdi, N'') AS Departman,
     ISNULL(P.PozisyonAdi, N'')  AS Unvan,
     ISNULL(C.CihazAdi, N'')     AS CihazAdi,
@@ -65,7 +58,6 @@ LEFT JOIN Kisiler         K  ON KH.PersonelId = K.PersonelId
 LEFT JOIN Departmanlar    D  ON K.DepartmanId = D.DepartmanId
 LEFT JOIN Cihazlar        C  ON KH.CihazId    = C.CihazId
 LEFT JOIN Pozisyonlar     P  ON K.PozisyonId  = P.PozisyonId
-LEFT JOIN PuantajsizKartlar PK ON KH.PersonelId = PK.KartId
 WHERE C.FirmaId = @p1
   AND KH.Tip = N'Yemekhane'
 ORDER BY KH.Tarih DESC";
@@ -214,7 +206,7 @@ WHERE k.FirmaId = @p0
             return _context.SaveChanges() > 0;
         }
 
-        public DataTable GetAktifKisilerWithSicil(int firmaId)
+        public DataTable GetAktifKisilerWithSicil(int firmaId, bool puantajYapilirMi = true)
         {
             var sql = @"
 SELECT 
@@ -222,13 +214,14 @@ SELECT
     Ad + ' ' + Soyad + ' [' + ISNULL(CAST(PersonelId AS nvarchar(50)), '') + ']' AS AdSoyad
 FROM dbo.Kisiler
 WHERE FirmaId = @p0
-  AND PuantajYapilirMi = 1
+  AND PuantajYapilirMi = @p1
   AND (IstenCikisTarihi IS NULL OR IstenCikisTarihi >= GETDATE())
 ORDER BY Ad, Soyad";
 
             var rows = _context.Database
                 .SqlQueryRaw<AktifKisiRow>(sql,
-                    new Microsoft.Data.SqlClient.SqlParameter("@p0", firmaId))
+                    new Microsoft.Data.SqlClient.SqlParameter("@p0", firmaId),
+                    new Microsoft.Data.SqlClient.SqlParameter("@p1", puantajYapilirMi))
                 .ToList();
 
             var dt = new DataTable();

@@ -31,7 +31,7 @@ namespace CeyPASS.Web.Controllers
             _firmaService = firmaService;
         }
 
-        public IActionResult Index(int? firmaId = null, string personelIds = null, DateTime? baslangic = null, DateTime? bitis = null, bool? sadeceAktif = null, bool? sadecePasif = null, bool? sadeceYemekhane = null)
+        public IActionResult Index(int? firmaId = null, string personelIds = null, DateTime? baslangic = null, DateTime? bitis = null, bool? sadeceAktif = null, bool? sadecePasif = null, bool? sadeceYemekhane = null, string kartTipi = null)
         {
             // Check authorization
             if (!_authorizationService.ViewAbility(PageName))
@@ -52,8 +52,9 @@ namespace CeyPASS.Web.Controllers
             DateTime baslangicTarih = baslangic ?? DateTime.Today;
             DateTime bitisTarih = bitis ?? DateTime.Today.AddDays(1).AddMinutes(-1);
 
-            // Personel listesi
-            var personelList = GetPersonelList(selectedFirmaId);
+            // Kart tipi: puantajsiz = Puantaj Yapılmayanlar, aksi halde Puantaj Yapılanlar
+            bool puantajYapilir = kartTipi != "puantajsiz";
+            var personelList = GetPersonelList(selectedFirmaId, puantajYapilir);
 
             // Seçili personel ID'leri
             List<int> seciliPersonelIds = new List<int>();
@@ -114,6 +115,7 @@ namespace CeyPASS.Web.Controllers
             ViewBag.SadeceAktif = sadeceAktif ?? false;
             ViewBag.SadecePasif = sadecePasif ?? false;
             ViewBag.SadeceYemekhane = sadeceYemekhane ?? false;
+            ViewBag.KartTipi = kartTipi ?? "puantaj";
             ViewBag.CanCreate = _authorizationService.Can(PageName, YetkiTipleri.Create);
             ViewBag.CanUpdate = _authorizationService.Can(PageName, YetkiTipleri.Update);
             ViewBag.CanDelete = _authorizationService.Can(PageName, YetkiTipleri.Delete);
@@ -211,12 +213,12 @@ namespace CeyPASS.Web.Controllers
             return RedirectToAction("Index");
         }
 
-        private List<PersonelLookupItem> GetPersonelList(int firmaId)
+        private List<PersonelLookupItem> GetPersonelList(int firmaId, bool puantajYapilir = true)
         {
             var list = new List<PersonelLookupItem>();
             try
             {
-                var dt = _kisiHareketService.GetAktifKisilerWithSicil(firmaId);
+                var dt = _kisiHareketService.GetAktifKisilerWithSicil(firmaId, puantajYapilir);
                 if (dt != null)
                 {
                     bool hasId = dt.Columns.Contains("PersonelId");

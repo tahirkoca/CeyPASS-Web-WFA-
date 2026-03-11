@@ -22,7 +22,7 @@ namespace CeyPASS.DataAccess.Repositories
             return _context.Kisiler.Any(k => k.PersonelId == personelId);
         }
 
-        public List<KisiListItem> GetAktifByFirma(int firmId, string search = null, bool? puantajYapilirMi = true, int? isyeriId = null)
+        public List<KisiListItem> GetAktifByFirma(int firmId, string search = null, bool? puantajYapilirMi = true, int? isyeriId = null, bool? ziyaretciMi = null)
         {
             var q = _context.Kisiler
                 .Where(k => k.FirmaId == firmId && k.IstenCikisTarihi == null);
@@ -32,6 +32,9 @@ namespace CeyPASS.DataAccess.Repositories
 
             if (isyeriId.HasValue)
                 q = q.Where(k => k.IsyeriId == isyeriId.Value);
+
+            if (ziyaretciMi.HasValue)
+                q = q.Where(k => k.ZiyaretciMi == ziyaretciMi.Value);
 
             if (!string.IsNullOrWhiteSpace(search))
             {
@@ -103,10 +106,13 @@ namespace CeyPASS.DataAccess.Repositories
                 Email = k.Email,
                 Fotograf = k.Fotograf,
                 PuantajYapilabilir = (bool)k.PuantajYapilirMi,
-                FirmaPersoneli = true,
+                FirmaPersoneli = (bool)k.PuantajYapilirMi,
                 YemekHakkiVar = yemekHakkiVar,
                 GunlukYemekAdedi = gunlukLimit,
-                TaseronKartNo = taseronKartNo
+                TaseronKartNo = taseronKartNo,
+                ZiyaretciMi = k.ZiyaretciMi ?? false,
+                AracKartiMi = k.AracKartiMi ?? false,
+                TaseronCalisanMi = k.TaseronCalisanMi ?? false
             };
             return detay;
         }
@@ -248,6 +254,9 @@ UPDATE dbo.Kisiler
        CepTel           = @p16,
        Email            = @p17,
        PuantajYapilirMi = @p18,
+       ZiyaretciMi      = @p19z,
+       AracKartiMi      = @p20z,
+       TaseronCalisanMi = @p21z,
        Fotograf         = CASE WHEN @p19 = 1 THEN @p20 ELSE Fotograf END
  WHERE PersonelId = @p0";
 
@@ -272,6 +281,9 @@ UPDATE dbo.Kisiler
                         new Microsoft.Data.SqlClient.SqlParameter("@p16", SqlDbType.NVarChar) { Value = k.CepTel ?? (object)DBNull.Value },
                         new Microsoft.Data.SqlClient.SqlParameter("@p17", SqlDbType.NVarChar) { Value = k.Email ?? (object)DBNull.Value },
                         new Microsoft.Data.SqlClient.SqlParameter("@p18", SqlDbType.Bit) { Value = k.PuantajYapilirMi },
+                        new Microsoft.Data.SqlClient.SqlParameter("@p19z", SqlDbType.Bit) { Value = k.ZiyaretciMi ?? false },
+                        new Microsoft.Data.SqlClient.SqlParameter("@p20z", SqlDbType.Bit) { Value = k.AracKartiMi ?? false },
+                        new Microsoft.Data.SqlClient.SqlParameter("@p21z", SqlDbType.Bit) { Value = k.TaseronCalisanMi ?? false },
                         new Microsoft.Data.SqlClient.SqlParameter("@p19", SqlDbType.Bit) { Value = fotoDirty ? 1 : 0 },
                         new Microsoft.Data.SqlClient.SqlParameter("@p20", SqlDbType.Image) { Value = k.Fotograf ?? (object)DBNull.Value }
                     };
@@ -284,15 +296,6 @@ UPDATE dbo.Kisiler
                         _context.Database.ExecuteSqlRaw(sql1,
                             new Microsoft.Data.SqlClient.SqlParameter("@p0", oldId),
                             new Microsoft.Data.SqlClient.SqlParameter("@p1", newId));
-
-                        var kartIdExists = _context.PuantajsizKartlar.Any(x => x.KartId == newId);
-                        if (!kartIdExists)
-                        {
-                            var sql2 = "UPDATE dbo.PuantajsizKartlar SET KartId=@p1 WHERE KartId=@p0";
-                            _context.Database.ExecuteSqlRaw(sql2,
-                                new Microsoft.Data.SqlClient.SqlParameter("@p0", oldId),
-                                new Microsoft.Data.SqlClient.SqlParameter("@p1", newId));
-                        }
                     }
 
                     if (firmaDisiKartNo != null && int.TryParse(newId, out var pidInt))
@@ -342,7 +345,10 @@ UPDATE dbo.Kisiler
                 KayitTarihi = DateTime.Now,
                 Email = k.Email,
                 PuantajYapilirMi = k.PuantajYapilirMi,
-                BolumId = k.BolumId
+                BolumId = k.BolumId,
+                ZiyaretciMi = k.ZiyaretciMi,
+                AracKartiMi = k.AracKartiMi,
+                TaseronCalisanMi = k.TaseronCalisanMi
             };
 
             _context.Kisiler.Add(entity);

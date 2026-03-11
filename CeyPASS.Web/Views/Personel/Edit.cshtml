@@ -304,6 +304,30 @@
                             </label>
                         </div>
 
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" name="ziyaretciMi" id="ziyaretciMi" value="true" 
+                                   @(Model?.ZiyaretciMi == true ? "checked" : "") />
+                            <label class="form-check-label" for="ziyaretciMi">
+                                Ziyaretçi Kartı
+                            </label>
+                        </div>
+
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" name="aracKartiMi" id="aracKartiMi" value="true" 
+                                   @(Model?.AracKartiMi == true ? "checked" : "") />
+                            <label class="form-check-label" for="aracKartiMi">
+                                Araç Kartı
+                            </label>
+                        </div>
+
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" name="taseronCalisanMi" id="taseronCalisanMi" value="true" 
+                                   @(Model?.TaseronCalisanMi == true ? "checked" : "") />
+                            <label class="form-check-label" for="taseronCalisanMi">
+                                Taşeron Çalışan
+                            </label>
+                        </div>
+
                         <div class="mb-3">
                             <label for="gunlukYemekAdedi" class="form-label">Günlük Yemek Adedi</label>
                             <input type="number" name="gunlukYemekAdedi" id="gunlukYemekAdedi" class="form-control" min="0" 

@@ -1,4 +1,4 @@
-﻿using CeyPASS.Business.Abstractions;
+using CeyPASS.Business.Abstractions;
 using CeyPASS.DataAccess.Abstractions;
 using CeyPASS.Entities.Concrete;
 using System;
@@ -27,6 +27,6 @@ namespace CeyPASS.Business.Services
         public bool InsertManual(int firmaId, int personelId, DateTime tarih, string tip) => _repo.InsertManual(firmaId, personelId, tarih, tip);
         public bool UpdateManual(int id, DateTime tarih, string tip) => _repo.UpdateManual(id, tarih, tip);
         public bool PasifYap(int id) => _repo.PasifYap(id);
-        public DataTable GetAktifKisilerWithSicil(int firmaId)=>_repo.GetAktifKisilerWithSicil(firmaId);
+        public DataTable GetAktifKisilerWithSicil(int firmaId, bool puantajYapilirMi = true) => _repo.GetAktifKisilerWithSicil(firmaId, puantajYapilirMi);
     }
 }

@@ -24,6 +24,9 @@ namespace CeyPASS.Entities.Concrete
         public DateTime? KayitTarihi { get; set; }
         public string Email { get; set; }
         public bool PuantajYapilirMi { get; set; }
+        public bool? ZiyaretciMi { get; set; }
+        public bool? AracKartiMi { get; set; }
+        public bool? TaseronCalisanMi { get; set; }
         public string AdSoyad { get { return ((Ad ?? "").Trim() + " " + (Soyad ?? "").Trim()).Trim(); } }
     }
 

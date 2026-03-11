@@ -1,4 +1,4 @@
-﻿using CeyPASS.Entities.Concrete;
+using CeyPASS.Entities.Concrete;
 using System.Collections.Generic;
 using System.Data;
 
@@ -10,5 +10,6 @@ namespace CeyPASS.Business.Abstractions
         AuthUserDTO Login(int firmaId, string user, string pass);
         List<LastPassDTO> GetLastPasses(int firmaId, int take);
         List<LastPassDTO> GetLastPassesYemekhane(int firmaId, int take);
+        List<string> GetKullaniciAdlariByFirma(int firmaId);
     }
 }

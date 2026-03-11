@@ -165,52 +165,6 @@
                 </div>
             </div>
 
-            @if (ViewBag.PuantajsizKartMi == true)
-            {
-                <div class="card mb-3">
-                    <div class="card-header">
-                        <h5 class="mb-0">Puantajsız Kart Bilgileri</h5>
-                    </div>
-                    <div class="card-body">
-                        <dl class="row">
-                            <dt class="col-sm-4">Çalışma Şekli:</dt>
-                            <dd class="col-sm-8">@(ViewBag.PuantajsizCalismaSekli ?? "-")</dd>
-
-                            <dt class="col-sm-4">Ziyaretçi Kartı:</dt>
-                            <dd class="col-sm-8">
-                                @if (ViewBag.PuantajsizZiyaretciMi == true)
-                                { <span class="badge bg-success">Evet</span> }
-                                else
-                                { <span class="badge bg-secondary">Hayır</span> }
-                            </dd>
-
-                            <dt class="col-sm-4">Araç Kartı:</dt>
-                            <dd class="col-sm-8">
-                                @if (ViewBag.PuantajsizAracKartiMi == true)
-                                { <span class="badge bg-success">Evet</span> }
-                                else
-                                { <span class="badge bg-secondary">Hayır</span> }
-                            </dd>
-
-                            <dt class="col-sm-4">Taşeron Çalışan:</dt>
-                            <dd class="col-sm-8">
-                                @if (ViewBag.PuantajsizTaseronCalisanMi == true)
-                                { <span class="badge bg-success">Evet</span> }
-                                else
-                                { <span class="badge bg-secondary">Hayır</span> }
-                            </dd>
-
-                            <dt class="col-sm-4">Aktif:</dt>
-                            <dd class="col-sm-8">
-                                @if (ViewBag.PuantajsizAktifMi == true)
-                                { <span class="badge bg-success">Evet</span> }
-                                else
-                                { <span class="badge bg-secondary">Hayır</span> }
-                            </dd>
-                        </dl>
-                    </div>
-                </div>
-            }
         </div>
     </div>
 

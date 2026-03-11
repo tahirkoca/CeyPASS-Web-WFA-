@@ -35,7 +35,7 @@ namespace CeyPASS.WFA.Forms
             this.canliEkranSifre = new System.Windows.Forms.TextBox();
             this.label2 = new System.Windows.Forms.Label();
             this.pnlUser = new System.Windows.Forms.Panel();
-            this.canliEkranKullaniciAdi = new System.Windows.Forms.TextBox();
+            this.canliEkranKullaniciAdi = new System.Windows.Forms.ComboBox();
             this.label1 = new System.Windows.Forms.Label();
             this.lblSubtitle = new System.Windows.Forms.Label();
             this.lblTitle = new System.Windows.Forms.Label();
@@ -183,9 +183,10 @@ namespace CeyPASS.WFA.Forms
             // canliEkranKullaniciAdi
             // 
             this.canliEkranKullaniciAdi.BackColor = System.Drawing.Color.White;
-            this.canliEkranKullaniciAdi.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.canliEkranKullaniciAdi.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.canliEkranKullaniciAdi.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.canliEkranKullaniciAdi.Font = new System.Drawing.Font("Segoe UI", 9.5F);
+            this.canliEkranKullaniciAdi.FormattingEnabled = true;
             this.canliEkranKullaniciAdi.Location = new System.Drawing.Point(80, 0);
             this.canliEkranKullaniciAdi.Name = "canliEkranKullaniciAdi";
             this.canliEkranKullaniciAdi.Size = new System.Drawing.Size(300, 29);
@@ -295,7 +296,7 @@ namespace CeyPASS.WFA.Forms
         private System.Windows.Forms.Label lblTitle;
         private System.Windows.Forms.Label lblSubtitle;
 
-        private System.Windows.Forms.TextBox canliEkranKullaniciAdi;
+        private System.Windows.Forms.ComboBox canliEkranKullaniciAdi;
         private System.Windows.Forms.TextBox canliEkranSifre;
         private System.Windows.Forms.ComboBox canliIzlemeBolgeBox;
         private System.Windows.Forms.Button canliEkranGirisButon;

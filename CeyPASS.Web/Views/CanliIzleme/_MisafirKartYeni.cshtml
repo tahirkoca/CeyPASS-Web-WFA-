@@ -1,6 +1,6 @@
 @model CeyPASS.Web.Models.CanliIzleme.MisafirKartYeniModel
 @{
-    var cards = ViewBag.Cards as List<CeyPASS.Entities.Concrete.PuantajsizKart> ?? new List<CeyPASS.Entities.Concrete.PuantajsizKart>();
+    var cards = ViewBag.Cards as List<CeyPASS.Entities.Concrete.KisiListItem> ?? new List<CeyPASS.Entities.Concrete.KisiListItem>();
 }
 
 <form id="misafirYeniForm" method="post" asp-controller="CanliIzleme" asp-action="MisafirKartYeni">
@@ -13,9 +13,7 @@
                 <option value="">-- Seçiniz --</option>
                 @foreach (var c in cards)
                 {
-                    int id = 0;
-                    int.TryParse(c.KartId, out id);
-                    <option value="@id">@c.KartAdi</option>
+                    <option value="@c.PersonelId">@c.AdSoyad</option>
                 }
             </select>
         </div>

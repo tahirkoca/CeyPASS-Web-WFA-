@@ -512,14 +512,18 @@
                     <div class="form-group">
                         <label class="form-label">Kullanıcı Adı</label>
                         <div class="input-group">
-                            <input type="text" 
-                                   class="form-control" 
-                                   id="username" 
-                                   name="username" 
-                                   placeholder="Kullanıcı adınızı girin"
-                                   required 
-                                   autofocus
-                                   autocomplete="username">
+                            <select class="form-select" 
+                                    id="username" 
+                                    name="username" 
+                                    required 
+                                    autofocus
+                                    autocomplete="username">
+                                <option value="">-- Kullanıcı seçiniz --</option>
+                                @foreach (var ad in (ViewBag.KullaniciAdlari as List<string>) ?? new List<string>())
+                                {
+                                    <option value="@ad">@ad</option>
+                                }
+                            </select>
                             <i class="bi bi-person input-icon"></i>
                         </div>
                     </div>

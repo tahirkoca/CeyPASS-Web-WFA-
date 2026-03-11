@@ -20,7 +20,6 @@ namespace CeyPASS.WFA.Forms
         public canliIzlemeGirisEkrani(girisEkrani girisFormu,ISessionContext session, ICanliIzlemeService svc,IKisiHareketService khsvc,IKisiDetayService kdsvc,IMisafirKartService msvc)
         {
             InitializeComponent();
-            SendMessage(canliEkranKullaniciAdi.Handle, EM_SETCUEBANNER, 0, "Kullanıcı adınızı giriniz");
             SendMessage(canliEkranSifre.Handle, EM_SETCUEBANNER, 0, "Şifrenizi giriniz");
             this.girisFormuRef = girisFormu;
             _session= session;
@@ -36,6 +35,28 @@ namespace CeyPASS.WFA.Forms
             canliIzlemeBolgeBox.DataSource = dt;
             canliIzlemeBolgeBox.DisplayMember = "FirmaAdi";
             canliIzlemeBolgeBox.ValueMember = "FirmaId";
+            canliIzlemeBolgeBox.SelectedIndexChanged += canliIzlemeBolgeBox_SelectedIndexChanged;
+            // İlk bölgeyi seçip kullanıcı dropdown'ını hemen doldur (açılışta liste görünsün)
+            if (canliIzlemeBolgeBox.Items.Count > 0)
+                canliIzlemeBolgeBox.SelectedIndex = 0;
+            FillKullaniciCombo();
+        }
+        private void canliIzlemeBolgeBox_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            FillKullaniciCombo();
+        }
+        private void FillKullaniciCombo()
+        {
+            if (canliIzlemeBolgeBox.SelectedValue == null || !int.TryParse(canliIzlemeBolgeBox.SelectedValue.ToString(), out int firmaId))
+            {
+                canliEkranKullaniciAdi.DataSource = null;
+                canliEkranKullaniciAdi.Items.Clear();
+                return;
+            }
+            var adlar = _svc.GetKullaniciAdlariByFirma(firmaId);
+            canliEkranKullaniciAdi.DataSource = adlar ?? new System.Collections.Generic.List<string>();
+            if (canliEkranKullaniciAdi.Items.Count > 0)
+                canliEkranKullaniciAdi.SelectedIndex = 0;
         }
         private void ApplyTheme()
         {
@@ -53,7 +74,7 @@ namespace CeyPASS.WFA.Forms
             if (canliIzlemeBolgeBox.SelectedValue == null) { MessageBox.Show("Lütfen bölge seçin."); return; }
 
             int firmaId = Convert.ToInt32(canliIzlemeBolgeBox.SelectedValue);
-            string user = canliEkranKullaniciAdi.Text;
+            string user = (canliEkranKullaniciAdi.SelectedValue ?? canliEkranKullaniciAdi.Text)?.ToString()?.Trim() ?? "";
             string password = canliEkranSifre.Text;
             var auth = _svc.Login(firmaId, user, password);
 

@@ -19,7 +19,6 @@ namespace CeyPASS.Web.Controllers
         private readonly IAuthorizationService _authorizationService;
         private readonly ICalismaSekliService _calismaSekliService;
         private readonly IFirmaService _firmaService;
-        private readonly IPuantajsizKartRepository _puantajsizKartRepo;
         private const string PageName = "Personeller";
 
         public PersonelController(
@@ -29,8 +28,7 @@ namespace CeyPASS.Web.Controllers
             ISessionContext sessionContext,
             IAuthorizationService authorizationService,
             ICalismaSekliService calismaSekliService,
-            IFirmaService firmaService,
-            IPuantajsizKartRepository puantajsizKartRepo)
+            IFirmaService firmaService)
         {
             _kisiService = kisiService;
             _kisiQueryService = kisiQueryService;
@@ -39,7 +37,6 @@ namespace CeyPASS.Web.Controllers
             _authorizationService = authorizationService;
             _calismaSekliService = calismaSekliService;
             _firmaService = firmaService;
-            _puantajsizKartRepo = puantajsizKartRepo;
         }
 
         /// <param name="kartTipi">puantaj = Puantaj Yapılan Kartlar (PuantajYapilirMi=1), puantajsiz = Puantaj Yapılmayan Kartlar (PuantajYapilirMi=0)</param>
@@ -106,7 +103,7 @@ namespace CeyPASS.Web.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Create(Kisi kisi, bool firmaPersoneli, bool puantajYapilabilir, bool yemekHakkiVar, int gunlukYemekLimiti, string puantajsizKartId, string puantajsizKartNo, string puantajsizKartAdi, IFormFile fotograf)
+        public IActionResult Create(Kisi kisi, bool firmaPersoneli, bool puantajYapilabilir, bool yemekHakkiVar, int gunlukYemekLimiti, string puantajsizKartId, string puantajsizKartNo, string puantajsizKartAdi, IFormFile fotograf, bool ziyaretciMi, bool aracKartiMi, bool taseronCalisanMi)
         {
             if (!_authorizationService.Can(PageName, YetkiTipleri.Create))
             {
@@ -135,6 +132,10 @@ namespace CeyPASS.Web.Controllers
 
             try
             {
+                kisi.ZiyaretciMi = ziyaretciMi;
+                kisi.AracKartiMi = aracKartiMi;
+                kisi.TaseronCalisanMi = taseronCalisanMi;
+
                 // Fotoğraf yükleme
                 if (fotograf != null && fotograf.Length > 0)
                 {
@@ -180,15 +181,7 @@ namespace CeyPASS.Web.Controllers
 
             var kisi = _kisiQueryService.GetKisiDetay(id);
             if (kisi == null)
-            {
-                var puantajsiz = _puantajsizKartRepo.GetByKartId(id);
-                if (puantajsiz != null)
-                {
-                    ViewBag.OriginalPersonelId = id;
-                    return View("EditPuantajsiz", puantajsiz);
-                }
                 return NotFound();
-            }
 
             LoadLookupData(kisi);
             ViewBag.OriginalPersonelId = id;
@@ -199,25 +192,8 @@ namespace CeyPASS.Web.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult EditPuantajsiz(string kartId, string kartAdi, string kartNo, string calismaSekli, string kartTipi, int? firmaId)
         {
-            if (!_authorizationService.Can(PageName, YetkiTipleri.Update))
-            {
-                TempData["Error"] = "Personel güncelleme yetkiniz yok.";
-                return RedirectToAction("Index");
-            }
-            if (string.IsNullOrWhiteSpace(kartId))
-            {
-                TempData["Error"] = "Kart bulunamadı.";
-                return RedirectToAction("Index");
-            }
-            var mevcut = _puantajsizKartRepo.GetByKartId(kartId);
-            if (mevcut == null)
-            {
-                TempData["Error"] = "Puantajsız kart bulunamadı.";
-                return RedirectToAction("Index");
-            }
-            _puantajsizKartRepo.UpdateByKartId(kartId, kartAdi, kartNo, calismaSekli);
-            TempData["Success"] = "Puantajsız kart başarıyla güncellendi.";
-            return RedirectToAction("Details", new { id = kartId, kartTipi, firmaId });
+            TempData["Info"] = "Personel bilgileri artık Kisiler üzerinden düzenlenir.";
+            return RedirectToAction("Index", new { kartTipi, firmaId });
         }
 
         [HttpPost]
@@ -251,7 +227,10 @@ namespace CeyPASS.Web.Controllers
                     CepTel = kisiDetay.CepTel,
                     Email = kisiDetay.Email,
                     PuantajYapilirMi = kisiDetay.PuantajYapilabilir,
-                    Fotograf = kisiDetay.Fotograf
+                    Fotograf = kisiDetay.Fotograf,
+                    ZiyaretciMi = kisiDetay.ZiyaretciMi,
+                    AracKartiMi = kisiDetay.AracKartiMi,
+                    TaseronCalisanMi = kisiDetay.TaseronCalisanMi
                 };
 
                 // Fotoğraf yükleme (yeni fotoğraf varsa)
@@ -346,35 +325,8 @@ namespace CeyPASS.Web.Controllers
 
             var kisi = _kisiQueryService.GetKisiDetay(id);
             if (kisi == null)
-            {
-                // PuantajsizKartlar'da varsa detayı oradan göster (sadece görüntüleme)
-                var puantajsiz = _puantajsizKartRepo.GetByKartId(id);
-                if (puantajsiz == null)
-                    return NotFound();
+                return NotFound();
 
-                var detay = new KisiDetay
-                {
-                    PersonelId = puantajsiz.KartId,
-                    Ad = puantajsiz.KartAdi ?? "",
-                    Soyad = "",
-                    KartNo = puantajsiz.KartNo,
-                    FirmaId = puantajsiz.FirmaId ?? 0,
-                    FirmaPersoneli = false,
-                    PuantajYapilabilir = false,
-                    YemekHakkiVar = false,
-                    CalismaSekliCsv = puantajsiz.CalismaSekli
-                };
-                ViewBag.PuantajsizKartMi = true;
-                ViewBag.PuantajsizCalismaSekli = puantajsiz.CalismaSekli ?? "-";
-                ViewBag.PuantajsizZiyaretciMi = puantajsiz.ZiyaretciMi == true;
-                ViewBag.PuantajsizAracKartiMi = puantajsiz.AracKartiMi == true;
-                ViewBag.PuantajsizTaseronCalisanMi = puantajsiz.TaseronCalisanMi == true;
-                ViewBag.PuantajsizAktifMi = puantajsiz.AktifMi;
-                FillOrganizasyonAdlari(detay);
-                return View(detay);
-            }
-
-            ViewBag.PuantajsizKartMi = false;
             FillOrganizasyonAdlari(kisi);
             return View(kisi);
         }

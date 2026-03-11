@@ -39,7 +39,7 @@ namespace CeyPASS.WFA
             this.txtSifre = new System.Windows.Forms.TextBox();
             this.lblPassword = new System.Windows.Forms.Label();
             this.pnlUsername = new System.Windows.Forms.Panel();
-            this.txtKullaniciAdi = new System.Windows.Forms.TextBox();
+            this.cmbKullaniciAdi = new System.Windows.Forms.ComboBox();
             this.lblUsername = new System.Windows.Forms.Label();
             this.lblSubtitle = new System.Windows.Forms.Label();
             this.lblWelcome = new System.Windows.Forms.Label();
@@ -211,7 +211,7 @@ namespace CeyPASS.WFA
             // 
             // pnlUsername
             // 
-            this.pnlUsername.Controls.Add(this.txtKullaniciAdi);
+            this.pnlUsername.Controls.Add(this.cmbKullaniciAdi);
             this.pnlUsername.Controls.Add(this.lblUsername);
             this.pnlUsername.Dock = System.Windows.Forms.DockStyle.Top;
             this.pnlUsername.Location = new System.Drawing.Point(40, 10);
@@ -219,19 +219,18 @@ namespace CeyPASS.WFA
             this.pnlUsername.Size = new System.Drawing.Size(340, 70);
             this.pnlUsername.TabIndex = 0;
             // 
-            // txtKullaniciAdi
+            // cmbKullaniciAdi
             // 
-            this.txtKullaniciAdi.BackColor = System.Drawing.Color.White;
-            this.txtKullaniciAdi.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.txtKullaniciAdi.Dock = System.Windows.Forms.DockStyle.Top;
-            this.txtKullaniciAdi.Font = new System.Drawing.Font("Segoe UI", 11F);
-            this.txtKullaniciAdi.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(28)))), ((int)(((byte)(28)))), ((int)(((byte)(28)))));
-            this.txtKullaniciAdi.Location = new System.Drawing.Point(0, 25);
-            this.txtKullaniciAdi.Name = "txtKullaniciAdi";
-            this.txtKullaniciAdi.Size = new System.Drawing.Size(340, 32);
-            this.txtKullaniciAdi.TabIndex = 1;
-            this.txtKullaniciAdi.Enter += new System.EventHandler(this.txtKullaniciAdi_Enter);
-            this.txtKullaniciAdi.Leave += new System.EventHandler(this.txtKullaniciAdi_Leave);
+            this.cmbKullaniciAdi.BackColor = System.Drawing.Color.White;
+            this.cmbKullaniciAdi.Dock = System.Windows.Forms.DockStyle.Top;
+            this.cmbKullaniciAdi.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cmbKullaniciAdi.Font = new System.Drawing.Font("Segoe UI", 11F);
+            this.cmbKullaniciAdi.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(28)))), ((int)(((byte)(28)))), ((int)(((byte)(28)))));
+            this.cmbKullaniciAdi.FormattingEnabled = true;
+            this.cmbKullaniciAdi.Location = new System.Drawing.Point(0, 25);
+            this.cmbKullaniciAdi.Name = "cmbKullaniciAdi";
+            this.cmbKullaniciAdi.Size = new System.Drawing.Size(340, 33);
+            this.cmbKullaniciAdi.TabIndex = 1;
             // 
             // lblUsername
             // 
@@ -333,7 +332,7 @@ namespace CeyPASS.WFA
         private System.Windows.Forms.Panel pnlForm;
         private System.Windows.Forms.Panel pnlUsername;
         private System.Windows.Forms.Label lblUsername;
-        private System.Windows.Forms.TextBox txtKullaniciAdi;
+        private System.Windows.Forms.ComboBox cmbKullaniciAdi;
         private System.Windows.Forms.Panel pnlPassword;
         private System.Windows.Forms.Label lblPassword;
         private System.Windows.Forms.TextBox txtSifre;

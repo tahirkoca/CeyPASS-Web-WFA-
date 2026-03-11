@@ -22,8 +22,8 @@ namespace CeyPASS.DataAccess.Repositories
 
             var query =
                 from a in _context.PuantajsizKartAtamalari
-                join k in _context.PuantajsizKartlar
-                    on a.KartId equals k.KartId
+                join k in _context.Kisiler
+                    on a.KartId equals k.PersonelId
                 where k.FirmaId == firmaId
                       && a.Baslangic.Date == today
                       && a.Bitis == null
@@ -33,7 +33,7 @@ namespace CeyPASS.DataAccess.Repositories
                     AtamaId = a.AtamaId,
                     KartId = a.KartId,
                     MisafirAdSoyad = a.MisafirAdSoyad,
-                    KartAdi = k.KartAdi,
+                    KartAdi = (k.Ad != null || k.Soyad != null) ? ((k.Ad ?? "") + " " + (k.Soyad ?? "")).Trim() : "",
                     Baslangic = a.Baslangic,
                     Bitis = a.Bitis,
                     Notlar = a.Notlar
@@ -42,20 +42,16 @@ namespace CeyPASS.DataAccess.Repositories
             return query.ToList();
         }
 
-        public bool CardBelongsToFirma(int kartId, int firmaId)
+        public bool CardBelongsToFirma(string personelId, int firmaId)
         {
-            var kartIdStr = kartId.ToString();
-
-            return _context.PuantajsizKartlar
-                .Any(k => k.KartId == kartIdStr && k.FirmaId == firmaId);
+            return _context.Kisiler
+                .Any(k => k.PersonelId == personelId && k.FirmaId == firmaId);
         }
 
-        public bool ExistsActiveForCard(int kartId)
+        public bool ExistsActiveForCard(string personelId)
         {
-            var kartIdStr = kartId.ToString();
-
             return _context.PuantajsizKartAtamalari
-                .Any(a => a.KartId == kartIdStr && a.Bitis == null);
+                .Any(a => a.KartId == personelId && a.Bitis == null);
         }
 
         public int Insert(PuantajsizKartAtama a)

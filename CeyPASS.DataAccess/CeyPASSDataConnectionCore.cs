@@ -35,7 +35,6 @@ namespace CeyPASS.DataAccess
         public DbSet<KullaniciEkstraYetkilendirme> KullaniciEkstraYetkilendirme { get; set; }
         public DbSet<KullaniciSifreKurtarma> KullaniciSifreKurtarma { get; set; }
         public DbSet<PuantajOnay> PuantajOnay { get; set; }
-        public DbSet<PuantajsizKartlar> PuantajsizKartlar { get; set; }
         public DbSet<PuantajTipleri> PuantajTipleri { get; set; }
         public DbSet<SayfaYetkileri> SayfaYetkileri { get; set; }
         public DbSet<SistemLoglari> SistemLoglari { get; set; }
@@ -95,7 +94,6 @@ namespace CeyPASS.DataAccess
                 .Metadata.SetAfterSaveBehavior(Microsoft.EntityFrameworkCore.Metadata.PropertySaveBehavior.Ignore);
             modelBuilder.Entity<PuantajOnay>().HasKey(e => new { e.PersonelId, e.Tarih });
             modelBuilder.Entity<FinalPuantajVerisi>().HasKey(e => e.Id);
-            modelBuilder.Entity<PuantajsizKartlar>().HasKey(e => e.KartNo);
             modelBuilder.Entity<PuantajsizKartAtamalari>().HasKey(e => e.AtamaId);
             modelBuilder.Entity<KullaniciEkstraYetkilendirme>().HasKey(e => new { e.KullaniciId, e.SayfaAdi, e.YetkiTipi, e.Allowed });
             modelBuilder.Entity<KullaniciSifreKurtarma>().HasKey(e => e.Id);

@@ -31,7 +31,6 @@ namespace CeyPASS.WFA
         public girisEkrani(ISessionContext session,ICanliIzlemeService svc,ISifreService ssvc,IKullaniciService ksvc,IEmailService esvc,IKisiHareketService khsvc,IKisiDetayService kdsvc,IMisafirKartService mksvc, IServiceProvider sp)
         {
             InitializeComponent();
-            SendMessage(txtKullaniciAdi.Handle, EM_SETCUEBANNER, 0, "Kullanıcı adınızı giriniz");
             SendMessage(txtSifre.Handle, EM_SETCUEBANNER, 0, "Şifrenizi giriniz");
             this.KeyPreview = true;
             this.KeyDown += girisEkrani_KeyDown;
@@ -51,10 +50,15 @@ namespace CeyPASS.WFA
             // Sürüm: AssemblyVersion ile aynı kaynaktan; Application.ProductVersion AssemblyInformationalVersion kullanır
             var version = Application.ProductVersion ?? Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "0.0.0";
             this.Text = $"CeyPASS v{version}";
+            // Yetkili tablosundan kullanıcı adlarını dropdown'a doldur
+            var adlar = _ksvc.GetTumKullaniciAdlari();
+            cmbKullaniciAdi.DataSource = adlar ?? new System.Collections.Generic.List<string>();
+            if (cmbKullaniciAdi.Items.Count > 0)
+                cmbKullaniciAdi.SelectedIndex = 0;
         }
         private void btnGiris_Click(object sender, EventArgs e)
         {
-            string kullaniciAdi = txtKullaniciAdi.Text.Trim();
+            string kullaniciAdi = (cmbKullaniciAdi.SelectedValue ?? cmbKullaniciAdi.Text)?.ToString()?.Trim() ?? "";
             string sifre = txtSifre.Text.Trim();
 
             Kullanici kullanici = _ksvc.GirisYap(kullaniciAdi, sifre);
@@ -92,7 +96,7 @@ namespace CeyPASS.WFA
         }
         private void btnSifremiUnuttum_Click(object sender, EventArgs e)
         {
-            string kullaniciAdi = txtKullaniciAdi.Text.Trim();
+            string kullaniciAdi = (cmbKullaniciAdi.SelectedValue ?? cmbKullaniciAdi.Text)?.ToString()?.Trim() ?? "";
 
             if (string.IsNullOrEmpty(kullaniciAdi))
             {
@@ -206,16 +210,6 @@ namespace CeyPASS.WFA
             path.AddArc(rect.X, rect.Bottom - radius, radius, radius, 90, 90);
             path.CloseFigure();
             return path;
-        }
-        private void txtKullaniciAdi_Enter(object sender, EventArgs e)
-        {
-            txtKullaniciAdi.BackColor = Color.FromArgb(248, 249, 250);
-            lblUsername.ForeColor = AppTheme.BorderFocus;
-        }
-        private void txtKullaniciAdi_Leave(object sender, EventArgs e)
-        {
-            txtKullaniciAdi.BackColor = Color.White;
-            lblUsername.ForeColor = AppTheme.TextPrimary;
         }
         private void txtSifre_Enter(object sender, EventArgs e)
         {

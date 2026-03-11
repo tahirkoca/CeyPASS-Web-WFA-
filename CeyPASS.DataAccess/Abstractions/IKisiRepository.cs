@@ -7,7 +7,7 @@ namespace CeyPASS.DataAccess.Abstractions
     public interface IKisiRepository
     {
         bool Exists(string personelId);
-        List<KisiListItem> GetAktifByFirma(int firmId, string search = null, bool? puantajYapilirMi = true, int? isyeriId = null);
+        List<KisiListItem> GetAktifByFirma(int firmId, string search = null, bool? puantajYapilirMi = true, int? isyeriId = null, bool? ziyaretciMi = null);
         KisiDetay GetDetay(string personelId);
         void SetIstenCikisTarihi(string personelId, DateTime tarih);
         List<Kisi> GetKisilerForPuantaj(int firmaId, int isyeriId, int yil, int ay);

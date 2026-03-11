@@ -111,7 +111,6 @@ namespace CeyPASS.WFA
             services.AddScoped<IPozisyonRepository, PozisyonRepositoryCore>();
             services.AddScoped<IPuantajRepository, PuantajRepositoryCore>();
             services.AddScoped<IPuantajsizKartAtamaRepository, PuantajsizKartAtamaRepositoryCore>();
-            services.AddScoped<IPuantajsizKartRepository, PuantajsizKartRepositoryCore>();
             services.AddScoped<IRaporRepository, RaporRepositoryCore>();
             services.AddScoped<IResmiTatilRepository, ResmiTatilRepositoryCore>();
             services.AddScoped<ISistemLogRepository, SistemLogRepositoryCore>();

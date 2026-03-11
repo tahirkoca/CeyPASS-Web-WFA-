@@ -1084,6 +1084,9 @@ namespace CeyPASS.WFA.UserControls
             this.chkFirmaPersoneliMi = new System.Windows.Forms.CheckBox();
             this.chkPuantajYapilirMi = new System.Windows.Forms.CheckBox();
             this.chkYemekHakkiVarMi = new System.Windows.Forms.CheckBox();
+            this.chkZiyaretciMi = new System.Windows.Forms.CheckBox();
+            this.chkAracKartiMi = new System.Windows.Forms.CheckBox();
+            this.chkTaseronCalisanMi = new System.Windows.Forms.CheckBox();
             this.pnlPhotoContainer = new System.Windows.Forms.Panel();
             this.tlpPhotoBtns = new System.Windows.Forms.TableLayoutPanel();
             this.btnFotoEkle = new System.Windows.Forms.Button();
@@ -1499,6 +1502,9 @@ namespace CeyPASS.WFA.UserControls
             this.pnlChecks.Controls.Add(this.chkFirmaPersoneliMi);
             this.pnlChecks.Controls.Add(this.chkPuantajYapilirMi);
             this.pnlChecks.Controls.Add(this.chkYemekHakkiVarMi);
+            this.pnlChecks.Controls.Add(this.chkZiyaretciMi);
+            this.pnlChecks.Controls.Add(this.chkAracKartiMi);
+            this.pnlChecks.Controls.Add(this.chkTaseronCalisanMi);
             this.pnlChecks.Dock = System.Windows.Forms.DockStyle.Fill;
             this.pnlChecks.FlowDirection = System.Windows.Forms.FlowDirection.TopDown;
             this.pnlChecks.Location = new System.Drawing.Point(0, 200);
@@ -1539,6 +1545,39 @@ namespace CeyPASS.WFA.UserControls
             this.chkYemekHakkiVarMi.TabIndex = 2;
             this.chkYemekHakkiVarMi.Text = "Yemek Hakkı Var";
             this.chkYemekHakkiVarMi.UseVisualStyleBackColor = true;
+            // 
+            // chkZiyaretciMi
+            // 
+            this.chkZiyaretciMi.AutoSize = true;
+            this.chkZiyaretciMi.Font = new System.Drawing.Font("Segoe UI", 10F);
+            this.chkZiyaretciMi.Location = new System.Drawing.Point(3, 122);
+            this.chkZiyaretciMi.Name = "chkZiyaretciMi";
+            this.chkZiyaretciMi.Size = new System.Drawing.Size(130, 27);
+            this.chkZiyaretciMi.TabIndex = 3;
+            this.chkZiyaretciMi.Text = "Ziyaretçi Kartı";
+            this.chkZiyaretciMi.UseVisualStyleBackColor = true;
+            // 
+            // chkAracKartiMi
+            // 
+            this.chkAracKartiMi.AutoSize = true;
+            this.chkAracKartiMi.Font = new System.Drawing.Font("Segoe UI", 10F);
+            this.chkAracKartiMi.Location = new System.Drawing.Point(3, 155);
+            this.chkAracKartiMi.Name = "chkAracKartiMi";
+            this.chkAracKartiMi.Size = new System.Drawing.Size(108, 27);
+            this.chkAracKartiMi.TabIndex = 4;
+            this.chkAracKartiMi.Text = "Araç Kartı";
+            this.chkAracKartiMi.UseVisualStyleBackColor = true;
+            // 
+            // chkTaseronCalisanMi
+            // 
+            this.chkTaseronCalisanMi.AutoSize = true;
+            this.chkTaseronCalisanMi.Font = new System.Drawing.Font("Segoe UI", 10F);
+            this.chkTaseronCalisanMi.Location = new System.Drawing.Point(3, 188);
+            this.chkTaseronCalisanMi.Name = "chkTaseronCalisanMi";
+            this.chkTaseronCalisanMi.Size = new System.Drawing.Size(148, 27);
+            this.chkTaseronCalisanMi.TabIndex = 5;
+            this.chkTaseronCalisanMi.Text = "Taşeron Çalışan";
+            this.chkTaseronCalisanMi.UseVisualStyleBackColor = true;
             // 
             // pnlPhotoContainer
             // 
@@ -2134,6 +2173,9 @@ namespace CeyPASS.WFA.UserControls
         private System.Windows.Forms.CheckBox chkFirmaPersoneliMi;
         private System.Windows.Forms.CheckBox chkPuantajYapilirMi;
         private System.Windows.Forms.CheckBox chkYemekHakkiVarMi;
+        private System.Windows.Forms.CheckBox chkZiyaretciMi;
+        private System.Windows.Forms.CheckBox chkAracKartiMi;
+        private System.Windows.Forms.CheckBox chkTaseronCalisanMi;
 
         private System.Windows.Forms.Label lblAdSoyad;
         private System.Windows.Forms.Label lblTc;

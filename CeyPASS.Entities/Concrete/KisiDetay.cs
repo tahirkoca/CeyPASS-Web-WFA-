@@ -28,5 +28,8 @@ namespace CeyPASS.Entities.Concrete
         public bool YemekHakkiVar { get; set; }
         public int? GunlukYemekAdedi { get; set; }
         public string TaseronKartNo { get; set; }          
+        public bool ZiyaretciMi { get; set; }
+        public bool AracKartiMi { get; set; }
+        public bool TaseronCalisanMi { get; set; }
     }
 }

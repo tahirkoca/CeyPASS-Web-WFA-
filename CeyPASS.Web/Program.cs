@@ -64,7 +64,6 @@ builder.Services.AddTransient<IMailRepository, MailRepositoryCore>();
 builder.Services.AddTransient<IYemekhaneRepository, YemekhaneRepositoryCore>();
 builder.Services.AddTransient<ICanliIzlemeRepository, CanliIzlemeRepositoryCore>();
 builder.Services.AddTransient<IDashboardRepository, DashboardRepositoryCore>();
-builder.Services.AddTransient<IPuantajsizKartRepository, PuantajsizKartRepositoryCore>();
 builder.Services.AddTransient<IPuantajsizKartAtamaRepository, PuantajsizKartAtamaRepositoryCore>();
 builder.Services.AddTransient<IRaporRepository, RaporRepositoryCore>();
 builder.Services.AddTransient<IKisiHareketRepository, KisiHareketRepositoryCore>();

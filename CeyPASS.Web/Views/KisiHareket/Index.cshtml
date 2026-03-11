@@ -11,6 +11,7 @@
     var sadeceAktif = ViewBag.SadeceAktif as bool? ?? false;
     var sadecePasif = ViewBag.SadecePasif as bool? ?? false;
     var sadeceYemekhane = ViewBag.SadeceYemekhane as bool? ?? false;
+    var kartTipi = ViewBag.KartTipi as string ?? "puantaj";
     var canCreate = ViewBag.CanCreate as bool? ?? false;
     var canUpdate = ViewBag.CanUpdate as bool? ?? false;
     var canDelete = ViewBag.CanDelete as bool? ?? false;
@@ -72,6 +73,22 @@
                             {
                                 <input type="hidden" name="firmaId" value="@selectedFirmaId" />
                             }
+
+                            <div class="col-md-2">
+                                <label for="kartTipi" class="form-label">Kart Tipi:</label>
+                                <select name="kartTipi" id="kartTipi" class="form-select">
+                                    @if (kartTipi == "puantajsiz")
+                                    {
+                                        <option value="puantaj">Puantaj Yapılanlar</option>
+                                        <option value="puantajsiz" selected="selected">Puantaj Yapılmayanlar</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="puantaj" selected="selected">Puantaj Yapılanlar</option>
+                                        <option value="puantajsiz">Puantaj Yapılmayanlar</option>
+                                    }
+                                </select>
+                            </div>
 
                             <div class="col-md-3">
                                 <label for="baslangic" class="form-label">Başlangıç Tarihi:</label>
@@ -379,8 +396,8 @@
             modal.show();
         }
 
-        // Firma değiştiğinde sayfayı yenile
-        $('#firmaId').change(function() {
+        // Firma veya kart tipi değiştiğinde sayfayı yenile (personel listesi güncellenir)
+        $('#firmaId, #kartTipi').change(function() {
             $('#filterForm').submit();
         });
     </script>

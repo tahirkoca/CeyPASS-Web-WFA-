@@ -34,5 +34,8 @@ namespace CeyPASS.DataAccess
         public string Email { get; set; }
         public Nullable<bool> PuantajYapilirMi { get; set; }
         public Nullable<int> BolumId { get; set; }
+        public Nullable<bool> ZiyaretciMi { get; set; }
+        public Nullable<bool> AracKartiMi { get; set; }
+        public Nullable<bool> TaseronCalisanMi { get; set; }
     }
 }

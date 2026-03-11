@@ -40,7 +40,7 @@ namespace CeyPASS.WFA.UserControls.Canlı_İzleme
 
                     int yeniId = _msvc.CreateAssignment(
                         firmaId: (int)_session.AktifFirmaId,
-                        kartId: Convert.ToInt32(kartId),
+                        personelId: kartId,
                         misafirAdSoyad: txtMisafirAdSoyad.Text,
                         girisSaati: dtpGirisSaati.Value,
                         aciklama: txtAciklama.Text
@@ -103,8 +103,8 @@ namespace CeyPASS.WFA.UserControls.Canlı_İzleme
             var cards = _msvc.GetCardsForNew(firmaId);
 
             cmbPuantajsizKartlar.DataSource = null;
-            cmbPuantajsizKartlar.DisplayMember = nameof(PuantajsizKart.KartAdi);
-            cmbPuantajsizKartlar.ValueMember = nameof(PuantajsizKart.KartId);
+            cmbPuantajsizKartlar.DisplayMember = nameof(KisiListItem.AdSoyad);
+            cmbPuantajsizKartlar.ValueMember = nameof(KisiListItem.PersonelId);
             cmbPuantajsizKartlar.DataSource = cards;
             cmbPuantajsizKartlar.DropDownStyle = ComboBoxStyle.DropDownList;
 

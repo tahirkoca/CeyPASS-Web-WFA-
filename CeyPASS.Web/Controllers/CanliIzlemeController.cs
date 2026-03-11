@@ -36,6 +36,10 @@ namespace CeyPASS.Web.Controllers
         {
             var firmalar = ToFirmaOptions(_svc.GetFirmalar());
             ViewBag.Firmalar = firmalar;
+            var kullanicilarByFirma = new Dictionary<int, List<string>>();
+            foreach (var f in firmalar)
+                kullanicilarByFirma[f.Id] = _svc.GetKullaniciAdlariByFirma(f.Id) ?? new List<string>();
+            ViewBag.KullanicilarByFirmaJson = JsonSerializer.Serialize(kullanicilarByFirma);
             return View(new CanliIzlemeLoginModel());
         }
 

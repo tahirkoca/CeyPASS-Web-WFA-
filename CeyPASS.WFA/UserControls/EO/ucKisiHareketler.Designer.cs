@@ -50,6 +50,9 @@ namespace CeyPASS.WFA.UserControls.EO
             this.chkKisiler = new System.Windows.Forms.CheckedListBox();
             this.pnlLeftHeader = new System.Windows.Forms.Panel();
             this.lblPersonelListesi = new System.Windows.Forms.Label();
+            this.pnlKartTipi = new System.Windows.Forms.Panel();
+            this.lblKartTipi = new System.Windows.Forms.Label();
+            this.cmbKartTipi = new System.Windows.Forms.ComboBox();
             this.pnlMain.SuspendLayout();
             this.pnlContent.SuspendLayout();
             this.pnlGridContainer.SuspendLayout();
@@ -62,6 +65,7 @@ namespace CeyPASS.WFA.UserControls.EO
             this.pnlFirmaFilter.SuspendLayout();
             this.pnlLeft.SuspendLayout();
             this.pnlLeftHeader.SuspendLayout();
+            this.pnlKartTipi.SuspendLayout();
             this.SuspendLayout();
             // 
             // pnlMain
@@ -365,6 +369,7 @@ namespace CeyPASS.WFA.UserControls.EO
             this.pnlLeft.BackColor = System.Drawing.Color.White;
             this.pnlLeft.Controls.Add(this.chkKisiler);
             this.pnlLeft.Controls.Add(this.pnlLeftHeader);
+            this.pnlLeft.Controls.Add(this.pnlKartTipi);
             this.pnlLeft.Dock = System.Windows.Forms.DockStyle.Left;
             this.pnlLeft.Location = new System.Drawing.Point(10, 10);
             this.pnlLeft.Name = "pnlLeft";
@@ -407,6 +412,39 @@ namespace CeyPASS.WFA.UserControls.EO
             this.lblPersonelListesi.Text = "Personel Listesi";
             this.lblPersonelListesi.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
+            // pnlKartTipi
+            // 
+            this.pnlKartTipi.BackColor = System.Drawing.Color.WhiteSmoke;
+            this.pnlKartTipi.Controls.Add(this.cmbKartTipi);
+            this.pnlKartTipi.Controls.Add(this.lblKartTipi);
+            this.pnlKartTipi.Dock = System.Windows.Forms.DockStyle.Top;
+            this.pnlKartTipi.Location = new System.Drawing.Point(1, 1);
+            this.pnlKartTipi.Name = "pnlKartTipi";
+            this.pnlKartTipi.Padding = new System.Windows.Forms.Padding(8, 6, 8, 6);
+            this.pnlKartTipi.Size = new System.Drawing.Size(348, 44);
+            this.pnlKartTipi.TabIndex = 2;
+            // 
+            // lblKartTipi
+            // 
+            this.lblKartTipi.AutoSize = true;
+            this.lblKartTipi.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
+            this.lblKartTipi.ForeColor = System.Drawing.Color.Gray;
+            this.lblKartTipi.Location = new System.Drawing.Point(8, 12);
+            this.lblKartTipi.Name = "lblKartTipi";
+            this.lblKartTipi.Size = new System.Drawing.Size(68, 20);
+            this.lblKartTipi.TabIndex = 0;
+            this.lblKartTipi.Text = "Kart Tipi:";
+            // 
+            // cmbKartTipi
+            // 
+            this.cmbKartTipi.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cmbKartTipi.Font = new System.Drawing.Font("Segoe UI", 9.5F);
+            this.cmbKartTipi.FormattingEnabled = true;
+            this.cmbKartTipi.Location = new System.Drawing.Point(90, 8);
+            this.cmbKartTipi.Name = "cmbKartTipi";
+            this.cmbKartTipi.Size = new System.Drawing.Size(250, 29);
+            this.cmbKartTipi.TabIndex = 1;
+            // 
             // ucKisiHareketler
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
@@ -430,6 +468,8 @@ namespace CeyPASS.WFA.UserControls.EO
             this.pnlFirmaFilter.PerformLayout();
             this.pnlLeft.ResumeLayout(false);
             this.pnlLeftHeader.ResumeLayout(false);
+            this.pnlKartTipi.ResumeLayout(false);
+            this.pnlKartTipi.PerformLayout();
             this.ResumeLayout(false);
 
         }
@@ -442,6 +482,9 @@ namespace CeyPASS.WFA.UserControls.EO
         private System.Windows.Forms.Panel pnlContent;
 
         // Sol Menü
+        private System.Windows.Forms.Panel pnlKartTipi;
+        private System.Windows.Forms.Label lblKartTipi;
+        private System.Windows.Forms.ComboBox cmbKartTipi;
         private System.Windows.Forms.Panel pnlLeftHeader;
         private System.Windows.Forms.Label lblPersonelListesi;
         private System.Windows.Forms.CheckedListBox chkKisiler;

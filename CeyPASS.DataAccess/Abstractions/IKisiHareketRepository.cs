@@ -1,4 +1,4 @@
-﻿using CeyPASS.Entities.Concrete;
+using CeyPASS.Entities.Concrete;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -13,6 +13,6 @@ namespace CeyPASS.DataAccess.Abstractions
         bool InsertManual(int firmaId, int personelId, DateTime tarih, string tip);
         bool UpdateManual(int id, DateTime tarih, string tip);
         bool PasifYap(int id);
-        DataTable GetAktifKisilerWithSicil(int firmaId);
+        DataTable GetAktifKisilerWithSicil(int firmaId, bool puantajYapilirMi = true);
     }
 }

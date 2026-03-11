@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using CeyPASS.Business.Abstractions;
 using CeyPASS.Entities.Concrete;
+using System.Collections.Generic;
 
 namespace CeyPASS.Web.Controllers
 {
@@ -26,6 +27,7 @@ namespace CeyPASS.Web.Controllers
             {
                 return RedirectToAction("Index", "Home");
             }
+            ViewBag.KullaniciAdlari = _kullaniciService.GetTumKullaniciAdlari() ?? new List<string>();
             return View();
         }
 

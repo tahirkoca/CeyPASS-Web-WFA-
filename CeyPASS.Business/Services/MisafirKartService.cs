@@ -8,25 +8,24 @@ namespace CeyPASS.Business.Services
 {
     public class MisafirKartService:IMisafirKartService
     {
-        private readonly IPuantajsizKartRepository _kartRepo;
+        private readonly IKisiRepository _kisiRepo;
         private readonly IPuantajsizKartAtamaRepository _atamaRepo;
 
-        public MisafirKartService(IPuantajsizKartRepository kartRepo, IPuantajsizKartAtamaRepository atamaRepo)
+        public MisafirKartService(IKisiRepository kisiRepo, IPuantajsizKartAtamaRepository atamaRepo)
         {
-            _kartRepo = kartRepo;
+            _kisiRepo = kisiRepo;
             _atamaRepo= atamaRepo;
         }
 
-        public List<PuantajsizKart> GetCardsForNew(int firmaId)
+        public List<KisiListItem> GetCardsForNew(int firmaId)
         {
-            var tumKartlar = _kartRepo.GetByFirmaOrderByName(firmaId);
-            var sonuc = new List<PuantajsizKart>();
+            // Misafire atanacak kartlar: sadece ZiyaretciMi=1 (ziyaretçi kartı) olanlar
+            var tumKartlar = _kisiRepo.GetAktifByFirma(firmaId, null, puantajYapilirMi: false, isyeriId: null, ziyaretciMi: true);
+            var sonuc = new List<KisiListItem>();
             foreach (var k in tumKartlar)
             {
-                if (string.IsNullOrWhiteSpace(k.KartId)) continue;
-                if (!int.TryParse(k.KartId, out int kartIdInt))
-                    continue;
-                if (_atamaRepo.ExistsActiveForCard(kartIdInt))
+                if (string.IsNullOrWhiteSpace(k.PersonelId)) continue;
+                if (_atamaRepo.ExistsActiveForCard(k.PersonelId))
                     continue;
                 sonuc.Add(k);
             }
@@ -36,20 +35,20 @@ namespace CeyPASS.Business.Services
         {
             return _atamaRepo.GetTodayActive(now, firmaId);
         }
-        public int CreateAssignment(int firmaId, int kartId, string misafirAdSoyad, DateTime girisSaati, string aciklama)
+        public int CreateAssignment(int firmaId, string personelId, string misafirAdSoyad, DateTime girisSaati, string aciklama)
         {
             if (string.IsNullOrWhiteSpace(misafirAdSoyad))
                 throw new ArgumentException("Misafir adı soyadı boş olamaz.", nameof(misafirAdSoyad));
 
-            if (!_atamaRepo.CardBelongsToFirma(kartId, firmaId))
+            if (!_atamaRepo.CardBelongsToFirma(personelId, firmaId))
                 throw new InvalidOperationException("Seçilen kart bu firmaya ait değil.");
 
-            if (_atamaRepo.ExistsActiveForCard(kartId))
+            if (_atamaRepo.ExistsActiveForCard(personelId))
                 throw new InvalidOperationException("Bu karta ait aktif bir atama zaten var. Önce çıkış veriniz.");
 
             var id = _atamaRepo.Insert(new PuantajsizKartAtama
             {
-                KartId = Convert.ToString(kartId),
+                KartId = personelId,
                 MisafirAdSoyad = misafirAdSoyad.Trim(),
                 Baslangic = girisSaati,
                 Bitis = null,

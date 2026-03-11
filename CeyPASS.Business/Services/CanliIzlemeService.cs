@@ -1,4 +1,4 @@
-﻿using CeyPASS.Business.Abstractions;
+using CeyPASS.Business.Abstractions;
 using CeyPASS.DataAccess.Abstractions;
 using CeyPASS.Entities.Concrete;
 using System.Collections.Generic;
@@ -25,6 +25,10 @@ namespace CeyPASS.Business.Services
         public List<LastPassDTO> GetLastPassesYemekhane(int firmaId, int take)
         {
             return _canliRepo.GetLastPassesYemekhane(firmaId, take);
+        }
+        public List<string> GetKullaniciAdlariByFirma(int firmaId)
+        {
+            return _canliRepo.GetKullaniciAdlariByFirma(firmaId);
         }
     }
 }

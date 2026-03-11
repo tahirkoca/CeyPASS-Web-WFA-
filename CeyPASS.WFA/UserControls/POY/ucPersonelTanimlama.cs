@@ -25,7 +25,6 @@ namespace CeyPASS.WFA.UserControls
         private readonly IAuthorizationService _auth;
         private readonly ICalismaSekliService _calismaSekliSvc;
         private readonly IFirmaService _firmaSvc;
-        private readonly IPuantajsizKartRepository _puantajsizKartRepo;
         AuthorizationHelper authHelp;
         private bool _istenCikisModu = false;
         private bool _isYeniKayit = false;
@@ -34,14 +33,10 @@ namespace CeyPASS.WFA.UserControls
         private string _aktifFiltre = null;
         private KisiListItem _sonSecilen = null;
         private string _originalPersonelId = null;
-        private bool _seciliPuantajsizKartMi = false;
-        private HashSet<int> _firmaYetkileri = new HashSet<int>();
-        private List<FirmaIsyeriYetkiDTO> _kullaniciYetkileri;
-        private readonly IPuantajService _psvc;
         private const string PageName = "Personeller";
         private const string PageNameUI = "Personeller";
 
-        public ucPersonelTanimlama(ISessionContext session, IKisiService kisiSvc, IKisiQueryService kisiQuerySvc, IKisiEkraniLookUpService lookups, ICalismaSekliService calismaSekliSvc, IAuthorizationService authSvc, IFirmaService firmaSvc, IPuantajsizKartRepository puantajsizKartRepo, IPuantajService psvc)
+        public ucPersonelTanimlama(ISessionContext session, IKisiService kisiSvc, IKisiQueryService kisiQuerySvc, IKisiEkraniLookUpService lookups, ICalismaSekliService calismaSekliSvc, IAuthorizationService authSvc, IFirmaService firmaSvc)
         {
             InitializeComponent();
             SendMessage(txtCepTel.Handle, EM_SETCUEBANNER, 0, "05.. - ... - .. - .. şeklinde giriniz");
@@ -64,8 +59,6 @@ namespace CeyPASS.WFA.UserControls
             _calismaSekliSvc = calismaSekliSvc;
             _auth = authSvc;
             _firmaSvc = firmaSvc;
-            _psvc = psvc;
-            _puantajsizKartRepo = puantajsizKartRepo;
             authHelp = new AuthorizationHelper(_session, _auth);
 
             if (!_auth.ViewAbility(PageName))
@@ -113,6 +106,9 @@ namespace CeyPASS.WFA.UserControls
             chkFirmaPersoneliMi.CheckedChanged += (s, e) => UpdateUIState();
             chkYemekHakkiVarMi.CheckedChanged += (s, e) => UpdateUIState();
             chkPuantajYapilirMi.CheckedChanged += (s, e) => UpdateUIState();
+            chkZiyaretciMi.CheckedChanged += (s, e) => UpdateUIState();
+            chkAracKartiMi.CheckedChanged += (s, e) => UpdateUIState();
+            chkTaseronCalisanMi.CheckedChanged += (s, e) => UpdateUIState();
 
             lstKisiler.DrawMode = DrawMode.OwnerDrawFixed;
             lstKisiler.ItemHeight = 30;
@@ -128,10 +124,6 @@ namespace CeyPASS.WFA.UserControls
             {
                 if (cmbKartTipi.Items.Count > 0 && cmbKartTipi.SelectedIndex < 0)
                     cmbKartTipi.SelectedIndex = 0; // Puantaj Yapılanlar
-                
-                _kullaniciYetkileri = _psvc.GetKullaniciFirmaIsyeriYetkileri((int)_session.AktifKullaniciId) ?? new List<FirmaIsyeriYetkiDTO>();
-                _firmaYetkileri = _kullaniciYetkileri.Select(y => y.FirmaId).Distinct().ToHashSet();
-
                 FirmaFilteriniYukle();
 
                 int firmaId = GetSeciliFirmaId();
@@ -171,10 +163,9 @@ namespace CeyPASS.WFA.UserControls
                 else
                 {
                     liste = tumFirmalar
-                        .Where(f => _firmaYetkileri.Contains(f.FirmaId))
-                        .OrderBy(f => f.FirmaAdi)
+                        .Where(f => f.FirmaId == _session.AktifFirmaId)
                         .ToList();
-                    cmbFirmaFilter.Enabled = true; // Firmalar arası geçiş yapabilsin
+                    cmbFirmaFilter.Enabled = false;
                 }
 
                 cmbFirmaFilter.DataSource = null;
@@ -338,27 +329,6 @@ namespace CeyPASS.WFA.UserControls
             try
             {
                 var list = _iklsvc.GetIsyerleri(firmaId) ?? new List<LookupItem>();
-                
-                bool isAdmin = _session.RolId == 1 || _session.RolId == 2;
-                if (!isAdmin && _kullaniciYetkileri != null)
-                {
-                    var yetkiliIsyerleri = _kullaniciYetkileri
-                        .Where(y => y.FirmaId == firmaId)
-                        .ToList();
-
-                    bool tumIsyerleriGoster = yetkiliIsyerleri.Any(y => !y.IsyeriId.HasValue);
-
-                    if (!tumIsyerleriGoster)
-                    {
-                        var yetkiliIsyeriIdler = yetkiliIsyerleri
-                            .Where(y => y.IsyeriId.HasValue)
-                            .Select(y => y.IsyeriId.Value)
-                            .ToHashSet();
-
-                        list = list.Where(i => yetkiliIsyeriIdler.Contains(i.Id)).ToList();
-                    }
-                }
-
                 // "Tümü" seçeneği
                 var data = new List<LookupItem> { new LookupItem { Id = 0, Ad = "Tümü" } };
                 data.AddRange(list);
@@ -404,8 +374,6 @@ namespace CeyPASS.WFA.UserControls
                     MessageBox.Show("Kişi bulunamadı.");
                     return;
                 }
-
-                _seciliPuantajsizKartMi = isPuantajsizKart;
 
                 txtAdSoyad.Text = (d.Ad + " " + d.Soyad).Trim();
                 txtSicilNo.Text = d.PersonelId;
@@ -458,13 +426,16 @@ namespace CeyPASS.WFA.UserControls
 
                 chkFirmaPersoneliMi.Checked = d.FirmaPersoneli;
                 chkPuantajYapilirMi.Checked = d.PuantajYapilabilir;
+                chkZiyaretciMi.Checked = d.ZiyaretciMi;
+                chkAracKartiMi.Checked = d.AracKartiMi;
+                chkTaseronCalisanMi.Checked = d.TaseronCalisanMi;
 
                 pbKisiFoto.Image = DbHelpers.BytesToImage(d.Fotograf);
                 _fotoDirty = false;
 
                 ApplyCheckboxRules();
                 WinFormsAuthHelper.ApplyPageAuthorization(_auth, _session, PageName, this);
-                LogHelper.Info(PageName, "KisiyiGetir", $"Kişi detay yüklendi: {kisiId} (PuantajsizKart={_seciliPuantajsizKartMi})", null, cid);
+                LogHelper.Info(PageName, "KisiyiGetir", $"Kişi detay yüklendi: {kisiId}", null, cid);
             }
             catch (Exception ex)
             {
@@ -545,6 +516,15 @@ namespace CeyPASS.WFA.UserControls
                 CombosunuYukle(firmaId);
                 VardiyaYukle(firmaId);
                 YeniKayitModunaGec();
+                if (cmbKartTipi.SelectedIndex == 1)
+                {
+                    chkPuantajYapilirMi.Checked = false;
+                    chkFirmaPersoneliMi.Checked = false;
+                    chkZiyaretciMi.Checked = false;
+                    chkAracKartiMi.Checked = false;
+                    chkTaseronCalisanMi.Checked = false;
+                    ApplyCheckboxRules();
+                }
                 pbKisiFoto.Image = null;
                 _fotoDirty = false;
                 IslemButonlariniGoster(true);
@@ -598,6 +578,9 @@ namespace CeyPASS.WFA.UserControls
             chkFirmaPersoneliMi.Checked = true;
             chkPuantajYapilirMi.Checked = true;
             chkYemekHakkiVarMi.Checked = false;
+            chkZiyaretciMi.Checked = false;
+            chkAracKartiMi.Checked = false;
+            chkTaseronCalisanMi.Checked = false;
             nudYemekAdedi.Value = 0;
 
             ApplyCheckboxRules();
@@ -621,26 +604,6 @@ namespace CeyPASS.WFA.UserControls
                     LogHelper.Warn(PageName, "IstenCikisBasla", "Seçim yok.", null, cid);
                     MessageBox.Show("Lütfen listeden bir kişi seçiniz.", "Uyarı",
                         MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                    return;
-                }
-
-                // Puantajsız kart: tek adımda pasif et
-                if (_seciliPuantajsizKartMi)
-                {
-                    string kartId = txtSicilNo.Text?.Trim();
-                    if (string.IsNullOrWhiteSpace(kartId))
-                    {
-                        MessageBox.Show("Kart bilgisi alınamadı.", "Uyarı", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                        return;
-                    }
-                    var onay = MessageBox.Show("Bu puantajsız kartı pasif etmek istediğinize emin misiniz?",
-                        "Onay", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-                    if (onay != DialogResult.Yes)
-                        return;
-                    _puantajsizKartRepo.PasifEtByKartId(kartId);
-                    KisileriYukle(GetSeciliFirmaId());
-                    MessageBox.Show("Kart pasif edildi.", "Bilgi", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    LogHelper.Info(PageName, "PuantajsizKartPasif", $"Kart pasif edildi: {kartId}", null, cid);
                     return;
                 }
 
@@ -793,31 +756,6 @@ namespace CeyPASS.WFA.UserControls
                     if (string.IsNullOrWhiteSpace(txtSicilNo.Text))
                         throw new Exception("Sicil No (PersonelId) boş olamaz.");
 
-                    // Puantajsız kart güncelleme (KartNo değişirse: eski pasif + yeni kayıt)
-                    if (_seciliPuantajsizKartMi)
-                    {
-                        string guncelleKartId = txtSicilNo.Text.Trim();
-                        string guncelleKartAdi = txtAdSoyad.Text?.Trim() ?? "";
-                        string guncelleKartNo = txtPersonelKartNo.Text?.Trim() ?? "";
-                        string calismaSekli = SecilenVardiyaIds();
-                        try
-                        {
-                            _puantajsizKartRepo.UpdateByKartId(guncelleKartId, guncelleKartAdi, guncelleKartNo, calismaSekli);
-                        }
-                        catch (InvalidOperationException ex)
-                        {
-                            MessageBox.Show(ex.Message, "Uyarı", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                            return;
-                        }
-                        MessageBox.Show("Kart güncellendi.", "Bilgi", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                        _guncelleModu = false;
-                        KisileriYukle(GetSeciliFirmaId());
-                        ApplyCheckboxRules();
-                        IslemButonlariniGoster(false);
-                        LogHelper.Info(PageName, "PuantajsizKartGuncelle", $"Kart güncellendi: {guncelleKartId}", null, cid);
-                        return;
-                    }
-
                     AdSoyadAyir(txtAdSoyad.Text, out string ad, out string soyad);
 
                     var kisi = new Kisi
@@ -840,7 +778,10 @@ namespace CeyPASS.WFA.UserControls
                         CepTel = txtCepTel.Text.Trim(),
                         Email = txtEmail.Text.Trim(),
                         Fotograf = _fotoDirty ? DbHelpers.ImageToBytes(pbKisiFoto.Image) : null,
-                        PuantajYapilirMi = chkPuantajYapilirMi.Checked
+                        PuantajYapilirMi = chkPuantajYapilirMi.Checked,
+                        ZiyaretciMi = chkZiyaretciMi.Checked,
+                        AracKartiMi = chkAracKartiMi.Checked,
+                        TaseronCalisanMi = chkTaseronCalisanMi.Checked
                     };
 
                     bool firma = chkFirmaPersoneliMi.Checked;
@@ -884,33 +825,6 @@ namespace CeyPASS.WFA.UserControls
                 }
 
                 // --- Yeni kayıt --- //
-                // Puantajsız kart ekleme (Puantaj Yapılmayanlar listesindeyken Ekle)
-                if (_isYeniKayit && cmbKartTipi.SelectedIndex == 1)
-                {
-                    string yeniKartId = txtSicilNo.Text?.Trim();
-                    string yeniKartAdi = txtAdSoyad.Text?.Trim() ?? "";
-                    string yeniKartNo = txtPersonelKartNo.Text?.Trim() ?? "";
-                    if (string.IsNullOrWhiteSpace(yeniKartId))
-                    {
-                        MessageBox.Show("Kart kodu (Sicil No) boş olamaz.", "Uyarı", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                        return;
-                    }
-                    if (_puantajsizKartRepo.Exists(yeniKartId))
-                    {
-                        MessageBox.Show("Bu kart kodu zaten kayıtlı.", "Uyarı", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                        return;
-                    }
-                    int firmaId = GetSeciliFirmaId();
-                    string calismaSekliCsv = SecilenVardiyaIds();
-                    _puantajsizKartRepo.Insert(yeniKartId, yeniKartNo, yeniKartAdi, firmaId, calismaSekliCsv, ziyaretciMi: false, aracKartMi: false, taseronCalisanMi: false);
-                    MessageBox.Show("Puantajsız kart eklendi.", "Bilgi", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    _isYeniKayit = false;
-                    KisileriYukle(GetSeciliFirmaId());
-                    IslemButonlariniGoster(false);
-                    LogHelper.Info(PageName, "PuantajsizKartEkle", $"Yeni kart eklendi: {yeniKartId}", null, cid);
-                    return;
-                }
-
                 bool f = chkFirmaPersoneliMi.Checked;
                 bool p = chkPuantajYapilirMi.Checked;
                 bool y = chkYemekHakkiVarMi.Checked;
@@ -956,7 +870,10 @@ namespace CeyPASS.WFA.UserControls
                     CepTel = txtCepTel.Text.Trim(),
                     Email = txtEmail.Text.Trim(),
                     Fotograf = pbKisiFoto.Image != null ? DbHelpers.ImageToBytes(pbKisiFoto.Image) : null,
-                    PuantajYapilirMi = p
+                    PuantajYapilirMi = p,
+                    ZiyaretciMi = chkZiyaretciMi.Checked,
+                    AracKartiMi = chkAracKartiMi.Checked,
+                    TaseronCalisanMi = chkTaseronCalisanMi.Checked
                 };
 
                 string kartId = txtSicilNo.Text.Trim();

@@ -30,6 +30,7 @@ namespace CeyPASS.WFA.UserControls.EO
                 return (int)_session.AktifFirmaId;
             }
         }
+        private bool PuantajYapilanlarSecili => cmbKartTipi.SelectedIndex != 1;
 
         public ucKisiHareketler(ISessionContext session, IKisiHareketService khsvc, IKisiQueryService kqsvc, IAuthorizationService auth, IFirmaService firmaSvc)
         {
@@ -63,6 +64,7 @@ namespace CeyPASS.WFA.UserControls.EO
             btnHareketGuncelle.Click += (s, e) => UpdateSelected();
             btnHareketSil.Click += (s, e) => SoftDeleteSelected();
             chkKisiler.KeyDown += chkKisiler_KeyDown;
+            cmbKartTipi.SelectedIndexChanged += (s, e) => LoadPersons();
 
             if (!_auth.ViewAbility(PageName))
             {
@@ -77,6 +79,11 @@ namespace CeyPASS.WFA.UserControls.EO
         {            
             try
             {
+                cmbKartTipi.Items.Clear();
+                cmbKartTipi.Items.Add("Puantaj Yapılanlar");
+                cmbKartTipi.Items.Add("Puantaj Yapılmayanlar");
+                cmbKartTipi.DropDownStyle = ComboBoxStyle.DropDownList;
+                cmbKartTipi.SelectedIndex = 0;
                 LoadFirmaComboBox();
                 LoadPersons();
 
@@ -159,7 +166,8 @@ namespace CeyPASS.WFA.UserControls.EO
         {
             if (chkKisiler == null) return;
 
-            object src = _khsvc.GetAktifKisilerWithSicil(SelectedFirmaId);
+            bool puantajYapilir = PuantajYapilanlarSecili;
+            object src = _khsvc.GetAktifKisilerWithSicil(SelectedFirmaId, puantajYapilir);
             var list = new List<LookupItem>();
 
             var dt = src as DataTable;

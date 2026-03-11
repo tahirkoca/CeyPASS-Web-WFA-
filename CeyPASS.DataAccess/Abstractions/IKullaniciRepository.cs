@@ -1,4 +1,4 @@
-﻿using CeyPASS.Entities.Concrete;
+using CeyPASS.Entities.Concrete;
 using System;
 using System.Collections.Generic;
 
@@ -14,5 +14,7 @@ namespace CeyPASS.DataAccess.Abstractions
         void KurtarmaKoduKaydet(int kullaniciId, string kod, DateTime sonKullanmaZamani);
         string GetKurtarmaKodu(int kullaniciId);
         void KurtarmaKodunuTemizle(int kullaniciId);
+        /// <summary>Giriş ekranı dropdown için tüm kullanıcı adlarını getirir (yetkili tablosu).</summary>
+        List<string> GetTumKullaniciAdlari();
     }
 }

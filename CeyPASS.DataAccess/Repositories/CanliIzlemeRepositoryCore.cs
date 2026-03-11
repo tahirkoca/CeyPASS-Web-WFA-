@@ -20,10 +20,7 @@ namespace CeyPASS.DataAccess.Repositories
             var sql = @"
 SELECT TOP (@p1)
     KH.PersonelId                           AS PersonelId,
-    ISNULL(CASE 
-        WHEN K.PersonelId IS NULL THEN PK.KartAdi
-        ELSE (K.Ad + ' ' + K.Soyad) 
-    END, N'')                               AS AdSoyad,
+    ISNULL(RTRIM(LTRIM(ISNULL(K.Ad, N'') + N' ' + ISNULL(K.Soyad, N''))), N'') AS AdSoyad,
     K.Fotograf                              AS Foto,
     ISNULL(D.DepartmanAdi, N'')             AS DepartmanAdi,
     ISNULL(P.PozisyonAdi, N'')              AS Unvan,
@@ -39,7 +36,6 @@ LEFT JOIN Kisiler         K  ON KH.PersonelId = K.PersonelId
 LEFT JOIN Departmanlar    D  ON K.DepartmanId = D.DepartmanId
 LEFT JOIN Cihazlar        C  ON KH.CihazId    = C.CihazId
 LEFT JOIN Pozisyonlar     P  ON K.PozisyonId  = P.PozisyonId
-LEFT JOIN PuantajsizKartlar PK ON PK.KartId  = KH.PersonelId
 WHERE C.FirmaId = @p0 AND C.AnaGirisCikisMi=1
 ORDER BY KH.Tarih DESC";
 
@@ -55,10 +51,7 @@ ORDER BY KH.Tarih DESC";
             var sql = @"
 SELECT TOP (@p1)
     KH.PersonelId                           AS PersonelId,
-    ISNULL(CASE 
-        WHEN K.PersonelId IS NULL THEN PK.KartAdi
-        ELSE (K.Ad + ' ' + K.Soyad) 
-    END, N'')                               AS AdSoyad,
+    ISNULL(RTRIM(LTRIM(ISNULL(K.Ad, N'') + N' ' + ISNULL(K.Soyad, N''))), N'') AS AdSoyad,
     K.Fotograf                              AS Foto,
     ISNULL(D.DepartmanAdi, N'')             AS DepartmanAdi,
     ISNULL(P.PozisyonAdi, N'')              AS Unvan,
@@ -70,7 +63,6 @@ LEFT JOIN Kisiler         K  ON KH.PersonelId = K.PersonelId
 LEFT JOIN Departmanlar    D  ON K.DepartmanId = D.DepartmanId
 LEFT JOIN Cihazlar        C  ON KH.CihazId    = C.CihazId
 LEFT JOIN Pozisyonlar     P  ON K.PozisyonId  = P.PozisyonId
-LEFT JOIN PuantajsizKartlar PK ON PK.KartId  = KH.PersonelId
 WHERE C.FirmaId = @p0
   AND KH.Tip = N'Yemekhane'
 ORDER BY KH.Tarih DESC";
@@ -107,6 +99,16 @@ WHERE c.FirmaId      = @p0
                     new Microsoft.Data.SqlClient.SqlParameter("@p2", password ?? string.Empty))
                 .AsEnumerable()
                 .FirstOrDefault();
+        }
+
+        public List<string> GetKullaniciAdlariByFirma(int firmaId)
+        {
+            return _context.CanliIzlemeHesaplari
+                .Where(c => c.FirmaId == firmaId && c.AktifMi)
+                .OrderBy(c => c.KullaniciAdi)
+                .Select(c => c.KullaniciAdi)
+                .Distinct()
+                .ToList();
         }
     }
 }

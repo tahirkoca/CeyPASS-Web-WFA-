@@ -477,11 +477,13 @@
                     <div class="form-group">
                         <label class="form-label">Kullanıcı Adı</label>
                         <div class="input-group">
-                            <input asp-for="KullaniciAdi" 
-                                   class="form-control" 
-                                   placeholder="Kullanıcı adınızı girin"
-                                   autocomplete="username" 
-                                   required />
+                            <select asp-for="KullaniciAdi" 
+                                    class="form-select" 
+                                    id="KullaniciAdi"
+                                    autocomplete="username" 
+                                    required>
+                                <option value="">-- Önce bölge/firma seçiniz --</option>
+                            </select>
                             <i class="bi bi-person input-icon"></i>
                         </div>
                     </div>
@@ -537,6 +539,28 @@
             btn.classList.add('loading');
             btn.disabled = true;
         });
+
+        // Firma seçilince kullanıcı dropdown'ını yetkili listesinden doldur
+        var kullanicilarByFirma = @Html.Raw(ViewBag.KullanicilarByFirmaJson ?? "{}");
+        var kullaniciSelect = document.getElementById('KullaniciAdi');
+        var firmaSelect = document.getElementById('FirmaId');
+        function fillKullaniciDropdown() {
+            var firmaId = parseInt(firmaSelect.value, 10);
+            var list = (kullanicilarByFirma[firmaId] || []);
+            kullaniciSelect.innerHTML = '';
+            var first = document.createElement('option');
+            first.value = '';
+            first.textContent = list.length ? '-- Kullanıcı seçiniz --' : '-- Bu bölge için kullanıcı yok --';
+            kullaniciSelect.appendChild(first);
+            list.forEach(function(ad) {
+                var opt = document.createElement('option');
+                opt.value = ad;
+                opt.textContent = ad;
+                kullaniciSelect.appendChild(opt);
+            });
+        }
+        if (firmaSelect) firmaSelect.addEventListener('change', fillKullaniciDropdown);
+        if (firmaSelect && firmaSelect.value) fillKullaniciDropdown();
         
         // Validation summary gösterimi
         const validationSummary = document.querySelector('[data-valmsg-summary]');
