@@ -22,9 +22,23 @@
             <input type="datetime-local" class="form-control" name="GirisSaati"
                    value="@Model.GirisSaati.ToString("yyyy-MM-ddTHH:mm")" required />
         </div>
+        <div class="col-md-6">
+            <label class="form-label">T.C. Kimlik No</label>
+            <input class="form-control" name="TCKimlikNo" id="TCKimlikNo" maxlength="11" />
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Kime Geldiği</label>
+            <input class="form-control" name="ZiyaretEdilenKisi" id="ZiyaretEdilenKisi" />
+        </div>
+        <div class="col-12">
+            <p class="form-text text-muted small mb-0">
+                <span class="text-info" aria-hidden="true">ℹ</span>
+                T.C. zorunlu değildir; elle ya da barkodla giriş yapabilirsiniz. T.C. girip alandan çıkınca veya Enter'a basınca boş alanlar otomatik doldurulur, dolu alanlar değiştirilmez.
+            </p>
+        </div>
         <div class="col-md-12">
             <label class="form-label">Misafir Ad Soyad</label>
-            <input class="form-control" name="MisafirAdSoyad" required />
+            <input class="form-control" name="MisafirAdSoyad" id="MisafirAdSoyad" required />
         </div>
         <div class="col-md-12">
             <label class="form-label">Açıklama</label>
@@ -40,6 +54,42 @@
 <script>
     (function () {
         const form = document.getElementById('misafirYeniForm');
+        const tcInput = document.getElementById('TCKimlikNo');
+        const misafirInput = document.getElementById('MisafirAdSoyad');
+        const kimeGeldigiInput = document.getElementById('ZiyaretEdilenKisi');
+
+        async function tryFillByTc() {
+            const tc = tcInput.value.trim();
+            if (!tc) return;
+
+            try {
+                const url = '@Url.Action("GetMisafirByTc", "CanliIzleme")' + '?tc=' + encodeURIComponent(tc);
+                const res = await fetch(url, { method: 'GET' });
+                if (!res.ok) return;
+                const data = await res.json();
+                if (!data.ok) return;
+
+                if (data.misafirAdSoyad && !misafirInput.value.trim()) misafirInput.value = data.misafirAdSoyad;
+                if (data.ziyaretEdilenKisi && !kimeGeldigiInput.value.trim()) kimeGeldigiInput.value = data.ziyaretEdilenKisi;
+                if (data.aciklama) {
+                    const aciklamaEl = form.querySelector('[name="Aciklama"]');
+                    if (aciklamaEl && !aciklamaEl.value.trim()) aciklamaEl.value = data.aciklama;
+                }
+            } catch (e) {
+                // Sessiz geç; otomatik doldurma zorunlu değil.
+            }
+        }
+
+        if (tcInput) {
+            tcInput.addEventListener('blur', tryFillByTc);
+            tcInput.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    tryFillByTc();
+                }
+            });
+        }
+
         form.addEventListener('submit', async function (e) {
             e.preventDefault();
             const fd = new FormData(form);

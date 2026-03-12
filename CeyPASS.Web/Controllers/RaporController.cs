@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using CeyPASS.Business.Abstractions;
 using CeyPASS.Entities.Concrete;
 using CeyPASS.Infrastructure.Helpers;
+using Microsoft.Extensions.Caching.Memory;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -16,21 +17,26 @@ namespace CeyPASS.Web.Controllers
         private readonly IKullaniciQueryService _kullaniciQueryService;
         private readonly ISessionContext _sessionContext;
         private readonly IAuthorizationService _authorizationService;
+        private readonly IMemoryCache _cache;
         private const string PageName = "Raporlar";
+        private const int DefaultPageSize = 100;
+        private static readonly int[] AllowedPageSizes = new[] { 50, 100, 200, 500 };
 
         public RaporController(
             IRaporService raporService,
             IKullaniciQueryService kullaniciQueryService,
             ISessionContext sessionContext,
-            IAuthorizationService authorizationService)
+            IAuthorizationService authorizationService,
+            IMemoryCache cache)
         {
             _raporService = raporService;
             _kullaniciQueryService = kullaniciQueryService;
             _sessionContext = sessionContext;
             _authorizationService = authorizationService;
+            _cache = cache;
         }
 
-        public IActionResult Index(string? procedureAdi = null, DateTime? tarihBaslangic = null, DateTime? tarihBitis = null, int? firmaId = null)
+        public IActionResult Index(string? procedureAdi = null, DateTime? tarihBaslangic = null, DateTime? tarihBitis = null, int? firmaId = null, int page = 1, int pageSize = DefaultPageSize)
         {
             // Check authorization
             if (!_authorizationService.ViewAbility(PageName))
@@ -38,6 +44,9 @@ namespace CeyPASS.Web.Controllers
                 TempData["Error"] = "Raporlar ekranını görüntüleme yetkiniz yok.";
                 return RedirectToAction("Index", "Home");
             }
+
+            if (page < 1) page = 1;
+            if (!AllowedPageSizes.Contains(pageSize)) pageSize = DefaultPageSize;
 
             // Default tarih aralığı: Bu ay
             DateTime baslangicTarih = tarihBaslangic ?? new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
@@ -54,6 +63,7 @@ namespace CeyPASS.Web.Controllers
 
             // Rapor verisi (eğer rapor seçilmişse)
             DataTable? raporData = null;
+            int totalCount = 0;
             if (!string.IsNullOrWhiteSpace(procedureAdi))
             {
                 try
@@ -70,10 +80,18 @@ namespace CeyPASS.Web.Controllers
                         { "@TarihBitis", bitisTarih } 
                     };
 
-                    raporData = _raporService.CalistirRapor(procedureAdi, parametreler);
+                    var cacheKey = $"rapor_{selectedFirmaId}_{procedureAdi}_{baslangicTarih:yyyyMMdd}_{bitisTarih:yyyyMMdd}";
+                    if (!_cache.TryGetValue(cacheKey, out DataTable cachedDt))
+                    {
+                        cachedDt = _raporService.CalistirRapor(procedureAdi, parametreler);
+                        _cache.Set(cacheKey, cachedDt, TimeSpan.FromMinutes(2));
+                    }
+
+                    totalCount = cachedDt?.Rows?.Count ?? 0;
+                    raporData = PageDataTable(cachedDt, page, pageSize);
                     
                     // Rapor verisini session'da sakla (export için)
-                    HttpContext.Session.SetString("LastRaporData", SerializeDataTable(raporData));
+                    HttpContext.Session.SetString("LastRaporData", SerializeDataTable(cachedDt));
                     HttpContext.Session.SetString("LastRaporAdi", selectedRapor?.RaporAdi ?? "Rapor");
                 }
                 catch (Exception ex)
@@ -89,6 +107,10 @@ namespace CeyPASS.Web.Controllers
             ViewBag.BitisTarih = bitisTarih;
             ViewBag.SelectedFirmaId = selectedFirmaId;
             ViewBag.CanExport = _authorizationService.Can(PageName, YetkiTipleri.Export);
+            ViewBag.Page = page;
+            ViewBag.PageSize = pageSize;
+            ViewBag.TotalCount = totalCount;
+            ViewBag.TotalPages = totalCount > 0 ? (int)Math.Ceiling(totalCount / (double)pageSize) : 1;
 
             return View(raporData);
         }
@@ -203,6 +225,25 @@ namespace CeyPASS.Web.Controllers
                 dt.ReadXml(sr);
             }
             return dt;
+        }
+
+        private static DataTable? PageDataTable(DataTable? dt, int page, int pageSize)
+        {
+            if (dt == null) return null;
+            if (page < 1) page = 1;
+            if (pageSize < 1) pageSize = 100;
+
+            var start = (page - 1) * pageSize;
+            if (start >= dt.Rows.Count) start = Math.Max(0, (dt.Rows.Count - 1) / pageSize * pageSize);
+            var endExclusive = Math.Min(dt.Rows.Count, start + pageSize);
+
+            var paged = dt.Clone();
+            for (int i = start; i < endExclusive; i++)
+            {
+                paged.ImportRow(dt.Rows[i]);
+            }
+            paged.TableName = dt.TableName;
+            return paged;
         }
     }
 }

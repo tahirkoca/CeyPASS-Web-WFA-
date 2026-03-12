@@ -2,6 +2,7 @@ using CeyPASS.Business.Abstractions;
 using CeyPASS.DataAccess.Abstractions;
 using CeyPASS.Entities.Concrete;
 using System;
+using System.Collections.Generic;
 using System.Data;
 
 namespace CeyPASS.Business.Services
@@ -19,6 +20,8 @@ namespace CeyPASS.Business.Services
         public KisiIzin GetById(int kisiIzinId) => _repo.GetById(kisiIzinId);
         public bool PasifYap(int kisiIzinId) => _repo.PasifYap(kisiIzinId);
         public DataTable GetTumIzinler(int? firmaId, string personelId, int? izinTipId, DateTime bas, DateTime bit) => _repo.GetIzinRaporu(firmaId, personelId, izinTipId, bas, bit);
+        public List<KisiIzinListRow> GetTumIzinlerPaged(int? firmaId, string personelId, int? izinTipId, DateTime bas, DateTime bit, int page, int pageSize, out int totalCount)
+            => _repo.GetIzinRaporuPaged(firmaId, personelId, izinTipId, bas, bit, page, pageSize, out totalCount);
         public (bool IsValid, string? Message) ValidateKayit(IzinKayitValidasyonDTO dto)
         {
             if (string.IsNullOrWhiteSpace(dto.PersonelId))

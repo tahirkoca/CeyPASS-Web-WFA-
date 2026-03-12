@@ -26,7 +26,7 @@
     <div class="row mb-3">
         <div class="col-12">
             <h2>Personel Düzenle</h2>
-            <a href="@Url.Action("Index", new { kartTipi = ViewBag.KartTipi, firmaId = ViewBag.SelectedFirmaId })" class="btn btn-secondary">
+            <a href="@Url.Action("Index", new { kartTipi = ViewBag.KartTipi, firmaId = ViewBag.SelectedFirmaId, page = ViewBag.Page, pageSize = ViewBag.PageSize, search = ViewBag.Search, isyeriId = ViewBag.SelectedIsyeriId })" class="btn btn-secondary">
                 <i class="bi bi-arrow-left"></i> Geri Dön
             </a>
         </div>
@@ -49,6 +49,10 @@
         <input type="hidden" name="originalPersonelId" value="@originalPersonelId" />
         <input type="hidden" name="kartTipi" value="@(ViewBag.KartTipi)" />
         <input type="hidden" name="firmaId" value="@(ViewBag.SelectedFirmaId)" />
+        <input type="hidden" name="page" value="@(ViewBag.Page ?? 1)" />
+        <input type="hidden" name="pageSize" value="@(ViewBag.PageSize ?? 20)" />
+        <input type="hidden" name="search" value="@(ViewBag.Search ?? "")" />
+        <input type="hidden" name="isyeriId" value="@(ViewBag.SelectedIsyeriId ?? "")" />
         
         <div class="row">
             <!-- Sol Kolon -->

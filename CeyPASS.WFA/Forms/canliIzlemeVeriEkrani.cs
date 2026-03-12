@@ -217,13 +217,13 @@ namespace CeyPASS.WFA.Forms
         {
             var uc = new misafirKartAtama(_session, _mSvc);
             uc.InitYeni((int)_session.AktifFirmaId);
-            ShowUserControlInDialog(uc, "Misafir Kart Atama - Yeni", 520, 360, this);
+            ShowUserControlInDialog(uc, "Misafir Kart Atama - Yeni", 720, 600, this);
         }
         private void atananKartiGuncelle_Click(object sender, EventArgs e)
         {
             var uc = new misafirKartAtama(_session, _mSvc);
             uc.InitGuncelleme((int)_session.AktifFirmaId, DateTime.Now);
-            ShowUserControlInDialog(uc, "Misafir Kart Atama - Güncelleme", 520, 360, this);
+            ShowUserControlInDialog(uc, "Misafir Kart Atama - Güncelleme", 720, 600, this);
         }
         private void KisiDetaylariniGetir(int kisiId)
         {

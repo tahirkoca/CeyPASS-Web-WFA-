@@ -57,6 +57,45 @@ namespace CeyPASS.DataAccess.Repositories
                 .ToList();
         }
 
+        public List<KisiListItem> GetAktifByFirmaPaged(int firmId, string search, bool? puantajYapilirMi, int? isyeriId, int page, int pageSize, out int totalCount)
+        {
+            if (page < 1) page = 1;
+            if (pageSize < 1) pageSize = 20;
+
+            var q = _context.Kisiler
+                .Where(k => k.FirmaId == firmId && k.IstenCikisTarihi == null);
+
+            if (puantajYapilirMi.HasValue)
+                q = q.Where(k => k.PuantajYapilirMi == puantajYapilirMi.Value);
+
+            if (isyeriId.HasValue)
+                q = q.Where(k => k.IsyeriId == isyeriId.Value);
+
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                search = search.Trim();
+                q = q.Where(k =>
+                    (k.Ad ?? "").Contains(search) ||
+                    (k.Soyad ?? "").Contains(search) ||
+                    (k.PersonelId ?? "").Contains(search) ||
+                    (k.TcKimlikNo ?? "").Contains(search));
+            }
+
+            totalCount = q.Count();
+
+            return q
+                .OrderBy(k => k.Ad)
+                .ThenBy(k => k.Soyad)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .Select(k => new KisiListItem
+                {
+                    PersonelId = k.PersonelId,
+                    AdSoyad = ((k.Ad ?? "") + " " + (k.Soyad ?? "")).Trim()
+                })
+                .ToList();
+        }
+
         public KisiDetay GetDetay(string personelId)
         {
             var k = _context.Kisiler.FirstOrDefault(x => x.PersonelId == personelId);

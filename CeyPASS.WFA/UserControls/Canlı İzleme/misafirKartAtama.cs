@@ -20,6 +20,43 @@ namespace CeyPASS.WFA.UserControls.Canlı_İzleme
             _msvc = msvc;
             cmbPuantajsizKartlar.DropDownStyle = ComboBoxStyle.DropDownList;
             cmbPuantajsizKartlar.SelectedIndexChanged += cmbPuantajsizKartlar_SelectedIndexChanged;
+            txtTCKimlikNo.Leave += TxtTCKimlikNo_Leave;
+            txtTCKimlikNo.KeyDown += TxtTCKimlikNo_KeyDown;
+        }
+
+        private void TxtTCKimlikNo_Leave(object sender, EventArgs e)
+        {
+            TryFillFromTc();
+        }
+
+        private void TxtTCKimlikNo_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Enter)
+            {
+                e.SuppressKeyPress = true;
+                TryFillFromTc();
+            }
+        }
+
+        private void TryFillFromTc()
+        {
+            var tc = txtTCKimlikNo?.Text?.Trim();
+            if (string.IsNullOrEmpty(tc)) return;
+
+            try
+            {
+                var rec = _msvc.GetMisafirBilgisiByTc(tc);
+                if (rec == null) return;
+
+                if (!string.IsNullOrEmpty(rec.MisafirAdSoyad) && string.IsNullOrWhiteSpace(txtMisafirAdSoyad.Text))
+                    txtMisafirAdSoyad.Text = rec.MisafirAdSoyad;
+                if (!string.IsNullOrEmpty(rec.ZiyaretEdilenKisi) && string.IsNullOrWhiteSpace(txtZiyaretEdilenKisi.Text))
+                    txtZiyaretEdilenKisi.Text = rec.ZiyaretEdilenKisi;
+            }
+            catch
+            {
+                // Otomatik doldurma başarısız olsa da sessiz geç; kullanıcı elle girebilir.
+            }
         }
 
         private void misafirKartAtama_Load(object sender, EventArgs e) { }
@@ -38,12 +75,16 @@ namespace CeyPASS.WFA.UserControls.Canlı_İzleme
 
                     string kartId = Convert.ToString(cmbPuantajsizKartlar.SelectedValue);
 
+                    var tc = string.IsNullOrWhiteSpace(txtTCKimlikNo.Text) ? null : txtTCKimlikNo.Text.Trim();
+                    var kimeGeldigi = string.IsNullOrWhiteSpace(txtZiyaretEdilenKisi.Text) ? null : txtZiyaretEdilenKisi.Text.Trim();
                     int yeniId = _msvc.CreateAssignment(
                         firmaId: (int)_session.AktifFirmaId,
                         personelId: kartId,
                         misafirAdSoyad: txtMisafirAdSoyad.Text,
                         girisSaati: dtpGirisSaati.Value,
-                        aciklama: txtAciklama.Text
+                        aciklama: txtAciklama.Text,
+                        tcKimlikNo: tc,
+                        ziyaretEdilenKisi: kimeGeldigi
                     );
 
                     MessageBox.Show("Kayıt başarıyla oluşturuldu.");
@@ -56,12 +97,16 @@ namespace CeyPASS.WFA.UserControls.Canlı_İzleme
                     if (a == null)
                         throw new InvalidOperationException("Güncellenecek atamayı seçiniz.");
 
+                    var tc = string.IsNullOrWhiteSpace(txtTCKimlikNo.Text) ? null : txtTCKimlikNo.Text.Trim();
+                    var kimeGeldigi = string.IsNullOrWhiteSpace(txtZiyaretEdilenKisi.Text) ? null : txtZiyaretEdilenKisi.Text.Trim();
                     _msvc.UpdateAssignment(
                         atamaId: a.AtamaId,
                         misafirAdSoyad: txtMisafirAdSoyad.Text,
                         girisSaati: dtpGirisSaati.Value,
                         cikisSaati: dtpCikisSaati.Enabled ? dtpCikisSaati.Value : (DateTime?)null,
-                        aciklama: txtAciklama.Text
+                        aciklama: txtAciklama.Text,
+                        tcKimlikNo: tc,
+                        ziyaretEdilenKisi: kimeGeldigi
                     );
 
                     MessageBox.Show("Kayıt güncellendi.");
@@ -91,6 +136,8 @@ namespace CeyPASS.WFA.UserControls.Canlı_İzleme
             if (a == null) return;
 
             txtMisafirAdSoyad.Text = a.MisafirAdSoyad ?? "";
+            txtZiyaretEdilenKisi.Text = a.ZiyaretEdilenKisi ?? "";
+            txtTCKimlikNo.Text = a.TCKimlikNo ?? "";
             txtAciklama.Text = a.Notlar ?? "";
             dtpGirisSaati.Value = a.Baslangic;
             dtpCikisSaati.Value = DateTime.Now;
@@ -111,6 +158,8 @@ namespace CeyPASS.WFA.UserControls.Canlı_İzleme
             if (cards != null && cards.Count > 0)
                 cmbPuantajsizKartlar.SelectedIndex = 0;
 
+            txtTCKimlikNo.Clear();
+            txtZiyaretEdilenKisi.Clear();
             dtpCikisSaati.Enabled = false;
         }
         public void InitGuncelleme(int firmaId, DateTime now)

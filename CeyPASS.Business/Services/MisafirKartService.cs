@@ -35,7 +35,7 @@ namespace CeyPASS.Business.Services
         {
             return _atamaRepo.GetTodayActive(now, firmaId);
         }
-        public int CreateAssignment(int firmaId, string personelId, string misafirAdSoyad, DateTime girisSaati, string aciklama)
+        public int CreateAssignment(int firmaId, string personelId, string misafirAdSoyad, DateTime girisSaati, string aciklama, string tcKimlikNo, string ziyaretEdilenKisi)
         {
             if (string.IsNullOrWhiteSpace(misafirAdSoyad))
                 throw new ArgumentException("Misafir adı soyadı boş olamaz.", nameof(misafirAdSoyad));
@@ -46,10 +46,15 @@ namespace CeyPASS.Business.Services
             if (_atamaRepo.ExistsActiveForCard(personelId))
                 throw new InvalidOperationException("Bu karta ait aktif bir atama zaten var. Önce çıkış veriniz.");
 
+            var tc = string.IsNullOrWhiteSpace(tcKimlikNo) ? null : tcKimlikNo.Trim();
+            // TC'yi sadece boş değilse kaydediyoruz, 11 karakter kontrolü gerekirse eklenebilir.
+
             var id = _atamaRepo.Insert(new PuantajsizKartAtama
             {
                 KartId = personelId,
                 MisafirAdSoyad = misafirAdSoyad.Trim(),
+                TCKimlikNo = tc,
+                ZiyaretEdilenKisi = string.IsNullOrWhiteSpace(ziyaretEdilenKisi) ? null : ziyaretEdilenKisi.Trim(),
                 Baslangic = girisSaati,
                 Bitis = null,
                 Notlar = string.IsNullOrWhiteSpace(aciklama) ? "" : aciklama.Trim()
@@ -57,7 +62,7 @@ namespace CeyPASS.Business.Services
 
             return id;
         }
-        public void UpdateAssignment(int atamaId, string misafirAdSoyad, DateTime girisSaati, DateTime? cikisSaati, string aciklama)
+        public void UpdateAssignment(int atamaId, string misafirAdSoyad, DateTime girisSaati, DateTime? cikisSaati, string aciklama, string tcKimlikNo, string ziyaretEdilenKisi)
         {
             var rec = _atamaRepo.GetById(atamaId);
             if (rec == null)
@@ -70,8 +75,19 @@ namespace CeyPASS.Business.Services
             rec.Baslangic = girisSaati;
             rec.Bitis = cikisSaati;
             rec.Notlar = string.IsNullOrWhiteSpace(aciklama) ? "" : aciklama.Trim();
+            rec.TCKimlikNo = string.IsNullOrWhiteSpace(tcKimlikNo) ? null : tcKimlikNo.Trim();
+            rec.ZiyaretEdilenKisi = string.IsNullOrWhiteSpace(ziyaretEdilenKisi) ? null : ziyaretEdilenKisi.Trim();
 
             _atamaRepo.Update(rec);
+        }
+
+        public PuantajsizKartAtama GetMisafirBilgisiByTc(string tcKimlikNo)
+        {
+            if (string.IsNullOrWhiteSpace(tcKimlikNo))
+                return null;
+
+            var tc = tcKimlikNo.Trim();
+            return _atamaRepo.GetSonAtamaByTcKimlikNo(tc);
         }
     }
 }

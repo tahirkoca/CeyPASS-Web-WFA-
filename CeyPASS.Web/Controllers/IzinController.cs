@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using CeyPASS.Business.Abstractions;
 using CeyPASS.Entities.Concrete;
+using Microsoft.Extensions.Caching.Memory;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -17,7 +18,11 @@ namespace CeyPASS.Web.Controllers
         private readonly IPuantajService _puantajService;
         private readonly ISessionContext _sessionContext;
         private readonly IAuthorizationService _authorizationService;
+        private readonly IMemoryCache _cache;
         private const string PageName = "Izinler";
+        private const int DefaultPageSize = 50;
+        private static readonly int[] AllowedPageSizes = new[] { 20, 50, 100, 200 };
+        private const string CacheVerPrefix = "izin_ver_";
 
         public IzinController(
             IKisiIzinService kisiIzinService,
@@ -26,7 +31,8 @@ namespace CeyPASS.Web.Controllers
             IFirmaService firmaService,
             IPuantajService puantajService,
             ISessionContext sessionContext,
-            IAuthorizationService authorizationService)
+            IAuthorizationService authorizationService,
+            IMemoryCache cache)
         {
             _kisiIzinService = kisiIzinService;
             _kisiQueryService = kisiQueryService;
@@ -35,9 +41,10 @@ namespace CeyPASS.Web.Controllers
             _puantajService = puantajService;
             _sessionContext = sessionContext;
             _authorizationService = authorizationService;
+            _cache = cache;
         }
 
-        public IActionResult Index(string personelId = null, int? izinTipId = null, DateTime? baslangic = null, DateTime? bitis = null)
+        public IActionResult Index(string personelId = null, int? izinTipId = null, DateTime? baslangic = null, DateTime? bitis = null, int page = 1, int pageSize = DefaultPageSize)
         {
             // Check authorization
             if (!_authorizationService.ViewAbility(PageName))
@@ -46,6 +53,9 @@ namespace CeyPASS.Web.Controllers
                 return RedirectToAction("Index", "Home");
             }
 
+            if (page < 1) page = 1;
+            if (!AllowedPageSizes.Contains(pageSize)) pageSize = DefaultPageSize;
+
             // Firma ID navbar'dan seçilen aktif firmadan alınır
             int selectedFirmaId = (int)_sessionContext.AktifFirmaId;
 
@@ -53,39 +63,36 @@ namespace CeyPASS.Web.Controllers
             DateTime baslangicTarih = baslangic ?? new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
             DateTime bitisTarih = bitis ?? baslangicTarih.AddMonths(1).AddDays(-1);
 
-            // İzinleri yükle
-            DataTable izinlerDt = _kisiIzinService.GetTumIzinler(
-                selectedFirmaId,
-                personelId == "ALL" ? null : personelId,
-                izinTipId == 0 ? (int?)null : izinTipId,
-                baslangicTarih,
-                bitisTarih
-            );
-
-            // DataTable'ı List'e çevir
-            List<KisiIzinListRow> izinler = new List<KisiIzinListRow>();
-            if (izinlerDt != null)
+            // İzinleri yükle (paged + cache)
+            int totalCount = 0;
+            var verKey = CacheVerPrefix + selectedFirmaId;
+            if (!_cache.TryGetValue(verKey, out int ver))
             {
-                foreach (DataRow row in izinlerDt.Rows)
-                {
-                    izinler.Add(new KisiIzinListRow
-                    {
-                        KisiIzinId = row["KisiIzinId"] != DBNull.Value ? Convert.ToInt32(row["KisiIzinId"]) : 0,
-                        SicilNo = row["SicilNo"]?.ToString() ?? "",
-                        AdSoyad = row["AdSoyad"]?.ToString() ?? "",
-                        FirmaAdi = row["FirmaAdi"]?.ToString() ?? "",
-                        IzinTipi = row["IzinTipi"]?.ToString() ?? "",
-                        IzinBaslangic = row["Başlangıç Tarihi"] != DBNull.Value ? Convert.ToDateTime(row["Başlangıç Tarihi"]) : DateTime.MinValue,
-                        IzinBitis = row["Bitiş Tarihi"] != DBNull.Value ? Convert.ToDateTime(row["Bitiş Tarihi"]) : DateTime.MinValue,
-                        SureGun = row["Süre(Gün)"]?.ToString() ?? "",
-                        SureSaat = row["Süre(Saat)"] != DBNull.Value ? Convert.ToDouble(row["Süre(Saat)"]) : 0,
-                        SaatlikIzin = row["Saatlik İzin Mi"]?.ToString() ?? "",
-                        Aciklama = row["Açıklama"]?.ToString() ?? "",
-                        IslenmeTarihi = row["IslenmeTarihi"] != DBNull.Value ? (DateTime?)Convert.ToDateTime(row["IslenmeTarihi"]) : null,
-                        GuncellemeTarihi = row["GuncellemeTarihi"] != DBNull.Value ? (DateTime?)Convert.ToDateTime(row["GuncellemeTarihi"]) : null
-                    });
-                }
+                ver = 0;
+                _cache.Set(verKey, ver, TimeSpan.FromHours(1));
             }
+
+            var personelKey = personelId == "ALL" ? "" : (personelId ?? "");
+            var izinKey = izinTipId == 0 ? "" : (izinTipId?.ToString() ?? "");
+            var cacheKey = $"izin_{selectedFirmaId}_v{ver}_{personelKey}_{izinKey}_{baslangicTarih:yyyyMMdd}_{bitisTarih:yyyyMMdd}_p{page}_s{pageSize}";
+            if (!_cache.TryGetValue(cacheKey, out IzinCacheValue cached))
+            {
+                var items = _kisiIzinService.GetTumIzinlerPaged(
+                    selectedFirmaId,
+                    personelId == "ALL" ? null : personelId,
+                    izinTipId == 0 ? (int?)null : izinTipId,
+                    baslangicTarih,
+                    bitisTarih,
+                    page,
+                    pageSize,
+                    out totalCount
+                );
+                cached = new IzinCacheValue(items, totalCount);
+                _cache.Set(cacheKey, cached, TimeSpan.FromMinutes(2));
+            }
+
+            var izinler = cached.Items;
+            totalCount = cached.TotalCount;
 
             // Lookup data
             var kisiler = _kisiQueryService.GetAktifKisilerByFirma(selectedFirmaId);
@@ -97,6 +104,10 @@ namespace CeyPASS.Web.Controllers
             ViewBag.SelectedIzinTipId = izinTipId;
             ViewBag.BaslangicTarih = baslangicTarih;
             ViewBag.BitisTarih = bitisTarih;
+            ViewBag.Page = page;
+            ViewBag.PageSize = pageSize;
+            ViewBag.TotalCount = totalCount;
+            ViewBag.TotalPages = totalCount > 0 ? (int)Math.Ceiling(totalCount / (double)pageSize) : 1;
             ViewBag.CanCreate = _authorizationService.Can(PageName, YetkiTipleri.Create);
             ViewBag.CanUpdate = _authorizationService.Can(PageName, YetkiTipleri.Update);
             ViewBag.CanDelete = _authorizationService.Can(PageName, YetkiTipleri.Delete);
@@ -180,6 +191,7 @@ namespace CeyPASS.Web.Controllers
                 if (success)
                 {
                     TempData["Success"] = "İzin başarıyla eklendi.";
+                    BumpVer(izin.FirmaId);
                     return RedirectToAction("Index");
                 }
                 else
@@ -288,6 +300,7 @@ namespace CeyPASS.Web.Controllers
                 if (success)
                 {
                     TempData["Success"] = "İzin başarıyla güncellendi.";
+                    BumpVer(izin.FirmaId);
                     return RedirectToAction("Index");
                 }
                 ModelState.AddModelError("", "İzin güncellenemedi.");
@@ -324,6 +337,7 @@ namespace CeyPASS.Web.Controllers
                 if (success)
                 {
                     TempData["Success"] = "İzin başarıyla silindi.";
+                    BumpVer((int)_sessionContext.AktifFirmaId);
                 }
                 else
                 {
@@ -336,6 +350,25 @@ namespace CeyPASS.Web.Controllers
             }
 
             return RedirectToAction("Index");
+        }
+
+        private void BumpVer(int firmaId)
+        {
+            var key = CacheVerPrefix + firmaId;
+            if (!_cache.TryGetValue(key, out int ver)) ver = 0;
+            ver++;
+            _cache.Set(key, ver, TimeSpan.FromHours(1));
+        }
+
+        private sealed class IzinCacheValue
+        {
+            public IzinCacheValue(List<KisiIzinListRow> items, int totalCount)
+            {
+                Items = items ?? new List<KisiIzinListRow>();
+                TotalCount = totalCount;
+            }
+            public List<KisiIzinListRow> Items { get; }
+            public int TotalCount { get; }
         }
 
         [HttpGet]

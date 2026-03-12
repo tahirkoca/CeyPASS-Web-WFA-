@@ -550,7 +550,7 @@
             kullaniciSelect.innerHTML = '';
             var first = document.createElement('option');
             first.value = '';
-            first.textContent = list.length ? '-- Kullanıcı seçiniz --' : '-- Bu bölge için kullanıcı yok --';
+            first.textContent = list.length ? 'Kullanıcı seçiniz' : 'Bu bölge için kullanıcı yok';
             kullaniciSelect.appendChild(first);
             list.forEach(function(ad) {
                 var opt = document.createElement('option');

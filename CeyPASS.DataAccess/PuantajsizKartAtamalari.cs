@@ -18,6 +18,8 @@ namespace CeyPASS.DataAccess
         public string KartId { get; set; }
         public Nullable<int> AtananPersonelId { get; set; }
         public string MisafirAdSoyad { get; set; }
+        public string TCKimlikNo { get; set; }
+        public string ZiyaretEdilenKisi { get; set; }
         public System.DateTime Baslangic { get; set; }
         public Nullable<System.DateTime> Bitis { get; set; }
         public string Notlar { get; set; }

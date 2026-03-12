@@ -433,6 +433,11 @@ h6 { font-size: 0.875rem; }
     min-width: 0;
 }
 
+/* Flex/grid overflow fix: allow column to shrink below content size */
+.min-width-0 {
+    min-width: 0;
+}
+
 .user-name {
     color: white;
     font-weight: 600;
@@ -1185,6 +1190,12 @@ h6 { font-size: 0.875rem; }
     margin-bottom: 24px;
 }
 
+@media (min-width: 1200px) {
+    .dashboard-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+}
+
 .dashboard-card {
     background: white;
     border-radius: var(--radius-md);
@@ -1290,6 +1301,52 @@ h6 { font-size: 0.875rem; }
     border-radius: var(--radius-md);
     border: 1px solid var(--gray-200);
     overflow: hidden;
+}
+
+/* Dashboard tables: fixed height + internal scroll */
+.data-table-wrapper .table-responsive {
+    max-height: 420px;
+    overflow-y: auto;
+    overflow-x: auto;
+}
+
+.data-table-wrapper .table thead th {
+    position: sticky;
+    top: 0;
+    background: white;
+    z-index: 2;
+}
+
+/* Scrollbar styling (Chromium) */
+.data-table-wrapper .table-responsive::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+.data-table-wrapper .table-responsive::-webkit-scrollbar-track {
+    background: var(--gray-100);
+}
+
+.data-table-wrapper .table-responsive::-webkit-scrollbar-thumb {
+    background: var(--gray-300);
+    border-radius: 999px;
+    border: 2px solid var(--gray-100);
+}
+
+.data-table-wrapper .table-responsive::-webkit-scrollbar-thumb:hover {
+    background: var(--gray-400);
+}
+
+/* Scrollbar styling (Firefox) */
+.data-table-wrapper .table-responsive {
+    scrollbar-width: thin;
+    scrollbar-color: var(--gray-300) var(--gray-100);
+}
+
+@media (max-width: 992px) {
+    .data-table-wrapper .table-responsive {
+        max-height: 360px;
+    }
 }
 
 .data-table-header {

@@ -1,4 +1,4 @@
-﻿using CeyPASS.Entities.Concrete;
+using CeyPASS.Entities.Concrete;
 using System;
 using System.Collections.Generic;
 
@@ -8,7 +8,8 @@ namespace CeyPASS.Business.Abstractions
     {
         List<KisiListItem> GetCardsForNew(int firmaId);
         List<PuantajsizKartAtama> GetTodayActiveAssignments(DateTime now, int firmaId);
-        int CreateAssignment(int firmaId, string personelId, string misafirAdSoyad, DateTime girisSaati, string aciklama);
-        void UpdateAssignment(int atamaId, string misafirAdSoyad, DateTime girisSaati, DateTime? cikisSaati, string aciklama);
+        int CreateAssignment(int firmaId, string personelId, string misafirAdSoyad, DateTime girisSaati, string aciklama, string tcKimlikNo, string ziyaretEdilenKisi);
+        void UpdateAssignment(int atamaId, string misafirAdSoyad, DateTime girisSaati, DateTime? cikisSaati, string aciklama, string tcKimlikNo, string ziyaretEdilenKisi);
+        PuantajsizKartAtama GetMisafirBilgisiByTc(string tcKimlikNo);
     }
 }

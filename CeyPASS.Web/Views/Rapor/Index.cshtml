@@ -8,6 +8,12 @@
     var selectedFirmaId = ViewBag.SelectedFirmaId as int? ?? 0;
     var canExport = ViewBag.CanExport as bool? ?? false;
     var selectedRapor = ViewBag.SelectedRapor as CeyPASS.Entities.Concrete.RaporTanimi;
+    var currentPage = ViewBag.Page as int? ?? 1;
+    var pageSize = ViewBag.PageSize as int? ?? 100;
+    var totalCount = ViewBag.TotalCount as int? ?? (Model?.Rows?.Count ?? 0);
+    var totalPages = ViewBag.TotalPages as int? ?? 1;
+    var startIndex = totalCount == 0 ? 0 : ((currentPage - 1) * pageSize + 1);
+    var endIndex = totalCount == 0 ? 0 : Math.Min(currentPage * pageSize, totalCount);
 }
 <style>
     .rapor-table-wrapper {
@@ -94,8 +100,9 @@
                 </div>
                 <div class="card-body">
                     <form method="get" action="@Url.Action("Index")" id="raporForm">
+                        <input type="hidden" name="page" value="1" />
                         <div class="row g-3 align-items-end">
-                            <div class="col-md-4">
+                            <div class="col-12 col-lg-4">
                                 <label for="procedureAdi" class="form-label">Rapor Türü <span class="text-danger">*</span></label>
                                 <select name="procedureAdi" id="procedureAdi" class="form-select" required>
                                     <option value="">-- Rapor Seçiniz --</option>
@@ -117,19 +124,52 @@
                                 </select>
                             </div>
 
-                            <div class="col-md-3">
+                            <div class="col-12 col-lg-2">
                                 <label for="tarihBaslangic" class="form-label">Başlangıç Tarihi <span class="text-danger">*</span></label>
                                 <input type="date" name="tarihBaslangic" id="tarihBaslangic" class="form-control" required 
                                        value="@baslangicTarih.ToString("yyyy-MM-dd")" />
                             </div>
 
-                            <div class="col-md-3">
+                            <div class="col-12 col-lg-2">
                                 <label for="tarihBitis" class="form-label">Bitiş Tarihi <span class="text-danger">*</span></label>
                                 <input type="date" name="tarihBitis" id="tarihBitis" class="form-control" required 
                                        value="@bitisTarih.ToString("yyyy-MM-dd")" />
                             </div>
 
-                            <div class="col-md-2">
+                            <div class="col-12 col-lg-2">
+                                <label for="pageSize" class="form-label">Sayfa başına:</label>
+                                <select name="pageSize" id="pageSize" class="form-select">
+                                    @if (pageSize == 50)
+                                    {
+                                        <option value="50" selected="selected">50</option>
+                                        <option value="100">100</option>
+                                        <option value="200">200</option>
+                                        <option value="500">500</option>
+                                    }
+                                    else if (pageSize == 200)
+                                    {
+                                        <option value="50">50</option>
+                                        <option value="100">100</option>
+                                        <option value="200" selected="selected">200</option>
+                                        <option value="500">500</option>
+                                    }
+                                    else if (pageSize == 500)
+                                    {
+                                        <option value="50">50</option>
+                                        <option value="100">100</option>
+                                        <option value="200">200</option>
+                                        <option value="500" selected="selected">500</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="50">50</option>
+                                        <option value="100" selected="selected">100</option>
+                                        <option value="200">200</option>
+                                        <option value="500">500</option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="col-12 col-lg-2">
                                 <button type="submit" class="btn btn-primary w-100">
                                     <i class="bi bi-search"></i> Rapor Getir
                                 </button>
@@ -148,10 +188,16 @@
             <div class="col-12">
                 <div class="card">
                     <div class="card-header d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0">
-                            @(selectedRapor?.RaporAdi ?? "Rapor") 
-                            <small class="text-muted">(@Model.Rows.Count kayıt)</small>
-                        </h5>
+                        <div>
+                            <h5 class="mb-0">
+                                @(selectedRapor?.RaporAdi ?? "Rapor") 
+                                <small class="text-muted">(Toplam @totalCount kayıt)</small>
+                            </h5>
+                            @if (totalCount > 0)
+                            {
+                                <small class="text-muted">Sayfa @currentPage / @totalPages • @startIndex - @endIndex arası gösteriliyor</small>
+                            }
+                        </div>
                         @if (canExport)
                         {
                             <div>
@@ -191,6 +237,59 @@
                                 </tbody>
                             </table>
                         </div>
+
+                        @if (totalPages > 1)
+                        {
+                            <nav aria-label="Rapor sayfalama" class="mt-3">
+                                <ul class="pagination justify-content-center flex-wrap mb-0">
+                                    <li class="page-item @(currentPage <= 1 ? "disabled" : "")">
+                                        <a class="page-link" href="@Url.Action("Index", new { procedureAdi = selectedProcedureAdi, tarihBaslangic = baslangicTarih, tarihBitis = bitisTarih, firmaId = selectedFirmaId, page = currentPage - 1, pageSize })" aria-label="Önceki">
+                                            <span aria-hidden="true">&laquo;</span>
+                                        </a>
+                                    </li>
+
+                                    @{
+                                        var window = 2;
+                                        var start = Math.Max(1, currentPage - window);
+                                        var end = Math.Min(totalPages, currentPage + window);
+                                        if (start > 1)
+                                        {
+                                            <li class="page-item">
+                                                <a class="page-link" href="@Url.Action("Index", new { procedureAdi = selectedProcedureAdi, tarihBaslangic = baslangicTarih, tarihBitis = bitisTarih, firmaId = selectedFirmaId, page = 1, pageSize })">1</a>
+                                            </li>
+                                            if (start > 2)
+                                            {
+                                                <li class="page-item disabled"><span class="page-link">…</span></li>
+                                            }
+                                        }
+
+                                        for (var p = start; p <= end; p++)
+                                        {
+                                            <li class="page-item @(p == currentPage ? "active" : "")">
+                                                <a class="page-link" href="@Url.Action("Index", new { procedureAdi = selectedProcedureAdi, tarihBaslangic = baslangicTarih, tarihBitis = bitisTarih, firmaId = selectedFirmaId, page = p, pageSize })">@p</a>
+                                            </li>
+                                        }
+
+                                        if (end < totalPages)
+                                        {
+                                            if (end < totalPages - 1)
+                                            {
+                                                <li class="page-item disabled"><span class="page-link">…</span></li>
+                                            }
+                                            <li class="page-item">
+                                                <a class="page-link" href="@Url.Action("Index", new { procedureAdi = selectedProcedureAdi, tarihBaslangic = baslangicTarih, tarihBitis = bitisTarih, firmaId = selectedFirmaId, page = totalPages, pageSize })">@totalPages</a>
+                                            </li>
+                                        }
+                                    }
+
+                                    <li class="page-item @(currentPage >= totalPages ? "disabled" : "")">
+                                        <a class="page-link" href="@Url.Action("Index", new { procedureAdi = selectedProcedureAdi, tarihBaslangic = baslangicTarih, tarihBitis = bitisTarih, firmaId = selectedFirmaId, page = currentPage + 1, pageSize })" aria-label="Sonraki">
+                                            <span aria-hidden="true">&raquo;</span>
+                                        </a>
+                                    </li>
+                                </ul>
+                            </nav>
+                        }
                     </div>
                 </div>
             </div>
@@ -222,6 +321,10 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     
     <script>
+        document.getElementById('pageSize')?.addEventListener('change', function () {
+            this.closest('form')?.submit();
+        });
+
         function showToast(message, type) {
             type = type || 'success';
             var $c = $('#raporToastContainer');

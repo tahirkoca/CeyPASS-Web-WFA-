@@ -20,6 +20,8 @@ else
                     {
                         <option value="@a.AtamaId"
                                 data-misafir="@a.MisafirAdSoyad"
+                                data-tc="@(a.TCKimlikNo ?? "")"
+                                data-ziyaret="@(a.ZiyaretEdilenKisi ?? "")"
                                 data-aciklama="@a.Notlar"
                                 data-giris="@a.Baslangic.ToString("yyyy-MM-ddTHH:mm")">
                             @a.KartAdi - @a.MisafirAdSoyad
@@ -42,6 +44,14 @@ else
                 <label class="form-label">Misafir Ad Soyad</label>
                 <input class="form-control" name="MisafirAdSoyad" id="MisafirAdSoyad" required />
             </div>
+            <div class="col-md-6">
+                <label class="form-label">T.C. Kimlik No</label>
+                <input class="form-control" name="TCKimlikNo" id="TCKimlikNo" maxlength="11" />
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Kime Geldiği</label>
+                <input class="form-control" name="ZiyaretEdilenKisi" id="ZiyaretEdilenKisi" />
+            </div>
             <div class="col-md-12">
                 <label class="form-label">Açıklama</label>
                 <textarea class="form-control" name="Aciklama" id="Aciklama" rows="3"></textarea>
@@ -60,6 +70,8 @@ else
             const atamaId = document.getElementById('AtamaId');
             const giris = document.getElementById('GirisSaati');
             const misafir = document.getElementById('MisafirAdSoyad');
+            const tcInput = document.getElementById('TCKimlikNo');
+            const ziyaretInput = document.getElementById('ZiyaretEdilenKisi');
             const aciklama = document.getElementById('Aciklama');
 
             function applyFromOption() {
@@ -67,6 +79,8 @@ else
                 if (!opt) return;
                 atamaId.value = opt.value;
                 misafir.value = opt.getAttribute('data-misafir') || opt.dataset?.misafir || '';
+                if (tcInput) tcInput.value = opt.getAttribute('data-tc') || opt.dataset?.tc || '';
+                if (ziyaretInput) ziyaretInput.value = opt.getAttribute('data-ziyaret') || opt.dataset?.ziyaret || '';
                 aciklama.value = opt.getAttribute('data-aciklama') || opt.dataset?.aciklama || '';
                 var girisVal = opt.getAttribute('data-giris') || opt.dataset?.giris || '';
                 giris.value = girisVal;

@@ -258,14 +258,15 @@
                 <div class="user-info">
                     <div class="user-avatar">
                         @{
-                            var displayName = SessionContext?.CurrentUser?.AdSoyad ?? SessionContext?.CurrentUser?.KullaniciAdi ?? "";
+                            var layoutUser = SessionContext?.CurrentUser ?? (ViewBag.User as CeyPASS.Entities.Concrete.AuthUserDTO);
+                            var displayName = layoutUser?.AdSoyad ?? layoutUser?.KullaniciAdi ?? "";
                             var initial = !string.IsNullOrEmpty(displayName) ? displayName[0].ToString().ToUpperInvariant() : "K";
                         }
                         @initial
                     </div>
                     <div class="user-details">
-                        <div class="user-name">@(SessionContext?.CurrentUser?.AdSoyad ?? SessionContext?.CurrentUser?.KullaniciAdi ?? "Kullanıcı")</div>
-                        <div class="user-role">@(SessionContext?.CurrentUser?.Rol ?? "Kullanıcı")</div>
+                        <div class="user-name">@((layoutUser?.AdSoyad ?? layoutUser?.KullaniciAdi) ?? "Kullanıcı")</div>
+                        <div class="user-role">@((layoutUser?.Rol) ?? "Kullanıcı")</div>
                     </div>
                     <a href="@Url.Action("Logout", "Account")" class="btn btn-ghost btn-sm" title="Çıkış Yap">
                         <i class="bi bi-box-arrow-right"></i>

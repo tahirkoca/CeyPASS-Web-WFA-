@@ -17,6 +17,9 @@ builder.Configuration.AddJsonFile("appsettings.Local.json", optional: true, relo
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
+// In-memory cache (tek sunucu cache senaryoları için)
+builder.Services.AddMemoryCache();
+
 // Session Configuration
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(options =>

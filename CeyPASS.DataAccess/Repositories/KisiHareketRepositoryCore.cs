@@ -161,6 +161,96 @@ WHERE k.FirmaId = @p0
             return dt;
         }
 
+        public List<KisiHareketListRow> GetByPersonsPaged(List<int> personIds, DateTime bas, DateTime bit, bool onlyAktif, bool onlyPasif, bool onlyYemekhane, int firmaId, int page, int pageSize, out int totalCount)
+        {
+            if (page < 1) page = 1;
+            if (pageSize < 1) pageSize = 20;
+
+            var sbWhere = new StringBuilder(@"
+FROM dbo.KisiHareketler AS k
+LEFT JOIN dbo.Kisiler  AS p ON p.PersonelId = k.PersonelId
+LEFT JOIN dbo.Cihazlar AS c ON c.CihazId   = k.CihazId
+LEFT JOIN dbo.Firmalar AS f ON f.FirmaId   = k.FirmaId
+WHERE k.FirmaId = @p0
+  AND k.Tarih >= @p1
+  AND k.Tarih <= @p2
+");
+
+            var parameters = new List<Microsoft.Data.SqlClient.SqlParameter>
+            {
+                new Microsoft.Data.SqlClient.SqlParameter("@p0", firmaId),
+                new Microsoft.Data.SqlClient.SqlParameter("@p1", bas),
+                new Microsoft.Data.SqlClient.SqlParameter("@p2", bit)
+            };
+
+            if (onlyAktif && !onlyPasif)
+                sbWhere.AppendLine("  AND k.AktifMi = 1");
+            else if (!onlyAktif && onlyPasif)
+                sbWhere.AppendLine("  AND k.AktifMi = 0");
+            else if (!onlyAktif && !onlyPasif)
+                sbWhere.AppendLine("  AND k.AktifMi = 1");
+
+            if (onlyYemekhane)
+            {
+                sbWhere.AppendLine("  AND k.Tip = N'Yemekhane'");
+            }
+            else
+            {
+                sbWhere.AppendLine("  AND (k.Tip IN (N'Giriş', N'Çıkış', N'Cikis'))");
+            }
+
+            if (personIds != null && personIds.Count > 0)
+            {
+                var inParams = new List<string>(personIds.Count);
+                for (int i = 0; i < personIds.Count; i++)
+                {
+                    var pn = "@p" + (3 + i);
+                    inParams.Add(pn);
+                    parameters.Add(new Microsoft.Data.SqlClient.SqlParameter(pn, personIds[i]));
+                }
+
+                sbWhere.Append("  AND k.PersonelId IN (");
+                sbWhere.Append(string.Join(",", inParams));
+                sbWhere.AppendLine(")");
+            }
+
+            var countSql = "SELECT COUNT(1) " + sbWhere.ToString();
+            totalCount = _context.Database
+                .SqlQueryRaw<int>(countSql, parameters.ToArray())
+                .AsEnumerable()
+                .FirstOrDefault();
+
+            var selectSql = @"
+SELECT
+    k.Id,
+    f.FirmaAdi AS Firma,
+    p.PersonelId AS SicilNo,
+    p.Ad + ' ' + p.Soyad AS AdSoyad,
+    CASE
+        WHEN k.CihazId = 0
+          OR c.CihazAdi IS NULL
+          OR LTRIM(RTRIM(c.CihazAdi)) = N'' THEN N'ELLE MÜDAHALE'
+        ELSE c.CihazAdi
+    END AS CihazAdi,
+    k.Tarih,
+    k.Tip,
+    k.KayitZamani,
+    k.AktifMi
+";
+
+            var pageSql = new StringBuilder();
+            pageSql.Append(selectSql);
+            pageSql.Append(sbWhere);
+            pageSql.AppendLine("ORDER BY k.Tarih");
+            pageSql.AppendLine("OFFSET @po ROWS FETCH NEXT @pf ROWS ONLY");
+            parameters.Add(new Microsoft.Data.SqlClient.SqlParameter("@po", (page - 1) * pageSize));
+            parameters.Add(new Microsoft.Data.SqlClient.SqlParameter("@pf", pageSize));
+
+            return _context.Database
+                .SqlQueryRaw<KisiHareketListRow>(pageSql.ToString(), parameters.ToArray())
+                .ToList();
+        }
+
         public bool InsertManual(int firmaId, int personelId, DateTime tarih, string tip)
         {
             var entity = new CeyPASS.DataAccess.KisiHareketler

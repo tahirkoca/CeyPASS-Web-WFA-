@@ -184,13 +184,40 @@ namespace CeyPASS.Web.Controllers
 
             try
             {
-                _msvc.CreateAssignment(user.FirmaId, model.KartId, model.MisafirAdSoyad, model.GirisSaati, model.Aciklama);
+                _msvc.CreateAssignment(user.FirmaId, model.KartId, model.MisafirAdSoyad, model.GirisSaati, model.Aciklama, model.TCKimlikNo, model.ZiyaretEdilenKisi);
                 return Json(new { ok = true, message = "Kayıt başarıyla oluşturuldu." });
             }
             catch (Exception ex)
             {
                 return Json(new { ok = false, message = ex.Message });
             }
+        }
+
+        [HttpGet]
+        public IActionResult GetMisafirByTc(string tc)
+        {
+            var user = GetUser();
+            if (user == null) return Unauthorized();
+            if (IsYemekhaneRole(user?.Rol) && !IsDanismaRole(user?.Rol)) return Forbid();
+
+            if (string.IsNullOrWhiteSpace(tc))
+            {
+                return Json(new { ok = false, message = "T.C. kimlik numarası boş olamaz." });
+            }
+
+            var rec = _msvc.GetMisafirBilgisiByTc(tc);
+            if (rec == null)
+            {
+                return Json(new { ok = false });
+            }
+
+            return Json(new
+            {
+                ok = true,
+                misafirAdSoyad = rec.MisafirAdSoyad,
+                ziyaretEdilenKisi = rec.ZiyaretEdilenKisi,
+                aciklama = rec.Notlar
+            });
         }
 
         [HttpGet]
@@ -215,7 +242,7 @@ namespace CeyPASS.Web.Controllers
 
             try
             {
-                _msvc.UpdateAssignment(model.AtamaId, model.MisafirAdSoyad, model.GirisSaati, model.CikisSaati, model.Aciklama);
+                _msvc.UpdateAssignment(model.AtamaId, model.MisafirAdSoyad, model.GirisSaati, model.CikisSaati, model.Aciklama, model.TCKimlikNo, model.ZiyaretEdilenKisi);
                 return Json(new { ok = true, message = "Kayıt güncellendi." });
             }
             catch (Exception ex)

@@ -30,6 +30,11 @@ namespace CeyPASS.WFA.UserControls.Canlı_İzleme
             this.cmbPuantajsizKartlar = new System.Windows.Forms.ComboBox();
             this.label3 = new System.Windows.Forms.Label();
             this.txtMisafirAdSoyad = new System.Windows.Forms.TextBox();
+            this.lblTCKimlikNo = new System.Windows.Forms.Label();
+            this.txtTCKimlikNo = new System.Windows.Forms.TextBox();
+            this.lblKimeGeldigi = new System.Windows.Forms.Label();
+            this.txtZiyaretEdilenKisi = new System.Windows.Forms.TextBox();
+            this.lblTcBilgi = new System.Windows.Forms.Label();
             this.label4 = new System.Windows.Forms.Label();
             this.dtpGirisSaati = new System.Windows.Forms.DateTimePicker();
             this.label5 = new System.Windows.Forms.Label();
@@ -54,7 +59,7 @@ namespace CeyPASS.WFA.UserControls.Canlı_İzleme
             this.pnlMain.Location = new System.Drawing.Point(0, 0);
             this.pnlMain.Name = "pnlMain";
             this.pnlMain.Padding = new System.Windows.Forms.Padding(10);
-            this.pnlMain.Size = new System.Drawing.Size(600, 500);
+            this.pnlMain.Size = new System.Drawing.Size(720, 600);
             this.pnlMain.TabIndex = 0;
             // 
             // pnlCard
@@ -66,7 +71,7 @@ namespace CeyPASS.WFA.UserControls.Canlı_İzleme
             this.pnlCard.Dock = System.Windows.Forms.DockStyle.Fill;
             this.pnlCard.Location = new System.Drawing.Point(10, 10);
             this.pnlCard.Name = "pnlCard";
-            this.pnlCard.Size = new System.Drawing.Size(580, 480);
+            this.pnlCard.Size = new System.Drawing.Size(700, 580);
             this.pnlCard.TabIndex = 0;
             // 
             // tlpForm
@@ -77,28 +82,38 @@ namespace CeyPASS.WFA.UserControls.Canlı_İzleme
             this.tlpForm.Controls.Add(this.cmbPuantajsizKartlar, 0, 1);
             this.tlpForm.Controls.Add(this.label3, 0, 2);
             this.tlpForm.Controls.Add(this.txtMisafirAdSoyad, 0, 3);
-            this.tlpForm.Controls.Add(this.label4, 0, 4);
-            this.tlpForm.Controls.Add(this.dtpGirisSaati, 0, 5);
-            this.tlpForm.Controls.Add(this.label5, 0, 6);
-            this.tlpForm.Controls.Add(this.dtpCikisSaati, 0, 7);
-            this.tlpForm.Controls.Add(this.label6, 0, 8);
-            this.tlpForm.Controls.Add(this.txtAciklama, 0, 9);
+            this.tlpForm.Controls.Add(this.lblTCKimlikNo, 0, 4);
+            this.tlpForm.Controls.Add(this.txtTCKimlikNo, 0, 5);
+            this.tlpForm.Controls.Add(this.lblKimeGeldigi, 0, 6);
+            this.tlpForm.Controls.Add(this.txtZiyaretEdilenKisi, 0, 7);
+            this.tlpForm.Controls.Add(this.lblTcBilgi, 0, 8);
+            this.tlpForm.Controls.Add(this.label4, 0, 9);
+            this.tlpForm.Controls.Add(this.dtpGirisSaati, 0, 10);
+            this.tlpForm.Controls.Add(this.label5, 0, 11);
+            this.tlpForm.Controls.Add(this.dtpCikisSaati, 0, 12);
+            this.tlpForm.Controls.Add(this.label6, 0, 13);
+            this.tlpForm.Controls.Add(this.txtAciklama, 0, 14);
             this.tlpForm.Dock = System.Windows.Forms.DockStyle.Fill;
             this.tlpForm.Location = new System.Drawing.Point(0, 50);
             this.tlpForm.Name = "tlpForm";
             this.tlpForm.Padding = new System.Windows.Forms.Padding(20, 10, 20, 0);
-            this.tlpForm.RowCount = 10;
-            this.tlpForm.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 22F)); // Label
-            this.tlpForm.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 35F)); // Input
-            this.tlpForm.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 22F)); // Label
-            this.tlpForm.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 35F)); // Input
-            this.tlpForm.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 22F)); // Label
-            this.tlpForm.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 35F)); // Input
-            this.tlpForm.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 22F)); // Label
-            this.tlpForm.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 35F)); // Input
-            this.tlpForm.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 22F)); // Label
-            this.tlpForm.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F)); // Açıklama (Kalan alanı kaplar)
-            this.tlpForm.Size = new System.Drawing.Size(580, 360);
+            this.tlpForm.RowCount = 15;
+            this.tlpForm.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 22F));
+            this.tlpForm.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 35F));
+            this.tlpForm.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 22F));
+            this.tlpForm.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 35F));
+            this.tlpForm.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 22F));
+            this.tlpForm.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 35F));
+            this.tlpForm.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 22F));
+            this.tlpForm.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 35F));
+            this.tlpForm.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 28F));
+            this.tlpForm.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 22F));
+            this.tlpForm.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 35F));
+            this.tlpForm.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 22F));
+            this.tlpForm.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 35F));
+            this.tlpForm.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 22F));
+            this.tlpForm.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
+            this.tlpForm.Size = new System.Drawing.Size(700, 510);
             this.tlpForm.TabIndex = 1;
             // 
             // label2
@@ -145,6 +160,65 @@ namespace CeyPASS.WFA.UserControls.Canlı_İzleme
             this.txtMisafirAdSoyad.Name = "txtMisafirAdSoyad";
             this.txtMisafirAdSoyad.Size = new System.Drawing.Size(534, 30);
             this.txtMisafirAdSoyad.TabIndex = 3;
+            // 
+            // lblTCKimlikNo
+            // 
+            this.lblTCKimlikNo.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.lblTCKimlikNo.AutoSize = true;
+            this.lblTCKimlikNo.Font = new System.Drawing.Font("Segoe UI Semibold", 9F, System.Drawing.FontStyle.Bold);
+            this.lblTCKimlikNo.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
+            this.lblTCKimlikNo.Location = new System.Drawing.Point(23, 126);
+            this.lblTCKimlikNo.Name = "lblTCKimlikNo";
+            this.lblTCKimlikNo.Size = new System.Drawing.Size(109, 20);
+            this.lblTCKimlikNo.TabIndex = 4;
+            this.lblTCKimlikNo.Text = "T.C. Kimlik No";
+            // 
+            // txtTCKimlikNo
+            // 
+            this.txtTCKimlikNo.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.txtTCKimlikNo.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.txtTCKimlikNo.Font = new System.Drawing.Font("Segoe UI", 10F);
+            this.txtTCKimlikNo.Location = new System.Drawing.Point(23, 149);
+            this.txtTCKimlikNo.MaxLength = 11;
+            this.txtTCKimlikNo.Name = "txtTCKimlikNo";
+            this.txtTCKimlikNo.Size = new System.Drawing.Size(534, 30);
+            this.txtTCKimlikNo.TabIndex = 5;
+            // 
+            // lblKimeGeldigi
+            // 
+            this.lblKimeGeldigi.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.lblKimeGeldigi.AutoSize = true;
+            this.lblKimeGeldigi.Font = new System.Drawing.Font("Segoe UI Semibold", 9F, System.Drawing.FontStyle.Bold);
+            this.lblKimeGeldigi.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
+            this.lblKimeGeldigi.Location = new System.Drawing.Point(23, 183);
+            this.lblKimeGeldigi.Name = "lblKimeGeldigi";
+            this.lblKimeGeldigi.Size = new System.Drawing.Size(97, 20);
+            this.lblKimeGeldigi.TabIndex = 6;
+            this.lblKimeGeldigi.Text = "Kime Geldiği";
+            // 
+            // txtZiyaretEdilenKisi
+            // 
+            this.txtZiyaretEdilenKisi.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.txtZiyaretEdilenKisi.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.txtZiyaretEdilenKisi.Font = new System.Drawing.Font("Segoe UI", 10F);
+            this.txtZiyaretEdilenKisi.Location = new System.Drawing.Point(23, 206);
+            this.txtZiyaretEdilenKisi.Name = "txtZiyaretEdilenKisi";
+            this.txtZiyaretEdilenKisi.Size = new System.Drawing.Size(534, 30);
+            this.txtZiyaretEdilenKisi.TabIndex = 7;
+            // 
+            // lblTcBilgi
+            // 
+            this.lblTcBilgi.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)));
+            this.lblTcBilgi.AutoSize = true;
+            this.lblTcBilgi.Font = new System.Drawing.Font("Segoe UI", 8.25F);
+            this.lblTcBilgi.ForeColor = System.Drawing.Color.Gray;
+            this.lblTcBilgi.Location = new System.Drawing.Point(23, 239);
+            this.lblTcBilgi.MaximumSize = new System.Drawing.Size(534, 0);
+            this.lblTcBilgi.Name = "lblTcBilgi";
+            this.lblTcBilgi.Size = new System.Drawing.Size(420, 19);
+            this.lblTcBilgi.TabIndex = 8;
+            this.lblTcBilgi.Text = "T.C. zorunlu değildir; elle ya da barkodla giriş yapabilirsiniz. T.C. girip alandan çıkınca veya Enter'a basınca boş alanlar otomatik doldurulur, dolu alanlar değiştirilmez.";
+            this.lblTcBilgi.UseMnemonic = false;
             // 
             // label4
             // 
@@ -218,10 +292,10 @@ namespace CeyPASS.WFA.UserControls.Canlı_İzleme
             this.pnlFooter.Controls.Add(this.btnMisafirKayitIptal);
             this.pnlFooter.Controls.Add(this.btnMisafirKaydet);
             this.pnlFooter.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.pnlFooter.Location = new System.Drawing.Point(0, 410);
+            this.pnlFooter.Location = new System.Drawing.Point(0, 530);
             this.pnlFooter.Name = "pnlFooter";
             this.pnlFooter.Padding = new System.Windows.Forms.Padding(20, 10, 20, 10);
-            this.pnlFooter.Size = new System.Drawing.Size(580, 70);
+            this.pnlFooter.Size = new System.Drawing.Size(700, 70);
             this.pnlFooter.TabIndex = 2;
             // 
             // btnMisafirKayitIptal
@@ -278,7 +352,7 @@ namespace CeyPASS.WFA.UserControls.Canlı_İzleme
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.Controls.Add(this.pnlMain);
             this.Name = "misafirKartAtama";
-            this.Size = new System.Drawing.Size(600, 500);
+            this.Size = new System.Drawing.Size(720, 600);
             this.Load += new System.EventHandler(this.misafirKartAtama_Load);
             this.pnlMain.ResumeLayout(false);
             this.pnlCard.ResumeLayout(false);
@@ -298,6 +372,11 @@ namespace CeyPASS.WFA.UserControls.Canlı_İzleme
         private System.Windows.Forms.ComboBox cmbPuantajsizKartlar;
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.TextBox txtMisafirAdSoyad;
+        private System.Windows.Forms.Label lblTCKimlikNo;
+        private System.Windows.Forms.TextBox txtTCKimlikNo;
+        private System.Windows.Forms.Label lblKimeGeldigi;
+        private System.Windows.Forms.TextBox txtZiyaretEdilenKisi;
+        private System.Windows.Forms.Label lblTcBilgi;
         private System.Windows.Forms.Label label4;
         private System.Windows.Forms.DateTimePicker dtpGirisSaati;
         private System.Windows.Forms.Label label5;

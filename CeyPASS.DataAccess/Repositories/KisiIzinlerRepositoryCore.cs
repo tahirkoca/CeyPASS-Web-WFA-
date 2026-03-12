@@ -386,5 +386,143 @@ WHERE ki.AktifMi = 1
             }
             return dt;
         }
+
+        public List<KisiIzinListRow> GetIzinRaporuPaged(int? firmaId, string personelId, int? izinTipId, DateTime bas, DateTime bit, int page, int pageSize, out int totalCount)
+        {
+            if (page < 1) page = 1;
+            if (pageSize < 1) pageSize = 20;
+
+            var sql = @"
+SELECT
+    COUNT(1) OVER()                      AS TotalCount,
+    ki.KisiIzinId                        AS KisiIzinId,
+    k.PersonelId                         AS SicilNo,
+    (k.Ad + ' ' + k.Soyad)               AS AdSoyad,
+    f.FirmaAdi                           AS FirmaAdi,
+    it.Adi                               AS IzinTipi,
+    ki.Baslangic                         AS IzinBaslangic,
+    ki.Bitis                             AS IzinBitis,
+    CASE 
+      WHEN ki.SaatlikIzinMi = 1 THEN N'-'
+      WHEN calc.GunNet = FLOOR(calc.GunNet)
+           THEN CONVERT(varchar(20), CONVERT(int, calc.GunNet))
+      ELSE REPLACE(CONVERT(varchar(20), CAST(ROUND(calc.GunNet, 2) AS decimal(10,2))), '.', ',')
+    END                                  AS SureGun,
+    CAST(ROUND(CAST(ki.SureDakika AS float) / 60.0, 2) AS float) AS SureSaat,
+    ki.SaatlikIzinMi                     AS SaatlikIzinMi,
+    ki.Aciklama                          AS Aciklama,
+    ki.OlusturmaTarihi                   AS IslenmeTarihi,
+    ki.GuncellemeTarihi                  AS GuncellemeTarihi
+FROM KisiIzinler ki
+JOIN Kisiler      k  ON k.PersonelId = ki.PersonelId
+JOIN Firmalar     f  ON f.FirmaId    = ki.FirmaId
+JOIN IzinTipleri  it ON it.IzinTipId = ki.IzinId
+CROSS APPLY (
+    SELECT 
+        S = CONVERT(date, ki.Baslangic),
+        E = CONVERT(date, ki.Bitis)
+) d
+CROSS APPLY (
+    SELECT
+        ToplamGun = DATEDIFF(DAY, d.S, d.E) + 1,
+        IlkPazar  = DATEADD(DAY, (7 - (DATEDIFF(DAY, '19000107', d.S) % 7)) % 7, d.S)
+) t
+CROSS APPLY (
+    SELECT 
+        Pazar = CASE 
+                  WHEN t.IlkPazar > d.E THEN 0 
+                  ELSE 1 + DATEDIFF(DAY, t.IlkPazar, d.E) / 7 
+                END,
+        RTAzalis = (
+            SELECT ISNULL(SUM(
+                CASE
+                  WHEN (DATEDIFF(DAY,'19000107', rt.Tarih) % 7) = 0 THEN 0.0
+                  WHEN rt.CalismaSaati >= 7.5 THEN 1.0
+                  WHEN rt.CalismaSaati > 0 THEN rt.CalismaSaati / 7.5
+                  ELSE 1.0
+                END
+            ),0.0)
+            FROM dbo.ResmiTatiller rt
+            WHERE rt.Tarih BETWEEN d.S AND d.E
+        ),
+        ToplamGun = t.ToplamGun
+) calc0
+CROSS APPLY (
+    SELECT GunNet = CASE WHEN (calc0.ToplamGun - calc0.Pazar - calc0.RTAzalis) < 0
+                         THEN 0.0
+                         ELSE (calc0.ToplamGun - calc0.Pazar - calc0.RTAzalis)
+                    END
+) calc
+WHERE ki.AktifMi = 1
+  AND ki.Baslangic <= @p0
+  AND ki.Bitis     >= @p1
+";
+
+            var parameters = new List<Microsoft.Data.SqlClient.SqlParameter>
+            {
+                new Microsoft.Data.SqlClient.SqlParameter("@p0", bit),
+                new Microsoft.Data.SqlClient.SqlParameter("@p1", bas)
+            };
+
+            if (firmaId.HasValue)
+            {
+                sql += "  AND ki.FirmaId   = @p" + parameters.Count;
+                parameters.Add(new Microsoft.Data.SqlClient.SqlParameter("@p" + parameters.Count, firmaId.Value));
+            }
+            if (!string.IsNullOrEmpty(personelId))
+            {
+                sql += "  AND ki.PersonelId = @p" + parameters.Count;
+                parameters.Add(new Microsoft.Data.SqlClient.SqlParameter("@p" + parameters.Count, personelId));
+            }
+            if (izinTipId.HasValue)
+            {
+                sql += "  AND ki.IzinId    = @p" + parameters.Count;
+                parameters.Add(new Microsoft.Data.SqlClient.SqlParameter("@p" + parameters.Count, izinTipId.Value));
+            }
+
+            sql += " ORDER BY ki.Baslangic OFFSET @po ROWS FETCH NEXT @pf ROWS ONLY";
+            parameters.Add(new Microsoft.Data.SqlClient.SqlParameter("@po", (page - 1) * pageSize));
+            parameters.Add(new Microsoft.Data.SqlClient.SqlParameter("@pf", pageSize));
+
+            var rows = _context.Database
+                .SqlQueryRaw<IzinRaporuPagedRow>(sql, parameters.ToArray())
+                .ToList();
+
+            totalCount = rows.FirstOrDefault()?.TotalCount ?? 0;
+            return rows.Select(r => new KisiIzinListRow
+            {
+                KisiIzinId = r.KisiIzinId,
+                SicilNo = r.SicilNo ?? "",
+                AdSoyad = r.AdSoyad ?? "",
+                FirmaAdi = r.FirmaAdi ?? "",
+                IzinTipi = r.IzinTipi ?? "",
+                IzinBaslangic = r.IzinBaslangic,
+                IzinBitis = r.IzinBitis,
+                SureGun = r.SureGun ?? "",
+                SureSaat = r.SureSaat,
+                SaatlikIzin = r.SaatlikIzinMi ? "EVET" : "HAYIR",
+                Aciklama = r.Aciklama ?? "",
+                IslenmeTarihi = r.IslenmeTarihi,
+                GuncellemeTarihi = r.GuncellemeTarihi
+            }).ToList();
+        }
+
+        private sealed class IzinRaporuPagedRow
+        {
+            public int TotalCount { get; set; }
+            public int KisiIzinId { get; set; }
+            public string? SicilNo { get; set; }
+            public string? AdSoyad { get; set; }
+            public string? FirmaAdi { get; set; }
+            public string? IzinTipi { get; set; }
+            public DateTime IzinBaslangic { get; set; }
+            public DateTime IzinBitis { get; set; }
+            public string? SureGun { get; set; }
+            public double SureSaat { get; set; }
+            public bool SaatlikIzinMi { get; set; }
+            public string? Aciklama { get; set; }
+            public DateTime? IslenmeTarihi { get; set; }
+            public DateTime? GuncellemeTarihi { get; set; }
+        }
     }
 }

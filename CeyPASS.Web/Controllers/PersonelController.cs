@@ -3,6 +3,7 @@ using CeyPASS.Business.Abstractions;
 using CeyPASS.DataAccess.Abstractions;
 using CeyPASS.Entities.Concrete;
 using CeyPASS.Infrastructure.Helpers;
+using Microsoft.Extensions.Caching.Memory;
 using System;
 using System.IO;
 using System.Linq;
@@ -19,7 +20,11 @@ namespace CeyPASS.Web.Controllers
         private readonly IAuthorizationService _authorizationService;
         private readonly ICalismaSekliService _calismaSekliService;
         private readonly IFirmaService _firmaService;
+        private readonly IMemoryCache _cache;
         private const string PageName = "Personeller";
+        private const int DefaultPageSize = 20;
+        private static readonly int[] AllowedPageSizes = new[] { 10, 20, 50, 100 };
+        private const string CacheVerPrefix = "personel_list_ver_";
 
         public PersonelController(
             IKisiService kisiService,
@@ -28,7 +33,8 @@ namespace CeyPASS.Web.Controllers
             ISessionContext sessionContext,
             IAuthorizationService authorizationService,
             ICalismaSekliService calismaSekliService,
-            IFirmaService firmaService)
+            IFirmaService firmaService,
+            IMemoryCache cache)
         {
             _kisiService = kisiService;
             _kisiQueryService = kisiQueryService;
@@ -37,10 +43,11 @@ namespace CeyPASS.Web.Controllers
             _authorizationService = authorizationService;
             _calismaSekliService = calismaSekliService;
             _firmaService = firmaService;
+            _cache = cache;
         }
 
         /// <param name="kartTipi">puantaj = Puantaj Yapılan Kartlar (PuantajYapilirMi=1), puantajsiz = Puantaj Yapılmayan Kartlar (PuantajYapilirMi=0)</param>
-        public IActionResult Index(string search = null, int? firmaId = null, int? isyeriId = null, string kartTipi = null)
+        public IActionResult Index(string search = null, int? firmaId = null, int? isyeriId = null, string kartTipi = null, int page = 1, int pageSize = DefaultPageSize)
         {
             // Check authorization
             if (!_authorizationService.ViewAbility(PageName))
@@ -48,6 +55,9 @@ namespace CeyPASS.Web.Controllers
                 TempData["Error"] = "Personeller ekranını görüntüleme yetkiniz yok.";
                 return RedirectToAction("Index", "Home");
             }
+
+            if (page < 1) page = 1;
+            if (!AllowedPageSizes.Contains(pageSize)) pageSize = DefaultPageSize;
 
             // Determine firma
             int selectedFirmaId = firmaId ?? (int)_sessionContext.AktifFirmaId;
@@ -60,8 +70,29 @@ namespace CeyPASS.Web.Controllers
             bool puantajYapilan = (kartTipi != "puantajsiz");
             var puantajYapilirMi = puantajYapilan;
 
-            // Load personel list (puantaj yapılan veya puantaj yapılmayan kartlar)
-            var personelList = _kisiQueryService.GetAktifKisilerByFirma(selectedFirmaId, search, puantajYapilirMi, isyeriId);
+            // Load personel list (paged + cache)
+            var searchNorm = NormalizeSearch(search);
+            var verKey = CacheVerPrefix + selectedFirmaId;
+            if (!_cache.TryGetValue(verKey, out int ver))
+            {
+                ver = 0;
+                _cache.Set(verKey, ver, TimeSpan.FromHours(1));
+            }
+
+            var cacheKey = $"personel_list_{selectedFirmaId}_v{ver}_{(isyeriId.HasValue ? isyeriId.Value.ToString() : "all")}_{(puantajYapilan ? "puantaj" : "puantajsiz")}_{searchNorm}_p{page}_s{pageSize}";
+            if (!_cache.TryGetValue(cacheKey, out PersonelListCacheValue cached))
+            {
+                int totalCount;
+                var items = _kisiQueryService.GetAktifKisilerByFirmaPaged(selectedFirmaId, search, puantajYapilirMi, isyeriId, page, pageSize, out totalCount);
+                cached = new PersonelListCacheValue(items, totalCount);
+                _cache.Set(cacheKey, cached, TimeSpan.FromMinutes(2));
+            }
+
+            var personelList = cached.Items;
+            var total = cached.TotalCount;
+            var totalPages = (int)Math.Ceiling(total / (double)pageSize);
+            if (totalPages < 1) totalPages = 1;
+            if (page > totalPages) page = totalPages;
 
             // Load lookup data for filters
             var firmalar = isAdmin ? _firmaService.GetAll().OrderBy(f => f.FirmaAdi).ToList() : null;
@@ -77,6 +108,10 @@ namespace CeyPASS.Web.Controllers
             ViewBag.CanCreate = _authorizationService.Can(PageName, YetkiTipleri.Create);
             ViewBag.CanUpdate = _authorizationService.Can(PageName, YetkiTipleri.Update);
             ViewBag.CanDelete = _authorizationService.Can(PageName, YetkiTipleri.Delete);
+            ViewBag.Page = page;
+            ViewBag.PageSize = pageSize;
+            ViewBag.TotalCount = total;
+            ViewBag.TotalPages = totalPages;
 
             return View(personelList);
         }
@@ -152,6 +187,7 @@ namespace CeyPASS.Web.Controllers
 
                 _kisiService.YeniKisiEkle(kisi, firmaPersoneli, puantajYapilabilir, yemekHakkiVar, gunlukYemekLimiti, puantajsizKartId, puantajsizKartNo, puantajsizKartAdi);
                 TempData["Success"] = "Personel başarıyla eklendi.";
+                BumpPersonelCacheVersion(kisi.FirmaId);
                 return RedirectToAction("Index");
             }
             catch (Exception ex)
@@ -163,7 +199,7 @@ namespace CeyPASS.Web.Controllers
         }
 
         [HttpGet]
-        public IActionResult Edit(string id, string kartTipi, int? firmaId)
+        public IActionResult Edit(string id, string kartTipi, int? firmaId, int page = 1, int pageSize = DefaultPageSize, string search = null, int? isyeriId = null)
         {
             if (!_authorizationService.Can(PageName, YetkiTipleri.Update))
             {
@@ -178,6 +214,10 @@ namespace CeyPASS.Web.Controllers
 
             ViewBag.KartTipi = kartTipi;
             ViewBag.SelectedFirmaId = firmaId;
+            ViewBag.Page = page;
+            ViewBag.PageSize = pageSize;
+            ViewBag.Search = search;
+            ViewBag.SelectedIsyeriId = isyeriId;
 
             var kisi = _kisiQueryService.GetKisiDetay(id);
             if (kisi == null)
@@ -198,7 +238,7 @@ namespace CeyPASS.Web.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Edit(string originalPersonelId, KisiDetay kisiDetay, bool firmaPersoneli, bool puantajYapilabilir, bool yemekHakkiVar, int gunlukYemekAdedi, string firmaDisiKartNo, bool fotoDegisti, IFormFile fotograf, string kartTipi, int? firmaId)
+        public IActionResult Edit(string originalPersonelId, KisiDetay kisiDetay, bool firmaPersoneli, bool puantajYapilabilir, bool yemekHakkiVar, int gunlukYemekAdedi, string firmaDisiKartNo, bool fotoDegisti, IFormFile fotograf, string kartTipi, int? firmaId, int page = 1, int pageSize = DefaultPageSize, string search = null, int? isyeriId = null)
         {
             if (!_authorizationService.Can(PageName, YetkiTipleri.Update))
             {
@@ -251,7 +291,8 @@ namespace CeyPASS.Web.Controllers
                 if (success)
                 {
                     TempData["Success"] = "Personel başarıyla güncellendi.";
-                    return RedirectToAction("Index", new { kartTipi, firmaId });
+                    BumpPersonelCacheVersion(kisi.FirmaId);
+                    return RedirectToAction("Index", new { kartTipi, firmaId, page, pageSize, search, isyeriId });
                 }
                 else
                 {
@@ -260,6 +301,10 @@ namespace CeyPASS.Web.Controllers
                     ViewBag.OriginalPersonelId = originalPersonelId;
                     ViewBag.KartTipi = kartTipi;
                     ViewBag.SelectedFirmaId = firmaId;
+                    ViewBag.Page = page;
+                    ViewBag.PageSize = pageSize;
+                    ViewBag.Search = search;
+                    ViewBag.SelectedIsyeriId = isyeriId;
                     return View(kisiDetay);
                 }
             }
@@ -270,18 +315,22 @@ namespace CeyPASS.Web.Controllers
                 ViewBag.OriginalPersonelId = originalPersonelId;
                 ViewBag.KartTipi = kartTipi;
                 ViewBag.SelectedFirmaId = firmaId;
+                ViewBag.Page = page;
+                ViewBag.PageSize = pageSize;
+                ViewBag.Search = search;
+                ViewBag.SelectedIsyeriId = isyeriId;
                 return View(kisiDetay);
             }
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Delete(string id, DateTime? cikisTarihi, string? firmaDisiKartNo, string kartTipi, int? firmaId)
+        public IActionResult Delete(string id, DateTime? cikisTarihi, string? firmaDisiKartNo, string kartTipi, int? firmaId, int page = 1, int pageSize = DefaultPageSize, string search = null, int? isyeriId = null)
         {
             if (!_authorizationService.Can(PageName, YetkiTipleri.Delete))
             {
                 TempData["Error"] = "Personel silme yetkiniz yok.";
-                return RedirectToAction("Index", new { kartTipi, firmaId });
+                return RedirectToAction("Index", new { kartTipi, firmaId, page, pageSize, search, isyeriId });
             }
 
             if (string.IsNullOrWhiteSpace(id))
@@ -298,6 +347,7 @@ namespace CeyPASS.Web.Controllers
                 if (success)
                 {
                     TempData["Success"] = "Personel işten çıkarıldı.";
+                    if (firmaId.HasValue) BumpPersonelCacheVersion(firmaId.Value);
                 }
                 else
                 {
@@ -309,11 +359,11 @@ namespace CeyPASS.Web.Controllers
                 TempData["Error"] = "Hata: " + ex.Message;
             }
 
-            return RedirectToAction("Index", new { kartTipi, firmaId });
+            return RedirectToAction("Index", new { kartTipi, firmaId, page, pageSize, search, isyeriId });
         }
 
         [HttpGet]
-        public IActionResult Details(string id, string kartTipi, int? firmaId)
+        public IActionResult Details(string id, string kartTipi, int? firmaId, int page = 1, int pageSize = DefaultPageSize, string search = null, int? isyeriId = null)
         {
             if (string.IsNullOrWhiteSpace(id))
             {
@@ -322,6 +372,10 @@ namespace CeyPASS.Web.Controllers
 
             ViewBag.KartTipi = kartTipi;
             ViewBag.SelectedFirmaId = firmaId;
+            ViewBag.Page = page;
+            ViewBag.PageSize = pageSize;
+            ViewBag.Search = search;
+            ViewBag.SelectedIsyeriId = isyeriId;
 
             var kisi = _kisiQueryService.GetKisiDetay(id);
             if (kisi == null)
@@ -329,6 +383,35 @@ namespace CeyPASS.Web.Controllers
 
             FillOrganizasyonAdlari(kisi);
             return View(kisi);
+        }
+
+        private void BumpPersonelCacheVersion(int firmaId)
+        {
+            var verKey = CacheVerPrefix + firmaId;
+            if (!_cache.TryGetValue(verKey, out int ver))
+                ver = 0;
+            ver++;
+            _cache.Set(verKey, ver, TimeSpan.FromHours(1));
+        }
+
+        private static string NormalizeSearch(string s)
+        {
+            if (string.IsNullOrWhiteSpace(s)) return "";
+            s = s.Trim();
+            while (s.Contains("  "))
+                s = s.Replace("  ", " ");
+            return s.ToLowerInvariant();
+        }
+
+        private sealed class PersonelListCacheValue
+        {
+            public PersonelListCacheValue(System.Collections.Generic.List<KisiListItem> items, int totalCount)
+            {
+                Items = items ?? new System.Collections.Generic.List<KisiListItem>();
+                TotalCount = totalCount;
+            }
+            public System.Collections.Generic.List<KisiListItem> Items { get; }
+            public int TotalCount { get; }
         }
 
         private void FillOrganizasyonAdlari(KisiDetay kisi)

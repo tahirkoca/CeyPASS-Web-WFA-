@@ -10,6 +10,7 @@ namespace CeyPASS.Business.Abstractions
         List<KisiHareketDTO> GetLastMovesByFirma(int top, int firmaId);
         List<KisiHareketDTO> GetLastMovesByFirmaYemekhane(int top, int firmaId);
         DataTable GetByPersons(List<int> personIds, DateTime bas, DateTime bit, bool onlyAktif, bool onlyPasif, bool onlyYemekhane, int firmaId);
+        List<KisiHareketListRow> GetByPersonsPaged(List<int> personIds, DateTime bas, DateTime bit, bool onlyAktif, bool onlyPasif, bool onlyYemekhane, int firmaId, int page, int pageSize, out int totalCount);
         bool InsertManual(int firmaId, int personelId, DateTime tarih, string tip);
         bool UpdateManual(int id, DateTime tarih, string tip);
         bool PasifYap(int id);

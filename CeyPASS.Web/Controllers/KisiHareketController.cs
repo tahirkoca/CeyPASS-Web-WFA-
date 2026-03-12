@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using CeyPASS.Business.Abstractions;
 using CeyPASS.Entities.Concrete;
+using Microsoft.Extensions.Caching.Memory;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -15,23 +16,29 @@ namespace CeyPASS.Web.Controllers
         private readonly ISessionContext _sessionContext;
         private readonly IAuthorizationService _authorizationService;
         private readonly IFirmaService _firmaService;
+        private readonly IMemoryCache _cache;
         private const string PageName = "KisiHareketler";
+        private const int DefaultPageSize = 50;
+        private static readonly int[] AllowedPageSizes = new[] { 20, 50, 100, 200 };
+        private const string CacheVerPrefix = "kisihareket_ver_";
 
         public KisiHareketController(
             IKisiHareketService kisiHareketService,
             IKisiQueryService kisiQueryService,
             ISessionContext sessionContext,
             IAuthorizationService authorizationService,
-            IFirmaService firmaService)
+            IFirmaService firmaService,
+            IMemoryCache cache)
         {
             _kisiHareketService = kisiHareketService;
             _kisiQueryService = kisiQueryService;
             _sessionContext = sessionContext;
             _authorizationService = authorizationService;
             _firmaService = firmaService;
+            _cache = cache;
         }
 
-        public IActionResult Index(int? firmaId = null, string personelIds = null, DateTime? baslangic = null, DateTime? bitis = null, bool? sadeceAktif = null, bool? sadecePasif = null, bool? sadeceYemekhane = null, string kartTipi = null)
+        public IActionResult Index(int? firmaId = null, string personelIds = null, DateTime? baslangic = null, DateTime? bitis = null, bool? sadeceAktif = null, bool? sadecePasif = null, bool? sadeceYemekhane = null, string kartTipi = null, int page = 1, int pageSize = DefaultPageSize)
         {
             // Check authorization
             if (!_authorizationService.ViewAbility(PageName))
@@ -39,6 +46,9 @@ namespace CeyPASS.Web.Controllers
                 TempData["Error"] = "Kişi Hareketler ekranını görüntüleme yetkiniz yok.";
                 return RedirectToAction("Index", "Home");
             }
+
+            if (page < 1) page = 1;
+            if (!AllowedPageSizes.Contains(pageSize)) pageSize = DefaultPageSize;
 
             // Determine firma
             int selectedFirmaId = firmaId ?? (int)_sessionContext.AktifFirmaId;
@@ -67,39 +77,39 @@ namespace CeyPASS.Web.Controllers
             }
 
             // Hareketleri yükle (eğer personel seçilmişse)
-            DataTable hareketlerDt = null;
+            int totalCount = 0;
+            List<KisiHareketListRow> hareketler = new List<KisiHareketListRow>();
             if (seciliPersonelIds.Any())
             {
-                hareketlerDt = _kisiHareketService.GetByPersons(
-                    seciliPersonelIds,
-                    baslangicTarih,
-                    bitisTarih,
-                    sadeceAktif ?? false,
-                    sadecePasif ?? false,
-                    sadeceYemekhane ?? false,
-                    selectedFirmaId
-                );
-            }
-
-            // DataTable'ı List'e çevir
-            List<KisiHareketListRow> hareketler = new List<KisiHareketListRow>();
-            if (hareketlerDt != null)
-            {
-                foreach (DataRow row in hareketlerDt.Rows)
+                var personelKeyPart = string.Join(",", seciliPersonelIds.OrderBy(x => x));
+                var verKey = CacheVerPrefix + selectedFirmaId;
+                if (!_cache.TryGetValue(verKey, out int ver))
                 {
-                    hareketler.Add(new KisiHareketListRow
-                    {
-                        Id = row["Id"] != DBNull.Value ? Convert.ToInt32(row["Id"]) : 0,
-                        Firma = row["Firma"]?.ToString() ?? "",
-                        SicilNo = row["SicilNo"]?.ToString() ?? "",
-                        AdSoyad = row["AdSoyad"]?.ToString() ?? "",
-                        CihazAdi = row["CihazAdi"]?.ToString() ?? "",
-                        Tarih = row["Tarih"] != DBNull.Value ? Convert.ToDateTime(row["Tarih"]) : DateTime.MinValue,
-                        Tip = row["Tip"]?.ToString() ?? "",
-                        KayitZamani = row["KayitZamani"] != DBNull.Value ? Convert.ToDateTime(row["KayitZamani"]) : DateTime.MinValue,
-                        AktifMi = row["AktifMi"] != DBNull.Value && Convert.ToBoolean(row["AktifMi"])
-                    });
+                    ver = 0;
+                    _cache.Set(verKey, ver, TimeSpan.FromHours(1));
                 }
+
+                var cacheKey = $"kisihareket_{selectedFirmaId}_v{ver}_{kartTipi}_{personelKeyPart}_{baslangicTarih:yyyyMMddHHmmss}_{bitisTarih:yyyyMMddHHmmss}_{(sadeceAktif ?? false)}_{(sadecePasif ?? false)}_{(sadeceYemekhane ?? false)}_p{page}_s{pageSize}";
+                if (!_cache.TryGetValue(cacheKey, out KisiHareketCacheValue cached))
+                {
+                    var items = _kisiHareketService.GetByPersonsPaged(
+                        seciliPersonelIds,
+                        baslangicTarih,
+                        bitisTarih,
+                        sadeceAktif ?? false,
+                        sadecePasif ?? false,
+                        sadeceYemekhane ?? false,
+                        selectedFirmaId,
+                        page,
+                        pageSize,
+                        out totalCount
+                    );
+                    cached = new KisiHareketCacheValue(items, totalCount);
+                    _cache.Set(cacheKey, cached, TimeSpan.FromMinutes(2));
+                }
+
+                hareketler = cached.Items;
+                totalCount = cached.TotalCount;
             }
 
             // Firmalar (admin için)
@@ -116,6 +126,10 @@ namespace CeyPASS.Web.Controllers
             ViewBag.SadecePasif = sadecePasif ?? false;
             ViewBag.SadeceYemekhane = sadeceYemekhane ?? false;
             ViewBag.KartTipi = kartTipi ?? "puantaj";
+            ViewBag.Page = page;
+            ViewBag.PageSize = pageSize;
+            ViewBag.TotalCount = totalCount;
+            ViewBag.TotalPages = totalCount > 0 ? (int)Math.Ceiling(totalCount / (double)pageSize) : 1;
             ViewBag.CanCreate = _authorizationService.Can(PageName, YetkiTipleri.Create);
             ViewBag.CanUpdate = _authorizationService.Can(PageName, YetkiTipleri.Update);
             ViewBag.CanDelete = _authorizationService.Can(PageName, YetkiTipleri.Delete);
@@ -139,6 +153,7 @@ namespace CeyPASS.Web.Controllers
                 if (success)
                 {
                     TempData["Success"] = "Hareket başarıyla eklendi.";
+                    BumpVer(firmaId);
                 }
                 else
                 {
@@ -169,6 +184,7 @@ namespace CeyPASS.Web.Controllers
                 if (success)
                 {
                     TempData["Success"] = "Hareket başarıyla güncellendi.";
+                    BumpVer((int)_sessionContext.AktifFirmaId);
                 }
                 else
                 {
@@ -199,6 +215,7 @@ namespace CeyPASS.Web.Controllers
                 if (success)
                 {
                     TempData["Success"] = "Hareket pasif yapıldı.";
+                    BumpVer((int)_sessionContext.AktifFirmaId);
                 }
                 else
                 {
@@ -242,10 +259,29 @@ namespace CeyPASS.Web.Controllers
             }
             catch (Exception)
             {
-                // Log error if needed
+                // ignore lookup errors
             }
 
             return list;
+        }
+
+        private void BumpVer(int firmaId)
+        {
+            var key = CacheVerPrefix + firmaId;
+            if (!_cache.TryGetValue(key, out int ver)) ver = 0;
+            ver++;
+            _cache.Set(key, ver, TimeSpan.FromHours(1));
+        }
+
+        private sealed class KisiHareketCacheValue
+        {
+            public KisiHareketCacheValue(List<KisiHareketListRow> items, int totalCount)
+            {
+                Items = items ?? new List<KisiHareketListRow>();
+                TotalCount = totalCount;
+            }
+            public List<KisiHareketListRow> Items { get; }
+            public int TotalCount { get; }
         }
     }
 

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 namespace CeyPASS.Entities.Concrete
 {
@@ -7,6 +7,8 @@ namespace CeyPASS.Entities.Concrete
         public int AtamaId { get; set; }
         public string KartId { get; set; }
         public string MisafirAdSoyad { get; set; }
+        public string TCKimlikNo { get; set; }
+        public string ZiyaretEdilenKisi { get; set; }
         public string KartAdi { get; set; }
         public DateTime Baslangic { get; set; }
         public DateTime? Bitis { get; set; }
