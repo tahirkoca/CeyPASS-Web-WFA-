@@ -9,44 +9,22 @@ jobs:
   sync:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout personal repo
+        uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.PERSONAL_TOKEN }}
+          path: personal
+
       - name: Clone company repo
         run: |
-          git clone --branch main https://x-access-token:${{ secrets.PERSONAL_TOKEN }}@github.com/ceysoft/ceypass.git repo
+          git clone --branch main https://x-access-token:${{ secrets.PERSONAL_TOKEN }}@github.com/ceysoft/ceypass.git company
 
-      - name: Remove company github folder and add sync workflow
-        env:
-          SYNC_CONTENT: |
-            name: Sync from Private Company Repo
-            on:
-              schedule:
-                - cron: '0 14 * * 0'
-              workflow_dispatch:
-            jobs:
-              sync:
-                runs-on: ubuntu-latest
-                steps:
-                  - name: Clone company repo
-                    run: |
-                      git clone --branch main https://x-access-token:PLACEHOLDER@github.com/ceysoft/ceypass.git repo
-                  - name: Remove company github folder
-                    run: |
-                      rm -rf repo/.github
-                      mkdir -p repo/.github/workflows
-                  - name: Push to personal repo
-                    run: |
-                      cd repo
-                      git push https://x-access-token:PLACEHOLDER@github.com/tahirkoca/CeyPASS-Web-WFA-.git main --force
+      - name: Sync files
         run: |
-          rm -rf repo/.github
-          mkdir -p repo/.github/workflows
-          echo "$SYNC_CONTENT" | sed 's/PLACEHOLDER/${{ secrets.PERSONAL_TOKEN }}/g' > repo/.github/workflows/sync.yml
-          cd repo
+          rsync -av --exclude='.github' --exclude='.git' company/ personal/
+          cd personal
           git config user.email "action@github.com"
           git config user.name "GitHub Action"
           git add -A
-          git commit -m "Add sync workflow"
-
-      - name: Push to personal repo
-        run: |
-          cd repo
-          git push https://x-access-token:${{ secrets.PERSONAL_TOKEN }}@github.com/tahirkoca/CeyPASS-Web-WFA-.git main --force
+          git commit -m "Sync from company repo" || echo "Nothing to commit"
+          git push
