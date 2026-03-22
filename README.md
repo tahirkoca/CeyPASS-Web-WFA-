@@ -34,6 +34,27 @@ Proje, **Business, DataAccess, Entities ve Infrastructure** katmanlarından olu�
 *   **Gerçek Zamanlı İletişim:** SignalR
 *   **Ortak Yapı:** Dependency Injection, Repository Pattern
 
+## 🧪 Testler
+
+Proje, **xUnit + Moq + FluentAssertions** kütüphaneleri kullanılarak yazılmış kapsamlı bir test paketine sahiptir.
+Tüm testler `CeyPASS.Tests` projesinde toplanmıştır ve kaynak kodda herhangi bir erişim belirteci değişikliği yapılmadan uygulanmıştır.
+
+| Kategori | Dosya Sayısı | Test Sayısı |
+|---|---|---|
+| **Birim Testleri** (Business Servisler) | 24 | 180+ |
+| **Kontrolcü Testleri** (Web Controllers) | 17 | 138+ |
+| **Toplam** | **41** | **329+** |
+
+**Kapsam:**
+- Tüm iş mantığı servisleri (yetkilendirme, puantaj, izin, personel, bildirim vb.)
+- Tüm ASP.NET Core MVC kontrolcüleri (yetki korumaları, başarı ve hata senaryoları)
+
+**Testleri çalıştırmak için:**
+
+```bash
+dotnet test CeyPASS.Tests/CeyPASS.Tests.csproj
+```
+
 ## 🔁 CI/CD Entegrasyonu
 
 Bu depo, GitHub Actions tabanlı bir **CI/CD hattına** sahiptir:
@@ -94,6 +115,27 @@ The project is built on **Nx Layered Architecture (N-Layered Architecture)** con
 *   **Database:** Microsoft SQL Server (Entity Framework Core)
 *   **Real-time:** SignalR
 *   **Shared Logic:** Dependency Injection, Repository Pattern
+
+## 🧪 Testing
+
+The project includes a comprehensive test suite written with **xUnit + Moq + FluentAssertions**.
+All tests reside in the `CeyPASS.Tests` project and were implemented without modifying any access modifiers in the source code.
+
+| Category | Files | Tests |
+|---|---|---|
+| **Unit Tests** (Business Services) | 24 | 180+ |
+| **Controller Tests** (Web Controllers) | 17 | 138+ |
+| **Total** | **41** | **329+** |
+
+**Coverage:**
+- All business logic services (authorization, attendance, leave, personnel, notifications, etc.)
+- All ASP.NET Core MVC controllers (authorization guards, success and error paths)
+
+**To run the tests:**
+
+```bash
+dotnet test CeyPASS.Tests/CeyPASS.Tests.csproj
+```
 
 ## 🔁 CI/CD Integration
 
