@@ -9,5 +9,6 @@ namespace CeyPASS.Entities.Concrete
         public string? AdSoyad { get; set; }
         public string? Rol { get; set; }
         public int? RolId { get; set; }
+        public string? SicilNo { get; set; }
     }
 }

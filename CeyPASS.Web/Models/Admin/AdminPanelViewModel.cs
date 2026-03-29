@@ -16,6 +16,9 @@ namespace CeyPASS.Web.Models.Admin
         public List<ResmiTatilDTO> ResmiTatiller { get; set; } = new List<ResmiTatilDTO>();
         public List<LookupItem> CalismaStatuleri { get; set; } = new List<LookupItem>();
         public List<CalismaSekli> CalismaSekilleri { get; set; } = new List<CalismaSekli>();
+        public List<KullaniciAdminRow> Kullanicilar { get; set; } = new List<KullaniciAdminRow>();
+        public List<PersonelAdSoyad> Personeller { get; set; } = new List<PersonelAdSoyad>();
+        public List<UstYetkili> UstYetkililer { get; set; } = new List<UstYetkili>();
         /// <summary>Açık kalacak sekme (firma, isyeri, cihaz, departman, pozisyon, resmitatil, calismastatu, vardiya).</summary>
         public string AktifTab { get; set; } = "firma";
     }

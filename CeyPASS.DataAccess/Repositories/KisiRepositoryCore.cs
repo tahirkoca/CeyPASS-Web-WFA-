@@ -124,6 +124,15 @@ namespace CeyPASS.DataAccess.Repositories
                     calismaStatusuId = cs;
             }
 
+            string calismaStatusuText = null;
+            if (calismaStatusuId.HasValue)
+            {
+                calismaStatusuText = _context.CalismaStatusu
+                    .Where(x => x.CalismaStatuId == calismaStatusuId.Value)
+                    .Select(x => x.CalismaStatuAdi)
+                    .FirstOrDefault();
+            }
+
             var detay = new KisiDetay
             {
                 PersonelId = k.PersonelId,
@@ -140,6 +149,7 @@ namespace CeyPASS.DataAccess.Repositories
                 IseGirisTarihi = k.IseGirisTarihi,
                 IstenCikisTarihi = k.IstenCikisTarihi,
                 CalismaStatusuId = calismaStatusuId,
+                CalismaStatusuText = calismaStatusuText,
                 CalismaSekliCsv = k.CalismaSekli,
                 CepTel = k.CepTel,
                 Email = k.Email,
@@ -471,6 +481,49 @@ UPDATE dbo.Kisiler
                 Unvan = poz?.PozisyonAdi,
                 Departman = dept?.DepartmanAdi,
                 Foto = k.Fotograf
+            };
+        }
+
+        public Kisi GetByLoginIdentifier(string identifier)
+        {
+            if (string.IsNullOrWhiteSpace(identifier)) return null;
+            var val = identifier.Trim();
+
+            // 1. Standart Arama (TC, Sicil, Email, Ad Soyad veya Tam Telefon Eşleşmesi)
+            var k = _context.Kisiler.FirstOrDefault(x => 
+                x.IstenCikisTarihi == null &&
+                (x.PersonelId == val || 
+                 x.TcKimlikNo == val || 
+                 x.CepTel == val || 
+                 x.Email == val || 
+                 ((x.Ad ?? "") + " " + (x.Soyad ?? "")).Trim() == val));
+
+            // 2. Telefon Numarası İçin Gelişmiş Arama (Format Bağımsız)
+            if (k == null)
+            {
+                var digitsOnly = new string(val.Where(char.IsDigit).ToArray());
+                if (digitsOnly.Length >= 10)
+                {
+                    // 10 haneli hali (Örn: 5321234567)
+                    var phone10 = digitsOnly.Length > 10 ? digitsOnly.Substring(digitsOnly.Length - 10) : digitsOnly;
+                    
+                    // Veritabanındaki telefon numaralarından boşluk, parantez vb. temizleyip son 10 hanesini karşılaştırıyoruz
+                    k = _context.Kisiler.FirstOrDefault(x =>
+                        x.IstenCikisTarihi == null &&
+                        x.CepTel != null &&
+                        (x.CepTel.Replace(" ", "").Replace("(", "").Replace(")", "").Replace("-", "").Replace(".", "").EndsWith(phone10)));
+                }
+            }
+                 
+            if (k == null) return null;
+            
+            return new Kisi
+            {
+                PersonelId = k.PersonelId,
+                Ad = k.Ad,
+                Soyad = k.Soyad,
+                FirmaId = (int)k.FirmaId,
+                IsyeriId = k.IsyeriId
             };
         }
     }

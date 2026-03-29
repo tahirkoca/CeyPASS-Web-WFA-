@@ -14,16 +14,19 @@ namespace CeyPASS.Web.Controllers
         private readonly IIsyeriService _isyeriService;
         private readonly IFirmaService _firmaService;
         private readonly IAuthorizationService _authorizationService;
+        private readonly IKisiEkraniLookUpService _lookupService;
         private const string PageName = "Isyerler";
 
         public IsyeriController(
             IIsyeriService isyeriService,
             IFirmaService firmaService,
-            IAuthorizationService authorizationService)
+            IAuthorizationService authorizationService,
+            IKisiEkraniLookUpService lookupService)
         {
             _isyeriService = isyeriService;
             _firmaService = firmaService;
             _authorizationService = authorizationService;
+            _lookupService = lookupService;
         }
 
         public IActionResult Index(int? firmaId = null)
@@ -90,6 +93,7 @@ namespace CeyPASS.Web.Controllers
             }
 
             TempData["Success"] = "İşyeri kaydedildi.";
+            _lookupService.InvalidateCache();
             if (!string.IsNullOrWhiteSpace(model.ReturnUrl) && Url.IsLocalUrl(model.ReturnUrl))
                 return Redirect(model.ReturnUrl);
             return RedirectToAction("Index", new { firmaId = model.FirmaId });
@@ -147,6 +151,7 @@ namespace CeyPASS.Web.Controllers
             }
 
             TempData["Success"] = "İşyeri güncellendi.";
+            _lookupService.InvalidateCache();
             if (!string.IsNullOrWhiteSpace(model.ReturnUrl) && Url.IsLocalUrl(model.ReturnUrl))
                 return Redirect(model.ReturnUrl);
             return RedirectToAction("Index", new { firmaId = model.FirmaId });
@@ -166,6 +171,7 @@ namespace CeyPASS.Web.Controllers
             {
                 var ok = _isyeriService.Delete(firmaId, isyeriId);
                 TempData[ok ? "Success" : "Error"] = ok ? "İşyeri silindi." : "İşyeri silinemedi.";
+                if (ok) _lookupService.InvalidateCache();
             }
             catch (Exception ex)
             {

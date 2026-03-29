@@ -63,6 +63,22 @@ namespace CeyPASS.Business.Services
                                      saat: saat,
                                      kullaniciId: kullaniciId);
         }
+
+        public void TopluOnayla(int personelId, int yil, int ay, int kullaniciId)
+        {
+            var gunler = GetAy(personelId, yil, ay);
+            int ekKayitGun = GetEkKayitGun();
+
+            foreach (var gun in gunler)
+            {
+                // Sadece Bekliyor durumunda ve düzenlenebilir (kilitlenmemiş) günleri onayla
+                if (gun.OnayDurumu == OnayDurumu.Bekliyor && IsRowEditable(gun.Tarih, ekKayitGun))
+                {
+                    Onayla(personelId, gun.Tarih, gun.DuzenlenenFMDakika, gun.Aciklama, gun.CalismaTipi, gun.Saat, kullaniciId);
+                }
+            }
+        }
+
         public void Reddet(int personelId, DateTime tarih, string aciklama, int kullaniciId) => _repo.OnayUpsert(personelId, tarih, (int)OnayDurumu.Reddedildi, 0, aciklama, kullaniciId);
         public void Duzenle(int personelId, DateTime tarih, int duzenlenmisFm, string aciklama, int kullaniciId) => _repo.OnayUpsert(personelId, tarih, (int)OnayDurumu.Düzeltildi, duzenlenmisFm, aciklama, kullaniciId);
         public List<PuantajTipDTO> GetPuantajTipleri() => _repo.GetPuantajTipleri();
@@ -482,12 +498,16 @@ namespace CeyPASS.Business.Services
 
             if (ekKayitGun < 0) ekKayitGun = 0;
 
-            // Gelecek ay tarihleri düzenlenemez
+            // BUGFIX: Bugün ve gelecek tarihler onaylanamaz/düzenlenemez (WFA ile tam uyum)
+            if (tarih.Date >= today)
+                return false;
+
+            // Gelecek ay tarihleri düzenlenemez (zaten yukarıdaki kontrole girer ama kalsın)
             if (tarih >= currMonthBeg.AddMonths(1))
                 return false;
 
-            // Bu ay tarihleri düzenlenebilir
-            if (tarih >= currMonthBeg && tarih < currMonthBeg.AddMonths(1))
+            // Bu ayın geçmiş günleri düzenlenebilir
+            if (tarih >= currMonthBeg && tarih < today)
                 return true;
 
             // Geçen ay için deadline kontrolü

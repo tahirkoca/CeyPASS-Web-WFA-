@@ -1,6 +1,7 @@
 using CeyPASS.Business.Abstractions;
-using CeyPASS.Entities.Concrete;
 using CeyPASS.DataAccess.Abstractions;
+using CeyPASS.Entities.Concrete;
+using System;
 using System.Collections.Generic;
 using System.Data;
 
@@ -14,10 +15,12 @@ namespace CeyPASS.Business.Services
         {
             _repo = repo;
         }
-        public List<LookupItem> GetAll()
+        public List<LookupItem> GetAll(int? firmId = null)
         {
             var dt = _repo.GetAll();
-            var list = new List<LookupItem>(dt.Rows.Count);
+            var list = new List<LookupItem>();
+            if (dt == null) return list;
+
             foreach (DataRow r in dt.Rows)
             {
                 list.Add(new LookupItem

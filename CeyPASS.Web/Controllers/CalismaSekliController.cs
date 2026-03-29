@@ -11,16 +11,19 @@ namespace CeyPASS.Web.Controllers
         private readonly ICalismaSekliService _calismaSekliService;
         private readonly ISessionContext _sessionContext;
         private readonly IAuthorizationService _authorizationService;
+        private readonly IKisiEkraniLookUpService _lookupService;
         private const string PageName = "Vardiyalar";
 
         public CalismaSekliController(
             ICalismaSekliService calismaSekliService,
             ISessionContext sessionContext,
-            IAuthorizationService authorizationService)
+            IAuthorizationService authorizationService,
+            IKisiEkraniLookUpService lookupService)
         {
             _calismaSekliService = calismaSekliService;
             _sessionContext = sessionContext;
             _authorizationService = authorizationService;
+            _lookupService = lookupService;
         }
 
         public IActionResult Index()
@@ -86,6 +89,7 @@ namespace CeyPASS.Web.Controllers
                 {
                     _calismaSekliService.Add(vardiya);
                     TempData["Success"] = "Vardiya başarıyla eklendi.";
+                    _lookupService.InvalidateCache();
                     return RedirectToAction("Index");
                 }
                 catch (Exception ex)
@@ -142,6 +146,7 @@ namespace CeyPASS.Web.Controllers
                     if (success)
                     {
                         TempData["Success"] = "Vardiya başarıyla güncellendi.";
+                        _lookupService.InvalidateCache();
                         return RedirectToAction("Index");
                     }
                     else
@@ -175,6 +180,7 @@ namespace CeyPASS.Web.Controllers
                 if (success)
                 {
                     TempData["Success"] = "Vardiya başarıyla silindi.";
+                    _lookupService.InvalidateCache();
                 }
                 else
                 {

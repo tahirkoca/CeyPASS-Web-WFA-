@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.0" />
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.18" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\CeyPASS.Models\CeyPASS.Models.csproj" />
+    <ProjectReference Include="..\CeyPASS.Business\CeyPASS.Business.csproj" />
+    <ProjectReference Include="..\CeyPASS.Entities\CeyPASS.Entities.csproj" />
+    <ProjectReference Include="..\CeyPASS.Infrastructure\CeyPASS.Infrastructure.csproj" />
+    <ProjectReference Include="..\CeyPASS.DataAccess\CeyPASS.DataAccess.csproj" />
+  </ItemGroup>
+
+</Project>

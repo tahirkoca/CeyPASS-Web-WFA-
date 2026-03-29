@@ -84,7 +84,8 @@ SELECT TOP(1)
        c.KullaniciAdi,
        c.KullaniciAdi AS AdSoyad,
        c.Rol,
-       CAST(NULL AS int) AS RolId
+       CAST(NULL AS int) AS RolId,
+       CAST(NULL AS nvarchar(max)) AS SicilNo
 FROM dbo.CanliIzlemeHesaplari c WITH (NOLOCK)
 LEFT JOIN dbo.Firmalar f WITH (NOLOCK) ON f.FirmaId = c.FirmaId
 WHERE c.FirmaId      = @p0

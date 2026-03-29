@@ -456,9 +456,9 @@ namespace CeyPASS.WFA.UserControls
                     cb.SelectedIndex = 0;
             };
 
-            bind(cmbCalismaStatu, _iklsvc.GetCalismaStatuleri());
-            bind(cmbDepartman, _iklsvc.GetDepartmanlar());
-            bind(cmbPozisyon, _iklsvc.GetPozisyonlar());
+            bind(cmbCalismaStatu, _iklsvc.GetCalismaStatuleri(firmId));
+            bind(cmbDepartman, _iklsvc.GetDepartmanlar(firmId));
+            bind(cmbPozisyon, _iklsvc.GetPozisyonlar(firmId));
             bind(cmbIsyeri, _iklsvc.GetIsyerleri(firmId));
             bind(cmbFirma, _iklsvc.GetFirma(firmId));
             bind(cmbBolum, _iklsvc.GetBolumler(firmId));

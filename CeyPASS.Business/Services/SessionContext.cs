@@ -8,6 +8,7 @@ namespace CeyPASS.Business.Services
         private AuthUserDTO _currentUser;
         private int? _aktifKullaniciId;
         private int? _aktifFirmaId;
+        private string? _aktifSicilNo;
         private string _rolAdi;
 
         public int? AktifKullaniciId 
@@ -31,6 +32,17 @@ namespace CeyPASS.Business.Services
                     _currentUser.FirmaId = value ?? 0;
             }
         }
+
+        public string? AktifSicilNo
+        {
+            get => _currentUser?.SicilNo ?? _aktifSicilNo;
+            set
+            {
+                _aktifSicilNo = value;
+                if (_currentUser != null)
+                    _currentUser.SicilNo = value;
+            }
+        }
         
         public string AdSoyad { get; set; }
         public string RolAdi 
@@ -45,8 +57,12 @@ namespace CeyPASS.Business.Services
         }
         
         public int? RolId { get; set; }
+        public string? UserPhotoUrl { get; set; }
+        public string? UserInitials { get; set; }
+        public bool? IsSupervisor { get; set; }
 
         public AuthUserDTO CurrentUser => _currentUser;
+        public bool IsAdmin() => RolId == 1 || RolId == 2;
 
         public void SetCurrentUser(AuthUserDTO user)
         {
@@ -62,6 +78,7 @@ namespace CeyPASS.Business.Services
             _currentUser = null;
             _aktifKullaniciId = null;
             _aktifFirmaId = null;
+            _aktifSicilNo = null;
             _rolAdi = null;
             AdSoyad = null;
             RolId = null;

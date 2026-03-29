@@ -1,5 +1,8 @@
 @inject CeyPASS.Business.Abstractions.ISessionContext SessionContext
 @inject CeyPASS.Business.Abstractions.IAuthorizationService AuthorizationService
+@inject CeyPASS.Business.Abstractions.IIzinTalepService IzinTalepService
+@inject CeyPASS.Business.Abstractions.IKisiQueryService KisiQueryService
+@inject CeyPASS.Business.Abstractions.IPozisyonService PozisyonService
 <!DOCTYPE html>
 <html lang="tr">
 <head>
@@ -13,13 +16,38 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" />
+    <link rel="stylesheet" href="https://cdn.datatables.net/2.1.8/css/dataTables.bootstrap5.css" />
+    <style>
+        /* DataTables Custom Polish */
+        .dataTables_wrapper .dataTables_paginate .page-link { padding: 0.3rem 0.6rem; font-size: 0.85rem; }
+        .dataTables_wrapper .dataTables_info { font-size: 0.85rem; color: #6c757d; }
+        .dataTables_wrapper .dataTables_filter input { 
+            border: 1px solid #dee2e6; 
+            border-radius: 6px; 
+            padding: 0.3rem 0.75rem; 
+            font-size: 0.85rem; 
+            outline: none;
+        }
+        .dataTables_wrapper .dataTables_filter input:focus { border-color: var(--primary-color); box-shadow: 0 0 0 0.2rem rgba(37, 117, 252, 0.1); }
+        .dataTables_length select { border-radius: 6px; padding: 0.2rem 1.5rem 0.2rem 0.5rem; font-size: 0.85rem; }
+        table.dataTable thead th { border-bottom: 2px solid #f8f9fa; font-weight: 600; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.025em; color: #6c757d; }
+    </style>
 </head>
 <body>
     <div class="app-wrapper">
         <!-- Sidebar -->
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
-                <a href="@Url.Action("Index", "Home")" class="sidebar-brand">
+                @{
+                    var logoHref = Url.Action("Index", "Home");
+                    var canDashboardForLogo = AuthorizationService.ViewAbility("Dashboard");
+                    var canProfilForLogo = AuthorizationService.ViewAbility("Profil");
+                    if (!canDashboardForLogo && canProfilForLogo && !string.IsNullOrWhiteSpace(SessionContext.AktifSicilNo))
+                    {
+                        logoHref = Url.Action("Index", "Profil");
+                    }
+                }
+                <a href="@logoHref" class="sidebar-brand" title="CeyPASS Ana Sayfa">
                     <img src="@Url.Content("~/images/logo.png")" alt="CeyPASS" class="sidebar-logo" 
                          onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
                     <span class="sidebar-logo-fallback" style="display:none;">CeyPASS</span>
@@ -29,6 +57,9 @@
             <nav class="sidebar-nav">
                 @{
                     var canDashboard = AuthorizationService.ViewAbility("Dashboard");
+                    var canProfil = AuthorizationService.ViewAbility("Profil");
+                    var canIzinTalepleri = AuthorizationService.ViewAbility("IzinTalepleri");
+                    var canAvans = AuthorizationService.ViewAbility("Avans");
                     var canPersoneller = AuthorizationService.ViewAbility("Personeller");
                     var canKisiHareket = AuthorizationService.ViewAbility("KisiHareketler");
                     var canIzin = AuthorizationService.ViewAbility("Izinler");
@@ -43,11 +74,99 @@
                     var canCihaz = AuthorizationService.ViewAbility("Cihazlar");
                     var canResmiTatil = AuthorizationService.ViewAbility("ResmiTatiller");
                 }
+
+                @if (canProfil && !string.IsNullOrWhiteSpace(SessionContext.AktifSicilNo))
+                {
+                <!-- Personel Portal -->
+                <div class="nav-section accordion-section">
+                    <button type="button" class="nav-section-title accordion-toggle" data-bs-toggle="collapse" data-bs-target="#navSectionPersonel" aria-expanded="true" aria-controls="navSectionPersonel" title="Personel İşlemleri Menüsünü Aç/Kapat">
+                        <span>Personel</span>
+                        <i class="bi bi-chevron-down accordion-icon"></i>
+                    </button>
+                    <div class="collapse show" id="navSectionPersonel">
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Profil" && ViewContext.RouteData.Values["action"]?.ToString() == "Index" ? "active" : "")"
+                               asp-controller="Profil" asp-action="Index" title="Profil Bilgilerim">
+                                <i class="bi bi-person"></i>
+                                <span>Profil</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Profil" && ViewContext.RouteData.Values["action"]?.ToString() == "Izinlerim" ? "active" : "")"
+                               asp-controller="Profil" asp-action="Izinlerim" title="İzin Taleplerim ve Geçmişi">
+                                <i class="bi bi-calendar-check"></i>
+                                <span>İzinlerim</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Profil" && ViewContext.RouteData.Values["action"]?.ToString() == "Avanslarim" ? "active" : "")"
+                               asp-controller="Profil" asp-action="Avanslarim" title="Avans Taleplerim ve Geçmişi">
+                                <i class="bi bi-cash-coin"></i>
+                                <span>Avanslarım</span>
+                            </a>
+                        </li>
+                        @{
+                            if (!SessionContext.IsSupervisor.HasValue && !string.IsNullOrWhiteSpace(SessionContext.AktifSicilNo))
+                            {
+                                SessionContext.IsSupervisor = IzinTalepService.IsSupervisor(SessionContext.AktifSicilNo);
+                            }
+                            var isSupervisor = SessionContext.IsSupervisor ?? false;
+                        }
+                        @if (isSupervisor)
+                        {
+                        <li class="nav-item">
+                            <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Profil" && ViewContext.RouteData.Values["action"]?.ToString() == "UstYetkiliPaneli" ? "active" : "")"
+                               asp-controller="Profil" asp-action="UstYetkiliPaneli" title="Üst Yetkili Onay ve Yönetim Paneli">
+                                <i class="bi bi-person-check-fill"></i>
+                                <span>Yetkili Paneli</span>
+                            </a>
+                        </li>
+                        }
+                    </ul>
+                    </div>
+                </div>
+                }
+
+                @if (canIzinTalepleri || canAvans)
+                {
+                <!-- Talepler -->
+                <div class="nav-section accordion-section">
+                    <button type="button" class="nav-section-title accordion-toggle" data-bs-toggle="collapse" data-bs-target="#navSectionTalepler" aria-expanded="true" aria-controls="navSectionTalepler" title="Talep Yönetimi Menüsünü Aç/Kapat">
+                        <span>TALEPLER</span>
+                        <i class="bi bi-chevron-down accordion-icon"></i>
+                    </button>
+                    <div class="collapse show" id="navSectionTalepler">
+                    <ul class="nav flex-column">
+                        @if (canIzinTalepleri)
+                        {
+                        <li class="nav-item">
+                            <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Izin" && ViewContext.RouteData.Values["action"]?.ToString() == "TalepListesi" ? "active" : "")"
+                               asp-controller="Izin" asp-action="TalepListesi" title="Personel İzin Talepleri Listesi ve Onay Ekranı">
+                                <i class="bi bi-clipboard-check"></i>
+                                <span>İzin Talepleri</span>
+                            </a>
+                        </li>
+                        }
+                        @if (canAvans)
+                        {
+                        <li class="nav-item">
+                            <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Avans" ? "active" : "")"
+                               asp-controller="Avans" asp-action="Index" title="Personel Avans Talepleri Listesi ve Onay Ekranı">
+                                <i class="bi bi-cash-coin"></i>
+                                <span>Avans Talepleri</span>
+                            </a>
+                        </li>
+                        }
+                    </ul>
+                    </div>
+                </div>
+                }
                 @if (canDashboard || canPersoneller || canKisiHareket || canIzin || canPuantaj || canRapor)
                 {
                 <!-- Ana Menü -->
                 <div class="nav-section accordion-section">
-                    <button type="button" class="nav-section-title accordion-toggle" data-bs-toggle="collapse" data-bs-target="#navSectionAnaMenu" aria-expanded="true" aria-controls="navSectionAnaMenu">
+                    <button type="button" class="nav-section-title accordion-toggle" data-bs-toggle="collapse" data-bs-target="#navSectionAnaMenu" aria-expanded="true" aria-controls="navSectionAnaMenu" title="Ana Menü İşlemlerini Aç/Kapat">
                         <span>Ana Menü</span>
                         <i class="bi bi-chevron-down accordion-icon"></i>
                     </button>
@@ -57,7 +176,7 @@
                         {
                         <li class="nav-item">
                             <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Home" ? "active" : "")" 
-                               asp-controller="Home" asp-action="Index">
+                               asp-controller="Home" asp-action="Index" title="Dashboard / Genel Durum">
                                 <i class="bi bi-house"></i>
                                 <span>Ana Sayfa</span>
                             </a>
@@ -67,7 +186,7 @@
                         {
                         <li class="nav-item">
                             <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Personel" ? "active" : "")" 
-                               asp-controller="Personel" asp-action="Index">
+                               asp-controller="Personel" asp-action="Index" title="Tüm Personel Listesi ve Yönetimi">
                                 <i class="bi bi-people"></i>
                                 <span>Personeller</span>
                             </a>
@@ -77,7 +196,7 @@
                         {
                         <li class="nav-item">
                             <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "KisiHareket" ? "active" : "")" 
-                               asp-controller="KisiHareket" asp-action="Index">
+                               asp-controller="KisiHareket" asp-action="Index" title="Giriş / Çıkış Hareket Kayıtları">
                                 <i class="bi bi-clock-history"></i>
                                 <span>Kişi Hareketleri</span>
                             </a>
@@ -87,7 +206,7 @@
                         {
                         <li class="nav-item">
                             <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Izin" ? "active" : "")" 
-                               asp-controller="Izin" asp-action="Index">
+                               asp-controller="Izin" asp-action="Index" title="Genel İzin Kayıtları ve Onaylama">
                                 <i class="bi bi-calendar-check"></i>
                                 <span>İzinler</span>
                             </a>
@@ -97,7 +216,7 @@
                         {
                         <li class="nav-item">
                             <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Puantaj" ? "active" : "")" 
-                               asp-controller="Puantaj" asp-action="Index">
+                               asp-controller="Puantaj" asp-action="Index" title="Aylık Puantaj Takibi ve Onay İşlemleri">
                                 <i class="bi bi-calendar3"></i>
                                 <span>Puantaj</span>
                             </a>
@@ -107,7 +226,7 @@
                         {
                         <li class="nav-item">
                             <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Rapor" ? "active" : "")" 
-                               asp-controller="Rapor" asp-action="Index">
+                               asp-controller="Rapor" asp-action="Index" title="Detaylı Raporlar ve Dışa Aktarma">
                                 <i class="bi bi-file-earmark-bar-graph"></i>
                                 <span>Raporlar</span>
                             </a>
@@ -122,7 +241,7 @@
                 {
                 <!-- Organizasyon -->
                 <div class="nav-section accordion-section">
-                    <button type="button" class="nav-section-title accordion-toggle" data-bs-toggle="collapse" data-bs-target="#navSectionOrganizasyon" aria-expanded="true" aria-controls="navSectionOrganizasyon">
+                    <button type="button" class="nav-section-title accordion-toggle" data-bs-toggle="collapse" data-bs-target="#navSectionOrganizasyon" aria-expanded="true" aria-controls="navSectionOrganizasyon" title="Organizasyonel Tanımlar Menüsünü Aç/Kapat">
                         <span>Organizasyon</span>
                         <i class="bi bi-chevron-down accordion-icon"></i>
                     </button>
@@ -132,7 +251,7 @@
                         {
                         <li class="nav-item">
                             <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Firma" ? "active" : "")" 
-                               asp-controller="Firma" asp-action="Index">
+                               asp-controller="Firma" asp-action="Index" title="Firma Tanımlamaları">
                                 <i class="bi bi-building"></i>
                                 <span>Firmalar</span>
                             </a>
@@ -142,7 +261,7 @@
                         {
                         <li class="nav-item">
                             <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Isyeri" ? "active" : "")" 
-                               asp-controller="Isyeri" asp-action="Index">
+                               asp-controller="Isyeri" asp-action="Index" title="İşyeri ve Şube Tanımlamaları">
                                 <i class="bi bi-geo-alt"></i>
                                 <span>İşyerleri</span>
                             </a>
@@ -152,7 +271,7 @@
                         {
                         <li class="nav-item">
                             <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Departman" ? "active" : "")" 
-                               asp-controller="Departman" asp-action="Index">
+                               asp-controller="Departman" asp-action="Index" title="Departman Tanımlamaları ve Hiyerarşi">
                                 <i class="bi bi-diagram-3"></i>
                                 <span>Departmanlar</span>
                             </a>
@@ -162,7 +281,7 @@
                         {
                         <li class="nav-item">
                             <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Pozisyon" ? "active" : "")" 
-                               asp-controller="Pozisyon" asp-action="Index">
+                               asp-controller="Pozisyon" asp-action="Index" title="Pozisyon ve Unvan Tanımlamaları">
                                 <i class="bi bi-person-badge"></i>
                                 <span>Pozisyonlar</span>
                             </a>
@@ -177,7 +296,7 @@
                 {
                 <!-- Ayarlar -->
                 <div class="nav-section accordion-section">
-                    <button type="button" class="nav-section-title accordion-toggle" data-bs-toggle="collapse" data-bs-target="#navSectionAyarlar" aria-expanded="true" aria-controls="navSectionAyarlar">
+                    <button type="button" class="nav-section-title accordion-toggle" data-bs-toggle="collapse" data-bs-target="#navSectionAyarlar" aria-expanded="true" aria-controls="navSectionAyarlar" title="Sistem Ayarları Menüsünü Aç/Kapat">
                         <span>Ayarlar</span>
                         <i class="bi bi-chevron-down accordion-icon"></i>
                     </button>
@@ -187,7 +306,7 @@
                         {
                         <li class="nav-item">
                             <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "CalismaSekli" ? "active" : "")" 
-                               asp-controller="CalismaSekli" asp-action="Index">
+                               asp-controller="CalismaSekli" asp-action="Index" title="Vardiya ve Çalışma Şekli Ayarları">
                                 <i class="bi bi-clock"></i>
                                 <span>Vardiyalar</span>
                             </a>
@@ -197,7 +316,7 @@
                         {
                         <li class="nav-item">
                             <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "CalismaStatu" ? "active" : "")" 
-                               asp-controller="CalismaStatu" asp-action="Index">
+                               asp-controller="CalismaStatu" asp-action="Index" title="Personel Çalışma Durumları (Aktif, Pasif, vb.)">
                                 <i class="bi bi-toggles"></i>
                                 <span>Çalışma Statüleri</span>
                             </a>
@@ -207,7 +326,7 @@
                         {
                         <li class="nav-item">
                             <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Cihaz" ? "active" : "")" 
-                               asp-controller="Cihaz" asp-action="Index">
+                               asp-controller="Cihaz" asp-action="Index" title="ZKTeco ve Diğer Turnike/Cihaz Yönetimi">
                                 <i class="bi bi-device-hdd"></i>
                                 <span>Cihazlar</span>
                             </a>
@@ -217,7 +336,7 @@
                         {
                         <li class="nav-item">
                             <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "ResmiTatil" ? "active" : "")" 
-                               asp-controller="ResmiTatil" asp-action="Index">
+                               asp-controller="ResmiTatil" asp-action="Index" title="Yıllık Resmi ve Dini Tatil Takvimi">
                                 <i class="bi bi-calendar-event"></i>
                                 <span>Resmi Tatiller</span>
                             </a>
@@ -235,7 +354,7 @@
                 {
                 <!-- Admin Panel -->
                 <div class="nav-section accordion-section">
-                    <button type="button" class="nav-section-title accordion-toggle" data-bs-toggle="collapse" data-bs-target="#navSectionAdmin" aria-expanded="true" aria-controls="navSectionAdmin">
+                    <button type="button" class="nav-section-title accordion-toggle" data-bs-toggle="collapse" data-bs-target="#navSectionAdmin" aria-expanded="true" aria-controls="navSectionAdmin" title="Yönetici Paneli Menüsünü Aç/Kapat">
                         <span>Admin</span>
                         <i class="bi bi-chevron-down accordion-icon"></i>
                     </button>
@@ -243,7 +362,7 @@
                     <ul class="nav flex-column">
                         <li class="nav-item">
                             <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Admin" ? "active" : "")" 
-                               asp-controller="Admin" asp-action="Index">
+                               asp-controller="Admin" asp-action="Index" title="Sistem Yönetimi, Kullanıcı Eşleme ve Yetkilendirme">
                                 <i class="bi bi-shield-lock"></i>
                                 <span>Admin Panel</span>
                             </a>
@@ -257,16 +376,34 @@
             <div class="sidebar-footer">
                 <div class="user-info">
                     <div class="user-avatar">
-                        @{
-                            var layoutUser = SessionContext?.CurrentUser ?? (ViewBag.User as CeyPASS.Entities.Concrete.AuthUserDTO);
-                            var displayName = layoutUser?.AdSoyad ?? layoutUser?.KullaniciAdi ?? "";
-                            var initial = !string.IsNullOrEmpty(displayName) ? displayName[0].ToString().ToUpperInvariant() : "K";
-                        }
-                        @initial
+                        @await Component.InvokeAsync("UserAvatar")
                     </div>
+                    @{
+                        var layoutUser = SessionContext?.CurrentUser ?? (ViewBag.User as CeyPASS.Entities.Concrete.AuthUserDTO);
+                        
+                        // Pozisyon bilgisi çekme
+                        string? displayRole = layoutUser?.Rol;
+                        if (!string.IsNullOrWhiteSpace(SessionContext?.AktifSicilNo))
+                        {
+                            try
+                            {
+                                var kDetay = KisiQueryService.GetKisiDetay(SessionContext.AktifSicilNo);
+                                if (kDetay?.PozisyonId != null)
+                                {
+                                    var pozList = PozisyonService.GetAll();
+                                    var pName = pozList?.FirstOrDefault(x => x.Id == kDetay.PozisyonId.Value)?.Ad;
+                                    if (!string.IsNullOrWhiteSpace(pName))
+                                    {
+                                        displayRole = pName;
+                                    }
+                                }
+                            }
+                            catch { /* yoksay */ }
+                        }
+                    }
                     <div class="user-details">
-                        <div class="user-name">@((layoutUser?.AdSoyad ?? layoutUser?.KullaniciAdi) ?? "Kullanıcı")</div>
-                        <div class="user-role">@((layoutUser?.Rol) ?? "Kullanıcı")</div>
+                        <div class="user-name" title="@((layoutUser?.AdSoyad ?? layoutUser?.KullaniciAdi) ?? "Kullanıcı")">@((layoutUser?.AdSoyad ?? layoutUser?.KullaniciAdi) ?? "Kullanıcı")</div>
+                        <div class="user-role" title="@(displayRole ?? "Kullanıcı")">@(displayRole ?? "Kullanıcı")</div>
                     </div>
                     <a href="@Url.Action("Logout", "Account")" class="btn btn-ghost btn-sm" title="Çıkış Yap">
                         <i class="bi bi-box-arrow-right"></i>
@@ -283,11 +420,11 @@
             <!-- Top Header -->
             <header class="top-header">
                 <div class="header-left">
-                    <button class="btn btn-ghost d-lg-none" id="sidebarToggle">
+                    <button class="btn btn-ghost d-lg-none" id="sidebarToggle" title="Menü">
                         <i class="bi bi-list fs-5"></i>
                     </button>
                     <nav class="breadcrumb-nav d-none d-md-flex">
-                        <a href="@Url.Action("Index", "Home")"><i class="bi bi-house"></i></a>
+                        <a href="@Url.Action("Index", "Home")" title="Ana Sayfa"><i class="bi bi-house"></i></a>
                         <i class="bi bi-chevron-right text-muted small"></i>
                         <span class="current">@ViewData["Title"]</span>
                     </nav>
@@ -301,15 +438,30 @@
                             <span class="header-notif-badge badge rounded-pill bg-danger" id="headerNotifBadge" style="display: none;">0</span>
                         </button>
                         <div class="dropdown-menu dropdown-menu-end header-dropdown-panel header-notif-panel shadow" aria-labelledby="headerNotifDropdown">
-                            <div class="dropdown-header border-bottom bg-light">
-                                <strong><i class="bi bi-bell me-2"></i>Bildirimler</strong>
+                            <div class="dropdown-header border-bottom bg-light d-flex justify-content-between align-items-center py-2">
+                                <span class="fw-bold small"><i class="bi bi-bell me-2"></i>Bildirimler</span>
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="badge bg-secondary rounded-pill" id="notifCountLabel" style="font-size: 0.7rem;">0</span>
+                                    <button type="button" class="btn btn-link p-0 text-decoration-none small text-muted hover-primary" id="markAllReadBtn" title="Tümünü okundu işaretle" style="font-size: 0.75rem;">
+                                        Tümünü oku
+                                    </button>
+                                </div>
                             </div>
-                            <div class="header-notif-body p-3 text-center text-muted">
-                                <i class="bi bi-inbox d-block fs-2 mb-2"></i>
-                                <span>Henüz bildirim yok.</span>
+                            <div class="header-notif-body p-0" id="notificationList" style="max-height: 350px; overflow-y: auto;">
+                                <div class="p-3 text-center text-muted">
+                                    <i class="bi bi-inbox d-block fs-2 mb-2"></i>
+                                    <span>Henüz bildirim yok.</span>
+                                </div>
                             </div>
                             <div class="dropdown-divider my-0"></div>
-                            <a class="dropdown-item small text-primary py-2" href="@Url.Action("Index", "Home")#bildirimler">
+                            @{
+                                var seeAllUrl = Url.Action("Index", "Home") + "#bildirimler";
+                                if (!AuthorizationService.ViewAbility("Dashboard") && AuthorizationService.ViewAbility("Profil") && !string.IsNullOrWhiteSpace(SessionContext.AktifSicilNo))
+                                {
+                                    seeAllUrl = Url.Action("Index", "Profil") + "#bildirimler";
+                                }
+                            }
+                            <a class="dropdown-item small text-primary py-2 text-center" href="@seeAllUrl">
                                 <i class="bi bi-list-ul me-2"></i>Tümünü gör
                             </a>
                         </div>
@@ -322,7 +474,7 @@
                         <ul class="dropdown-menu dropdown-menu-end header-settings-menu shadow" aria-labelledby="headerSettingsDropdown">
                             <li><h6 class="dropdown-header">Ayarlar</h6></li>
                             <li><a class="dropdown-item" href="@Url.Action("Index", "Home")"><i class="bi bi-house me-2"></i>Ana Sayfa</a></li>
-                            <li><a class="dropdown-item" href="@Url.Action("ForgotPassword", "Account")"><i class="bi bi-key me-2"></i>Şifre değiştir</a></li>
+                            <li><a class="dropdown-item" href="@Url.Action("ChangePassword", "Account")"><i class="bi bi-key me-2"></i>Şifre değiştir</a></li>
                             <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item text-danger" href="@Url.Action("Logout", "Account")"><i class="bi bi-box-arrow-right me-2"></i>Çıkış yap</a></li>
                         </ul>
@@ -348,9 +500,19 @@
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+    <script src="https://cdn.datatables.net/2.1.8/js/dataTables.js"></script>
+    <script src="https://cdn.datatables.net/2.1.8/js/dataTables.bootstrap5.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
     <script>
-        toastr.options = { positionClass: 'toast-top-end', closeButton: true, progressBar: true, timeOut: 4000 };
+        toastr.options = { 
+            positionClass: 'toast-top-end', 
+            closeButton: true, 
+            progressBar: true, 
+            timeOut: 5000,
+            extendedTimeOut: 2000,
+            preventDuplicates: true,
+            newestOnTop: true
+        };
     </script>
     <script>
         // Sidebar toggle for mobile
@@ -417,7 +579,7 @@
         // Sidebar akordeon: açık/kapalı durumu localStorage'da sakla
         (function() {
             var STORAGE_KEY = 'ceypass-sidebar-accordion';
-            var sectionIds = ['navSectionAnaMenu', 'navSectionOrganizasyon', 'navSectionAyarlar', 'navSectionAdmin'];
+            var sectionIds = ['navSectionPersonel', 'navSectionTalepler', 'navSectionAnaMenu', 'navSectionOrganizasyon', 'navSectionAyarlar', 'navSectionAdmin'];
             function loadState() {
                 try {
                     var raw = localStorage.getItem(STORAGE_KEY);
@@ -465,6 +627,159 @@
                 window.location.href = url + '?firmaId=' + sel.value + '&returnUrl=' + returnUrl;
             });
         })();
+        
+        // GLOBAL TOOLTIP INITIALIZATION
+        (function() {
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"], [title]'));
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                if (!tooltipTriggerEl.hasAttribute('data-bs-toggle')) {
+                    tooltipTriggerEl.setAttribute('data-bs-toggle', 'tooltip');
+                }
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+        })();
+
+        // BİLDİRİM SİSTEMİ (Toaster Entegrasyonu ile)
+        (function() {
+            var getUrl = '@Url.Action("GetMyNotifications", "Bildirim")';
+            var readUrl = '@Url.Action("MarkAsRead", "Bildirim")';
+            var listEl = document.getElementById('notificationList');
+            var badgeEl = document.getElementById('headerNotifBadge');
+            var countLabel = document.getElementById('notifCountLabel');
+            
+            var lastProcessedId = -1; // Sayfa ilk açıldığında mevcutları toast olarak göstermemek için
+            var pollInterval = 15000; // 15 saniye Aktif periyodu
+            var idleInterval = 60000; // 60 saniye Pasif periyodu
+            var currentIntervalId = null;
+
+            function showToast(item) {
+                var title = item.baslik || 'Yeni Bildirim';
+                var msg = item.mesaj || '';
+                
+                // Tipine göre metod belirle
+                var type = 'info';
+                if (item.tipi === 'IzinOnay' || item.tipi === 'AvansOnay') type = 'success';
+                else if (item.tipi === 'IzinRed' || item.tipi === 'AvansRed') type = 'error';
+                else if (item.tipi === 'IzinTalep' || item.tipi === 'AvansTalep' || item.tipi === 'SifreReset') type = 'warning';
+                
+                toastr[type](msg, title);
+            }
+
+            function fetchNotifications() {
+                $.getJSON(getUrl, function(data) {
+                    // Update badge
+                    if (data.unreadCount > 0) {
+                        badgeEl.innerText = data.unreadCount;
+                        badgeEl.style.display = 'inline-block';
+                        if (countLabel) countLabel.innerText = data.unreadCount;
+                    } else {
+                        badgeEl.style.display = 'none';
+                        if (countLabel) countLabel.innerText = '0';
+                    }
+
+                    // Update list & process toasts
+                    if (data.items && data.items.length > 0) {
+                        var html = '<div class="list-group list-group-flush">';
+                        var maxId = lastProcessedId;
+
+                        data.items.forEach(function(item) {
+                            // Toaster logic: Sadece okunmamış ve daha önce işlenmemişse göster
+                            if (!item.okunduMu && lastProcessedId !== -1 && item.id > lastProcessedId) {
+                                showToast(item);
+                            }
+                            if (item.id > maxId) maxId = item.id;
+
+                            var bg = item.okunduMu ? '' : 'bg-light';
+                            var icon = '<i class="bi bi-info-circle text-primary"></i>';
+                            if (item.tipi === 'IzinTalep') icon = '<i class="bi bi-file-earmark-plus text-success"></i>';
+                            if (item.tipi === 'IzinOnay') icon = '<i class="bi bi-check-circle text-success"></i>';
+                            if (item.tipi === 'IzinRed') icon = '<i class="bi bi-x-circle text-danger"></i>';
+                            if (item.tipi === 'AvansTalep') icon = '<i class="bi bi-cash-stack text-warning"></i>';
+                            if (item.tipi === 'AvansOnay') icon = '<i class="bi bi-check-circle text-success"></i>';
+                            if (item.tipi === 'AvansRed') icon = '<i class="bi bi-x-circle text-danger"></i>';
+
+                             html += '<a href="javascript:void(0)" class="list-group-item list-group-item-action px-3 py-2 border-0 notification-item ' + bg + '" data-id="' + item.id + '">' +
+                                        '<div class="d-flex w-100 justify-content-between align-items-center mb-1">' +
+                                            '<div class="fw-bold text-dark d-flex align-items-center gap-2" style="font-size: 0.8rem;">' + icon + ' ' + item.baslik + '</div>' +
+                                            '<span class="text-muted" style="font-size: 0.65rem;">' + item.tarih + '</span>' +
+                                        '</div>' +
+                                        '<div class="text-muted text-truncate-2" style="font-size: 0.75rem;">' + item.mesaj + '</div>' +
+                                    '</a>';
+                        });
+                        
+                        lastProcessedId = maxId;
+                        html += '</div>';
+                        if (listEl) listEl.innerHTML = html;
+                    } else {
+                        if (listEl) listEl.innerHTML = '<div class="p-3 text-center text-muted"><i class="bi bi-inbox d-block fs-2 mb-2"></i><span>Henüz bildirim yok.</span></div>';
+                        if (lastProcessedId === -1) lastProcessedId = 0;
+                    }
+                });
+            }
+
+            // Polling control
+            function startInterval(ms) {
+                if (currentIntervalId) clearInterval(currentIntervalId);
+                currentIntervalId = setInterval(fetchNotifications, ms);
+            }
+
+            // Initial fetch
+            fetchNotifications();
+            startInterval(pollInterval);
+
+            // Visibility tab takibi (Sistemi yormamak için)
+            document.addEventListener('visibilitychange', function() {
+                if (document.hidden) {
+                    startInterval(idleInterval); // Sekmeye bakmıyorsa 60 sn periyoda geç
+                } else {
+                    fetchNotifications(); // Geri döndüğünde anında çek
+                    startInterval(pollInterval); // 15 sn periyoda dön
+                }
+            });
+
+             // Mark as read when clicked
+            $(document).on('click', '.notification-item', function() {
+                var el = $(this);
+                var id = el.data('id');
+                if (el.hasClass('bg-light')) {
+                    $.post(readUrl, { id: id }, function() {
+                        el.removeClass('bg-light');
+                        fetchNotifications();
+                    });
+                }
+            });
+
+            var markAllUrl = '@Url.Action("MarkAllAsRead", "Bildirim")';
+            $('#markAllReadBtn').on('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                $.post(markAllUrl, function() {
+                    fetchNotifications();
+                });
+            });
+
+        })();
+
+        // GLOBAL DATATABLES INITIALIZATION
+        $(document).ready(function () {
+            $('.js-datatable').each(function () {
+                if (!$.fn.DataTable.isDataTable(this)) {
+                    $(this).DataTable({
+                        language: {
+                            url: 'https://cdn.datatables.net/plug-ins/2.1.8/i18n/tr.json'
+                        },
+                        pageLength: 10,
+                        lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "Tümü"]],
+                        dom: "<'row mb-3'<'col-sm-12 col-md-6'l><'col-sm-12 col-md-6'f>>" +
+                             "<'row'<'col-sm-12'tr>>" +
+                             "<'row mt-3'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>",
+                        order: [], // Disable initial sort to keep server order
+                        stateSave: true, // Remember page/search
+                        responsive: true
+                    });
+                }
+            });
+        });
     </script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>

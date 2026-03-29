@@ -6,7 +6,7 @@ namespace CeyPASS.Business.Abstractions
 {
     public interface IDepartmanService
     {
-        List<LookupItem> GetAll();
+        List<LookupItem> GetAll(int? firmId = null);
         List<DepartmanListDTO> GetListForAdmin();
         DataRow? GetRowById(int id);
         int GetNextId();

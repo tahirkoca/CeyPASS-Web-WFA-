@@ -158,7 +158,8 @@ namespace CeyPASS.Tests.Unit
         [Fact]
         public void IsRowEditable_BuAy_TrueDoner()
         {
-            _sut.IsRowEditable(DateTime.Today, 0).Should().BeTrue();
+            // Bugün değil, dün düzenlenebilir olmalı (yeni mantık: bugün ve gelecek false)
+            _sut.IsRowEditable(DateTime.Today.AddDays(-1), 0).Should().BeTrue();
         }
 
         [Fact]

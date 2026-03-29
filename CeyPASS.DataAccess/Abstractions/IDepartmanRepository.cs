@@ -6,7 +6,7 @@ namespace CeyPASS.DataAccess.Abstractions
 {
     public interface IDepartmanRepository
     {
-        List<LookupItem> GetByFirma();
+        List<LookupItem> GetByFirma(int? firmId = null);
         DataTable GetAll();
         int GetNextId();
         bool Insert(int id, string ad, string aciklama);

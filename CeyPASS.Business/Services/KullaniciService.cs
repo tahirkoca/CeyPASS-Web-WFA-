@@ -21,5 +21,15 @@ namespace CeyPASS.Business.Services
         {
             return _repo.GetTumKullaniciAdlari();
         }
+
+        public Kullanici GetByPersonelId(string personelId)
+        {
+            return _repo.GetByPersonelId(personelId);
+        }
+
+        public Kullanici GetByUserName(string kullaniciAdi)
+        {
+            return _repo.GetByUserName(kullaniciAdi);
+        }
     }
 }

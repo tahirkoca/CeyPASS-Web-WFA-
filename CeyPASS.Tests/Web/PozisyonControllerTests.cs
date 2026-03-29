@@ -15,11 +15,12 @@ namespace CeyPASS.Tests.Web
     {
         private readonly Mock<IPozisyonService> _pozisyonMock = new();
         private readonly Mock<IAuthorizationService> _authMock = new();
+        private readonly Mock<IKisiEkraniLookUpService> _lookupMock = new();
         private readonly PozisyonController _sut;
 
         public PozisyonControllerTests()
         {
-            _sut = new PozisyonController(_pozisyonMock.Object, _authMock.Object);
+            _sut = new PozisyonController(_pozisyonMock.Object, _authMock.Object, _lookupMock.Object);
 
             var httpContext = new DefaultHttpContext();
             _sut.ControllerContext = new ControllerContext { HttpContext = httpContext };

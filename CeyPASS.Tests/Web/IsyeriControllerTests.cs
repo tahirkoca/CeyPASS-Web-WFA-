@@ -17,11 +17,12 @@ namespace CeyPASS.Tests.Web
         private readonly Mock<IIsyeriService> _isyeriMock = new();
         private readonly Mock<IFirmaService> _firmaMock = new();
         private readonly Mock<IAuthorizationService> _authMock = new();
+        private readonly Mock<IKisiEkraniLookUpService> _lookupMock = new();
         private readonly IsyeriController _sut;
 
         public IsyeriControllerTests()
         {
-            _sut = new IsyeriController(_isyeriMock.Object, _firmaMock.Object, _authMock.Object);
+            _sut = new IsyeriController(_isyeriMock.Object, _firmaMock.Object, _authMock.Object, _lookupMock.Object);
 
             var httpContext = new DefaultHttpContext();
             _sut.ControllerContext = new ControllerContext { HttpContext = httpContext };

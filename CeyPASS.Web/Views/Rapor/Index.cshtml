@@ -104,7 +104,7 @@
                         <div class="row g-3 align-items-end">
                             <div class="col-12 col-lg-4">
                                 <label for="procedureAdi" class="form-label">Rapor Türü <span class="text-danger">*</span></label>
-                                <select name="procedureAdi" id="procedureAdi" class="form-select" required>
+                                <select name="procedureAdi" id="procedureAdi" class="form-select" required title="Dosya tipine göre rapor seçimi yapın">
                                     <option value="">-- Rapor Seçiniz --</option>
                                     @foreach (var rapor in raporlar.Where(r => r.AktifMi))
                                     {
@@ -127,18 +127,18 @@
                             <div class="col-12 col-lg-2">
                                 <label for="tarihBaslangic" class="form-label">Başlangıç Tarihi <span class="text-danger">*</span></label>
                                 <input type="date" name="tarihBaslangic" id="tarihBaslangic" class="form-control" required 
-                                       value="@baslangicTarih.ToString("yyyy-MM-dd")" />
+                                       value="@baslangicTarih.ToString("yyyy-MM-dd")" title="Rapor başlangıç tarihi" />
                             </div>
 
                             <div class="col-12 col-lg-2">
                                 <label for="tarihBitis" class="form-label">Bitiş Tarihi <span class="text-danger">*</span></label>
                                 <input type="date" name="tarihBitis" id="tarihBitis" class="form-control" required 
-                                       value="@bitisTarih.ToString("yyyy-MM-dd")" />
+                                       value="@bitisTarih.ToString("yyyy-MM-dd")" title="Rapor bitiş tarihi" />
                             </div>
 
                             <div class="col-12 col-lg-2">
                                 <label for="pageSize" class="form-label">Sayfa başına:</label>
-                                <select name="pageSize" id="pageSize" class="form-select">
+                                <select name="pageSize" id="pageSize" class="form-select" title="Sayfa başına gösterilecek kayıt sayısı">
                                     @if (pageSize == 50)
                                     {
                                         <option value="50" selected="selected">50</option>
@@ -170,7 +170,7 @@
                                 </select>
                             </div>
                             <div class="col-12 col-lg-2">
-                                <button type="submit" class="btn btn-primary w-100">
+                                <button type="submit" class="btn btn-primary w-100" title="Seçili parametrelere göre raporu oluştur">
                                     <i class="bi bi-search"></i> Rapor Getir
                                 </button>
                             </div>
@@ -201,10 +201,10 @@
                         @if (canExport)
                         {
                             <div>
-                                <button type="button" class="btn btn-sm btn-success" onclick="exportExcel()">
+                                <button type="button" class="btn btn-sm btn-success" onclick="exportExcel()" title="Mevcut raporu Excel dosyası olarak indir">
                                     <i class="bi bi-file-earmark-excel"></i> Excel'e Aktar
                                 </button>
-                                <button type="button" class="btn btn-sm btn-danger" onclick="exportPdf()">
+                                <button type="button" class="btn btn-sm btn-danger" onclick="exportPdf()" title="Mevcut raporu PDF dosyası olarak indir">
                                     <i class="bi bi-file-earmark-pdf"></i> PDF'e Aktar
                                 </button>
                             </div>
@@ -212,7 +212,7 @@
                     </div>
                     <div class="card-body">
                         <div class="mb-3 d-flex gap-2 flex-wrap">
-                            <input type="text" id="filterInput" class="form-control flex-grow-1" style="max-width: 320px;" placeholder="Raporlarda arama yapabilirsiniz..." />
+                            <input type="text" id="filterInput" class="form-control flex-grow-1" style="max-width: 320px;" placeholder="Raporlarda arama yapabilirsiniz..." title="Rapor sonuçları içinde anlık arama yapın" />
                         </div>
                         <div class="rapor-table-wrapper">
                             <table class="table table-hover table-bordered rapor-table" id="raporTable">

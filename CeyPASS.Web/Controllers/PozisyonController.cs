@@ -12,12 +12,14 @@ namespace CeyPASS.Web.Controllers
     {
         private readonly IPozisyonService _pozisyonService;
         private readonly IAuthorizationService _authorizationService;
+        private readonly IKisiEkraniLookUpService _lookupService;
         private const string PageName = "Pozisyonlar";
 
-        public PozisyonController(IPozisyonService pozisyonService, IAuthorizationService authorizationService)
+        public PozisyonController(IPozisyonService pozisyonService, IAuthorizationService authorizationService, IKisiEkraniLookUpService lookupService)
         {
             _pozisyonService = pozisyonService;
             _authorizationService = authorizationService;
+            _lookupService = lookupService;
         }
 
         public IActionResult Index()
@@ -74,6 +76,7 @@ namespace CeyPASS.Web.Controllers
             }
 
             TempData["Success"] = "Pozisyon kaydedildi.";
+            _lookupService.InvalidateCache();
             if (!string.IsNullOrWhiteSpace(model.ReturnUrl) && Url.IsLocalUrl(model.ReturnUrl))
                 return Redirect(model.ReturnUrl);
             return RedirectToAction("Index");
@@ -126,6 +129,7 @@ namespace CeyPASS.Web.Controllers
             }
 
             TempData["Success"] = "Pozisyon güncellendi.";
+            _lookupService.InvalidateCache();
             if (!string.IsNullOrWhiteSpace(model.ReturnUrl) && Url.IsLocalUrl(model.ReturnUrl))
                 return Redirect(model.ReturnUrl);
             return RedirectToAction("Index");
@@ -145,6 +149,7 @@ namespace CeyPASS.Web.Controllers
             {
                 var ok = _pozisyonService.Delete(id);
                 TempData[ok ? "Success" : "Error"] = ok ? "Pozisyon silindi." : "Pozisyon silinemedi.";
+                if (ok) _lookupService.InvalidateCache();
             }
             catch (Exception ex)
             {

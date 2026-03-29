@@ -77,8 +77,19 @@ namespace CeyPASS.Web.Services
                 SaveToSession();
             }
         }
+
+        public string? AktifSicilNo
+        {
+            get => CurrentUser?.SicilNo;
+            set
+            {
+                if (_currentUser != null)
+                    _currentUser.SicilNo = value;
+                SaveToSession();
+            }
+        }
         
-        public string? AdSoyad { get; set; }
+        public string AdSoyad { get; set; }
         public string RolAdi 
         { 
             get => CurrentUser?.Rol; 
@@ -103,7 +114,35 @@ namespace CeyPASS.Web.Services
             }
         }
 
-        public AuthUserDTO? CurrentUser => _currentUser;
+        public string? UserPhotoUrl
+        {
+            get => _httpContextAccessor?.HttpContext?.Session?.GetString("UserPhotoUrl");
+            set => _httpContextAccessor?.HttpContext?.Session?.SetString("UserPhotoUrl", value ?? string.Empty);
+        }
+
+        public string? UserInitials
+        {
+            get => _httpContextAccessor?.HttpContext?.Session?.GetString("UserInitials");
+            set => _httpContextAccessor?.HttpContext?.Session?.SetString("UserInitials", value ?? string.Empty);
+        }
+
+        public bool? IsSupervisor
+        {
+            get
+            {
+                var val = _httpContextAccessor?.HttpContext?.Session?.GetInt32("IsSupervisor");
+                return val == null ? (bool?)null : val == 1;
+            }
+            set
+            {
+                if (value == null) _httpContextAccessor?.HttpContext?.Session?.Remove("IsSupervisor");
+                else _httpContextAccessor?.HttpContext?.Session?.SetInt32("IsSupervisor", value.Value ? 1 : 0);
+            }
+        }
+
+        public AuthUserDTO CurrentUser => _currentUser;
+
+        public bool IsAdmin() => RolId == 1 || RolId == 2;
 
         public void SetCurrentUser(AuthUserDTO user)
         {
@@ -115,8 +154,10 @@ namespace CeyPASS.Web.Services
         public void Clear()
         {
             _currentUser = null;
-            AdSoyad = null;
             RolId = null;
+            UserPhotoUrl = null;
+            UserInitials = null;
+            IsSupervisor = null;
             SaveToSession();
             
             var session = _httpContextAccessor?.HttpContext?.Session;

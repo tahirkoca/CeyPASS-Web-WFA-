@@ -43,12 +43,16 @@
 
         if (ekKayitGun < 0) ekKayitGun = 0;
 
+        // BUGFIX: Bugün ve gelecek tarihler onaylanamaz/düzenlenemez (WFA ile tam uyum)
+        if (tarih.Date >= today)
+            return false;
+
         // Gelecek ay tarihleri düzenlenemez
         if (tarih >= currMonthBeg.AddMonths(1))
             return false;
 
-        // Bu ay tarihleri düzenlenebilir
-        if (tarih >= currMonthBeg && tarih < currMonthBeg.AddMonths(1))
+        // Bu ayın geçmiş günleri düzenlenebilir
+        if (tarih >= currMonthBeg && tarih < today)
             return true;
 
         // Geçen ay için deadline kontrolü
@@ -190,7 +194,7 @@
 
                             <div class="col-md-3">
                                 <label for="firmaId" class="form-label">Firma:</label>
-                                <select name="firmaId" id="firmaId" class="form-select">
+                                <select name="firmaId" id="firmaId" class="form-select" title="Firma seçimi yaparak verileri daraltın">
                                     <option value="">-- Seçiniz --</option>
                                     @foreach (var firma in firmalar)
                                     {
@@ -208,7 +212,7 @@
 
                             <div class="col-md-3">
                                 <label for="isyeriId" class="form-label">İşyeri:</label>
-                                <select name="isyeriId" id="isyeriId" class="form-select">
+                                <select name="isyeriId" id="isyeriId" class="form-select" title="İşyeri/Şube seçimi yaparak verileri daraltın">
                                     <option value="">-- Önce Firma Seçiniz --</option>
                                     @foreach (var isyeri in isyerleri)
                                     {
@@ -226,7 +230,7 @@
 
                             <div class="col-md-2">
                                 <label for="personelId" class="form-label">Personel:</label>
-                                <select name="personelId" id="personelId" class="form-select">
+                                <select name="personelId" id="personelId" class="form-select" title="Puantajını görmek istediğiniz personeli seçin">
                                     <option value="">-- Önce Firma Seçiniz --</option>
                                     @foreach (var kisi in kisiler)
                                     {
@@ -257,13 +261,19 @@
                                         <i class="bi bi-gear"></i> Ek Kayıt Günü (@ekKayitGun)
                                     </button>
                                 }
-                                <button type="submit" class="btn btn-primary ms-2">
+                                <button type="submit" class="btn btn-primary ms-2" title="Seçili filtrelere göre puantaj verilerini getir">
                                     <i class="bi bi-search"></i> Puantaj Getir
                                 </button>
                                 @if (canUpdate && !string.IsNullOrWhiteSpace(selectedPersonelId))
                                 {
                                     <button type="button" class="btn btn-info ms-2" id="btnCokluSicileAktar" title="Seçili personelin bağlı sicillerine ay sonu NG 7,5 aktarır">
                                         <i class="bi bi-arrow-left-right"></i> Çoklu Sicil Aktar
+                                    </button>
+                                }
+                                @if (canApprove && !string.IsNullOrWhiteSpace(selectedPersonelId))
+                                {
+                                    <button type="button" class="btn text-white ms-2 shadow-sm" id="btnTopluOnayla" style="background-color: #6f42c1; border-color: #6f42c1;" title="Seçili personelin bu aydaki tüm bekleyen ve düzenlenebilir puantajını onaylar">
+                                        <i class="bi bi-check-all"></i> Seçili Personeli Toplu Onayla
                                     </button>
                                 }
                                 </form>
@@ -273,7 +283,7 @@
                                         @Html.AntiForgeryToken()
                                         <input type="hidden" name="yil" id="exportYil" value="@selectedYil" />
                                         <input type="hidden" name="ay" id="exportAy" value="@selectedAy" />
-                                        <button type="submit" class="btn btn-success" id="btnPuantajExcel">
+                                        <button type="submit" class="btn btn-success" id="btnPuantajExcel" title="Görüntülenen puantaj verilerini Excel dosyası olarak indir">
                                             <i class="bi bi-file-earmark-excel"></i> Puantaj Exceli
                                         </button>
                                     </form>
@@ -292,7 +302,7 @@
                                         <input type="number" name="gun" class="form-control" value="@ekKayitGun" min="0" max="31" required />
                                     </div>
                                     <div class="col-12 col-md-auto">
-                                        <button type="submit" class="btn btn-warning">
+                                        <button type="submit" class="btn btn-warning" title="Ek kayıt günü ayarını bu firma için kaydet">
                                             <i class="bi bi-gear"></i> Kaydet
                                         </button>
                                     </div>
@@ -334,7 +344,7 @@
                                         <th>Çalışma Saati</th>
                                         <th>Onay Durumu</th>
                                         <th>Açıklama</th>
-                                        <th class="puantaj-sticky-col-right">İşlemler</th>
+                                        <th class="puantaj-sticky-col-right text-center">İşlemler</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -383,7 +393,7 @@
                                             </td>
                                             <td>@(gun.Aciklama ?? "-")</td>
                                             <td class="puantaj-sticky-col-right">
-                                                <div class="btn-group" role="group">
+                                                <div class="d-flex gap-1 justify-content-center">
                                                     @if (canApprove && gun.OnayDurumu == CeyPASS.Entities.Concrete.OnayDurumu.Bekliyor)
                                                     {
                                                         <button type="button"
@@ -394,8 +404,8 @@
                                                                 data-calisma-tipi="@gun.CalismaTipi"
                                                                 data-saat="@gun.Saat.ToString(System.Globalization.CultureInfo.InvariantCulture)"
                                                                 @(isEditable ? "" : "disabled")
-                                                                title="@(isEditable ? "" : "Düzenlenemez")">
-                                                            <i class="bi bi-check-circle"></i> Onayla
+                                                                title="@(isEditable ? "Onayla" : "Düzenlenemez")">
+                                                            <i class="bi bi-check-circle"></i>
                                                         </button>
                                                     }
                                                     @if (canDelete && gun.OnayDurumu == CeyPASS.Entities.Concrete.OnayDurumu.Bekliyor)
@@ -405,8 +415,8 @@
                                                                 data-personel-id="@selectedPersonelId"
                                                                 data-tarih="@gun.Tarih.ToString("yyyy-MM-dd")"
                                                                 @(isEditable ? "" : "disabled")
-                                                                title="@(isEditable ? "" : "Düzenlenemez")">
-                                                            <i class="bi bi-x-circle"></i> Reddet
+                                                                title="@(isEditable ? "Reddet" : "Düzenlenemez")">
+                                                            <i class="bi bi-x-circle"></i>
                                                         </button>
                                                     }
                                                     @if (canUpdate)
@@ -420,8 +430,8 @@
                                                                 data-calisma-tipi="@gun.CalismaTipi"
                                                                 data-saat="@gun.Saat.ToString(System.Globalization.CultureInfo.InvariantCulture)"
                                                                 @(isEditable ? "" : "disabled")
-                                                                title="@(isEditable ? "" : "Düzenlenemez")">
-                                                            <i class="bi bi-pencil"></i> Düzenle
+                                                                title="@(isEditable ? "Düzenle" : "Düzenlenemez")">
+                                                            <i class="bi bi-pencil"></i>
                                                         </button>
                                                     }
                                                 </div>
@@ -580,6 +590,36 @@
         <input type="hidden" name="saat" id="onaylaSaat" />
         <input type="hidden" name="aciklama" id="onaylaAciklama" value="" />
     </form>
+}
+
+@if (canApprove)
+{
+    <!-- Toplu Onay Modal -->
+    <div class="modal fade" id="topluOnayModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content border-primary" style="border-color: #6f42c1 !important;">
+                <div class="modal-header text-white" style="background-color: #6f42c1;">
+                    <h5 class="modal-title"><i class="bi bi-check-all"></i> Toplu Puantaj Onayla</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="text-center mb-3">
+                        <i class="bi bi-person-check" style="font-size: 3rem; color: #6f42c1;"></i>
+                    </div>
+                    <p class="text-center fs-5 mb-1"><strong id="topluOnayPersonelAd"></strong></p>
+                    <p class="text-center text-muted">Seçili <strong>personelin tüm bekleyen</strong> puantajları <span id="topluOnayDonem"></span> dönemi için onaylanacaktır.</p>
+                    <div class="alert alert-info py-2 small">
+                        <i class="bi bi-info-circle me-1"></i> Sadece düzenleme süresi geçmemiş (kilitlenmemiş) kayıtlar onaylanacaktır.
+                    </div>
+                    <p class="text-center mb-0">Devam etmek istediğinize emin misiniz?</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Vazgeç</button>
+                    <button type="button" class="btn text-white" id="btnTopluOnayOnayla" style="background-color: #6f42c1;">Evet, Onayla</button>
+                </div>
+            </div>
+        </div>
+    </div>
 }
 
 @section Scripts {
@@ -806,6 +846,55 @@
             $('#cokluSicilMesaj').text(yil + ' ' + ayAdi + ' ayının son gününe bağlı sicillere NG 7,5 aktarılacak. Onaylıyor musunuz?');
             var modal = new bootstrap.Modal(document.getElementById('cokluSicilModal'));
             modal.show();
+        });
+
+        $('#btnTopluOnayla').on('click', function () {
+            var personelId = $('#personelId').val();
+            var yil = $('#yil').val();
+            var ay = $('#ay').val();
+            var personelAd = $('#personelId option:selected').text();
+            var ayAdi = $('#ay option:selected').text();
+
+            if (!personelId) {
+                showToast('Lütfen bir personel seçin.', 'warning');
+                return;
+            }
+
+            $('#topluOnayPersonelAd').text(personelAd);
+            $('#topluOnayDonem').text(yil + ' ' + ayAdi);
+            
+            var modal = new bootstrap.Modal(document.getElementById('topluOnayModal'));
+            modal.show();
+        });
+
+        $('#btnTopluOnayOnayla').on('click', function() {
+            var $btn = $(this);
+            $btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> İşleniyor...');
+
+            $.ajax({
+                url: '@Url.Action("TopluOnayla")',
+                type: 'POST',
+                data: {
+                    personelId: $('#personelId').val(),
+                    yil: $('#yil').val(),
+                    ay: $('#ay').val(),
+                    __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                },
+                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                dataType: 'json'
+            }).done(function (r) {
+                if (r.success) {
+                    showToast(r.message, 'success');
+                    setTimeout(function() { window.location.reload(); }, 1000);
+                } else {
+                    showToast(r.message || 'Hata oluştu.', 'danger');
+                    $btn.prop('disabled', false).html('Evet, Onayla');
+                }
+            }).fail(function (xhr) {
+                var msg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : 'İşlem sırasında sunucu hatası oluştu.';
+                showToast(msg, 'danger');
+                $btn.prop('disabled', false).html('Evet, Onayla');
+            });
         });
     </script>
 }

@@ -11,12 +11,14 @@ namespace CeyPASS.Web.Controllers
     {
         private readonly IFirmaService _firmaService;
         private readonly IAuthorizationService _authorizationService;
+        private readonly IKisiEkraniLookUpService _lookupService;
         private const string PageName = "Firmalar";
 
-        public FirmaController(IFirmaService firmaService, IAuthorizationService authorizationService)
+        public FirmaController(IFirmaService firmaService, IAuthorizationService authorizationService, IKisiEkraniLookUpService lookupService)
         {
             _firmaService = firmaService;
             _authorizationService = authorizationService;
+            _lookupService = lookupService;
         }
 
         public IActionResult Index()
@@ -78,6 +80,7 @@ namespace CeyPASS.Web.Controllers
             }
 
             TempData["Success"] = "Firma kaydedildi.";
+            _lookupService.InvalidateCache();
             if (!string.IsNullOrWhiteSpace(model.ReturnUrl) && Url.IsLocalUrl(model.ReturnUrl))
                 return Redirect(model.ReturnUrl);
             return RedirectToAction("Index");
@@ -132,6 +135,7 @@ namespace CeyPASS.Web.Controllers
             }
 
             TempData["Success"] = "Firma güncellendi.";
+            _lookupService.InvalidateCache();
             if (!string.IsNullOrWhiteSpace(model.ReturnUrl) && Url.IsLocalUrl(model.ReturnUrl))
                 return Redirect(model.ReturnUrl);
             return RedirectToAction("Index");
@@ -151,6 +155,7 @@ namespace CeyPASS.Web.Controllers
             {
                 var ok = _firmaService.Delete(id);
                 TempData[ok ? "Success" : "Error"] = ok ? "Firma silindi." : "Firma silinemedi.";
+                if (ok) _lookupService.InvalidateCache();
             }
             catch (Exception ex)
             {

@@ -1,0 +1,327 @@
+@model CeyPASS.Web.Models.Profil.IzinlerimViewModel
+@{
+    ViewData["Title"] = "İzinlerim";
+    var izinTipleri = ViewBag.IzinTipleri as List<CeyPASS.Entities.Concrete.IzinTip> ?? new List<CeyPASS.Entities.Concrete.IzinTip>();
+    string IzinTipAdi(int? id) => id.HasValue ? (izinTipleri.FirstOrDefault(x => x.IzinTipId == id.Value)?.Ad ?? $"#{id.Value}") : "-";
+    var defaultTelefon = ViewBag.DefaultTelefon as string;
+}
+
+<div class="container-fluid">
+    <div class="row" id="izinlerimRow">
+        <div class="col-12 col-lg-5">
+            <div class="card mb-3" id="yeniTalepCard">
+                <div class="card-header">Yeni İzin Talebi</div>
+                <div class="card-body">
+                    <form asp-action="IzinTalep" method="post">
+                        @Html.AntiForgeryToken()
+                        <div class="mb-2">
+                            <label class="form-label">İzin Tipi</label>
+                            <select class="form-select" id="izinTipId" name="izinTipId" required>
+                                <option value="">Seçiniz</option>
+                                @foreach (var it in izinTipleri)
+                                {
+                                    <option value="@it.IzinTipId">@it.Ad</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label">Saatlik İzin mi?</label>
+                            <select class="form-select" id="saatlikIzinMi" name="saatlikIzinMi">
+                                <option value="false" selected>Hayır</option>
+                                <option value="true">Evet</option>
+                            </select>
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label">Başlangıç</label>
+                            <input class="form-control" name="baslangic" type="datetime-local" required />
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label">Bitiş</label>
+                            <input class="form-control" name="bitis" type="datetime-local" required />
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label">Adres</label>
+                            <textarea class="form-control" name="izinAdres" rows="2"></textarea>
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label">Telefon</label>
+                            <input class="form-control" name="telefonNo" value="@defaultTelefon" />
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label">Açıklama / Mazeret</label>
+                            <textarea class="form-control" name="aciklama" rows="2"></textarea>
+                        </div>
+                        <button class="btn btn-primary" type="submit" title="İzin talebini yöneticilerinizin onayına gönderin">Talep Oluştur</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-lg-7">
+            <div class="d-flex flex-column gap-3 izinlerim-right-stack" id="izinlerimRightStack">
+            <div class="card flex-fill min-h-0">
+                <div class="card-header">Taleplerim</div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm table-striped align-middle">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>İzin Tipi</th>
+                                    <th>Başlangıç</th>
+                                    <th>Bitiş</th>
+                                    <th>Süre</th>
+                                    <th>Üst Yetkili</th>
+                                    <th>İK</th>
+                                    <th>Durum</th>
+                                    <th>Dönüş İmzası</th>
+                                    <th style="width:220px;">İşlem</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            @foreach (var t in Model.Talepler)
+                            {
+                                <tr>
+                                    <td>@t.TalepId</td>
+                                    <td>@IzinTipAdi(t.IzinTipId)</td>
+                                    <td>@t.Baslangic.ToString("dd.MM.yyyy HH:mm")</td>
+                                    <td>@t.Bitis.ToString("dd.MM.yyyy HH:mm")</td>
+                                    <td>@(t.SaatlikIzinMi ? "Saatlik" : "Günlük")</td>
+                                    <td>@(t.UstYetkiliOnayDurumu?.ToString() ?? "-")</td>
+                                    <td>@(t.IkOnayDurumu?.ToString() ?? "-")</td>
+                                    <td>@(t.SonucKisiIzinId.HasValue ? "Onaylandı/İşlendi" : "Beklemede")</td>
+                                    <td>
+                                        @if (!t.SonucKisiIzinId.HasValue)
+                                        {
+                                            <span class="text-muted">-</span>
+                                        }
+                                        else if (!t.KullanimImzaIstenen)
+                                        {
+                                            <span class="text-muted">İK açmadı</span>
+                                        }
+                                        else if (t.KullanimImzaTarihi.HasValue)
+                                        {
+                                            <span>İmzalandı</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-warning">Bekliyor</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        <div class="d-flex gap-1 flex-wrap">
+                                             <a class="btn btn-sm btn-outline-secondary"
+                                                asp-controller="IzinKagit" asp-action="Preview" asp-route-talepId="@t.TalepId"
+                                                target="_blank" title="İzin belgesini önizle (Yeni sekme)"><i class="bi bi-eye"></i></a>
+                                             <a class="btn btn-sm btn-outline-secondary"
+                                                asp-controller="IzinKagit" asp-action="Pdf" asp-route-talepId="@t.TalepId"
+                                                target="_blank" title="İzin belgesini PDF dosyası olarak indir"><i class="bi bi-file-earmark-pdf"></i></a>
+
+                                            @if (t.KullanimImzaIstenen && !t.KullanimImzaTarihi.HasValue)
+                                            {
+                                                <form asp-action="KullanimImzaAt" method="post">
+                                                    @Html.AntiForgeryToken()
+                                                     <input type="hidden" name="talepId" value="@t.TalepId" />
+                                                     <button class="btn btn-sm btn-primary" type="submit" title="İş yerindeki ıslak imza sonrası dijital dönüş onayını gerçekleştirin">
+                                                         <i class="bi bi-pencil-square"></i>
+                                                     </button>
+                                                 </form>
+                                            }
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mt-2">
+                        <div class="small text-muted">
+                            @if (Model.TaleplerTotalCount > 0)
+                            {
+                                <span>Toplam @Model.TaleplerTotalCount kayıt • Sayfa @Model.TaleplerPage / @Model.TaleplerTotalPages</span>
+                            }
+                            else
+                            {
+                                <span>Toplam 0 kayıt</span>
+                            }
+                        </div>
+                        <div class="btn-group" role="group" aria-label="Taleplerim sayfalama">
+                            <a class="btn btn-sm btn-outline-secondary @(Model.TaleplerPage <= 1 ? "disabled" : "")"
+                               href="@Url.Action("Izinlerim", "Profil", new { taleplerPage = Model.TaleplerPage - 1, gecmisPage = Model.GecmisPage })">Önceki</a>
+                            <a class="btn btn-sm btn-outline-secondary @(Model.TaleplerPage >= Model.TaleplerTotalPages ? "disabled" : "")"
+                               href="@Url.Action("Izinlerim", "Profil", new { taleplerPage = Model.TaleplerPage + 1, gecmisPage = Model.GecmisPage })">Sonraki</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card flex-fill min-h-0">
+                <div class="card-header">Onaylı İzin Geçmişim</div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm table-striped align-middle">
+                            <thead>
+                                <tr>
+                                    <th>Başlangıç</th>
+                                    <th>Bitiş</th>
+                                    <th>Süre(Saat)</th>
+                                    <th>Saatlik</th>
+                                    <th>İşlenme</th>
+                                    <th>Açıklama</th>
+                                    <th style="width:140px;" class="text-center">İşlem</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var x in Model.OnayliIzinler)
+                                {
+                                    <tr>
+                                        <td>@x.Baslangic.ToString("dd.MM.yyyy HH:mm")</td>
+                                        <td>@x.Bitis.ToString("dd.MM.yyyy HH:mm")</td>
+                                        <td>@x.SureSaat.ToString("0.##")</td>
+                                        <td>@(x.SaatlikIzinMi ? "Evet" : "Hayır")</td>
+                                        <td>@(x.IslenmeTarihi.HasValue ? x.IslenmeTarihi.Value.ToString("dd.MM.yyyy HH:mm") : "-")</td>
+                                        <td>@(string.IsNullOrWhiteSpace(x.Aciklama) ? "-" : x.Aciklama)</td>
+                                         <td>
+                                             <div class="d-flex gap-1 justify-content-center flex-wrap">
+                                                 <a class="btn btn-sm btn-outline-secondary"
+                                                    asp-controller="IzinKagit" asp-action="PreviewFromIzin" asp-route-kisiIzinId="@x.KisiIzinId"
+                                                    target="_blank" title="Talep formunu önizle (Yeni sekme)"><i class="bi bi-eye"></i></a>
+                                                 <a class="btn btn-sm btn-outline-secondary"
+                                                    asp-controller="IzinKagit" asp-action="PdfFromIzin" asp-route-kisiIzinId="@x.KisiIzinId"
+                                                    target="_blank" title="Talep formunu PDF dosyası olarak indir"><i class="bi bi-file-earmark-pdf"></i></a>
+                                             </div>
+                                         </td>
+                                    </tr>
+                                }
+                                @if (!Model.OnayliIzinler.Any())
+                                {
+                                    <tr><td colspan="7" class="text-muted">Kayıt yok.</td></tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mt-2">
+                        <div class="small text-muted">
+                            @if (Model.GecmisTotalCount > 0)
+                            {
+                                <span>Toplam @Model.GecmisTotalCount kayıt • Sayfa @Model.GecmisPage / @Model.GecmisTotalPages</span>
+                            }
+                            else
+                            {
+                                <span>Toplam 0 kayıt</span>
+                            }
+                        </div>
+                        <div class="btn-group" role="group" aria-label="Onaylı izin sayfalama">
+                            <a class="btn btn-sm btn-outline-secondary @(Model.GecmisPage <= 1 ? "disabled" : "")"
+                               href="@Url.Action("Izinlerim", "Profil", new { taleplerPage = Model.TaleplerPage, gecmisPage = Model.GecmisPage - 1 })">Önceki</a>
+                            <a class="btn btn-sm btn-outline-secondary @(Model.GecmisPage >= Model.GecmisTotalPages ? "disabled" : "")"
+                               href="@Url.Action("Izinlerim", "Profil", new { taleplerPage = Model.TaleplerPage, gecmisPage = Model.GecmisPage + 1 })">Sonraki</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .min-h-0 { min-height: 0; }
+    @@media (min-width: 992px) {
+        .izinlerim-right-stack { min-height: var(--izinlerim-left-h, auto); }
+    }
+</style>
+
+<script>
+    (function () {
+        var izinTipSelect = document.getElementById('izinTipId');
+        var saatlikSelect = document.getElementById('saatlikIzinMi');
+        var mazeretIzinTipId = '7';
+
+        var baslangicInput = document.querySelector('input[name="baslangic"]');
+        var bitisInput = document.querySelector('input[name="bitis"]');
+
+        if (!izinTipSelect || !saatlikSelect) return;
+        var syncing = false;
+
+        function updateInputTypes() {
+            var targetType = saatlikSelect.value === 'true' ? 'datetime-local' : 'date';
+            
+            if (baslangicInput && baslangicInput.type !== targetType) {
+                var basVal = baslangicInput.value;
+                baslangicInput.type = targetType;
+                if (basVal && targetType === 'date') baslangicInput.value = basVal.split('T')[0];
+            }
+            if (bitisInput && bitisInput.type !== targetType) {
+                var bitVal = bitisInput.value;
+                bitisInput.type = targetType;
+                if (bitVal && targetType === 'date') bitisInput.value = bitVal.split('T')[0];
+            }
+        }
+
+        function applySaatlikRule() {
+            if (syncing) return;
+            var isSaatlik = (saatlikSelect.value === 'true');
+            
+            updateInputTypes();
+
+            if (!isSaatlik) return;
+
+            // Saatlik seçilince otomatik Mazeret (İzinTipId=7)
+            if (izinTipSelect.value !== mazeretIzinTipId) {
+                syncing = true;
+                izinTipSelect.value = mazeretIzinTipId;
+                izinTipSelect.dispatchEvent(new Event('change', { bubbles: true }));
+                syncing = false;
+            }
+        }
+
+        function applyIzinTipRule() {
+            if (syncing) return;
+            updateInputTypes();
+
+            if (izinTipSelect.value !== mazeretIzinTipId) return;
+
+            // Mazeret seçilince otomatik Saatlik = Evet
+            if (saatlikSelect.value !== 'true') {
+                syncing = true;
+                saatlikSelect.value = 'true';
+                saatlikSelect.dispatchEvent(new Event('change', { bubbles: true }));
+                syncing = false;
+            }
+        }
+
+        saatlikSelect.addEventListener('change', applySaatlikRule);
+        izinTipSelect.addEventListener('change', applyIzinTipRule);
+        // sayfa geri dönüşlerinde / autofill senaryoları
+        applySaatlikRule();
+        applyIzinTipRule();
+        updateInputTypes();
+    })();
+</script>
+
+<script>
+    (function () {
+        var left = document.getElementById('yeniTalepCard');
+        var right = document.getElementById('izinlerimRightStack');
+        if (!left || !right) return;
+
+        function syncHeights() {
+            // sadece desktop'ta sabitle; mobilde doğal aksın
+            if (window.innerWidth < 992) {
+                right.style.removeProperty('--izinlerim-left-h');
+                return;
+            }
+            var h = left.getBoundingClientRect().height;
+            if (h && h > 0) {
+                right.style.setProperty('--izinlerim-left-h', Math.ceil(h) + 'px');
+            }
+        }
+
+        syncHeights();
+        window.addEventListener('resize', syncHeights);
+        // font/layout load sonrası küçük farklar için
+        window.setTimeout(syncHeights, 200);
+    })();
+</script>
+

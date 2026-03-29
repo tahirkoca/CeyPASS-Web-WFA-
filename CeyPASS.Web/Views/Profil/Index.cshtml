@@ -1,0 +1,259 @@
+@model CeyPASS.Web.Models.Profil.ProfilIndexViewModel
+@{
+    ViewData["Title"] = "Profil";
+    var kisi = Model.Kisi;
+    var adSoyad = (kisi?.Ad ?? "") + " " + (kisi?.Soyad ?? "");
+    adSoyad = adSoyad.Trim();
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h4 class="mb-3">Personel Portalı</h4>
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex gap-3 align-items-start flex-wrap">
+                        <div>
+                            @if (!string.IsNullOrWhiteSpace(Model.FotografDataUrl))
+                            {
+                                <img src="@Model.FotografDataUrl" alt="Profil Fotoğrafı"
+                                     style="width:96px;height:96px;object-fit:cover;border-radius:12px;border:1px solid rgba(255,255,255,.12);" />
+                            }
+                            else
+                            {
+                                <div style="width:96px;height:96px;border-radius:12px;border:1px solid rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;">
+                                    <i class="bi bi-person" style="font-size:40px;opacity:.8;"></i>
+                                </div>
+                            }
+                        </div>
+
+                        <div class="flex-grow-1">
+                            <div class="row g-2">
+                                <div class="col-12 col-md-6">
+                                    <div><strong>Ad Soyad:</strong> @(string.IsNullOrWhiteSpace(adSoyad) ? "-" : adSoyad)</div>
+                                </div>
+                                <div class="col-12 col-md-6">
+                                    <div><strong>Sicil No:</strong> @Model.SicilNo</div>
+                                </div>
+                                <div class="col-12 col-md-6">
+                                    <div><strong>T.C. Kimlik No:</strong> @(string.IsNullOrWhiteSpace(kisi?.TcKimlikNo) ? "-" : kisi!.TcKimlikNo)</div>
+                                </div>
+                                <div class="col-12 col-md-6">
+                                    <div><strong>Kart No:</strong> @(string.IsNullOrWhiteSpace(kisi?.KartNo) ? "-" : kisi!.KartNo)</div>
+                                </div>
+                                <div class="col-12 col-md-6">
+                                    <div><strong>Cep Tel:</strong> @(string.IsNullOrWhiteSpace(kisi?.CepTel) ? "-" : kisi!.CepTel)</div>
+                                </div>
+                                <div class="col-12 col-md-6">
+                                    <div><strong>Email:</strong> @(string.IsNullOrWhiteSpace(kisi?.Email) ? "-" : kisi!.Email)</div>
+                                </div>
+                                <div class="col-12 col-md-6">
+                                    <div><strong>İşe Giriş:</strong> @(kisi?.IseGirisTarihi?.ToString("dd.MM.yyyy") ?? "-")</div>
+                                </div>
+                                <div class="col-12 col-md-6">
+                                    <div><strong>Çalışma Statüsü:</strong> @(string.IsNullOrWhiteSpace(kisi?.CalismaStatusuText) ? "-" : kisi!.CalismaStatusuText)</div>
+                                </div>
+                                <div class="col-12 col-md-6">
+                                    <div><strong>Departman:</strong> @(string.IsNullOrWhiteSpace(Model.DepartmanAdi) ? "-" : Model.DepartmanAdi)</div>
+                                </div>
+                                <div class="col-12 col-md-6">
+                                    <div><strong>Pozisyon:</strong> @(string.IsNullOrWhiteSpace(Model.PozisyonAdi) ? "-" : Model.PozisyonAdi)</div>
+                                </div>
+                                <div class="col-12 col-md-6">
+                                    <div><strong>Yemek Hakkı:</strong> @(Model.YemekHakkiVar == true ? "Var" : "Yok")</div>
+                                </div>
+                                <div class="col-12 col-md-6">
+                                    <div><strong>Günlük Yemek Adedi:</strong> @(Model.GunlukYemekAdedi?.ToString() ?? "-")</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr />
+                    <div class="d-flex gap-2 flex-wrap">
+                        <a class="btn btn-outline-primary" asp-controller="Profil" asp-action="Izinlerim" title="Tüm izin taleplerimi ve geçmişimi görüntüle">İzinlerim</a>
+                        <a class="btn btn-outline-primary" asp-controller="Profil" asp-action="Avanslarim" title="Tüm avans taleplerimi ve geçmişimi görüntüle">Avanslarım</a>
+                        @if (Model.HasUstYetkiliPanel)
+                        {
+                            <a class="btn btn-outline-secondary" asp-controller="Profil" asp-action="UstYetkiliPaneli" title="Üst yetkili onay ve yönetim ekranına git">Üst Yetkili Paneli</a>
+                        }
+                    </div>
+
+                    <hr />
+                    <h6 class="mb-2">Giriş-Çıkış Hareketlerim (Son 7 Gün)</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-striped align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Tarih</th>
+                                    <th>Tip</th>
+                                    <th>Cihaz</th>
+                                    <th>Aktif</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var h in Model.GirisCikisHareketleri)
+                                {
+                                    <tr>
+                                        <td>@h.Tarih.ToString("dd.MM.yyyy HH:mm")</td>
+                                        <td>@h.Tip</td>
+                                        <td>@(string.IsNullOrWhiteSpace(h.CihazAdi) ? "-" : h.CihazAdi)</td>
+                                        <td>@(h.AktifMi ? "Evet" : "Hayır")</td>
+                                    </tr>
+                                }
+                                @if (Model.GirisCikisHareketleri == null || !Model.GirisCikisHareketleri.Any())
+                                {
+                                    <tr><td colspan="4" class="text-muted">Kayıt yok.</td></tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center mt-2">
+                        <div class="small text-muted">
+                            @if (Model.HareketTotalCount > 0)
+                            {
+                                <span>Toplam @Model.HareketTotalCount kayıt • Sayfa @Model.HareketPage / @Model.HareketTotalPages</span>
+                            }
+                            else
+                            {
+                                <span>Toplam 0 kayıt</span>
+                            }
+                        </div>
+                        <div class="btn-group" role="group" aria-label="Hareket sayfalama">
+                            <a class="btn btn-sm btn-outline-secondary @(Model.HareketPage <= 1 ? "disabled" : "")"
+                               href="@Url.Action("Index", "Profil", new { hareketPage = Model.HareketPage - 1 })" title="Önceki sayfa">Önceki</a>
+                            <a class="btn btn-sm btn-outline-secondary @(Model.HareketPage >= Model.HareketTotalPages ? "disabled" : "")"
+                               href="@Url.Action("Index", "Profil", new { hareketPage = Model.HareketPage + 1 })" title="Sonraki sayfa">Sonraki</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<!-- Bildirimler Section -->
+<div class="row mt-4" id="bildirimler">
+    <div class="col-12">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-light py-3">
+                <h6 class="mb-0 fw-bold text-dark"><i class="bi bi-bell me-2"></i>Bildirim Geçmişi</h6>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0" id="fullHistoryTable">
+                        <thead class="table-light text-uppercase small" style="letter-spacing: 0.5px;">
+                            <tr>
+                                <th style="width: 50px;" class="ps-3">Durum</th>
+                                <th>Başlık</th>
+                                <th>Mesaj</th>
+                                <th style="width: 150px;" class="pe-3">Tarih</th>
+                            </tr>
+                        </thead>
+                        <tbody id="fullHistoryBody">
+                            <tr>
+                                <td colspan="4" class="text-center py-5 text-muted">
+                                    <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                                    Bildirimler yükleniyor...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="card-footer bg-white border-top-0 py-3">
+                <nav aria-label="Bildirim navigasyonu">
+                    <ul class="pagination pagination-sm justify-content-center mb-0" id="historyPagination">
+                        <!-- Pagination will be injected here -->
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Fetch History with Pagination
+            var historyUrl = '@Url.Action("GetAllNotifications", "Bildirim")';
+            var historyBody = $('#fullHistoryBody');
+            var paginationEl = $('#historyPagination');
+            var currentHistoryPage = 1;
+
+            function loadFullHistory(page) {
+                currentHistoryPage = page || 1;
+                $.getJSON(historyUrl, { page: currentHistoryPage, pageSize: 10 }, function(data) {
+                    if (data && data.items && data.items.length > 0) {
+                        var html = '';
+                        data.items.forEach(function(item) {
+                            var iconClass = 'bi bi-info-circle text-primary';
+                            if (item.tipi === 'IzinTalep') iconClass = 'bi bi-file-earmark-plus text-success';
+                            if (item.tipi === 'IzinOnay') iconClass = 'bi bi-check-circle text-success';
+                            if (item.tipi === 'IzinRed') iconClass = 'bi bi-x-circle text-danger';
+                            if (item.tipi === 'AvansTalep') iconClass = 'bi bi-cash-stack text-warning';
+                            if (item.tipi === 'AvansOnay') iconClass = 'bi bi-check-circle text-success';
+                            if (item.tipi === 'AvansRed') iconClass = 'bi bi-x-circle text-danger';
+
+                            var statusIcon = item.okunduMu 
+                                ? '<i class="' + iconClass + ' opacity-50"></i>' 
+                                : '<i class="' + iconClass + '"></i>';
+
+                            var rowClass = item.okunduMu ? '' : 'table-light fw-bold';
+                            
+                            html += '<tr class="' + rowClass + '">' +
+                                        '<td class="text-center ps-3">' + statusIcon + '</td>' +
+                                        '<td>' + item.baslik + '</td>' +
+                                        '<td>' + item.mesaj + '</td>' +
+                                        '<td class="small text-muted pe-3">' + item.tarih + '</td>' +
+                                    '</tr>';
+                        });
+                        historyBody.html(html);
+                        renderPagination(data.totalPages, data.currentPage);
+                    } else {
+                        historyBody.html('<tr><td colspan="4" class="text-center py-5 text-muted"><i class="bi bi-inbox d-block fs-2 mb-2"></i>Henüz hiç bildiriminiz bulunmuyor.</td></tr>');
+                        paginationEl.html('');
+                    }
+                });
+            }
+
+            function renderPagination(totalPages, currentPage) {
+                if (totalPages <= 1) {
+                    paginationEl.html('');
+                    return;
+                }
+
+                var html = '';
+                // Previous
+                html += '<li class="page-item ' + (currentPage === 1 ? 'disabled' : '') + '">';
+                html += '<a class="page-link" href="javascript:void(0)" onclick="window.changeHistoryPage(' + (currentPage - 1) + ')"><i class="bi bi-chevron-left"></i></a></li>';
+
+                // Pages
+                var startPage = Math.max(1, currentPage - 2);
+                var endPage = Math.min(totalPages, startPage + 4);
+                if (endPage - startPage < 4) startPage = Math.max(1, endPage - 4);
+
+                for (var i = startPage; i <= endPage; i++) {
+                    html += '<li class="page-item ' + (i === currentPage ? 'active' : '') + '">';
+                    html += '<a class="page-link" href="javascript:void(0)" onclick="window.changeHistoryPage(' + i + ')">' + i + '</a></li>';
+                }
+
+                // Next
+                html += '<li class="page-item ' + (currentPage === totalPages ? 'disabled' : '') + '">';
+                html += '<a class="page-link" href="javascript:void(0)" onclick="window.changeHistoryPage(' + (currentPage + 1) + ')"><i class="bi bi-chevron-right"></i></a></li>';
+
+                paginationEl.html(html);
+            }
+
+            window.changeHistoryPage = function(page) {
+                loadFullHistory(page);
+                // Scroll to card top
+                document.getElementById('bildirimler').scrollIntoView({ behavior: 'smooth', block: 'start' });
+            };
+
+            loadFullHistory(1);
+        });
+    </script>
+}
+

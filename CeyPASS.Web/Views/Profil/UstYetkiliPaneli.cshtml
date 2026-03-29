@@ -1,0 +1,250 @@
+@model List<CeyPASS.Entities.Concrete.IzinTalep>
+@{
+    ViewData["Title"] = "Üst Yetkili Paneli";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h4 class="mb-3">Üst Yetkili Paneli</h4>
+
+            <ul class="nav nav-tabs mb-3" id="panelTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="requests-tab" data-bs-toggle="tab" data-bs-target="#requests" type="button" role="tab" aria-controls="requests" aria-selected="true">
+                        <i class="bi bi-clock-history me-1"></i>Bekleyen Talepler
+                        @if (Model.Count > 0)
+                        {
+                            <span class="badge rounded-pill bg-danger ms-1">@Model.Count</span>
+                        }
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="team-tab" data-bs-toggle="tab" data-bs-target="#team" type="button" role="tab" aria-controls="team" aria-selected="false">
+                        <i class="bi bi-people me-1"></i>Bağlı Personellerim
+                    </button>
+                </li>
+            </ul>
+
+            <div class="tab-content" id="panelTabsContent">
+                <!-- Talepler Sekmesi -->
+                <div class="tab-pane fade show active" id="requests" role="tabpanel" aria-labelledby="requests-tab">
+                    <div class="card shadow-sm">
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-sm table-hover align-middle">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Personel</th>
+                                            <th>İzin Tipi</th>
+                                            <th>Başlangıç</th>
+                                            <th>Bitiş</th>
+                                            <th>Saatlik</th>
+                                            <th style="width:240px;" class="text-center">İşlemler</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @if (!Model.Any())
+                                        {
+                                            <tr><td colspan="7" class="text-center py-4 text-muted">Bekleyen izin talebi bulunmuyor.</td></tr>
+                                        }
+                                        @foreach (var t in Model)
+                                        {
+                                            <tr>
+                                                <td>@t.TalepId</td>
+                                                <td>
+                                                    @{
+                                                        var pDict = ViewBag.Personeller as System.Collections.Generic.Dictionary<string, string>;
+                                                        var pName = pDict != null && pDict.ContainsKey(t.PersonelId) ? pDict[t.PersonelId] : t.PersonelId;
+                                                    }
+                                                    <strong>@pName</strong>
+                                                </td>
+                                                <td>
+                                                    @{
+                                                        var iDict = ViewBag.IzinTipleri as System.Collections.Generic.Dictionary<int, string>;
+                                                        var iName = (t.IzinTipId != null && iDict != null && iDict.ContainsKey(t.IzinTipId.Value))
+                                                        ? iDict[t.IzinTipId.Value] : t.IzinTipId?.ToString();
+                                                    }
+                                                    @iName
+                                                </td>
+                                                <td><small>@t.Baslangic.ToString("dd.MM.yyyy HH:mm")</small></td>
+                                                <td><small>@t.Bitis.ToString("dd.MM.yyyy HH:mm")</small></td>
+                                                <td>@(t.SaatlikIzinMi ? "Evet" : "Hayır")</td>
+                                                <td class="text-nowrap text-center">
+                                                    <div class="d-flex align-items-center justify-content-center gap-2">
+                                                        <a class="btn btn-sm btn-outline-secondary" title="Önizleme"
+                                                           asp-controller="IzinKagit" asp-action="Preview" asp-route-talepId="@t.TalepId"
+                                                           target="_blank"><i class="bi bi-eye"></i></a>
+
+                                                        <button class="btn btn-sm btn-success" type="button" title="Onayla"
+                                                                onclick="showActionModal(@t.TalepId, 'Onayla', '@pName', '@iName')">
+                                                            <i class="bi bi-check-lg"></i>
+                                                        </button>
+                                                        
+                                                        <button class="btn btn-sm btn-danger" type="button" title="Reddet"
+                                                                onclick="showActionModal(@t.TalepId, 'Reddet', '@pName', '@iName')">
+                                                            <i class="bi bi-x-lg"></i>
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ekibim Sekmesi -->
+                <div class="tab-pane fade" id="team" role="tabpanel" aria-labelledby="team-tab">
+                    <div class="card shadow-sm">
+                        <div class="card-body">
+                            <div class="alert alert-info py-2 small mb-3">
+                                <i class="bi bi-info-circle me-2"></i>
+                                E-posta adresi olmayan personelleriniz için buradan <strong>geçici şifre</strong> oluşturup kendilerine iletebilirsiniz.
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-sm table-hover align-middle">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Sicil No</th>
+                                            <th>Ad Soyad</th>
+                                            <th>E-Posta</th>
+                                            <th style="width:200px;" class="text-center">Web İşlemleri</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @if (ViewBag.BagliPersoneller == null || !((List<CeyPASS.Entities.Concrete.KisiDetay>)ViewBag.BagliPersoneller).Any())
+                                        {
+                                            <tr><td colspan="4" class="text-center py-4 text-muted">Bağlı personel bulunamadı.</td></tr>
+                                        }
+                                        else
+                                        {
+                                            @foreach (var p in (List<CeyPASS.Entities.Concrete.KisiDetay>)ViewBag.BagliPersoneller)
+                                            {
+                                                <tr>
+                                                    <td><code>@p.PersonelId</code></td>
+                                                    <td>@p.Ad @p.Soyad</td>
+                                                    <td><small class="text-muted">@(string.IsNullOrWhiteSpace(p.Email) ? "(Tanımsız)" : p.Email)</small></td>
+                                                    <td class="text-center">
+                                                        <button type="button" class="btn btn-sm btn-outline-primary" title="Şifre Sıfırla"
+                                                                onclick="resetPw('@p.PersonelId', '@p.Ad @p.Soyad')">
+                                                            <i class="bi bi-key"></i>
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            }
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- İzin İşlem Modal (Onay/Ret) -->
+<div class="modal fade" id="actionModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header border-bottom-0">
+                <h5 class="modal-title" id="actionModalTitle">Talep İşlemi</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="actionForm" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="talepId" id="actionTalepId" />
+                <div class="modal-body py-0">
+                    <div class="p-3 bg-light rounded mb-3">
+                        <div class="small text-muted mb-1">Talep Sahibi</div>
+                        <div class="fw-bold mb-2" id="actionPersonelName"></div>
+                        <div class="small text-muted mb-1">İzin Tipi</div>
+                        <div id="actionIzinTipi"></div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Açıklama / Not (Opsiyonel)</label>
+                        <textarea name="aciklama" class="form-control" rows="3" placeholder="İşlem ile ilgili notunuzu buraya yazabilirsiniz..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer border-top-0">
+                    <button type="button" class="btn btn-link link-secondary text-decoration-none" data-bs-dismiss="modal">Vazgeç</button>
+                    <button type="submit" id="actionSubmitBtn" class="btn px-4">İşlemi Tamamla</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Şifre Sıfırlama Modal -->
+<div class="modal fade" id="resetPwModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Web Şifresi Sıfırla</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form asp-action="SifreSifirlaSubordinate" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="personelId" id="modalPersonelId" />
+                <div class="modal-body">
+                    <p><strong id="modalPersonelName"></strong> personeli için yeni şifre belirleyin:</p>
+                    <div class="form-group mb-3">
+                        <label class="form-label">Yeni Şifre</label>
+                        <input type="text" name="yeniSifre" class="form-control" value="123456" required />
+                        <div class="form-text">Personel bu şifreyle giriş yaptıktan sonra profilinden şifresini değiştirebilir.</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                    <button type="submit" class="btn btn-primary">Şifreyi Güncelle</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function resetPw(id, name) {
+            document.getElementById('modalPersonelId').value = id;
+            document.getElementById('modalPersonelName').innerText = name;
+            var myModal = new bootstrap.Modal(document.getElementById('resetPwModal'));
+            myModal.show();
+        }
+
+        function showActionModal(talepId, action, personelName, izinTipi) {
+            const form = document.getElementById('actionForm');
+            const title = document.getElementById('actionModalTitle');
+            const submitBtn = document.getElementById('actionSubmitBtn');
+            const pName = document.getElementById('actionPersonelName');
+            const iType = document.getElementById('actionIzinTipi');
+            const tIdInput = document.getElementById('actionTalepId');
+
+            tIdInput.value = talepId;
+            pName.innerText = personelName;
+            iType.innerText = izinTipi;
+            
+            if (action === 'Onayla') {
+                form.action = '@Url.Action("UstYetkiliOnayla", "Profil")';
+                title.innerText = 'İzin Talebini Onayla';
+                submitBtn.innerText = 'Onayla';
+                submitBtn.className = 'btn btn-success px-4';
+                title.className = 'modal-title text-success';
+            } else {
+                form.action = '@Url.Action("UstYetkiliReddet", "Profil")';
+                title.innerText = 'İzin Talebini Reddet';
+                submitBtn.innerText = 'Reddet';
+                submitBtn.className = 'btn btn-danger px-4';
+                title.className = 'modal-title text-danger';
+            }
+
+            var myModal = new bootstrap.Modal(document.getElementById('actionModal'));
+            myModal.show();
+        }
+    </script>
+}
+

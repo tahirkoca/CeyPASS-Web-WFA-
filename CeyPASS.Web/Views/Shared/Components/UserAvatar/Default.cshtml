@@ -1,0 +1,13 @@
+@{
+    string? photoUrl = ViewBag.PhotoUrl as string;
+    string initials = ViewBag.Initials as string ?? "U";
+}
+
+@if (!string.IsNullOrEmpty(photoUrl))
+{
+    <img src="@photoUrl" alt="Avatar" class="header-avatar-img w-100 h-100 rounded-circle" style="object-fit: cover;" />
+}
+else
+{
+    <span>@initials</span>
+}

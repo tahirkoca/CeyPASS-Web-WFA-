@@ -22,7 +22,7 @@
         <div class="dashboard-card-value">@Model.Cards.GirisYapan.ToString("N0")</div>
         <div class="dashboard-card-label">Giriş Yapanlar</div>
         <div class="dashboard-card-trend">
-            <i class="bi bi-info-circle"></i>
+            <i class="bi bi-info-circle" title="Tüm firmalarda bugün giriş veya çıkış hareketi olan personel sayısı"></i>
             <span>Bugün giriş/çıkış yapan</span>
         </div>
     </div>
@@ -36,7 +36,7 @@
         <div class="dashboard-card-value">@Model.Cards.Iceridekiler.ToString("N0")</div>
         <div class="dashboard-card-label">İçeridekiler</div>
         <div class="dashboard-card-trend">
-            <i class="bi bi-info-circle"></i>
+            <i class="bi bi-info-circle" title="Son hareketi 'Giriş' olan ve henüz 'Çıkış' yapmamış personel sayısı"></i>
             <span>Şu an işyerinde</span>
         </div>
     </div>
@@ -50,7 +50,7 @@
         <div class="dashboard-card-value">@Model.Cards.GecKalanlar.ToString("N0")</div>
         <div class="dashboard-card-label">Geç Kalanlar</div>
         <div class="dashboard-card-trend">
-            <i class="bi bi-info-circle"></i>
+            <i class="bi bi-info-circle" title="Vardiya başlangıç saatinden sonra giriş yapan personel sayısı"></i>
             <span>Mesaiye geç başlayan</span>
         </div>
     </div>
@@ -64,7 +64,7 @@
         <div class="dashboard-card-value">@Model.Cards.Disaridakiler.ToString("N0")</div>
         <div class="dashboard-card-label">Dışarıdakiler</div>
         <div class="dashboard-card-trend">
-            <i class="bi bi-info-circle"></i>
+            <i class="bi bi-info-circle" title="Son hareketi 'Çıkış' olan personel sayısı"></i>
             <span>Çıkış yapmış</span>
         </div>
     </div>
@@ -78,7 +78,7 @@
         <div class="dashboard-card-value">@Model.Cards.Devamsizlar.ToString("N0")</div>
         <div class="dashboard-card-label">Devamsızlar</div>
         <div class="dashboard-card-trend">
-            <i class="bi bi-info-circle"></i>
+            <i class="bi bi-info-circle" title="Bugün herhangi bir giriş hareketi bulunmayan (ve izinli olmayan) personel sayısı"></i>
             <span>Bugün gelmemiş</span>
         </div>
     </div>
@@ -92,7 +92,7 @@
         <div class="dashboard-card-value">@Model.Cards.Izinli.ToString("N0")</div>
         <div class="dashboard-card-label">İzinliler</div>
         <div class="dashboard-card-trend">
-            <i class="bi bi-info-circle"></i>
+            <i class="bi bi-info-circle" title="Bugün geçerli bir izin kaydı bulunan personel sayısı"></i>
             <span>Bugün izinli</span>
         </div>
     </div>
@@ -106,7 +106,7 @@
         <div class="dashboard-card-value">@Model.Cards.IseBaslayan.ToString("N0")</div>
         <div class="dashboard-card-label">İşe Başlayanlar</div>
         <div class="dashboard-card-trend">
-            <i class="bi bi-info-circle"></i>
+            <i class="bi bi-info-circle" title="İçinde bulunduğumuz ay içerisinde işe girişi yapılan personel sayısı"></i>
             <span>Bu ay başlayan</span>
         </div>
     </div>
@@ -120,7 +120,7 @@
         <div class="dashboard-card-value">@Model.Cards.IstenAyrilan.ToString("N0")</div>
         <div class="dashboard-card-label">İşten Ayrılanlar</div>
         <div class="dashboard-card-trend">
-            <i class="bi bi-info-circle"></i>
+            <i class="bi bi-info-circle" title="İçinde bulunduğumuz ay içerisinde işten çıkışı yapılan personel sayısı"></i>
             <span>Bu ay ayrılan</span>
         </div>
     </div>
@@ -332,13 +332,129 @@
     </div>
 </div>
 
+<!-- Bildirimler Section -->
+<div class="mt-5" id="bildirimler">
+    <div class="data-table-wrapper">
+        <div class="data-table-header">
+            <div class="data-table-title">
+                <i class="bi bi-bell"></i>
+                Bildirim Geçmişi
+            </div>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0" id="fullHistoryTable">
+                <thead class="table-light">
+                    <tr>
+                        <th style="width: 50px;">Durum</th>
+                        <th>Başlık</th>
+                        <th>Mesaj</th>
+                        <th style="width: 150px;">Tarih</th>
+                    </tr>
+                </thead>
+                <tbody id="fullHistoryBody">
+                    <tr>
+                        <td colspan="4" class="text-center py-5 text-muted">
+                            <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                            Bildirimler yükleniyor...
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="card-footer bg-white border-top-0 py-3">
+            <nav aria-label="Bildirim navigasyonu">
+                <ul class="pagination pagination-sm justify-content-center mb-0" id="historyPagination">
+                    <!-- Pagination will be injected here -->
+                </ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
     <script>
-        // Initialize tooltips
-        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-            return new bootstrap.Tooltip(tooltipTriggerEl);
-        });
+        $(document).ready(function() {
+            // Initialize tooltips
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
 
+            // Fetch History with Pagination
+            var historyUrl = '@Url.Action("GetAllNotifications", "Bildirim")';
+            var historyBody = $('#fullHistoryBody');
+            var paginationEl = $('#historyPagination');
+            var currentHistoryPage = 1;
+
+            function loadFullHistory(page) {
+                currentHistoryPage = page || 1;
+                $.getJSON(historyUrl, { page: currentHistoryPage, pageSize: 10 }, function(data) {
+                    if (data && data.items && data.items.length > 0) {
+                        var html = '';
+                        data.items.forEach(function(item) {
+                            var iconClass = 'bi bi-info-circle text-primary';
+                            if (item.tipi === 'IzinTalep') iconClass = 'bi bi-file-earmark-plus text-success';
+                            if (item.tipi === 'IzinOnay') iconClass = 'bi bi-check-circle text-success';
+                            if (item.tipi === 'IzinRed') iconClass = 'bi bi-x-circle text-danger';
+                            if (item.tipi === 'AvansTalep') iconClass = 'bi bi-cash-stack text-warning';
+                            if (item.tipi === 'AvansOnay') iconClass = 'bi bi-check-circle text-success';
+                            if (item.tipi === 'AvansRed') iconClass = 'bi bi-x-circle text-danger';
+
+                            var statusIcon = item.okunduMu 
+                                ? '<i class="' + iconClass + ' opacity-50"></i>' 
+                                : '<i class="' + iconClass + '"></i> <span class="badge bg-danger p-1 ms-1" style="font-size: 0.5rem; vertical-align: middle;">YENİ</span>';
+
+                            html += '<tr class="' + (item.okunduMu ? '' : 'table-light fw-bold') + '">' +
+                                        '<td class="text-center">' + statusIcon + '</td>' +
+                                        '<td>' + item.baslik + '</td>' +
+                                        '<td>' + item.mesaj + '</td>' +
+                                        '<td class="small text-muted">' + item.tarih + '</td>' +
+                                    '</tr>';
+                        });
+                        historyBody.html(html);
+                        renderPagination(data.totalPages, data.currentPage);
+                    } else {
+                        historyBody.html('<tr><td colspan="4" class="text-center py-5 text-muted"><i class="bi bi-inbox d-block fs-2 mb-2"></i>Henüz hiç bildiriminiz bulunmuyor.</td></tr>');
+                        paginationEl.html('');
+                    }
+                });
+            }
+
+            function renderPagination(totalPages, currentPage) {
+                if (totalPages <= 1) {
+                    paginationEl.html('');
+                    return;
+                }
+
+                var html = '';
+                // Previous
+                html += '<li class="page-item ' + (currentPage === 1 ? 'disabled' : '') + '">';
+                html += '<a class="page-link" href="javascript:void(0)" onclick="window.changeHistoryPage(' + (currentPage - 1) + ')"><i class="bi bi-chevron-left"></i></a></li>';
+
+                // Pages
+                var startPage = Math.max(1, currentPage - 2);
+                var endPage = Math.min(totalPages, startPage + 4);
+                if (endPage - startPage < 4) startPage = Math.max(1, endPage - 4);
+
+                for (var i = startPage; i <= endPage; i++) {
+                    html += '<li class="page-item ' + (i === currentPage ? 'active' : '') + '">';
+                    html += '<a class="page-link" href="javascript:void(0)" onclick="window.changeHistoryPage(' + i + ')">' + i + '</a></li>';
+                }
+
+                // Next
+                html += '<li class="page-item ' + (currentPage === totalPages ? 'disabled' : '') + '">';
+                html += '<a class="page-link" href="javascript:void(0)" onclick="window.changeHistoryPage(' + (currentPage + 1) + ')"><i class="bi bi-chevron-right"></i></a></li>';
+
+                paginationEl.html(html);
+            }
+
+            window.changeHistoryPage = function(page) {
+                loadFullHistory(page);
+                // Scroll to table top smoothly
+                document.getElementById('bildirimler').scrollIntoView({ behavior: 'smooth', block: 'start' });
+            };
+
+            loadFullHistory(1);
+        });
     </script>
 }

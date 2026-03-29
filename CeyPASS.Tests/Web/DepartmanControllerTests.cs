@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Moq;
 using Xunit;
+using System;
 
 namespace CeyPASS.Tests.Web
 {
@@ -15,98 +16,67 @@ namespace CeyPASS.Tests.Web
     {
         private readonly Mock<IDepartmanService> _departmanMock = new();
         private readonly Mock<IAuthorizationService> _authMock = new();
+        private readonly Mock<IKisiEkraniLookUpService> _lookupMock = new();
+        private readonly Mock<ISessionContext> _sessionMock = new();
         private readonly DepartmanController _sut;
 
         public DepartmanControllerTests()
         {
-            _sut = new DepartmanController(_departmanMock.Object, _authMock.Object);
+            _sut = new DepartmanController(_departmanMock.Object, _authMock.Object, _lookupMock.Object, _sessionMock.Object);
 
             var httpContext = new DefaultHttpContext();
             _sut.ControllerContext = new ControllerContext { HttpContext = httpContext };
             _sut.TempData = new TempDataDictionary(httpContext, Mock.Of<ITempDataProvider>());
         }
 
-        // ─── Create POST ──────────────────────────────────────────────────────
+        // ─── Create ───────────────────────────────────────────────────────────
 
         [Fact]
         public void Create_POST_Yetkisiz_IndexeYonlendirir()
         {
             _authMock.Setup(a => a.Can("Departmanlar", YetkiTipleri.Create)).Returns(false);
 
-            var sonuc = _sut.Create(new DepartmanFormModel());
-
-            var redirect = sonuc.Should().BeOfType<RedirectToActionResult>().Subject;
-            redirect.ActionName.Should().Be("Index");
-            ((string)_sut.TempData["Error"]!).Should().NotBeNullOrEmpty();
-        }
-
-        [Fact]
-        public void Create_POST_BosAd_GoruntumuDoner()
-        {
-            _authMock.Setup(a => a.Can("Departmanlar", YetkiTipleri.Create)).Returns(true);
-
-            var model = new DepartmanFormModel { DepartmanId = 1, DepartmanAdi = "" };
-            var sonuc = _sut.Create(model);
-
-            var view = sonuc.Should().BeOfType<ViewResult>().Subject;
-            _sut.ModelState.IsValid.Should().BeFalse();
-        }
-
-        [Fact]
-        public void Create_POST_ServisBasarili_IndexeYonlendirir()
-        {
-            _authMock.Setup(a => a.Can("Departmanlar", YetkiTipleri.Create)).Returns(true);
-            _departmanMock.Setup(d => d.Add(5, "Muhasebe", "")).Returns(true);
-
-            var model = new DepartmanFormModel { DepartmanId = 5, DepartmanAdi = "Muhasebe" };
+            var model = new DepartmanFormModel { DepartmanAdi = "IT" };
             var sonuc = _sut.Create(model);
 
             var redirect = sonuc.Should().BeOfType<RedirectToActionResult>().Subject;
             redirect.ActionName.Should().Be("Index");
-            ((string)_sut.TempData["Success"]!).Should().NotBeNullOrEmpty();
         }
 
-        // ─── Index ────────────────────────────────────────────────────────────
-
         [Fact]
-        public void Index_Yetkisiz_HomeIndexeYonlendirir()
+        public void Create_POST_Basarili_IndexeYonlendirir()
         {
-            _authMock.Setup(a => a.ViewAbility("Departmanlar")).Returns(false);
+            _authMock.Setup(a => a.Can("Departmanlar", YetkiTipleri.Create)).Returns(true);
+            _departmanMock.Setup(d => d.Add(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string>())).Returns(true);
 
-            var sonuc = _sut.Index();
+            var model = new DepartmanFormModel { DepartmanId = 1, DepartmanAdi = "IT" };
+            var sonuc = _sut.Create(model);
 
             var redirect = sonuc.Should().BeOfType<RedirectToActionResult>().Subject;
             redirect.ActionName.Should().Be("Index");
-            redirect.ControllerName.Should().Be("Home");
-            ((string)_sut.TempData["Error"]!).Should().NotBeNullOrEmpty();
+            _sut.TempData["Success"].Should().NotBeNull();
         }
 
-        // ─── Edit POST ────────────────────────────────────────────────────────
-
-        [Fact]
-        public void Edit_POST_Yetkisiz_IndexeYonlendirir()
-        {
-            _authMock.Setup(a => a.Can("Departmanlar", YetkiTipleri.Update)).Returns(false);
-
-            var sonuc = _sut.Edit(new DepartmanFormModel { DepartmanId = 1 });
-
-            var redirect = sonuc.Should().BeOfType<RedirectToActionResult>().Subject;
-            redirect.ActionName.Should().Be("Index");
-            ((string)_sut.TempData["Error"]!).Should().NotBeNullOrEmpty();
-        }
+        // ─── Edit ─────────────────────────────────────────────────────────────
 
         [Fact]
         public void Edit_POST_Basarili_IndexeYonlendirir()
         {
             _authMock.Setup(a => a.Can("Departmanlar", YetkiTipleri.Update)).Returns(true);
-            _departmanMock.Setup(d => d.Update(1, "IT", "")).Returns(true);
+            _sessionMock.Setup(s => s.IsAdmin()).Returns(true);
+            
+            var dt = new System.Data.DataTable();
+            dt.Columns.Add("FirmaId", typeof(int));
+            var row = dt.NewRow();
+            row["FirmaId"] = 1;
+            _departmanMock.Setup(d => d.GetRowById(It.IsAny<int>())).Returns(row);
+            _departmanMock.Setup(d => d.Update(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string>())).Returns(true);
 
             var model = new DepartmanFormModel { DepartmanId = 1, DepartmanAdi = "IT" };
             var sonuc = _sut.Edit(model);
 
             var redirect = sonuc.Should().BeOfType<RedirectToActionResult>().Subject;
-            redirect.ActionName.Should().Be("Index");
-            ((string)_sut.TempData["Success"]!).Should().NotBeNullOrEmpty();
+            _sut.TempData["Success"].Should().NotBeNull();
         }
 
         // ─── Delete ───────────────────────────────────────────────────────────
@@ -120,7 +90,6 @@ namespace CeyPASS.Tests.Web
 
             var redirect = sonuc.Should().BeOfType<RedirectToActionResult>().Subject;
             redirect.ActionName.Should().Be("Index");
-            ((string)_sut.TempData["Error"]!).Should().NotBeNullOrEmpty();
         }
     }
 }

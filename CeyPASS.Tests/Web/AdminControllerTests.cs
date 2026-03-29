@@ -1,4 +1,5 @@
 using CeyPASS.Business.Abstractions;
+using CeyPASS.DataAccess.Abstractions;
 using CeyPASS.Entities.Concrete;
 using CeyPASS.Web.Controllers;
 using CeyPASS.Web.Models.Admin;
@@ -27,6 +28,9 @@ namespace CeyPASS.Tests.Web
         private readonly Mock<ICalismaStatuService> _calismaStatuMock = new();
         private readonly Mock<ICalismaSekliService> _calismaSekliMock = new();
         private readonly Mock<INotificationService> _notificationMock = new();
+        private readonly Mock<IAdminKullaniciRepository> _adminKullaniciRepoMock = new();
+        private readonly Mock<IKisiRepository> _kisiRepoMock = new();
+        private readonly Mock<IUstYetkiliRepository> _ustYetkiliRepoMock = new();
         private readonly Mock<IWebHostEnvironment> _envMock = new();
         private readonly AdminController _sut;
 
@@ -47,6 +51,9 @@ namespace CeyPASS.Tests.Web
                 _calismaStatuMock.Object,
                 _calismaSekliMock.Object,
                 _notificationMock.Object,
+                _adminKullaniciRepoMock.Object,
+                _kisiRepoMock.Object,
+                _ustYetkiliRepoMock.Object,
                 _envMock.Object);
 
             var httpContext = new DefaultHttpContext();
@@ -56,6 +63,11 @@ namespace CeyPASS.Tests.Web
             // Admin user setup
             _sessionMock.Setup(s => s.CurrentUser).Returns(new AuthUserDTO { KullaniciId = 1 });
             _sessionMock.Setup(s => s.RolId).Returns(1);
+
+            // Default admin tab data (avoid null refs)
+            _adminKullaniciRepoMock.Setup(r => r.GetAll()).Returns(new List<KullaniciAdminRow>());
+            _kisiRepoMock.Setup(r => r.GetAktifPersonellerIdAd()).Returns(new List<PersonelAdSoyad>());
+            _ustYetkiliRepoMock.Setup(r => r.GetAll()).Returns(new List<UstYetkili>());
         }
 
         private static GuncellemeMailViewModel GecerliModel(
@@ -231,6 +243,78 @@ namespace CeyPASS.Tests.Web
             var redirect = sonuc.Should().BeOfType<RedirectToActionResult>().Subject;
             redirect.ActionName.Should().Be("Index");
             _sut.TempData["Success"].Should().NotBeNull();
+        }
+
+        // ─── Kullanıcı - Personel eşlemesi ────────────────────────────────────
+
+        [Fact]
+        public void KullaniciPersonelGuncelle_AdminDegil_LoginaYonlendirir()
+        {
+            _sessionMock.Setup(s => s.RolId).Returns(3);
+
+            var sonuc = _sut.KullaniciPersonelGuncelle(kullaniciId: 5, personelId: 10);
+
+            var redirect = sonuc.Should().BeOfType<RedirectToActionResult>().Subject;
+            redirect.ActionName.Should().Be("Login");
+            redirect.ControllerName.Should().Be("Account");
+        }
+
+        [Fact]
+        public void KullaniciPersonelGuncelle_Admin_SetPersonelIdCagrilir_VeKullanicilarTabinaDoner()
+        {
+            _adminKullaniciRepoMock.Setup(r => r.SetPersonelId(5, 10)).Returns(true);
+
+            var sonuc = _sut.KullaniciPersonelGuncelle(kullaniciId: 5, personelId: 10);
+
+            var redirect = sonuc.Should().BeOfType<RedirectToActionResult>().Subject;
+            redirect.ActionName.Should().Be("Index");
+            redirect.RouteValues.Should().ContainKey("tab");
+            redirect.RouteValues["tab"].Should().Be("kullanicilar");
+            _sut.TempData["Success"].Should().NotBeNull();
+            _adminKullaniciRepoMock.Verify(r => r.SetPersonelId(5, 10), Times.Once);
+        }
+
+        // ─── ÜstYetkili yönetimi ──────────────────────────────────────────────
+
+        [Fact]
+        public void UstYetkiliGuncelle_PersonelIdBos_HataVeUstYetkiliTabinaDoner()
+        {
+            var sonuc = _sut.UstYetkiliGuncelle(personelId: "   ", ustYetkiliPersonelId: "2002");
+
+            var redirect = sonuc.Should().BeOfType<RedirectToActionResult>().Subject;
+            redirect.ActionName.Should().Be("Index");
+            redirect.RouteValues["tab"].Should().Be("ustyetkili");
+            _sut.TempData["Error"].Should().NotBeNull();
+            _ustYetkiliRepoMock.Verify(r => r.Sil(It.IsAny<string>()), Times.Never);
+            _ustYetkiliRepoMock.Verify(r => r.EkleVeyaGuncelle(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+        }
+
+        [Fact]
+        public void UstYetkiliGuncelle_UstBos_SilCagrilir()
+        {
+            _ustYetkiliRepoMock.Setup(r => r.Sil("1001")).Returns(true);
+
+            var sonuc = _sut.UstYetkiliGuncelle(personelId: "1001", ustYetkiliPersonelId: "  ");
+
+            var redirect = sonuc.Should().BeOfType<RedirectToActionResult>().Subject;
+            redirect.RouteValues["tab"].Should().Be("ustyetkili");
+            _sut.TempData["Success"].Should().NotBeNull();
+            _ustYetkiliRepoMock.Verify(r => r.Sil("1001"), Times.Once);
+            _ustYetkiliRepoMock.Verify(r => r.EkleVeyaGuncelle(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+        }
+
+        [Fact]
+        public void UstYetkiliGuncelle_UstDolu_EkleVeyaGuncelleCagrilir()
+        {
+            _ustYetkiliRepoMock.Setup(r => r.EkleVeyaGuncelle("1001", "2002")).Returns(true);
+
+            var sonuc = _sut.UstYetkiliGuncelle(personelId: "1001", ustYetkiliPersonelId: "2002");
+
+            var redirect = sonuc.Should().BeOfType<RedirectToActionResult>().Subject;
+            redirect.RouteValues["tab"].Should().Be("ustyetkili");
+            _sut.TempData["Success"].Should().NotBeNull();
+            _ustYetkiliRepoMock.Verify(r => r.EkleVeyaGuncelle("1001", "2002"), Times.Once);
+            _ustYetkiliRepoMock.Verify(r => r.Sil(It.IsAny<string>()), Times.Never);
         }
     }
 }

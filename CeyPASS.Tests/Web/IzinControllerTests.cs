@@ -18,6 +18,7 @@ namespace CeyPASS.Tests.Web
         private readonly Mock<IKisiIzinService> _izinMock = new();
         private readonly Mock<IKisiQueryService> _kisiQueryMock = new();
         private readonly Mock<IIzinTipService> _izinTipMock = new();
+        private readonly Mock<IIzinTalepService> _izinTalepMock = new();
         private readonly Mock<IFirmaService> _firmaMock = new();
         private readonly Mock<IPuantajService> _puantajMock = new();
         private readonly Mock<ISessionContext> _sessionMock = new();
@@ -33,6 +34,7 @@ namespace CeyPASS.Tests.Web
                 _izinMock.Object,
                 _kisiQueryMock.Object,
                 _izinTipMock.Object,
+                _izinTalepMock.Object,
                 _firmaMock.Object,
                 _puantajMock.Object,
                 _sessionMock.Object,

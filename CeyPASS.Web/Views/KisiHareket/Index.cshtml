@@ -228,7 +228,7 @@
                                         <th>Hareket Tipi</th>
                                         <th>Kayıt Zamanı</th>
                                         <th>Durum</th>
-                                        <th>İşlemler</th>
+                                        <th class="text-center">İşlemler</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -255,11 +255,11 @@
                                                     <span class="badge bg-secondary">Pasif</span>
                                                 }
                                             </td>
-                                            <td>
-                                                <div class="btn-group" role="group">
+                                            <td class="text-center">
+                                                <div class="d-flex gap-1 justify-content-center">
                                                     @if (canUpdate && hareket.AktifMi)
                                                     {
-                                                        <button type="button" class="btn btn-sm btn-warning" 
+                                                        <button type="button" class="btn btn-sm btn-warning" title="Düzenle"
                                                                 onclick="hareketGuncelle(@hareket.Id, '@hareket.Tarih.ToString("yyyy-MM-ddTHH:mm")', '@hareket.Tip')">
                                                             <i class="bi bi-pencil"></i>
                                                         </button>
@@ -268,7 +268,7 @@
                                                     {
                                                         <form method="post" action="@Url.Action("PasifYap", new { id = hareket.Id })" style="display: inline;">
                                                             @Html.AntiForgeryToken()
-                                                            <button type="button" class="btn btn-sm btn-danger btn-sil-onay" data-msg="Bu hareketi pasif yapmak istediğinizden emin misiniz?" data-btn-text="Pasif Yap">
+                                                            <button type="button" class="btn btn-sm btn-danger btn-sil-onay" data-msg="Bu hareketi pasif yapmak istediğinizden emin misiniz?" data-btn-text="Pasif Yap" title="Pasif Yap">
                                                                 <i class="bi bi-trash"></i>
                                                             </button>
                                                         </form>

@@ -1,0 +1,6 @@
+@CeyPASS.Api_HostAddress = http://localhost:5126
+
+GET {{CeyPASS.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

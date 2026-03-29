@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Http;
 using CeyPASS.Business.Abstractions;
 using CeyPASS.DataAccess.Abstractions;
 using CeyPASS.Entities.Concrete;
@@ -61,7 +62,7 @@ namespace CeyPASS.Web.Controllers
 
             // Determine firma
             int selectedFirmaId = firmaId ?? (int)_sessionContext.AktifFirmaId;
-            bool isAdmin = _sessionContext.RolId == 1 || _sessionContext.RolId == 2;
+            bool isAdmin = _sessionContext.IsAdmin();
             if (!isAdmin && selectedFirmaId != _sessionContext.AktifFirmaId)
             {
                 selectedFirmaId = (int)_sessionContext.AktifFirmaId;
@@ -223,6 +224,13 @@ namespace CeyPASS.Web.Controllers
             if (kisi == null)
                 return NotFound();
 
+            // IDOR Protection: Ensure personnel belongs to caller's firm
+            if (!_sessionContext.IsAdmin() && kisi.FirmaId != _sessionContext.AktifFirmaId)
+            {
+                TempData["Error"] = "Bu personeli düzenleme yetkiniz yok.";
+                return RedirectToAction("Index");
+            }
+
             LoadLookupData(kisi);
             ViewBag.OriginalPersonelId = id;
             return View(kisi);
@@ -248,6 +256,14 @@ namespace CeyPASS.Web.Controllers
 
             try
             {
+                // IDOR Protection: Ensure original personnel belongs to caller's firm
+                var existing = _kisiQueryService.GetKisiDetay(originalPersonelId);
+                if (existing == null || (!_sessionContext.IsAdmin() && existing.FirmaId != _sessionContext.AktifFirmaId))
+                {
+                    TempData["Error"] = "Bu personeli güncelleme yetkiniz yok.";
+                    return RedirectToAction("Index");
+                }
+
                 // KisiDetay'dan Kisi'ye dönüştür
                 var kisi = new Kisi
                 {
@@ -343,6 +359,14 @@ namespace CeyPASS.Web.Controllers
 
             try
             {
+                // IDOR Protection: Ensure personnel belongs to caller's firm
+                var existing = _kisiQueryService.GetKisiDetay(id);
+                if (existing == null || (!_sessionContext.IsAdmin() && existing.FirmaId != _sessionContext.AktifFirmaId))
+                {
+                    TempData["Error"] = "Bu personeli işten çıkarma yetkiniz yok.";
+                    return RedirectToAction("Index");
+                }
+
                 bool success = _kisiService.KisiIstenCikar(id, cikis, kartNo);
                 if (success)
                 {
@@ -380,6 +404,13 @@ namespace CeyPASS.Web.Controllers
             var kisi = _kisiQueryService.GetKisiDetay(id);
             if (kisi == null)
                 return NotFound();
+
+            // IDOR Protection: Ensure personnel belongs to caller's firm
+            if (!_sessionContext.IsAdmin() && kisi.FirmaId != _sessionContext.AktifFirmaId)
+            {
+                TempData["Error"] = "Bu personele erişim yetkiniz yok.";
+                return RedirectToAction("Index");
+            }
 
             FillOrganizasyonAdlari(kisi);
             return View(kisi);
@@ -447,14 +478,14 @@ namespace CeyPASS.Web.Controllers
         [HttpGet]
         public IActionResult GetDepartmanlar()
         {
-            var departmanlar = _lookupService.GetDepartmanlar();
+            var departmanlar = _lookupService.GetDepartmanlar(_sessionContext.AktifFirmaId);
             return Json(departmanlar);
         }
 
         [HttpGet]
         public IActionResult GetPozisyonlar()
         {
-            var pozisyonlar = _lookupService.GetPozisyonlar();
+            var pozisyonlar = _lookupService.GetPozisyonlar(_sessionContext.AktifFirmaId);
             return Json(pozisyonlar);
         }
 
@@ -488,12 +519,12 @@ namespace CeyPASS.Web.Controllers
                 firmaId = (int)_sessionContext.AktifFirmaId;
             }
 
-            ViewBag.Departmanlar = _lookupService.GetDepartmanlar();
-            ViewBag.Pozisyonlar = _lookupService.GetPozisyonlar();
+            ViewBag.Departmanlar = _lookupService.GetDepartmanlar(firmaId);
+            ViewBag.Pozisyonlar = _lookupService.GetPozisyonlar(firmaId);
             ViewBag.Isyerleri = _lookupService.GetIsyerleri(firmaId);
             ViewBag.Bolumler = _lookupService.GetBolumler(firmaId);
             ViewBag.CalismaSekilleri = _calismaSekliService.GetAll(firmaId);
-            ViewBag.CalismaStatuleri = _lookupService.GetCalismaStatuleri();
+            ViewBag.CalismaStatuleri = _lookupService.GetCalismaStatuleri(firmaId);
             ViewBag.Firmalar = _firmaService.GetAll().OrderBy(f => f.FirmaAdi).ToList();
         }
     }

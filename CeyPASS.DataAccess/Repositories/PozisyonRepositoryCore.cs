@@ -16,7 +16,7 @@ namespace CeyPASS.DataAccess.Repositories
             _context = context;
         }
 
-        public List<LookupItem> GetByFirma()
+        public List<LookupItem> GetByFirma(int? firmId = null)
         {
             return _context.Pozisyonlar
                 .AsNoTracking()

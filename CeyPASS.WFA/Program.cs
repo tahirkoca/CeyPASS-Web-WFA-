@@ -77,6 +77,9 @@ namespace CeyPASS.WFA
             // Oturum(Session)
             services.AddSingleton<ISessionContext, SessionContext>();
 
+            // IMemoryCache (KisiEkraniLookupService vb. için gerekli)
+            services.AddMemoryCache();
+
             // Connection string: önce appsettings.json, sonra App.config, sonra Infrastructure.DatabaseHelperCore
             var connectionString = configuration.GetConnectionString("DefaultConnection")?.Trim();
             if (string.IsNullOrEmpty(connectionString) || connectionString.Contains("YOUR_PASSWORD"))
@@ -116,6 +119,11 @@ namespace CeyPASS.WFA
             services.AddScoped<ISistemLogRepository, SistemLogRepositoryCore>();
             services.AddScoped<IYemekhaneRepository, YemekhaneRepositoryCore>();
             services.AddScoped<IMailRepository, MailRepositoryCore>();
+            services.AddScoped<IBildirimRepository, BildirimRepositoryCore>();
+            services.AddScoped<IUserDeviceTokenRepository, UserDeviceTokenRepositoryCore>();
+            services.AddScoped<IUstYetkiliRepository, UstYetkiliRepositoryCore>();
+            services.AddScoped<IPersonelWebSifreRepository, PersonelWebSifreRepositoryCore>();
+            services.AddScoped<IAvansRepository, AvansRepositoryCore>();
 
             // Business — Faz 4.2: Scoped (DbContext ile aynı scope)
             services.AddScoped<IAuthorizationService, AuthorizationService>();
@@ -146,6 +154,8 @@ namespace CeyPASS.WFA
             services.AddScoped<ISifreService, SifreService>();
             services.AddScoped<ISistemLogService, SistemLogService>();
             services.AddScoped<IMailService, MailService>();
+            services.AddScoped<IBildirimService, BildirimManager>();
+            services.AddScoped<IPushNotificationService, FcmPushService>();
             services.AddScoped<INotificationService, NotificationService>();
 
             // UI — Faz 4.2: girisEkrani ve islemEkrani Scoped (scope ile açılır)

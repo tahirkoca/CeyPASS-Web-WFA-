@@ -1,0 +1,184 @@
+@model CeyPASS.Entities.Concrete.IzinTalep
+@using CeyPASS.Web.Controllers
+@{
+    Layout = null;
+    var t = Model;
+    var adSoyad  = (string?)ViewBag.PersonelAdSoyad ?? t.PersonelId;
+    var gorev    = (string?)ViewBag.PersonelGorev   ?? "";
+    var tcNo     = (string?)ViewBag.PersonelTc      ?? "";
+    var cepTel   = (string?)ViewBag.PersonelCep     ?? "";
+    var izinTip  = (string?)ViewBag.IzinTipAdi      ?? "";
+    var ustYetkilin = (string?)ViewBag.UstYetkiliAdSoyad ?? "Üst Yetkili";
+
+    var s = izinTip.ToLowerInvariant();
+    bool isYillik       = s.Contains("yıllık") || s.Contains("yillik");
+    bool isMazeret      = s.Contains("mazeret");
+    bool isGorev        = s.Contains("görev") || s.Contains("gorev");
+    bool isDenklestirme = s.Contains("denkle");
+    bool isEvlilik      = s.Contains("evlilik");
+    bool isOlum         = s.Contains("ölüm") || s.Contains("olum");
+    bool isDogum        = s.Contains("doğum") || s.Contains("dogum");
+    bool isUcretsiz     = s.Contains("ücretsiz") || s.Contains("ucretsiz");
+
+    var days = (t.Bitis.Date - t.Baslangic.Date).TotalDays + 1;
+    var sure = days >= 1 ? $"{days:0} gün" : $"{(t.Bitis - t.Baslangic).TotalHours:0.##} saat";
+
+    string Cb(bool on) => on ? "☑" : "☐";
+}
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: Arial, sans-serif; background: #fff; padding: 20px; color: #000; }
+
+  .form-wrapper { width: 720px; margin: 0 auto; border: 1.5px solid #000; }
+
+  /* HEADER */
+  .header { display: table; width: 100%; border-collapse: collapse; border-bottom: 1.5px solid #000; }
+  .header-logo { display: table-cell; vertical-align: middle; width: 110px; padding: 8px 10px; border-right: 1.5px solid #000; text-align: center; }
+  .header-logo img { height: 60px; }
+  .header-right { display: table-cell; vertical-align: top; }
+  .header-title { text-align: center; padding: 6px 8px 2px; border-bottom: 1px solid #000; }
+  .header-title .big { font-size: 18px; font-weight: bold; display: block; }
+  .header-title .iso { font-size: 13px; font-weight: bold; display: block; }
+  .header-meta { display: table; width: 100%; border-collapse: collapse; font-size: 11px; }
+  .header-meta td { border-right: 1px solid #000; padding: 4px 8px; vertical-align: top; }
+  .header-meta td:last-child { border-right: none; }
+  .header-meta .meta-label { font-weight: bold; }
+
+  /* BAŞLIK */
+  .form-title { text-align: center; font-size: 20px; font-weight: bold; padding: 14px 0 10px; letter-spacing: 1px; }
+
+  /* İZİN TİPLERİ */
+  .izin-types-box { border: 1px solid #000; margin: 0 10px 10px; padding: 10px 14px; display: grid; grid-template-columns: 1fr 1fr; gap: 6px 20px; }
+  .izin-type-row { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: bold; }
+
+  /* BİLGİ TABLOSU */
+  .info-table-box { border: 1px solid #000; margin: 0 10px 10px; border-collapse: collapse; width: calc(100% - 20px); }
+  .info-table-box td { border: 1px solid #000; padding: 10px 12px; font-size: 13px; vertical-align: middle; }
+  .info-table-box td.label { font-weight: bold; width: 130px; white-space: nowrap; }
+  .info-table-box td.val { width: 160px; }
+  .info-table-box td.sublabel { font-weight: bold; white-space: nowrap; }
+
+  /* ADRES */
+  .adres-box { border: 1px solid #000; margin: 0 10px 10px; }
+  .adres-row { padding: 10px 12px; font-size: 13px; border-bottom: 1px solid #000; }
+  .adres-row:last-child { border-bottom: none; }
+
+  /* İMZA */
+  .imza-box { border: 1px solid #000; margin: 0 10px 10px; display: table; width: calc(100% - 20px); border-collapse: collapse; }
+  .imza-cell { display: table-cell; width: 50%; border-right: 1px solid #000; padding: 12px 14px 22px; text-align: center; font-size: 13px; }
+  .imza-cell:last-child { border-right: none; }
+  .imza-label { font-weight: bold; display: block; margin-bottom: 8px; }
+  .imza-date { font-size: 12px; color: #333; }
+
+  /* ALT KULLANIM */
+  .kullanim-section { margin: 0 10px 10px; font-size: 13px; }
+  .kullanim-text { font-weight: bold; margin-bottom: 14px; }
+  .kullanim-right { text-align: right; font-weight: bold; font-size: 13px; line-height: 1.8; }
+  .kullanim-right .date-dots { font-weight: normal; font-size: 12px; margin-top: 20px; display: block; color: #333; }
+
+  .dijital { font-size: 11px; color: #444; display: block; margin-top: 6px; }
+</style>
+</head>
+<body>
+<div class="form-wrapper">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-logo">
+      <img src="/images/ceyLogo.ico" alt="Ceynak Logo"
+           onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';" />
+      <span style="display:none; font-weight:bold; font-size:14px;">CEYNAK</span>
+    </div>
+    <div class="header-right">
+      <div class="header-title">
+        <span class="big">CEYNAK<br>KALİTE YÖNETİM SİSTEMİ</span>
+        <span class="iso">TS-EN-ISO 9001:2015</span>
+      </div>
+      <table class="header-meta">
+        <tr>
+          <td><span class="meta-label">KYS-04</span></td>
+          <td><span class="meta-label">Form No</span><br>İKY-FR-002</td>
+          <td><span class="meta-label">İlk Yayın Tarihi</span><br>01.05.2002</td>
+          <td><span class="meta-label">Revizyon No/Tarihi</span><br>03/17.12.2018</td>
+          <td><span class="meta-label">Sayfa</span><br>1 / 1</td>
+        </tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- BAŞLIK -->
+  <div class="form-title">PERSONEL &nbsp;İZİN &nbsp;FORMU</div>
+
+  <!-- İZİN TİPLERİ -->
+  <div class="izin-types-box">
+    <div class="izin-type-row"><span style="font-size:16px;">@Cb(isYillik)</span> 1) YILLIK İZİN</div>
+    <div class="izin-type-row"><span style="font-size:16px;">@Cb(isEvlilik)</span> 5) EVLİLİK İZNİ</div>
+    <div class="izin-type-row"><span style="font-size:16px;">@Cb(isMazeret)</span> 2) MAZERET İZNİ</div>
+    <div class="izin-type-row"><span style="font-size:16px;">@Cb(isOlum)</span> 6) ÖLÜM İZNİ</div>
+    <div class="izin-type-row"><span style="font-size:16px;">@Cb(isGorev)</span> 3) GÖREV İZNİ</div>
+    <div class="izin-type-row"><span style="font-size:16px;">@Cb(isDogum)</span> 7) DOĞUM İZNİ</div>
+    <div class="izin-type-row"><span style="font-size:16px;">@Cb(isDenklestirme)</span> 4) DENKLEŞTİRME İZNİ</div>
+    <div class="izin-type-row"><span style="font-size:16px;">@Cb(isUcretsiz)</span> 8) ÜCRETSİZ İZİN</div>
+  </div>
+
+  <!-- BİLGİ TABLOSU -->
+  <table class="info-table-box">
+    <tr>
+      <td class="label">ADI-SOYADI</td>
+      <td class="val">@adSoyad</td>
+      <td class="sublabel">TALEP ETTİĞİ İZİN SÜRESİ</td>
+      <td>@sure</td>
+    </tr>
+    <tr>
+      <td class="label">GÖREVİ</td>
+      <td class="val">@gorev</td>
+      <td class="sublabel">İZİN BAŞLANGIÇ TARİHİ</td>
+      <td>@t.Baslangic.ToString("dd/MM/yyyy")</td>
+    </tr>
+    <tr>
+      <td class="label">T.C KİMLİK NO</td>
+      <td class="val">@tcNo</td>
+      <td class="sublabel">İZİN BİTİŞ TARİHİ</td>
+      <td>@t.Bitis.ToString("dd/MM/yyyy")</td>
+    </tr>
+  </table>
+
+  <!-- ADRES / TELEFON -->
+  <div class="adres-box">
+    <div class="adres-row"><strong>İZİN SIRASINDA BULUNACAĞI ADRES :</strong> @(t.IzinAdres ?? "…")</div>
+    <div class="adres-row"><strong>TELEFON NO :</strong> @(t.TelefonNo ?? "…") &nbsp;&nbsp;&nbsp; <strong>CEP TELEFONU :</strong> @cepTel</div>
+  </div>
+
+  <!-- İMZA -->
+  <div class="imza-box">
+    <div class="imza-cell">
+      <span class="imza-label">İZİN İSTEYENİN İMZASI</span>
+      <span class="imza-date">@t.Baslangic.ToString("dd/MM/yyyy")</span>
+      <span class="dijital">@IzinKagitController.DijitalImzaText("Talep", adSoyad, t.TalepImzaTarihi, t.TalepId)</span>
+    </div>
+    <div class="imza-cell">
+      <span class="imza-label">UYGUNDUR</span>
+      <span class="imza-date">@((t.UstYetkiliOnayTarihi ?? t.IkOnayTarihi)?.ToString("dd/MM/yyyy") ?? "…/…/…")</span>
+      <span class="dijital">@IzinKagitController.DijitalImzaText("Onay", ustYetkilin, t.UstYetkiliOnayTarihi ?? t.IkOnayTarihi, t.TalepId, t.UstYetkiliOnayDurumu)</span>
+    </div>
+  </div>
+
+  <!-- ALT KULLANIM -->
+  <div class="kullanim-section">
+    <div class="kullanim-text">YUKARIDA TALEP FORMUNDA TALEP ETTİĞİM İZİN SÜRESİNİ EKSİKSİZ OLARAK KULLANDIM.</div>
+    <div class="kullanim-right">
+      İZİN KULLANANIN<br>ADI-SOYADI / İMZASI
+      <span class="date-dots">
+        @((t.KullanimImzaTarihi)?.ToString("dd/MM/yyyy") ?? "…/…/…")<br>
+        @IzinKagitController.DijitalImzaText("Dönüş", adSoyad, t.KullanimImzaTarihi, t.TalepId)
+      </span>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

@@ -184,6 +184,35 @@ namespace CeyPASS.Web.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        public IActionResult TopluOnayla(int personelId, int yil, int ay)
+        {
+            if (!_authorizationService.Can(PageName, YetkiTipleri.Approve))
+            {
+                if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                    return Json(new { success = false, message = "Puantaj onaylama yetkiniz yok." });
+                TempData["Error"] = "Puantaj onaylama yetkiniz yok.";
+                return RedirectToAction("Index");
+            }
+
+            try
+            {
+                _puantajService.TopluOnayla(personelId, yil, ay, (int)_sessionContext.AktifKullaniciId);
+                if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                    return Json(new { success = true, message = "Seçili personelin aylık puantajı başarıyla toplu onaylandı." });
+                TempData["Success"] = "Toplu onay işlemi başarıyla tamamlandı.";
+            }
+            catch (Exception ex)
+            {
+                if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                    return Json(new { success = false, message = "Hata: " + ex.Message });
+                TempData["Error"] = "Hata: " + ex.Message;
+            }
+
+            return RedirectToAction("Index");
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
         public IActionResult Reddet(int personelId, DateTime tarih, string aciklama)
         {
             if (!_authorizationService.Can(PageName, YetkiTipleri.Delete))

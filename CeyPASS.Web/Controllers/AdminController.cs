@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Hosting;
 using CeyPASS.Business.Abstractions;
+using CeyPASS.DataAccess.Abstractions;
 using CeyPASS.Entities.Concrete;
 using CeyPASS.Web.Models.Admin;
 using System;
@@ -27,6 +28,9 @@ namespace CeyPASS.Web.Controllers
         private readonly ICalismaStatuService _calismaStatuService;
         private readonly ICalismaSekliService _calismaSekliService;
         private readonly INotificationService _notificationService;
+        private readonly IAdminKullaniciRepository _adminKullaniciRepo;
+        private readonly IKisiRepository _kisiRepo;
+        private readonly IUstYetkiliRepository _ustYetkiliRepo;
         private readonly IWebHostEnvironment _env;
 
         public AdminController(
@@ -40,6 +44,9 @@ namespace CeyPASS.Web.Controllers
             ICalismaStatuService calismaStatuService,
             ICalismaSekliService calismaSekliService,
             INotificationService notificationService,
+            IAdminKullaniciRepository adminKullaniciRepo,
+            IKisiRepository kisiRepo,
+            IUstYetkiliRepository ustYetkiliRepo,
             IWebHostEnvironment env)
         {
             _sessionContext = sessionContext;
@@ -52,6 +59,9 @@ namespace CeyPASS.Web.Controllers
             _calismaStatuService = calismaStatuService;
             _calismaSekliService = calismaSekliService;
             _notificationService = notificationService;
+            _adminKullaniciRepo = adminKullaniciRepo;
+            _kisiRepo = kisiRepo;
+            _ustYetkiliRepo = ustYetkiliRepo;
             _env = env;
         }
 
@@ -76,10 +86,51 @@ namespace CeyPASS.Web.Controllers
                 ResmiTatiller = (_resmiTatilService.GetList(yil: null) ?? new List<ResmiTatilDTO>()).OrderBy(x => x.Tarih).ToList(),
                 CalismaStatuleri = _calismaStatuService.GetAll() ?? new List<LookupItem>(),
                 CalismaSekilleri = _calismaSekliService.GetAllForAdmin() ?? new List<CalismaSekli>(),
+                Kullanicilar = _adminKullaniciRepo.GetAll() ?? new List<KullaniciAdminRow>(),
+                Personeller = _kisiRepo.GetAktifPersonellerIdAd() ?? new List<PersonelAdSoyad>(),
+                UstYetkililer = _ustYetkiliRepo.GetAll() ?? new List<UstYetkili>(),
                 AktifTab = string.IsNullOrWhiteSpace(tab) ? "firma" : tab.ToLowerInvariant()
             };
 
             return View(model);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult KullaniciPersonelGuncelle(int kullaniciId, int? personelId)
+        {
+            if (_sessionContext.CurrentUser == null || !IsAdmin())
+                return RedirectToAction("Login", "Account");
+
+            bool ok = _adminKullaniciRepo.SetPersonelId(kullaniciId, personelId);
+            TempData[ok ? "Success" : "Error"] = ok ? "Kullanıcı-personel bağlantısı güncellendi." : "Güncelleme başarısız.";
+            return RedirectToAction("Index", new { tab = "kullanicilar" });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult UstYetkiliGuncelle(string personelId, string? ustYetkiliPersonelId)
+        {
+            if (_sessionContext.CurrentUser == null || !IsAdmin())
+                return RedirectToAction("Login", "Account");
+
+            personelId = (personelId ?? "").Trim();
+            ustYetkiliPersonelId = (ustYetkiliPersonelId ?? "").Trim();
+
+            if (string.IsNullOrWhiteSpace(personelId))
+            {
+                TempData["Error"] = "PersonelId boş olamaz.";
+                return RedirectToAction("Index", new { tab = "ustyetkili" });
+            }
+
+            bool ok;
+            if (string.IsNullOrWhiteSpace(ustYetkiliPersonelId))
+                ok = _ustYetkiliRepo.Sil(personelId);
+            else
+                ok = _ustYetkiliRepo.EkleVeyaGuncelle(personelId, ustYetkiliPersonelId);
+
+            TempData[ok ? "Success" : "Error"] = ok ? "Üst yetkili kaydı güncellendi." : "İşlem başarısız.";
+            return RedirectToAction("Index", new { tab = "ustyetkili" });
         }
 
         /// <summary>Güncelleme bildirimi mail önizlemesi (HTML döner, yeni sekmede açılabilir).</summary>

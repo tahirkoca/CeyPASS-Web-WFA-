@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using CeyPASS.Business.Abstractions;
+using CeyPASS.DataAccess.Abstractions;
 using CeyPASS.Entities.Concrete;
 using Microsoft.Extensions.Caching.Memory;
 using System;
@@ -14,12 +15,14 @@ namespace CeyPASS.Web.Controllers
         private readonly IKisiIzinService _kisiIzinService;
         private readonly IKisiQueryService _kisiQueryService;
         private readonly IIzinTipService _izinTipService;
+        private readonly IIzinTalepService _izinTalepService;
         private readonly IFirmaService _firmaService;
         private readonly IPuantajService _puantajService;
         private readonly ISessionContext _sessionContext;
         private readonly IAuthorizationService _authorizationService;
         private readonly IMemoryCache _cache;
         private const string PageName = "Izinler";
+        private const string TalepPageName = "IzinTalepleri";
         private const int DefaultPageSize = 50;
         private static readonly int[] AllowedPageSizes = new[] { 20, 50, 100, 200 };
         private const string CacheVerPrefix = "izin_ver_";
@@ -28,6 +31,7 @@ namespace CeyPASS.Web.Controllers
             IKisiIzinService kisiIzinService,
             IKisiQueryService kisiQueryService,
             IIzinTipService izinTipService,
+            IIzinTalepService izinTalepService,
             IFirmaService firmaService,
             IPuantajService puantajService,
             ISessionContext sessionContext,
@@ -37,6 +41,7 @@ namespace CeyPASS.Web.Controllers
             _kisiIzinService = kisiIzinService;
             _kisiQueryService = kisiQueryService;
             _izinTipService = izinTipService;
+            _izinTalepService = izinTalepService;
             _firmaService = firmaService;
             _puantajService = puantajService;
             _sessionContext = sessionContext;
@@ -376,6 +381,97 @@ namespace CeyPASS.Web.Controllers
         {
             var kisiler = _kisiQueryService.GetAktifKisilerByFirma(firmaId);
             return Json(kisiler.Select(k => new { PersonelId = k.PersonelId, AdSoyad = k.AdSoyad }));
+        }
+
+        // ─── İzin Talepleri (Onay Mekanizması) ───────────────────────────────
+
+        [HttpGet]
+        public IActionResult TalepListesi()
+        {
+            if (!_authorizationService.ViewAbility(TalepPageName))
+            {
+                TempData["Error"] = "İzin talepleri ekranını görüntüleme yetkiniz yok.";
+                return RedirectToAction("Index", "Home");
+            }
+
+            var items = _izinTalepService.IkBekleyenler();
+
+            // Fetch names
+            var pIds = items.Select(x => x.PersonelId).Distinct().ToList();
+            var pNames = new Dictionary<string, string>();
+            foreach (var id in pIds)
+            {
+                var k = _kisiQueryService.GetKisiDetay(id);
+                if (k != null) pNames[id] = $"{k.Ad} {k.Soyad}";
+            }
+
+            var iTypes = _izinTipService.GetAktif().ToDictionary(x => x.IzinTipId, x => x.Ad);
+
+            ViewBag.Personeller = pNames;
+            ViewBag.IzinTipleri = iTypes;
+            ViewBag.CanUpdate = _authorizationService.Can(TalepPageName, YetkiTipleri.Update);
+            
+            return View(items);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult TalepOnayla(int talepId, string? aciklama)
+        {
+            if (!_authorizationService.Can(TalepPageName, YetkiTipleri.Update))
+            {
+                TempData["Error"] = "İzin talebi onaylama yetkiniz yok.";
+                return RedirectToAction(nameof(TalepListesi));
+            }
+            if (!_sessionContext.AktifKullaniciId.HasValue)
+            {
+                TempData["Error"] = "Oturum bilgisi bulunamadı.";
+                return RedirectToAction(nameof(TalepListesi));
+            }
+
+            var ok = _izinTalepService.IkOnayla(talepId, _sessionContext.AktifKullaniciId.Value, aciklama);
+            TempData[ok ? "Success" : "Error"] = ok ? "Talep onaylandı." : "Talep onaylanamadı.";
+            return RedirectToAction(nameof(TalepListesi));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult TalepReddet(int talepId, string? aciklama)
+        {
+            if (!_authorizationService.Can(TalepPageName, YetkiTipleri.Update))
+            {
+                TempData["Error"] = "İzin talebi reddetme yetkiniz yok.";
+                return RedirectToAction(nameof(TalepListesi));
+            }
+            if (!_sessionContext.AktifKullaniciId.HasValue)
+            {
+                TempData["Error"] = "Oturum bilgisi bulunamadı.";
+                return RedirectToAction(nameof(TalepListesi));
+            }
+
+            var ok = _izinTalepService.IkReddet(talepId, _sessionContext.AktifKullaniciId.Value, aciklama);
+            TempData[ok ? "Success" : "Error"] = ok ? "Talep reddedildi." : "Talep reddedilemedi.";
+            return RedirectToAction(nameof(TalepListesi));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult DonusImzasinaAc(int talepId)
+        {
+            if (!_authorizationService.Can(TalepPageName, YetkiTipleri.Update))
+            {
+                TempData["Error"] = "Dönüş imzasına açma yetkiniz yok.";
+                return RedirectToAction(nameof(TalepListesi));
+            }
+            if (!_sessionContext.AktifKullaniciId.HasValue)
+            {
+                TempData["Error"] = "Oturum bilgisi bulunamadı.";
+                return RedirectToAction(nameof(TalepListesi));
+            }
+
+            var ok = _izinTalepService.DonusImzasinaAc(talepId, _sessionContext.AktifKullaniciId.Value);
+            TempData[ok ? "Success" : "Error"] = ok ? "Dönüş imzasına açıldı." : "İşlem başarısız.";
+            return RedirectToAction(nameof(TalepListesi));
         }
 
         private List<Firma> GetAuthorizedFirmalar(HashSet<int> firmaYetkileri)

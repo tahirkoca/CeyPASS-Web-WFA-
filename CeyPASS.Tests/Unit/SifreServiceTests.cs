@@ -12,11 +12,21 @@ namespace CeyPASS.Tests.Unit
     {
         private readonly Mock<IKullaniciRepository> _repoMock = new();
         private readonly Mock<IEmailService> _emailMock = new();
+        private readonly Mock<IKisiRepository> _kisiRepoMock = new();
+        private readonly Mock<IPersonelWebSifreRepository> _personelWebSifreRepoMock = new();
+        private readonly Mock<IBildirimService> _bildirimServiceMock = new();
+        private readonly Mock<IUstYetkiliRepository> _ustYetkiliRepoMock = new();
         private readonly SifreService _sut;
 
         public SifreServiceTests()
         {
-            _sut = new SifreService(_repoMock.Object, _emailMock.Object);
+            _sut = new SifreService(
+                _repoMock.Object, 
+                _emailMock.Object, 
+                _kisiRepoMock.Object, 
+                _personelWebSifreRepoMock.Object,
+                _bildirimServiceMock.Object,
+                _ustYetkiliRepoMock.Object);
         }
 
         // ─── SifreSifirlamaTamamla ────────────────────────────────────────────

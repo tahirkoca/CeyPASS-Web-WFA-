@@ -16,11 +16,12 @@ namespace CeyPASS.Tests.Web
     {
         private readonly Mock<IFirmaService> _firmaMock = new();
         private readonly Mock<IAuthorizationService> _authMock = new();
+        private readonly Mock<IKisiEkraniLookUpService> _lookupMock = new();
         private readonly FirmaController _sut;
 
         public FirmaControllerTests()
         {
-            _sut = new FirmaController(_firmaMock.Object, _authMock.Object);
+            _sut = new FirmaController(_firmaMock.Object, _authMock.Object, _lookupMock.Object);
 
             var httpContext = new DefaultHttpContext();
             _sut.ControllerContext = new ControllerContext { HttpContext = httpContext };

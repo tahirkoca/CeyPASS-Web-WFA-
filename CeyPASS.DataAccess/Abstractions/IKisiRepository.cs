@@ -18,5 +18,6 @@ namespace CeyPASS.DataAccess.Abstractions
         List<PersonelCihazItem> GetAktifKartliPersonellerForSync();
         List<PersonelAdSoyad> GetAktifPersonellerIdAd();
         KisiDetayDTO GetById(int kisiId);
+        Kisi GetByLoginIdentifier(string identifier);
     }
 }

@@ -5,7 +5,7 @@ namespace CeyPASS.DataAccess.Abstractions
 {
     public interface ICalismaStatuRepository
     {
-        List<LookupItem> GetByFirma();
+        List<LookupItem> GetByFirma(int? firmId = null);
         int GetNextId();
         bool Insert(int id, string ad);
         bool Update(int id, string ad);

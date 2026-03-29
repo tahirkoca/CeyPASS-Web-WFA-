@@ -1,0 +1,176 @@
+@model CeyPASS.Entities.Concrete.IzinTalep
+@using CeyPASS.Web.Controllers
+@{
+    Layout = null;
+    var t = Model;
+    var adSoyad  = (string?)ViewBag.PersonelAdSoyad ?? t.PersonelId;
+    var gorev    = (string?)ViewBag.PersonelGorev   ?? "";
+    var ustYetkilin = (string?)ViewBag.UstYetkiliAdSoyad ?? "Üst Yetkili";
+}
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: Arial, sans-serif; background: #fff; padding: 20px; }
+
+  .form-wrapper {
+    width: 740px;
+    margin: 0 auto;
+    border: 2px solid #000;
+  }
+
+  /* ÜST BÖLÜM */
+  .top-section {
+    display: table;
+    width: 100%;
+    border-bottom: 2px solid #000;
+    border-collapse: collapse;
+  }
+  .top-section > div {
+    display: table-cell;
+    vertical-align: middle;
+  }
+  .logo-area {
+    padding: 10px 14px;
+    border-right: 2px solid #000;
+    width: 120px;
+    text-align: center;
+  }
+  .logo-area img { height: 40px; }
+  .title-area {
+    padding: 10px 14px;
+    text-align: center;
+    border-right: 2px solid #000;
+  }
+  .form-main-title {
+    font-size: 15px;
+    font-weight: bold;
+  }
+  .doc-info table {
+    width: 100%;
+    height: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+  }
+  .doc-info table tr { border-bottom: 1px solid #000; }
+  .doc-info table tr:last-child { border-bottom: none; }
+  .doc-info table td {
+    padding: 4px 8px;
+    border-right: 1px solid #000;
+  }
+  .doc-info table td:last-child { border-right: none; }
+  .doc-info table td:first-child { font-weight: bold; width: 55%; }
+
+  /* FORM BAŞLIĞI */
+  .form-title {
+    text-align: center;
+    font-weight: bold;
+    font-size: 14px;
+    padding: 8px;
+    border-bottom: 2px solid #000;
+  }
+
+  /* FORM ALANLARI */
+  .form-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  .form-table tr { border-bottom: 1px solid #000; }
+  .form-table tr:last-child { border-bottom: none; }
+  .form-table td { padding: 9px 12px; }
+  .form-table td.label {
+    width: 38%;
+    font-weight: bold;
+    border-right: 2px solid #000;
+  }
+
+  /* İMZA BÖLÜMÜ */
+  .imza-row {
+    display: flex;
+    border-top: 2px solid #000;
+  }
+  .imza-cell {
+    flex: 1;
+    padding: 12px 14px 28px;
+    font-size: 12px;
+  }
+  .imza-cell:not(:last-child) { border-right: 1px solid #000; }
+  .imza-cell strong { display: block; margin-bottom: 6px; }
+  .imza-cell .dijital { font-size: 11px; color: #444; margin-top: 4px; }
+</style>
+</head>
+<body>
+
+<div class="form-wrapper">
+
+  <!-- ÜST: Logo | Başlık | Döküman Bilgileri -->
+  <div class="top-section">
+    <div class="logo-area">
+      <img src="/images/ceyLogo.ico" alt="Ceynak Logo"
+           onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';" />
+      <span style="display:none; font-weight:bold; font-size:13px;">CEYNAK</span>
+    </div>
+    <div class="title-area">
+      <span class="form-main-title">SAATLİK MAZERET FORMU</span>
+    </div>
+    <div class="doc-info">
+      <table>
+        <tr><td>Döküman No</td><td>İKY.FR.050</td></tr>
+        <tr><td>Yayın Tarihi</td><td>01.07.2021</td></tr>
+        <tr><td>Revizyon No</td><td>0</td></tr>
+        <tr><td>Revizyon Tarihi</td><td>01.07.2021</td></tr>
+        <tr><td>Sayfa No</td><td>1/1</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- FORM BAŞLIĞI -->
+  <div class="form-title">SAATLİK MAZERET FORMU</div>
+
+  <!-- FORM ALANLARI -->
+  <table class="form-table">
+    <tr>
+      <td class="label">Adı Soyadı</td>
+      <td>@adSoyad</td>
+    </tr>
+    <tr>
+      <td class="label">Görevi</td>
+      <td>@gorev</td>
+    </tr>
+    <tr>
+      <td class="label">Mazereti</td>
+      <td style="min-height:60px;">@(t.Aciklama)</td>
+    </tr>
+    <tr>
+      <td class="label">Tarih</td>
+      <td>@t.Baslangic.ToString("dd.MM.yyyy")</td>
+    </tr>
+    <tr>
+      <td class="label">İzinli olarak istediği süre</td>
+      <td>@t.Baslangic.ToString("HH:mm") ile @t.Bitis.ToString("HH:mm") saatleri arasında izinlidir.</td>
+    </tr>
+  </table>
+
+  <!-- İMZA -->
+  <div class="imza-row">
+    <div class="imza-cell">
+      <strong>İZNİ İSTEYEN İMZASI</strong>
+      <span class="dijital">@IzinKagitController.DijitalImzaText("Talep", adSoyad, t.TalepImzaTarihi, t.TalepId)</span>
+    </div>
+    <div class="imza-cell" style="text-align:center;">
+      <strong>UYGUNDUR</strong>
+      <span class="dijital">@IzinKagitController.DijitalImzaText("Onay", ustYetkilin, t.UstYetkiliOnayTarihi ?? t.IkOnayTarihi, t.TalepId, t.UstYetkiliOnayDurumu)</span>
+    </div>
+    <div class="imza-cell" style="text-align:right;">
+      <strong>İZNİ KULLANANIN İMZASI</strong>
+      <span class="dijital">@IzinKagitController.DijitalImzaText("Dönüş", adSoyad, t.KullanimImzaTarihi, t.TalepId)</span>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>

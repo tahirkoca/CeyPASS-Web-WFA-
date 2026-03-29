@@ -1,0 +1,87 @@
+@model List<CeyPASS.Entities.Concrete.AvansTalep>
+@{
+    ViewData["Title"] = "Avans Talepleri";
+    bool canUpdate = (ViewBag.CanUpdate as bool?) == true;
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h4 class="mb-3">Avans Talepleri</h4>
+            <div class="card">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm table-striped align-middle js-datatable">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Personel</th>
+                                    <th>Talep Tarihi</th>
+                                    <th>Miktar</th>
+                                    <th>Durum</th>
+                                    <th style="width:200px;" class="text-center">İşlemler</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            @foreach (var t in Model)
+                            {
+                                <tr>
+                                    <td>@t.AvansId</td>
+                                    <td>
+                                        @{
+                                            var pDict = ViewBag.Personeller as Dictionary<string, string>;
+                                            var pName = (pDict != null && pDict.ContainsKey(t.PersonelId)) ? pDict[t.PersonelId] : t.PersonelId;
+                                        }
+                                        <strong>@pName</strong>
+                                    </td>
+                                    <td>@t.TalepTarihi.ToString("dd.MM.yyyy HH:mm")</td>
+                                    <td>@t.Miktar.ToString("N2")</td>
+                                    <td>
+                                        @{
+                                            var badgeClass = t.Durum switch {
+                                                CeyPASS.Entities.Concrete.AvansDurumu.Bekliyor => "bg-warning text-dark",
+                                                CeyPASS.Entities.Concrete.AvansDurumu.Onaylandi => "bg-success",
+                                                CeyPASS.Entities.Concrete.AvansDurumu.Reddedildi => "bg-danger",
+                                                _ => "bg-secondary"
+                                            };
+                                        }
+                                        <span class="badge @badgeClass">@t.Durum</span>
+                                    </td>
+                                        <td class="text-center">
+                                            @if (canUpdate)
+                                            {
+                                                <div class="d-flex gap-1 justify-content-center">
+                                                    <form asp-action="Onayla" method="post" class="d-inline">
+                                                        @Html.AntiForgeryToken()
+                                                        <input type="hidden" name="id" value="@t.AvansId" />
+                                                        <input type="hidden" name="aciklama" value="" />
+                                                        <button class="btn btn-sm btn-success" type="submit" title="Avans talebini onayla ve ödeme sürecini başlat">
+                                                            <i class="bi bi-check-circle"></i>
+                                                        </button>
+                                                    </form>
+                                                    <form asp-action="Reddet" method="post" class="d-inline">
+                                                        @Html.AntiForgeryToken()
+                                                        <input type="hidden" name="id" value="@t.AvansId" />
+                                                        <input type="hidden" name="aciklama" value="" />
+                                                        <button class="btn btn-sm btn-danger" type="submit" title="Avans talebini reddet">
+                                                            <i class="bi bi-x-circle"></i>
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted small">Yetki yok</span>
+                                            }
+                                        </td>
+                                </tr>
+                            }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+

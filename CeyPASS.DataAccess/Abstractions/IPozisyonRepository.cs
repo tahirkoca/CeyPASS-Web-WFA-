@@ -6,7 +6,7 @@ namespace CeyPASS.DataAccess.Abstractions
 {
     public interface IPozisyonRepository
     {
-        List<LookupItem> GetByFirma();
+        List<LookupItem> GetByFirma(int? firmId = null);
         List<LookupItem> GetAll();
         List<PozisyonListDTO> GetListForAdmin();
         DataRow GetById(int id);

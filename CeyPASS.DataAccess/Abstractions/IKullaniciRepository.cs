@@ -11,10 +11,12 @@ namespace CeyPASS.DataAccess.Abstractions
         string KullaniciyaKodGonder(string kullaniciAdi);
         List<int> GetIsyeriIdListByFirma(int firmaId);
         Kullanici GetByUserName(string kullaniciAdi);
+        Kullanici GetByPersonelId(string personelId);
         void KurtarmaKoduKaydet(int kullaniciId, string kod, DateTime sonKullanmaZamani);
         string GetKurtarmaKodu(int kullaniciId);
         void KurtarmaKodunuTemizle(int kullaniciId);
         /// <summary>Giriş ekranı dropdown için tüm kullanıcı adlarını getirir (yetkili tablosu).</summary>
         List<string> GetTumKullaniciAdlari();
+        List<string> GetAdminUserIds();
     }
 }

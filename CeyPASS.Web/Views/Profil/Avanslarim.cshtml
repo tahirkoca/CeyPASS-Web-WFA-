@@ -1,0 +1,258 @@
+@model CeyPASS.Web.Models.Profil.AvanslarimViewModel
+@{
+    ViewData["Title"] = "Avanslarım";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12 col-lg-5">
+            <div class="card mb-3 shadow-sm border-0" id="yeniAvansTalepCard">
+                <div class="card-header">Yeni Avans Talebi</div>
+                <div class="card-body">
+                    <form asp-action="AvansTalep" method="post">
+                        @Html.AntiForgeryToken()
+                        <div class="mb-2">
+                            <label class="form-label">Miktar</label>
+                            <input class="form-control" name="miktar" type="number" step="0.01" min="0.01" required />
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label">Açıklama</label>
+                            <textarea class="form-control" name="aciklama" rows="2"></textarea>
+                        </div>
+                        <button class="btn btn-primary" type="submit" title="Avans talebini yöneticilerinizin onayına gönderin">Talep Oluştur</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-lg-7">
+            <div class="d-flex flex-column gap-3 avanslarim-right-stack" id="avanslarimRightStack">
+                <!-- Aktif Talepler -->
+                <div class="card shadow-sm border-0 flex-fill min-h-0" id="aktifTalepCard">
+                    <div class="card-header">Taleplerim</div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-sm table-striped align-middle mb-0">
+                                <thead>
+                                    <tr>
+                                        <th class="ps-2">Tarih</th>
+                                        <th>Miktar</th>
+                                        <th>Durum</th>
+                                        <th class="text-center">İşlem</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                @foreach (var t in Model.AktifTalepler)
+                                {
+                                    <tr>
+                                        <td class="ps-2 text-nowrap">@t.TalepTarihi.ToString("dd.MM.yyyy HH:mm")</td>
+                                        <td class="fw-bold text-primary">@t.Miktar.ToString("N2") TL</td>
+                                        <td><span class="badge bg-warning text-dark">Bekliyor</span></td>
+                                        <td class="text-center">
+                                            <div class="d-flex gap-1 justify-content-center">
+                                                <button type="button" class="btn btn-sm btn-outline-secondary border-0" 
+                                                        title="Açıklama Detayı" 
+                                                        onclick="showAvansDetail('@t.Aciklama')">
+                                                    <i class="bi bi-info-circle"></i>
+                                                </button>
+                                                <button type="button" class="btn btn-sm btn-outline-secondary border-0" 
+                                                 title="Talebi Güncelle"
+                                                        onclick="editAvans(@t.AvansId, @t.Miktar.ToString("F2", System.Globalization.CultureInfo.InvariantCulture), '@t.Aciklama')">
+                                                    <i class="bi bi-pencil"></i>
+                                                </button>
+                                                <form asp-action="AvansIptal" method="post" onsubmit="return confirm('Bu avans talebini iptal etmek istediğinize emin misiniz?')">
+                                                    @Html.AntiForgeryToken()
+                                                    <input type="hidden" name="avansId" value="@t.AvansId" />
+                                                    <button type="submit" class="btn btn-sm btn-outline-secondary border-0 text-danger" title="İptal Et">
+                                                        <i class="bi bi-trash"></i>
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                                @if (!Model.AktifTalepler.Any())
+                                {
+                                    <tr>
+                                        <td colspan="4" class="text-center text-muted py-4">Bekleyen avans talebiniz bulunmuyor.</td>
+                                    </tr>
+                                }
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center mt-2">
+                            <div class="small text-muted">
+                                @if (Model.AktifTotalCount > 0)
+                                {
+                                    <span>Toplam @Model.AktifTotalCount kayıt • Sayfa @Model.AktifPage / @Model.AktifTotalPages</span>
+                                }
+                                else
+                                {
+                                    <span>Toplam 0 kayıt</span>
+                                }
+                            </div>
+                            <div class="btn-group" role="group" aria-label="Aktif sayfalama">
+                                <a class="btn btn-sm btn-outline-secondary @(Model.AktifPage <= 1 ? "disabled" : "")"
+                                   href="@Url.Action("Avanslarim", "Profil", new { pageAktif = Model.AktifPage - 1, pageGecmis = Model.GecmisPage })">Önceki</a>
+                                <a class="btn btn-sm btn-outline-secondary @(Model.AktifPage >= Model.AktifTotalPages ? "disabled" : "")"
+                                   href="@Url.Action("Avanslarim", "Profil", new { pageAktif = Model.AktifPage + 1, pageGecmis = Model.GecmisPage })">Sonraki</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Geçmiş Talepler -->
+                <div class="card shadow-sm border-0 flex-fill min-h-0" id="gecmisTalepCard">
+                    <div class="card-header">Onaylı Avans Geçmişim</div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-sm table-striped align-middle mb-0">
+                                <thead>
+                                    <tr>
+                                        <th class="ps-2">Tarih</th>
+                                        <th>Miktar</th>
+                                        <th>Durum</th>
+                                        <th class="pe-2">Sonuç Tarihi</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                @foreach (var t in Model.GecmisTalepler)
+                                {
+                                    <tr>
+                                        <td class="ps-2 text-nowrap">@t.TalepTarihi.ToString("dd.MM.yyyy HH:mm")</td>
+                                        <td class="fw-bold">@t.Miktar.ToString("N2") TL</td>
+                                        <td>
+                                            @if (t.Durum == CeyPASS.Entities.Concrete.AvansDurumu.Onaylandi) { <span class="badge bg-success">Onaylandı</span> }
+                                            else { <span class="badge bg-danger">Reddedildi</span> }
+                                        </td>
+                                        <td class="pe-2">@(t.OnayTarihi?.ToString("dd.MM.yyyy HH:mm") ?? "-")</td>
+                                    </tr>
+                                }
+                                @if (!Model.GecmisTalepler.Any())
+                                {
+                                    <tr>
+                                        <td colspan="4" class="text-center text-muted py-4">Geçmiş avans talebiniz bulunmuyor.</td>
+                                    </tr>
+                                }
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center mt-2">
+                            <div class="small text-muted">
+                                @if (Model.GecmisTotalCount > 0)
+                                {
+                                    <span>Toplam @Model.GecmisTotalCount kayıt • Sayfa @Model.GecmisPage / @Model.GecmisTotalPages</span>
+                                }
+                                else
+                                {
+                                    <span>Toplam 0 kayıt</span>
+                                }
+                            </div>
+                            <div class="btn-group" role="group" aria-label="Gecmis sayfalama">
+                                <a class="btn btn-sm btn-outline-secondary @(Model.GecmisPage <= 1 ? "disabled" : "")"
+                                   href="@Url.Action("Avanslarim", "Profil", new { pageAktif = Model.AktifPage, pageGecmis = Model.GecmisPage - 1 })">Önceki</a>
+                                <a class="btn btn-sm btn-outline-secondary @(Model.GecmisPage >= Model.GecmisTotalPages ? "disabled" : "")"
+                                   href="@Url.Action("Avanslarim", "Profil", new { pageAktif = Model.AktifPage, pageGecmis = Model.GecmisPage + 1 })">Sonraki</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .min-h-0 { min-height: 0; }
+    @@media (min-width: 992px) {
+        .avanslarim-right-stack { min-height: var(--avanslarim-left-h, auto); }
+    }
+</style>
+
+<!-- Avans Güncelleme Modalı -->
+<div class="modal fade" id="avansEditModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content text-start">
+            <div class="modal-header">
+                <h5 class="modal-title">Avans Talebi Güncelle</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form asp-action="AvansGuncelle" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="avansId" id="editAvansId" />
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Miktar</label>
+                        <input type="number" step="0.01" min="0.01" name="miktar" id="editMiktar" class="form-control" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Açıklama</label>
+                        <textarea name="aciklama" id="editAciklama" class="form-control" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Kapat</button>
+                    <button type="submit" class="btn btn-primary">Değişiklikleri Kaydet</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Açıklama Detay Modalı -->
+<div class="modal fade" id="avansDetailModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content text-start">
+            <div class="modal-header">
+                <h5 class="modal-title">Talep Açıklaması</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p id="detailAciklama" class="mb-0"></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Kapat</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function editAvans(id, miktar, aciklama) {
+            document.getElementById('editAvansId').value = id;
+            document.getElementById('editMiktar').value = miktar;
+            document.getElementById('editAciklama').value = aciklama;
+            new bootstrap.Modal(document.getElementById('avansEditModal')).show();
+        }
+
+        function showAvansDetail(aciklama) {
+            document.getElementById('detailAciklama').innerText = aciklama || "Açıklama belirtilmemiş.";
+            new bootstrap.Modal(document.getElementById('avansDetailModal')).show();
+        }
+
+        (function () {
+            var left = document.getElementById('yeniAvansTalepCard');
+            var right = document.getElementById('avanslarimRightStack');
+            if (!left || !right) return;
+
+            function syncHeights() {
+                if (window.innerWidth < 992) {
+                    right.style.removeProperty('--avanslarim-left-h');
+                    return;
+                }
+                var h = left.getBoundingClientRect().height;
+                if (h && h > 0) {
+                    right.style.setProperty('--avanslarim-left-h', Math.ceil(h) + 'px');
+                }
+            }
+
+            syncHeights();
+            window.addEventListener('resize', syncHeights);
+            window.setTimeout(syncHeights, 200);
+        })();
+    </script>
+}
+

@@ -21,16 +21,16 @@
             <div class="d-flex gap-2">
                 @if (canMisafirKart)
                 {
-                    <button class="btn btn-outline-primary" type="button" onclick="openMisafirKartYeni()">
+                    <button class="btn btn-outline-primary" type="button" onclick="openMisafirKartYeni()" title="Seçili kişiye yeni bir misafir kartı ata">
                         <i class="bi bi-person-plus me-1"></i>Kişiye Kart Ata
                     </button>
-                    <button class="btn btn-outline-secondary" type="button" onclick="openMisafirKartGuncelle()">
+                    <button class="btn btn-outline-secondary" type="button" onclick="openMisafirKartGuncelle()" title="Kişiye daha önce atanan kart bilgilerini güncelle">
                         <i class="bi bi-pencil-square me-1"></i>Atanan Kartı Güncelle
                     </button>
                 }
                 <form method="post" asp-controller="CanliIzleme" asp-action="Logout">
                     @Html.AntiForgeryToken()
-                    <button class="btn btn-danger" type="submit">
+                    <button class="btn btn-danger" type="submit" title="Canlı İzleme modundan çık">
                         <i class="bi bi-box-arrow-right me-1"></i>Çıkış
                     </button>
                 </form>

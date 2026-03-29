@@ -52,7 +52,7 @@
                         <input type="hidden" name="page" value="1" />
                         <div class="col-md-3">
                             <label for="kartTipi" class="form-label">Kart tipi:</label>
-                            <select name="kartTipi" id="kartTipi" class="form-select">
+                            <select name="kartTipi" id="kartTipi" class="form-select" title="Görüntülenecek kart tipini seçin">
                                 @if (kartTipi == "puantaj")
                                 {
                                     <option value="puantaj" selected="selected">Puantaj Yapılan Kartlar</option>
@@ -69,7 +69,7 @@
                         {
                             <div class="col-md-3">
                                 <label for="firmaId" class="form-label">Firma:</label>
-                                <select name="firmaId" id="firmaId" class="form-select">
+                                <select name="firmaId" id="firmaId" class="form-select" title="Filtrelemek için firma seçin">
                                     @foreach (var firma in firmalar)
                                     {
                                         if (firma.FirmaId == selectedFirmaId)
@@ -91,7 +91,7 @@
 
                         <div class="col-md-3">
                             <label for="isyeriId" class="form-label">İşyeri:</label>
-                            <select name="isyeriId" id="isyeriId" class="form-select">
+                            <select name="isyeriId" id="isyeriId" class="form-select" title="Filtrelemek için işyeri/şube seçin">
                                 <option value="">Tümü</option>
                                 @if (isyerleri != null && isyerleri.Any())
                                 {
@@ -112,12 +112,12 @@
                         
                         <div class="col-md-3">
                             <label for="search" class="form-label">Ara:</label>
-                            <input type="text" name="search" id="search" class="form-control" value="@search" placeholder="Personel adı, soyadı veya sicil no ile ara..." />
+                            <input type="text" name="search" id="search" class="form-control" value="@search" placeholder="İsim veya sicil no..." title="Personel adı, soyadı veya sicil numarasına göre arama yapın" />
                         </div>
 
                         <div class="col-md-2">
                             <label for="pageSize" class="form-label">Sayfa başına:</label>
-                            <select name="pageSize" id="pageSize" class="form-select">
+                            <select name="pageSize" id="pageSize" class="form-select" title="Sayfa başına gösterilecek kayıt sayısı">
                                 @if (pageSize == 10)
                                 {
                                     <option value="10" selected="selected">10</option>
@@ -150,10 +150,10 @@
                         </div>
                         
                         <div class="col-md-2 d-flex align-items-end">
-                            <button type="submit" class="btn btn-primary me-2">
+                            <button type="submit" class="btn btn-primary me-2" title="Filtreleri uygula ve ara">
                                 <i class="bi bi-search"></i> Ara
                             </button>
-                            <a href="@Url.Action("Index", new { kartTipi, firmaId = selectedFirmaId })" class="btn btn-secondary">
+                            <a href="@Url.Action("Index", new { kartTipi, firmaId = selectedFirmaId })" class="btn btn-secondary" title="Tüm filtreleri temizle">
                                 <i class="bi bi-x-circle"></i> Temizle
                             </a>
                         </div>
@@ -168,7 +168,7 @@
     {
         <div class="row mb-3">
             <div class="col-12">
-                <a href="@Url.Action("Create")" class="btn btn-success">
+                <a href="@Url.Action("Create")" class="btn btn-success" title="Sisteme yeni bir personel kaydı ekle">
                     <i class="bi bi-plus-circle"></i> Yeni Personel Ekle
                 </a>
             </div>
@@ -199,7 +199,7 @@
                                     <tr>
                                         <th>Sicil No</th>
                                         <th>Ad Soyad</th>
-                                        <th>İşlemler</th>
+                                        <th class="text-center">İşlemler</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -208,15 +208,15 @@
                                         <tr>
                                             <td>@personel.PersonelId</td>
                                             <td>@personel.AdSoyad</td>
-                                            <td>
-                                                <div class="btn-group" role="group">
+                                            <td class="text-center">
+                                                <div class="d-flex gap-1 justify-content-center">
                                                     <a href="@Url.Action("Details", new { id = personel.PersonelId, kartTipi, firmaId = selectedFirmaId, page = currentPage, pageSize, search, isyeriId = selectedIsyeriId })" class="btn btn-sm btn-info" title="Detaylar">
-                                                        <i class="bi bi-eye"></i> Detay
+                                                        <i class="bi bi-eye"></i>
                                                     </a>
                                                     @if (canUpdate)
                                                     {
                                                         <a href="@Url.Action("Edit", new { id = personel.PersonelId, kartTipi, firmaId = selectedFirmaId, page = currentPage, pageSize, search, isyeriId = selectedIsyeriId })" class="btn btn-sm btn-warning" title="Düzenle">
-                                                            <i class="bi bi-pencil"></i> Düzenle
+                                                            <i class="bi bi-pencil"></i>
                                                         </a>
                                                     }
                                                     @if (canDelete && kartTipi != "puantajsiz")
@@ -224,7 +224,7 @@
                                                         <button type="button" class="btn btn-sm btn-danger btn-isten-cikar" title="İşten Çıkar"
                                                                 data-bs-toggle="modal" data-bs-target="#istenCikarModal"
                                                                 data-personel-id="@personel.PersonelId" data-ad-soyad="@personel.AdSoyad">
-                                                            <i class="bi bi-trash"></i> İşten Çıkar
+                                                            <i class="bi bi-trash"></i>
                                                         </button>
                                                     }
                                                 </div>

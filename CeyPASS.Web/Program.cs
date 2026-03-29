@@ -74,7 +74,17 @@ builder.Services.AddTransient<IKisiIzinlerRepository, KisiIzinlerRepositoryCore>
 builder.Services.AddTransient<IKisiRepository, KisiRepositoryCore>();
 builder.Services.AddTransient<IPuantajRepository, PuantajRepositoryCore>();
 
+// Yeni modüller: İzin Talepleri / ÜstYetkili / Avans
+builder.Services.AddTransient<IIzinTalepRepository, IzinTalepRepositoryCore>();
+builder.Services.AddTransient<IUstYetkiliRepository, UstYetkiliRepositoryCore>();
+builder.Services.AddTransient<IAvansRepository, AvansRepositoryCore>();
+builder.Services.AddTransient<IAdminKullaniciRepository, AdminKullaniciRepositoryCore>();
+builder.Services.AddTransient<IPersonelWebSifreRepository, PersonelWebSifreRepositoryCore>();
+builder.Services.AddTransient<IBildirimRepository, BildirimRepositoryCore>();
+builder.Services.AddTransient<IUserDeviceTokenRepository, UserDeviceTokenRepositoryCore>();
+
 // Business Layer (Transient)
+builder.Services.AddTransient<IBildirimService, BildirimManager>();
 builder.Services.AddTransient<IAuthorizationService, AuthorizationService>();
 builder.Services.AddTransient<ICalismaSekliService, CalismaSekliService>();
 builder.Services.AddTransient<ICalismaStatuService, CalismaStatuService>();
@@ -104,6 +114,10 @@ builder.Services.AddTransient<ISifreService, SifreService>();
 builder.Services.AddTransient<ISistemLogService, SistemLogService>();
 builder.Services.AddTransient<IMailService, MailService>();
 builder.Services.AddTransient<INotificationService, NotificationService>();
+
+builder.Services.AddTransient<IIzinTalepService, IzinTalepService>();
+builder.Services.AddTransient<IAvansService, AvansService>();
+builder.Services.AddTransient<IPushNotificationService, FcmPushService>();
 
 var app = builder.Build();
 

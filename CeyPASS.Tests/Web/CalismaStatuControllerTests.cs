@@ -15,11 +15,12 @@ namespace CeyPASS.Tests.Web
         private readonly Mock<ICalismaStatuService> _statuMock = new();
         private readonly Mock<ISessionContext> _sessionMock = new();
         private readonly Mock<IAuthorizationService> _authMock = new();
+        private readonly Mock<IKisiEkraniLookUpService> _lookupMock = new();
         private readonly CalismaStatuController _sut;
 
         public CalismaStatuControllerTests()
         {
-            _sut = new CalismaStatuController(_statuMock.Object, _sessionMock.Object, _authMock.Object);
+            _sut = new CalismaStatuController(_statuMock.Object, _sessionMock.Object, _authMock.Object, _lookupMock.Object);
 
             var httpContext = new DefaultHttpContext();
             _sut.ControllerContext = new ControllerContext { HttpContext = httpContext };

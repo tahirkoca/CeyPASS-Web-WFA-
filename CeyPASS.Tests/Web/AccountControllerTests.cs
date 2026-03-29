@@ -8,6 +8,8 @@ using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Moq;
 using System.Collections.Generic;
 using Xunit;
+using CeyPASS.DataAccess.Abstractions;
+using Microsoft.AspNetCore.DataProtection;
 
 namespace CeyPASS.Tests.Web
 {
@@ -15,17 +17,29 @@ namespace CeyPASS.Tests.Web
     {
         private readonly Mock<IKullaniciService> _kullaniciMock = new();
         private readonly Mock<ISessionContext> _sessionMock = new();
+        private readonly Mock<IAuthorizationService> _authMock = new();
         private readonly Mock<ISifreService> _sifreMock = new();
         private readonly Mock<IEmailService> _emailMock = new();
+        private readonly Mock<IKisiRepository> _kisiRepoMock = new();
+        private readonly Mock<IPersonelWebSifreRepository> _webSifreRepoMock = new();
+        private readonly Mock<IDataProtectionProvider> _dataProtectionProviderMock = new();
+        private readonly Mock<IDataProtector> _dataProtectorMock = new();
         private readonly AccountController _sut;
 
         public AccountControllerTests()
         {
+            _dataProtectionProviderMock.Setup(d => d.CreateProtector(It.IsAny<string>()))
+                                       .Returns(_dataProtectorMock.Object);
+
             _sut = new AccountController(
                 _kullaniciMock.Object,
                 _sessionMock.Object,
+                _authMock.Object,
                 _sifreMock.Object,
-                _emailMock.Object);
+                _emailMock.Object,
+                _kisiRepoMock.Object,
+                _webSifreRepoMock.Object,
+                _dataProtectionProviderMock.Object);
 
             var httpContext = new DefaultHttpContext();
             _sut.ControllerContext = new ControllerContext { HttpContext = httpContext };
@@ -38,6 +52,7 @@ namespace CeyPASS.Tests.Web
         public void Login_GET_OturumAciksa_HomeaYonlendirir()
         {
             _sessionMock.Setup(s => s.CurrentUser).Returns(new AuthUserDTO { KullaniciAdi = "admin" });
+            _authMock.Setup(a => a.ViewAbility("Dashboard")).Returns(true);
 
             var sonuc = _sut.Login();
 
@@ -92,6 +107,7 @@ namespace CeyPASS.Tests.Web
                 RolTanimi = "Admin"
             };
             _kullaniciMock.Setup(k => k.GirisYap("admin", "pass")).Returns(kullanici);
+            _authMock.Setup(a => a.ViewAbility("Dashboard")).Returns(true);
 
             var sonuc = _sut.Login("admin", "pass");
 

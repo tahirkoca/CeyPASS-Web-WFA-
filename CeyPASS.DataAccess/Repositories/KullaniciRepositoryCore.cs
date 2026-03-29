@@ -130,6 +130,33 @@ WHERE  U.KullaniciAdi = {0}";
             return MapToKullanici(row);
         }
 
+        public Kullanici GetByPersonelId(string personelId)
+        {
+            const string sql = @"
+SELECT TOP 1
+       U.KullaniciId,
+       U.KullaniciAdi,
+       U.Sifre,
+       U.RolId,
+       U.PersonelId,
+       R.RolTanimi,
+       K.Ad + ' ' + K.Soyad AS AdSoyad,
+       K.FirmaId,
+       F.FirmaAdi,
+       K.Email
+FROM   [CeyPASS].[dbo].[Kullanicilar] AS U
+INNER JOIN Roller   AS R ON U.RolId      = R.RolId
+INNER JOIN Kisiler  AS K ON K.PersonelId = U.PersonelId
+LEFT  JOIN Firmalar AS F ON K.FirmaId    = F.FirmaId
+WHERE  K.PersonelId = {0}";
+
+            var row = _context.Database
+                .SqlQueryRaw<KullaniciQueryRow>(sql, personelId)
+                .FirstOrDefault();
+
+            return MapToKullanici(row);
+        }
+
         public void KurtarmaKoduKaydet(int kullaniciId, string kod, DateTime sonKullanmaZamani)
         {
             const string sql = @"
@@ -169,6 +196,16 @@ WHERE KullaniciId = {0} AND Kullanildi = 0";
             return _context.Kullanicilar
                 .OrderBy(k => k.KullaniciAdi)
                 .Select(k => k.KullaniciAdi)
+                .ToList();
+        }
+
+        public List<string> GetAdminUserIds()
+        {
+            // RolId = 1 genellikle Admin veya Süper Admin'dir. 
+            // Burada RolId = 1 olan tüm KullaniciId'leri dönüyoruz.
+            return _context.Kullanicilar
+                .Where(k => k.RolId == 1)
+                .Select(k => k.KullaniciId)
                 .ToList();
         }
     }

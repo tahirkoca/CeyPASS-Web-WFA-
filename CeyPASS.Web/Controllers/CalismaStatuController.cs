@@ -12,16 +12,19 @@ namespace CeyPASS.Web.Controllers
         private readonly ICalismaStatuService _calismaStatuService;
         private readonly ISessionContext _sessionContext;
         private readonly IAuthorizationService _authorizationService;
+        private readonly IKisiEkraniLookUpService _lookupService;
         private const string PageName = "CalismaStatuleri";
 
         public CalismaStatuController(
             ICalismaStatuService calismaStatuService,
             ISessionContext sessionContext,
-            IAuthorizationService authorizationService)
+            IAuthorizationService authorizationService,
+            IKisiEkraniLookUpService lookupService)
         {
             _calismaStatuService = calismaStatuService;
             _sessionContext = sessionContext;
             _authorizationService = authorizationService;
+            _lookupService = lookupService;
         }
 
         public IActionResult Index()
@@ -64,6 +67,7 @@ namespace CeyPASS.Web.Controllers
                 if (success)
                 {
                     TempData["Success"] = "Çalışma statüsü başarıyla eklendi.";
+                    _lookupService.InvalidateCache();
                 }
                 else
                 {
@@ -100,6 +104,7 @@ namespace CeyPASS.Web.Controllers
                 if (success)
                 {
                     TempData["Success"] = "Çalışma statüsü başarıyla güncellendi.";
+                    _lookupService.InvalidateCache();
                 }
                 else
                 {
@@ -130,6 +135,7 @@ namespace CeyPASS.Web.Controllers
                 if (success)
                 {
                     TempData["Success"] = "Çalışma statüsü başarıyla silindi.";
+                    _lookupService.InvalidateCache();
                 }
                 else
                 {

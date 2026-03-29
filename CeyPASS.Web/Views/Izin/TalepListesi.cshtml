@@ -1,0 +1,128 @@
+@model List<CeyPASS.Entities.Concrete.IzinTalep>
+@{
+    ViewData["Title"] = "İzin Talepleri";
+    bool canUpdate = (ViewBag.CanUpdate as bool?) == true;
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h4 class="mb-3">İzin Talepleri</h4>
+
+            <div class="card">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm table-striped align-middle js-datatable">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Personel</th>
+                                    <th>İzin Tipi</th>
+                                    <th>Başlangıç</th>
+                                    <th>Bitiş</th>
+                                    <th>Saatlik</th>
+                                    <th>Üst Onay</th>
+                                    <th>İK Onay</th>
+                                    <th>İşlendi</th>
+                                    <th style="width:240px;" class="text-center">İşlemler</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            @foreach (var t in Model)
+                            {
+                                <tr>
+                                    <td>@t.TalepId</td>
+                                    <td>
+                                        @{
+                                            var pDict = ViewBag.Personeller as Dictionary<string, string>;
+                                            var pName = (pDict != null && pDict.ContainsKey(t.PersonelId)) ? pDict[t.PersonelId] : t.PersonelId;
+                                        }
+                                        <strong>@pName</strong>
+                                    </td>
+                                    <td>
+                                        @{
+                                            var iDict = ViewBag.IzinTipleri as Dictionary<int, string>;
+                                            var iName = (t.IzinTipId.HasValue && iDict != null && iDict.ContainsKey(t.IzinTipId.Value)) ? iDict[t.IzinTipId.Value] : t.IzinTipId?.ToString();
+                                        }
+                                        @iName
+                                    </td>
+                                    <td><small>@t.Baslangic.ToString("dd.MM.yyyy HH:mm")</small></td>
+                                    <td><small>@t.Bitis.ToString("dd.MM.yyyy HH:mm")</small></td>
+                                    <td>@(t.SaatlikIzinMi ? "Evet" : "Hayır")</td>
+                                    <td>
+                                        @{
+                                            var uClass = t.UstYetkiliOnayDurumu switch {
+                                                CeyPASS.Entities.Concrete.IzinOnayDurumu.Onaylandi => "bg-success",
+                                                CeyPASS.Entities.Concrete.IzinOnayDurumu.Reddedildi => "bg-danger",
+                                                _ => "bg-warning text-dark"
+                                            };
+                                        }
+                                        <span class="badge @uClass">@(t.UstYetkiliOnayDurumu?.ToString() ?? "Bekliyor")</span>
+                                    </td>
+                                    <td>
+                                        @{
+                                            var ikClass = t.IkOnayDurumu switch {
+                                                CeyPASS.Entities.Concrete.IzinOnayDurumu.Onaylandi => "bg-success",
+                                                CeyPASS.Entities.Concrete.IzinOnayDurumu.Reddedildi => "bg-danger",
+                                                _ => "bg-warning text-dark"
+                                            };
+                                        }
+                                        <span class="badge @ikClass">@(t.IkOnayDurumu?.ToString() ?? "Bekliyor")</span>
+                                    </td>
+                                    <td>
+                                        @if (t.SonucKisiIzinId.HasValue)
+                                        {
+                                            <span class="badge bg-info">İşlendi</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted small">Hayır</span>
+                                        }
+                                    </td>
+                                    <td class="text-center">
+                                        @if (canUpdate)
+                                        {
+                                            <div class="d-flex gap-1 flex-wrap">
+                                                <a class="btn btn-sm btn-outline-secondary"
+                                                   asp-controller="IzinKagit" asp-action="Preview" asp-route-talepId="@t.TalepId"
+                                                   title="İzin kağıdı önizleme (Yeni sekme)"
+                                                    target="_blank"><i class="bi bi-eye"></i></a>
+                                                <a class="btn btn-sm btn-outline-secondary"
+                                                   asp-controller="IzinKagit" asp-action="Pdf" asp-route-talepId="@t.TalepId"
+                                                   title="İzin kağıdını PDF dosyası olarak indir"
+                                                    target="_blank"><i class="bi bi-file-earmark-pdf"></i></a>
+                                                <form asp-action="TalepOnayla" method="post">
+                                                    @Html.AntiForgeryToken()
+                                                    <input type="hidden" name="talepId" value="@t.TalepId" />
+                                                    <input type="hidden" name="aciklama" value="" />
+                                                    <button class="btn btn-sm btn-success" type="submit" title="İzin talebini onayla ve sisteme işle"><i class="bi bi-check-circle"></i></button>
+                                                </form>
+                                                <form asp-action="TalepReddet" method="post">
+                                                    @Html.AntiForgeryToken()
+                                                    <input type="hidden" name="talepId" value="@t.TalepId" />
+                                                    <input type="hidden" name="aciklama" value="" />
+                                                    <button class="btn btn-sm btn-danger" type="submit" title="İzin talebini reddet"><i class="bi bi-x-circle"></i></button>
+                                                </form>
+                                                <form asp-action="DonusImzasinaAc" method="post">
+                                                    @Html.AntiForgeryToken()
+                                                    <input type="hidden" name="talepId" value="@t.TalepId" />
+                                                    <button class="btn btn-sm btn-outline-primary" type="submit" title="İzin dönüş kaydı (ıslak imza sonrası) için yetki ver"><i class="bi bi-unlock"></i></button>
+                                                </form>
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">Yetki yok</span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+

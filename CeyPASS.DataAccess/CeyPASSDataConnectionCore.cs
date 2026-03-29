@@ -44,6 +44,8 @@ namespace CeyPASS.DataAccess
         public DbSet<Kisiler> Kisiler { get; set; }
         public DbSet<Kullanicilar> Kullanicilar { get; set; }
         public DbSet<Roller> Roller { get; set; }
+        public DbSet<CeyPASS.Entities.Concrete.Bildirim> Bildirimler { get; set; }
+        public DbSet<CeyPASS.Entities.Concrete.UserDeviceToken> UserDeviceTokens { get; set; }
         public DbSet<CihazTipler> CihazTipler { get; set; }
         public DbSet<Firmalar> Firmalar { get; set; }
         public DbSet<Isyerler> Isyerler { get; set; }
@@ -105,6 +107,7 @@ namespace CeyPASS.DataAccess
             modelBuilder.Entity<TaseronKartlari>().HasKey(e => e.Id);
             modelBuilder.Entity<CokluSicilBaglantilari>().HasKey(e => new { e.TCKimlikNo, e.AnaPersonelId, e.HedefPersonelId });
             modelBuilder.Entity<SistemMailAlicilari>().HasKey(e => e.Id);
+            modelBuilder.Entity<CeyPASS.Entities.Concrete.UserDeviceToken>().ToTable("MobilUygulamaTokenleri").HasKey(e => e.Id);
         }
 
         // Stored Procedure çağrıları için extension method'lar
