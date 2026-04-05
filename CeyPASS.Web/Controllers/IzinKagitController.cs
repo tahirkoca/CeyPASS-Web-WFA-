@@ -2,6 +2,7 @@ using CeyPASS.Business.Abstractions;
 using CeyPASS.DataAccess.Abstractions;
 using CeyPASS.Entities.Concrete;
 using CeyPASS.Infrastructure.Helpers;
+using CeyPASS.Infrastructure.Pdf;
 using MigraDoc.DocumentObjectModel;
 using MigraDoc.DocumentObjectModel.Tables;
 using MigraDoc.Rendering;
@@ -10,6 +11,9 @@ using Microsoft.AspNetCore.Hosting;
 using System;
 using System.IO;
 using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using CeyPASS.Web.Services;
 
 namespace CeyPASS.Web.Controllers
 {
@@ -26,6 +30,8 @@ namespace CeyPASS.Web.Controllers
         private readonly ISessionContext _session;
         private readonly IAuthorizationService _auth;
         private readonly IWebHostEnvironment _env;
+        private readonly IRazorViewToStringRenderer _viewRenderer;
+        private readonly IPlaywrightPdfService _playwrightPdf;
 
         public IzinKagitController(
             IIzinTalepService izinTalepService,
@@ -36,7 +42,9 @@ namespace CeyPASS.Web.Controllers
             IIzinTipService izinTipService,
             ISessionContext session,
             IAuthorizationService auth,
-            IWebHostEnvironment env)
+            IWebHostEnvironment env,
+            IRazorViewToStringRenderer viewRenderer,
+            IPlaywrightPdfService playwrightPdf)
         {
             _izinTalepService = izinTalepService;
             _izinTalepRepo = izinTalepRepo;
@@ -47,6 +55,45 @@ namespace CeyPASS.Web.Controllers
             _session = session;
             _auth = auth;
             _env = env;
+            _viewRenderer = viewRenderer;
+            _playwrightPdf = playwrightPdf;
+        }
+
+        private void ApplyViewBags(PreviewModel model, string logoSrc)
+        {
+            ViewBag.PersonelAdSoyad = model.AdSoyad;
+            ViewBag.PersonelGorev = model.Gorev;
+            ViewBag.PersonelTc = model.TcKimlikNo;
+            ViewBag.PersonelCep = model.CepTel;
+            ViewBag.IzinTipAdi = model.IzinTipAdi;
+            ViewBag.UstYetkiliAdSoyad = model.UstYetkiliAdSoyad;
+            ViewBag.LogoSrc = logoSrc;
+        }
+
+        private string ResolveLogoForPreview()
+        {
+            var ico = Path.Combine(_env.WebRootPath, "images", "ceyLogo.ico");
+            if (System.IO.File.Exists(ico)) return "/images/ceyLogo.ico";
+            var png = Path.Combine(_env.WebRootPath, "images", "ceyLogo.png");
+            if (System.IO.File.Exists(png)) return "/images/ceyLogo.png";
+            return "/images/ceyLogo.ico";
+        }
+
+        private string ResolveLogoDataUri()
+        {
+            var pngPath = Path.Combine(_env.WebRootPath, "images", "ceyLogo.png");
+            if (System.IO.File.Exists(pngPath))
+            {
+                var bytes = System.IO.File.ReadAllBytes(pngPath);
+                return $"data:image/png;base64,{Convert.ToBase64String(bytes)}";
+            }
+            var icoPath = Path.Combine(_env.WebRootPath, "images", "ceyLogo.ico");
+            if (System.IO.File.Exists(icoPath))
+            {
+                var bytes = System.IO.File.ReadAllBytes(icoPath);
+                return $"data:image/x-icon;base64,{Convert.ToBase64String(bytes)}";
+            }
+            return "/images/ceyLogo.png";
         }
 
         [HttpGet]
@@ -58,39 +105,42 @@ namespace CeyPASS.Web.Controllers
 
             // Şablon seçimi: Saatlik + IzinTipId=7 → mazeret formu
             var isMazeretSaatlik = talep.SaatlikIzinMi && talep.IzinTipId == 7;
-            ViewBag.PersonelAdSoyad = model.AdSoyad;
-            ViewBag.PersonelGorev = model.Gorev;
-            ViewBag.PersonelTc = model.TcKimlikNo;
-            ViewBag.PersonelCep = model.CepTel;
-            ViewBag.IzinTipAdi = model.IzinTipAdi;
-            ViewBag.UstYetkiliAdSoyad = model.UstYetkiliAdSoyad;
+            ApplyViewBags(model, ResolveLogoForPreview());
 
             return View(isMazeretSaatlik ? "MazeretSaatlik" : "KlasikGunluk", talep);
         }
 
         [HttpGet]
-        public IActionResult Pdf(int talepId)
+        public async Task<IActionResult> Pdf(int talepId)
         {
-            // font config (Program.cs'de de var ama burada güvenli)
-            ExportHelper.ConfigurePdfFonts();
-
             var (talep, model) = ResolveTalepAndModel(talepId);
             if (talep == null)
                 return RedirectToAction("Index", "Home");
 
             var isMazeretSaatlik = talep.SaatlikIzinMi && talep.IzinTipId == 7;
-            var logoPath = Path.Combine(_env.WebRootPath, "images", "ceyLogo.ico");
-            var doc = isMazeretSaatlik
-                ? BuildMazeretSaatlikPdf(talep, model, logoPath)
-                : BuildKlasikGunlukPdf(talep, model, logoPath);
+            var viewPath = isMazeretSaatlik ? "/Views/IzinKagit/MazeretSaatlik.cshtml" : "/Views/IzinKagit/KlasikGunluk.cshtml";
+            var logoDataUri = ResolveLogoDataUri();
 
-            var renderer = new PdfDocumentRenderer();
-            renderer.Document = doc;
-            renderer.RenderDocument();
+            var html = await _viewRenderer.RenderAsync(viewPath, talep, vd =>
+            {
+                vd["PersonelAdSoyad"] = model.AdSoyad;
+                vd["PersonelGorev"] = model.Gorev;
+                vd["PersonelTc"] = model.TcKimlikNo;
+                vd["PersonelCep"] = model.CepTel;
+                vd["IzinTipAdi"] = model.IzinTipAdi;
+                vd["UstYetkiliAdSoyad"] = model.UstYetkiliAdSoyad;
+                vd["LogoSrc"] = logoDataUri;
+            });
 
-            using var ms = new System.IO.MemoryStream();
-            renderer.PdfDocument.Save(ms, false);
-            var bytes = ms.ToArray();
+            byte[] bytes;
+            try
+            {
+                bytes = await _playwrightPdf.HtmlToPdfAsync(html);
+            }
+            catch (Exception ex)
+            {
+                return Content($"PDF üretilemedi (Playwright/Chromium). Sunucuda Chromium kurulu olmalı veya PLAYWRIGHT_BROWSERS_PATH ayarlı olmalı. Detay: {ex.Message}");
+            }
 
             var fileName = isMazeretSaatlik
                 ? $"SaatlikMazeret_{talep.TalepId}.pdf"
@@ -107,38 +157,42 @@ namespace CeyPASS.Web.Controllers
                 return RedirectToAction("Index", "Home");
 
             var isMazeretSaatlik = talep.SaatlikIzinMi && talep.IzinTipId == 7;
-            ViewBag.PersonelAdSoyad = model.AdSoyad;
-            ViewBag.PersonelGorev = model.Gorev;
-            ViewBag.PersonelTc = model.TcKimlikNo;
-            ViewBag.PersonelCep = model.CepTel;
-            ViewBag.IzinTipAdi = model.IzinTipAdi;
-            ViewBag.UstYetkiliAdSoyad = model.UstYetkiliAdSoyad;
+            ApplyViewBags(model, ResolveLogoForPreview());
 
             return View(isMazeretSaatlik ? "MazeretSaatlik" : "KlasikGunluk", talep);
         }
 
         [HttpGet]
-        public IActionResult PdfFromIzin(int kisiIzinId)
+        public async Task<IActionResult> PdfFromIzin(int kisiIzinId)
         {
-            ExportHelper.ConfigurePdfFonts();
-
             var (talep, model) = ResolveTalepAndModelFromIzin(kisiIzinId);
             if (talep == null)
                 return RedirectToAction("Index", "Home");
 
             var isMazeretSaatlik = talep.SaatlikIzinMi && talep.IzinTipId == 7;
-            var logoPath = Path.Combine(_env.WebRootPath, "images", "ceyLogo.ico");
-            var doc = isMazeretSaatlik
-                ? BuildMazeretSaatlikPdf(talep, model, logoPath)
-                : BuildKlasikGunlukPdf(talep, model, logoPath);
+            var viewPath = isMazeretSaatlik ? "/Views/IzinKagit/MazeretSaatlik.cshtml" : "/Views/IzinKagit/KlasikGunluk.cshtml";
+            var logoDataUri = ResolveLogoDataUri();
 
-            var renderer = new PdfDocumentRenderer();
-            renderer.Document = doc;
-            renderer.RenderDocument();
+            var html = await _viewRenderer.RenderAsync(viewPath, talep, vd =>
+            {
+                vd["PersonelAdSoyad"] = model.AdSoyad;
+                vd["PersonelGorev"] = model.Gorev;
+                vd["PersonelTc"] = model.TcKimlikNo;
+                vd["PersonelCep"] = model.CepTel;
+                vd["IzinTipAdi"] = model.IzinTipAdi;
+                vd["UstYetkiliAdSoyad"] = model.UstYetkiliAdSoyad;
+                vd["LogoSrc"] = logoDataUri;
+            });
 
-            using var ms = new System.IO.MemoryStream();
-            renderer.PdfDocument.Save(ms, false);
-            var bytes = ms.ToArray();
+            byte[] bytes;
+            try
+            {
+                bytes = await _playwrightPdf.HtmlToPdfAsync(html);
+            }
+            catch (Exception ex)
+            {
+                return Content($"PDF üretilemedi (Playwright/Chromium). Sunucuda Chromium kurulu olmalı veya PLAYWRIGHT_BROWSERS_PATH ayarlı olmalı. Detay: {ex.Message}");
+            }
 
             var fileName = isMazeretSaatlik
                 ? $"SaatlikMazeret_{kisiIzinId}.pdf"

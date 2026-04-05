@@ -171,3 +171,11 @@ __pycache__/
 **/appsettings.Local.json
 *.Secret.config
 /CeyPASS.sln
+
+# Expo / env (local API URL, keys)
+.env
+.env.*
+!.env.example
+CeyPASS.Mobile/.env
+CeyPASS.Mobile/.env.*
+!CeyPASS.Mobile/.env.example

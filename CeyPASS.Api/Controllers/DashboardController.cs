@@ -15,19 +15,22 @@ namespace CeyPASS.Api.Controllers
         private readonly IAvansService _avansService;
         private readonly IKisiHareketService _kisiHareketService;
         private readonly IBildirimService _bildirimService;
+        private readonly IDashboardService _dashboardService;
 
         public DashboardController(
             ISessionContext sessionContext,
             IIzinTalepService izinTalepService,
             IAvansService avansService,
             IKisiHareketService kisiHareketService,
-            IBildirimService bildirimService)
+            IBildirimService bildirimService,
+            IDashboardService dashboardService)
         {
             _sessionContext = sessionContext;
             _izinTalepService = izinTalepService;
             _avansService = avansService;
             _kisiHareketService = kisiHareketService;
             _bildirimService = bildirimService;
+            _dashboardService = dashboardService;
         }
 
         [HttpGet("ozet")]
@@ -62,6 +65,14 @@ namespace CeyPASS.Api.Controllers
             }
 
             return Ok(ApiResult<DashboardOzet>.Ok(ozet));
+        }
+
+        [HttpGet("full")]
+        public ActionResult<ApiResult<CeyPASS.Entities.Concrete.DashboardResult>> GetFull()
+        {
+            int firmaId = _sessionContext.AktifFirmaId ?? 0;
+            var result = _dashboardService.GetDashboardForToday(firmaId);
+            return Ok(ApiResult<CeyPASS.Entities.Concrete.DashboardResult>.Ok(result));
         }
     }
 

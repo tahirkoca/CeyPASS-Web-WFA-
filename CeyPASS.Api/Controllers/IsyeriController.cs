@@ -14,26 +14,29 @@ namespace CeyPASS.Api.Controllers
     public class IsyeriController : ControllerBase
     {
         private readonly IIsyeriService _isyeriService;
+        private readonly IFirmaService _firmaService;
         private readonly ISessionContext _sessionContext;
         private readonly IAuthorizationService _authorizationService;
         private const string PageName = "Isyerler";
 
         public IsyeriController(
             IIsyeriService isyeriService,
+            IFirmaService firmaService,
             ISessionContext sessionContext,
             IAuthorizationService authorizationService)
         {
             _isyeriService = isyeriService;
+            _firmaService = firmaService;
             _sessionContext = sessionContext;
             _authorizationService = authorizationService;
         }
 
         [HttpGet]
-        public ActionResult<ApiResult<List<IsyeriItem>>> Get()
+        public ActionResult<ApiResult<List<IsyeriItem>>> Get([FromQuery] int? firmaId = null)
         {
             if (!_authorizationService.ViewAbility(PageName)) return Forbid();
 
-            int firmaId = _sessionContext.AktifFirmaId ?? 0;
+            int aktifFirmaId = _sessionContext.AktifFirmaId ?? 0;
             var dt = _isyeriService.GetAll();
             var list = new List<IsyeriItem>();
 
@@ -42,7 +45,8 @@ namespace CeyPASS.Api.Controllers
                 foreach (DataRow r in dt.Rows)
                 {
                     int fId = r.Table.Columns.Contains("FirmaId") ? Convert.ToInt32(r["FirmaId"]) : 0;
-                    if (!_sessionContext.IsAdmin() && fId != firmaId) continue;
+                    if (!_sessionContext.IsAdmin() && fId != aktifFirmaId) continue;
+                    if (_sessionContext.IsAdmin() && firmaId.HasValue && fId != firmaId.Value) continue;
 
                     int iId = r.Table.Columns.Contains("IsyeriId") ? Convert.ToInt32(r["IsyeriId"]) : 0;
                     string ad = r.Table.Columns.Contains("IsyeriAdi") ? (r["IsyeriAdi"]?.ToString() ?? "") : "";
@@ -52,6 +56,20 @@ namespace CeyPASS.Api.Controllers
             }
 
             return Ok(ApiResult<List<IsyeriItem>>.Ok(list.OrderBy(x => x.Ad).ToList()));
+        }
+
+        [HttpGet("lookups")]
+        public ActionResult<ApiResult<object>> Lookups()
+        {
+            if (!_authorizationService.ViewAbility(PageName)) return Forbid();
+
+            var firmalar = _firmaService.GetLookup() ?? new List<LookupItem>();
+            var aktifFirmaId = _sessionContext.AktifFirmaId;
+            return Ok(ApiResult<object>.Ok(new
+            {
+                firmalar,
+                aktifFirmaId
+            }));
         }
 
         [HttpPost]

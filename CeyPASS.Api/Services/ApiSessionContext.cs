@@ -56,7 +56,8 @@ namespace CeyPASS.Api.Services
         public string? UserInitials { get; set; }
         public bool? IsSupervisor { get; set; }
 
-        public bool IsAdmin() => RolAdi == "Admin" || RolId == 1;
+        // Keep consistent with server-side SessionContext (RolId 1 or 2 are admin-level)
+        public bool IsAdmin() => RolId == 1 || RolId == 2 || RolAdi == "Admin";
 
         public AuthUserDTO CurrentUser => new AuthUserDTO
         {

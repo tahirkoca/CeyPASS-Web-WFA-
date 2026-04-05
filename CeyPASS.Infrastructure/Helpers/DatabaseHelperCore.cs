@@ -1,59 +1,33 @@
 using System;
-using System.IO;
-using System.Security.Cryptography;
-using System.Text;
-using Microsoft.Data.SqlClient;
 
 namespace CeyPASS.Infrastructure.Helpers
 {
+    /// <summary>
+    /// Connection string çözümlemesi — repoda sıfır secret. Gerçek değerler:
+    /// appsettings.Local.json, User Secrets veya ortam değişkeni (ConnectionStrings__DefaultConnection).
+    /// </summary>
     public static class DatabaseHelperCore
     {
-        private static readonly string ENCRYPTION_KEY = "MySecretKey12345MySecretKey12345"; // 32 karakter
-        private static readonly string ENCRYPTION_IV = "1234567890123456"; // 16 karakter
-        private const string ENCRYPTED_PASSWORD = "BGyIDNpaLNh015WPAB8/kw==";
-
-        public static string GetSqlConnectionString(string applicationName = "CeyPASS")
+        /// <summary>
+        /// ASP.NET Core ortam değişkeni eşlemesi: ConnectionStrings:DefaultConnection.
+        /// </summary>
+        public static string? TryGetConnectionStringFromEnvironment()
         {
-            try
-            {
-                string password = DecryptAES(ENCRYPTED_PASSWORD);
-
-                var sqlBuilder = new SqlConnectionStringBuilder
-                {
-                    DataSource = @"192.168.0.23\SQLEXPRESS01",
-                    InitialCatalog = "CeyPASS",
-                    UserID = "sa",
-                    Password = password,
-                    IntegratedSecurity = false,
-                    MultipleActiveResultSets = true,
-                    Encrypt = true,
-                    TrustServerCertificate = true,
-                    ApplicationName = applicationName,
-                    PersistSecurityInfo = true
-                };
-
-                return sqlBuilder.ConnectionString;
-            }
-            catch (Exception ex)
-            {
-                throw new Exception("Veritabanı bağlantısı oluşturulamadı: " + ex.Message);
-            }
+            var a = Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection")?.Trim();
+            if (!string.IsNullOrEmpty(a)) return a;
+            return Environment.GetEnvironmentVariable("CEYPASS_DEFAULT_CONNECTION")?.Trim();
         }
 
-        private static string DecryptAES(string cipherText)
+        /// <summary>
+        /// Şablon appsettings (YOUR_SERVER / YOUR_USER / YOUR_PASSWORD) veya boş string.
+        /// LocalDB gibi gerçek geliştirici connection'ları false döner.
+        /// </summary>
+        public static bool LooksLikePlaceholder(string? connectionString)
         {
-            using (Aes aes = Aes.Create())
-            {
-                aes.Key = Encoding.UTF8.GetBytes(ENCRYPTION_KEY);
-                aes.IV = Encoding.UTF8.GetBytes(ENCRYPTION_IV);
-                using (ICryptoTransform decryptor = aes.CreateDecryptor(aes.Key, aes.IV))
-                using (var ms = new MemoryStream(Convert.FromBase64String(cipherText)))
-                using (var cs = new CryptoStream(ms, decryptor, CryptoStreamMode.Read))
-                using (var sr = new StreamReader(cs))
-                {
-                    return sr.ReadToEnd();
-                }
-            }
+            if (string.IsNullOrWhiteSpace(connectionString)) return true;
+            return connectionString.Contains("YOUR_PASSWORD", StringComparison.OrdinalIgnoreCase)
+                || connectionString.Contains("YOUR_SERVER", StringComparison.OrdinalIgnoreCase)
+                || connectionString.Contains("YOUR_USER", StringComparison.OrdinalIgnoreCase);
         }
     }
 }

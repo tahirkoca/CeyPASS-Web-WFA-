@@ -4,6 +4,11 @@ using CeyPASS.Business.Abstractions;
 using IAuthorizationService = CeyPASS.Business.Abstractions.IAuthorizationService;
 using CeyPASS.Entities.Concrete;
 using CeyPASS.Models;
+using System.Data;
+using System.Text;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using Microsoft.IdentityModel.Tokens;
 
 namespace CeyPASS.Api.Controllers
 {
@@ -14,26 +19,127 @@ namespace CeyPASS.Api.Controllers
     {
         private readonly ICanliIzlemeService _canliIzlemeService;
         private readonly IKisiHareketService _kisiHareketService;
+        private readonly IKisiDetayService _kisiDetayService;
         private readonly ISessionContext _sessionContext;
         private readonly IAuthorizationService _authorizationService;
 
         public CanliIzlemeController(
             ICanliIzlemeService canliIzlemeService,
             IKisiHareketService kisiHareketService,
+            IKisiDetayService kisiDetayService,
             ISessionContext sessionContext,
             IAuthorizationService authorizationService)
         {
             _canliIzlemeService = canliIzlemeService;
             _kisiHareketService = kisiHareketService;
+            _kisiDetayService = kisiDetayService;
             _sessionContext = sessionContext;
             _authorizationService = authorizationService;
+        }
+
+        public sealed class FirmaOption
+        {
+            public int Id { get; set; }
+            public string Ad { get; set; } = "";
+        }
+
+        [AllowAnonymous]
+        [HttpGet("firmalar")]
+        public ActionResult<ApiResult<List<FirmaOption>>> GetFirmalar()
+        {
+            var dt = _canliIzlemeService.GetFirmalar();
+            var list = new List<FirmaOption>();
+            if (dt == null) return Ok(ApiResult<List<FirmaOption>>.Ok(list));
+
+            bool hasId = dt.Columns.Contains("FirmaId");
+            bool hasAd = dt.Columns.Contains("FirmaAdi");
+            if (!hasId || !hasAd) return Ok(ApiResult<List<FirmaOption>>.Ok(list));
+
+            foreach (DataRow r in dt.Rows)
+            {
+                int id = r["FirmaId"] == DBNull.Value ? 0 : Convert.ToInt32(r["FirmaId"]);
+                string ad = r["FirmaAdi"] == DBNull.Value ? "" : r["FirmaAdi"].ToString() ?? "";
+                if (id > 0) list.Add(new FirmaOption { Id = id, Ad = ad });
+            }
+
+            return Ok(ApiResult<List<FirmaOption>>.Ok(list));
+        }
+
+        [AllowAnonymous]
+        [HttpGet("kullanicilar")]
+        public ActionResult<ApiResult<List<string>>> GetKullanicilar([FromQuery] int firmaId)
+        {
+            if (firmaId <= 0) return BadRequest(ApiResult.Failure("Firma seçin."));
+            var list = _canliIzlemeService.GetKullaniciAdlariByFirma(firmaId) ?? new List<string>();
+            return Ok(ApiResult<List<string>>.Ok(list));
+        }
+
+        public sealed class CanliIzlemeLoginRequest
+        {
+            public int FirmaId { get; set; }
+            public string? KullaniciAdi { get; set; }
+            public string? Sifre { get; set; }
+        }
+
+        [AllowAnonymous]
+        [HttpPost("login")]
+        public ActionResult<ApiResult<object>> Login([FromBody] CanliIzlemeLoginRequest request)
+        {
+            if (request.FirmaId <= 0) return BadRequest(ApiResult.Failure("Firma seçin."));
+            if (string.IsNullOrWhiteSpace(request.KullaniciAdi)) return BadRequest(ApiResult.Failure("Kullanıcı adı boş olamaz."));
+            if (string.IsNullOrWhiteSpace(request.Sifre)) return BadRequest(ApiResult.Failure("Şifre boş olamaz."));
+
+            var auth = _canliIzlemeService.Login(request.FirmaId, request.KullaniciAdi.Trim(), request.Sifre);
+            if (auth == null) return Unauthorized(ApiResult.Failure("Hatalı kullanıcı adı/şifre veya bu firma için yetki yok."));
+
+            var token = GenerateJwtToken(auth);
+            return Ok(ApiResult<object>.Ok(new
+            {
+                token,
+                expiration = DateTime.Now.AddMinutes(double.Parse(HttpContext.RequestServices.GetRequiredService<IConfiguration>()["Jwt:DurationInMinutes"] ?? "1440")),
+                user = auth
+            }));
+        }
+
+        private string GenerateJwtToken(AuthUserDTO user)
+        {
+            var cfg = HttpContext.RequestServices.GetRequiredService<IConfiguration>();
+            var jwtKey = cfg["Jwt:Key"] ?? "";
+
+            var claims = new List<Claim>
+            {
+                new Claim(ClaimTypes.Name, user.KullaniciAdi ?? ""),
+                new Claim(ClaimTypes.NameIdentifier, user.KullaniciId.ToString()),
+                new Claim("FirmaId", user.FirmaId.ToString()),
+                new Claim("SicilNo", user.SicilNo ?? ""),
+                new Claim("RolId", (user.RolId ?? 0).ToString()),
+                new Claim(ClaimTypes.Role, user.Rol ?? "CanliIzleme"),
+                // Canlı izleme token'ını, ana mobil uygulama token'ından ayırmak için.
+                new Claim("AuthKind", "CanliIzleme")
+            };
+
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey));
+            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+            var expires = DateTime.Now.AddMinutes(double.Parse(cfg["Jwt:DurationInMinutes"] ?? "1440"));
+
+            var token = new JwtSecurityToken(
+                cfg["Jwt:Issuer"],
+                cfg["Jwt:Audience"],
+                claims,
+                expires: expires,
+                signingCredentials: creds
+            );
+
+            return new JwtSecurityTokenHandler().WriteToken(token);
         }
 
         [HttpGet("son-gecisler")]
         public ActionResult<ApiResult<List<dynamic>>> GetSonGecisler([FromQuery] int take = 10)
         {
-            // Bu ekran amirlere veya özel yetkili kullanıcılara (Danışma/Yemekhane) açıktır.
-            if (!_sessionContext.IsAdmin() && _sessionContext.RolId != 1) return Forbid();
+            // Web'deki gibi: Canlı İzleme kendi login'i ile token alan kullanıcılar erişebilir.
+            // Ana mobil login token'ı ile bu endpoint'ler açılmasın.
+            var authKind = User?.FindFirst("AuthKind")?.Value;
+            if (!_sessionContext.IsAdmin() && authKind != "CanliIzleme") return Forbid();
             if (!_sessionContext.AktifFirmaId.HasValue) return BadRequest(ApiResult.Failure("Firma bilgisi bulunamadı."));
 
             var passes = _canliIzlemeService.GetLastPasses(_sessionContext.AktifFirmaId.Value, take);
@@ -55,7 +161,8 @@ namespace CeyPASS.Api.Controllers
         [HttpGet("son-hareketler")]
         public ActionResult<ApiResult<List<dynamic>>> GetSonHareketler([FromQuery] int take = 15)
         {
-            if (!_sessionContext.IsAdmin() && _sessionContext.RolId != 1) return Forbid();
+            var authKind = User?.FindFirst("AuthKind")?.Value;
+            if (!_sessionContext.IsAdmin() && authKind != "CanliIzleme") return Forbid();
             if (!_sessionContext.AktifFirmaId.HasValue) return BadRequest(ApiResult.Failure("Firma bilgisi bulunamadı."));
 
             var moves = _kisiHareketService.GetLastMovesByFirma(take, _sessionContext.AktifFirmaId.Value);
@@ -70,6 +177,25 @@ namespace CeyPASS.Api.Controllers
             }).Cast<dynamic>().ToList();
 
             return Ok(ApiResult<List<dynamic>>.Ok(result));
+        }
+
+        [HttpGet("kisi-detay")]
+        public ActionResult<ApiResult<object>> KisiDetay([FromQuery] int kisiId)
+        {
+            var authKind = User?.FindFirst("AuthKind")?.Value;
+            if (!_sessionContext.IsAdmin() && authKind != "CanliIzleme") return Forbid();
+            if (kisiId <= 0) return BadRequest(ApiResult.Failure("Kişi seçin."));
+
+            var dto = _kisiDetayService.GetDetay(kisiId);
+            if (dto == null) return NotFound(ApiResult.Failure("Kişi bulunamadı."));
+
+            return Ok(ApiResult<object>.Ok(new
+            {
+                adSoyad = dto.AdSoyad,
+                unvan = dto.Unvan,
+                departman = dto.Departman,
+                fotoBase64 = (dto.Foto != null && dto.Foto.Length > 0) ? Convert.ToBase64String(dto.Foto) : null
+            }));
         }
     }
 }

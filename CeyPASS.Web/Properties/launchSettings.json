@@ -15,7 +15,8 @@
       "launchBrowser": true,
       "applicationUrl": "http://localhost:5002",
       "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development"
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "PLAYWRIGHT_CHROMIUM_USE_HEADLESS_SHELL": "1"
       }
     },
     "https": {
@@ -31,7 +32,8 @@
       "commandName": "IISExpress",
       "launchBrowser": true,
       "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development"
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "PLAYWRIGHT_CHROMIUM_USE_HEADLESS_SHELL": "1"
       }
     }
   }

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Text;
 using CeyPASS.Api.Infrastructure;
 using CeyPASS.Api.Services;
@@ -6,15 +7,29 @@ using CeyPASS.Business.Services;
 using CeyPASS.DataAccess;
 using CeyPASS.DataAccess.Abstractions;
 using CeyPASS.DataAccess.Repositories;
+using CeyPASS.Infrastructure.Helpers;
+using CeyPASS.Infrastructure.Pdf;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 
+// PDF export (MigraDoc/PdfSharp) için Windows'ta sistem fontlarını kullan.
+// PdfSharp font çözümleme ilk kullanımda cache'lendiği için bunu uygulama başlangıcında yapmak kritik.
+ExportHelper.ConfigurePdfFonts();
+
 var builder = WebApplication.CreateBuilder(args);
+builder.Configuration.AddJsonFile("appsettings.Local.json", optional: true, reloadOnChange: true);
+
+// JWT imza anahtarı: repoda tutulmaz. Öncelik: Jwt__Key ortam değişkeni → appsettings → Development varsayılanı.
+var jwtSigningKey = ResolveJwtSigningKey(builder);
+builder.Configuration.AddInMemoryCollection(new Dictionary<string, string?>
+{
+    ["Jwt:Key"] = jwtSigningKey
+});
 
 // Add services to the container.
-builder.Services.AddControllers();
+builder.Services.AddControllersWithViews();
 builder.Services.AddEndpointsApiExplorer();
 
 // In-Memory Cache
@@ -48,8 +63,18 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-// Database Context
+// Database Context (secret repoda yok: appsettings.Local.json / User Secrets / ConnectionStrings__DefaultConnection)
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+if (string.IsNullOrWhiteSpace(connectionString) || DatabaseHelperCore.LooksLikePlaceholder(connectionString))
+{
+    connectionString = DatabaseHelperCore.TryGetConnectionStringFromEnvironment();
+}
+if (string.IsNullOrWhiteSpace(connectionString) || DatabaseHelperCore.LooksLikePlaceholder(connectionString))
+{
+    throw new InvalidOperationException(
+        "ConnectionStrings:DefaultConnection yapılandırılmadı. appsettings.Local.json, User Secrets veya ConnectionStrings__DefaultConnection ortam değişkenini kullanın.");
+}
+
 builder.Services.AddDbContext<CeyPASSDataConnectionCore>(options =>
     options.UseSqlServer(connectionString));
 
@@ -57,8 +82,8 @@ builder.Services.AddDbContext<CeyPASSDataConnectionCore>(options =>
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ISessionContext, ApiSessionContext>();
 
-// JWT Authentication
-var jwtKey = builder.Configuration["Jwt:Key"] ?? "CeyPASS_DEFAULT_SECRET_KEY_FOR_JWT_MUST_BE_REPLACED";
+// JWT Authentication (jwtSigningKey tüm uygulama için Configuration üzerinden erişilebilir)
+var jwtKey = jwtSigningKey;
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -83,6 +108,12 @@ builder.Services.AddAuthentication(options =>
 // For now, mirroring Web's registrations to ensure exact functionality.
 RegisterCeyPassServices(builder.Services);
 
+// Razor view render (HTML → PDF) support
+builder.Services.AddScoped<CeyPASS.Api.Services.IRazorViewToStringRenderer, CeyPASS.Api.Services.RazorViewToStringRenderer>();
+
+builder.Services.Configure<PlaywrightPdfOptions>(builder.Configuration.GetSection("Pdf"));
+builder.Services.AddSingleton<IPlaywrightPdfService, PlaywrightPdfService>();
+
 // CORS
 builder.Services.AddCors(options =>
 {
@@ -104,7 +135,12 @@ if (app.Environment.IsDevelopment())
 app.UseExceptionHandler(); // This will use the registered GlobalExceptionHandler
 
 app.UseCors("AllowAll");
-app.UseHttpsRedirection();
+// Dev'de fiziksel cihazdan LAN üstünden test için HTTP'yi açık bırakıyoruz.
+// Aksi halde http -> https redirect self-signed sertifika nedeniyle mobilde düşebiliyor.
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
 
 app.UseAuthentication();
 app.UseAuthorization();
@@ -112,6 +148,23 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+static string ResolveJwtSigningKey(WebApplicationBuilder builder)
+{
+    var fromEnv = Environment.GetEnvironmentVariable("Jwt__Key") ?? Environment.GetEnvironmentVariable("JWT__KEY");
+    if (!string.IsNullOrWhiteSpace(fromEnv))
+        return fromEnv.Trim();
+
+    var fromConfig = builder.Configuration["Jwt:Key"];
+    if (!string.IsNullOrWhiteSpace(fromConfig))
+        return fromConfig.Trim();
+
+    if (builder.Environment.IsDevelopment())
+        return "CeyPASS_Development_Only_JWT_Signing_Key__ReplaceInProd__";
+
+    throw new InvalidOperationException(
+        "Production Jwt signing key is not configured. Set environment variable Jwt__Key (or JWT__KEY) or Jwt:Key in appsettings / secrets manager.");
+}
 
 void RegisterCeyPassServices(IServiceCollection services)
 {

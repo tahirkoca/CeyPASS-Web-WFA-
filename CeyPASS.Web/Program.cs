@@ -4,8 +4,8 @@ using CeyPASS.DataAccess.Abstractions;
 using CeyPASS.DataAccess;
 using CeyPASS.DataAccess.Repositories;
 using CeyPASS.Infrastructure.Helpers;
+using CeyPASS.Infrastructure.Pdf;
 using Microsoft.EntityFrameworkCore;
-using CeyPASS.Web.Data;
 using CeyPASS.Web.Services;
 
 // PDF export (MigraDoc) için Windows'ta Arial vb. sistem fontlarının kullanılması - ilk PDF'den önce ayarlanmalı
@@ -16,6 +16,12 @@ builder.Configuration.AddJsonFile("appsettings.Local.json", optional: true, relo
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+
+// Razor view render (HTML → PDF) support
+builder.Services.AddScoped<CeyPASS.Web.Services.IRazorViewToStringRenderer, CeyPASS.Web.Services.RazorViewToStringRenderer>();
+
+builder.Services.Configure<PlaywrightPdfOptions>(builder.Configuration.GetSection("Pdf"));
+builder.Services.AddSingleton<IPlaywrightPdfService, PlaywrightPdfService>();
 
 // In-memory cache (tek sunucu cache senaryoları için)
 builder.Services.AddMemoryCache();
@@ -29,12 +35,16 @@ builder.Services.AddSession(options =>
     options.Cookie.IsEssential = true;
 });
 
-// Database Context - EF Core
-// Connection string appsettings.json'dan veya Infrastructure.DatabaseHelperCore'dan alınabilir
+// Database Context - EF Core (secret repoda yok: appsettings.Local.json / User Secrets / ConnectionStrings__DefaultConnection)
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-if (string.IsNullOrEmpty(connectionString) || connectionString.Contains("YOUR_PASSWORD"))
+if (string.IsNullOrWhiteSpace(connectionString) || DatabaseHelperCore.LooksLikePlaceholder(connectionString))
 {
-    connectionString = CeyPASS.Infrastructure.Helpers.DatabaseHelperCore.GetSqlConnectionString("CeyPASS.Web");
+    connectionString = DatabaseHelperCore.TryGetConnectionStringFromEnvironment();
+}
+if (string.IsNullOrWhiteSpace(connectionString) || DatabaseHelperCore.LooksLikePlaceholder(connectionString))
+{
+    throw new InvalidOperationException(
+        "ConnectionStrings:DefaultConnection yapılandırılmadı. appsettings.Local.json, User Secrets veya ConnectionStrings__DefaultConnection ortam değişkenini kullanın.");
 }
 
 builder.Services.AddDbContext<CeyPASSDataConnectionCore>(options =>

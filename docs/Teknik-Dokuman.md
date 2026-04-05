@@ -102,14 +102,21 @@ Entities katmanındaki modeller veritabanı şemasına bağımlı değildir; tü
 ### 6.1 Web (CeyPASS.Web)
 
 - **appsettings.json** / **appsettings.Development.json**: Connection string, SMTP, uygulama ayarları.
+- **appsettings.Local.json** (gitignore): Yerel gerçek bağlantı (opsiyonel).
 - Bağlantı adı: `DefaultConnection`.
-- Veritabanı bağlantısı ek olarak **CeyPASS.Web.Data.DatabaseHelperCore** üzerinden Infrastructure ile uyumlu şekilde alınabilir.
+- Yer tutucu (`YOUR_SERVER` / `YOUR_PASSWORD` vb.) veya boş ise: ortam değişkeni `ConnectionStrings__DefaultConnection` (veya `CEYPASS_DEFAULT_CONNECTION`) kullanılabilir; aksi halde uygulama başlangıçta açıklayıcı hata verir.
 
-### 6.2 Masaüstü (CeyPASS.WFA)
+### 6.2 API (CeyPASS.Api)
+
+- **appsettings.json**: Varsayılan olarak LocalDB şablonu.
+- **appsettings.Local.json** (gitignore): Gerçek SQL Server bağlantısı için.
+- Ortam: `ConnectionStrings__DefaultConnection` veya `CEYPASS_DEFAULT_CONNECTION`.
+
+### 6.3 Masaüstü (CeyPASS.WFA)
 
 - **appsettings.json**: Öncelikli; `ConnectionStrings.DefaultConnection`, `SmtpSettings`.
 - **App.config**: Fallback; `connectionStrings`, `appSettings` (SMTP). Program.cs önce appsettings.json'a bakar, boş veya geçersizse App.config kullanılır.
-- Bağlantı sırası: appsettings.json → App.config → Infrastructure.DatabaseHelperCore.GetSqlConnectionString("CeyPASS.WFA").
+- Bağlantı sırası: appsettings.json → App.config → ortam (`ConnectionStrings__DefaultConnection` / `CEYPASS_DEFAULT_CONNECTION`). Repoda gömülü şifre/sunucu yoktur.
 
 ---
 

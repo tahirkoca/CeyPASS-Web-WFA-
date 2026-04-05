@@ -80,15 +80,23 @@ namespace CeyPASS.WFA
             // IMemoryCache (KisiEkraniLookupService vb. için gerekli)
             services.AddMemoryCache();
 
-            // Connection string: önce appsettings.json, sonra App.config, sonra Infrastructure.DatabaseHelperCore
+            // ILogger<T> (FcmPushService vb.) — WinForms’ta varsayılan konsol/debug olmadan da factory kaydı yeterli
+            services.AddLogging();
+
+            // Connection string: appsettings → App.config → ortam (secret repoda yok)
             var connectionString = configuration.GetConnectionString("DefaultConnection")?.Trim();
-            if (string.IsNullOrEmpty(connectionString) || connectionString.Contains("YOUR_PASSWORD"))
+            if (string.IsNullOrEmpty(connectionString) || DatabaseHelperCore.LooksLikePlaceholder(connectionString))
             {
                 connectionString = System.Configuration.ConfigurationManager.ConnectionStrings["DefaultConnection"]?.ConnectionString?.Trim();
             }
-            if (string.IsNullOrEmpty(connectionString) || connectionString.Contains("YOUR_PASSWORD"))
+            if (string.IsNullOrEmpty(connectionString) || DatabaseHelperCore.LooksLikePlaceholder(connectionString))
             {
-                connectionString = CeyPASS.Infrastructure.Helpers.DatabaseHelperCore.GetSqlConnectionString("CeyPASS.WFA");
+                connectionString = DatabaseHelperCore.TryGetConnectionStringFromEnvironment();
+            }
+            if (string.IsNullOrEmpty(connectionString) || DatabaseHelperCore.LooksLikePlaceholder(connectionString))
+            {
+                throw new InvalidOperationException(
+                    "ConnectionStrings:DefaultConnection yapılandırılmadı. appsettings.Local.json, App.config veya ConnectionStrings__DefaultConnection ortam değişkenini kullanın.");
             }
 
             // Faz 4.2: DbContext ve veri katmanı Scoped (form bazlı unit of work)

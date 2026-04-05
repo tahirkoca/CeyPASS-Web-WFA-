@@ -6,8 +6,10 @@ using CeyPASS.DataAccess.Abstractions;
 using CeyPASS.Entities.Concrete;
 using CeyPASS.Models;
 using CeyPASS.Models.Auth;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
+using IAuthorizationService = CeyPASS.Business.Abstractions.IAuthorizationService;
 
 namespace CeyPASS.Api.Controllers
 {
@@ -18,17 +20,32 @@ namespace CeyPASS.Api.Controllers
         private readonly IKullaniciService _kullaniciService;
         private readonly IKisiRepository _kisiRepository;
         private readonly IPersonelWebSifreRepository _personelWebSifreRepository;
+        private readonly IAuthorizationService _authorizationService;
+        private readonly ISessionContext _sessionContext;
+        private readonly IIzinTalepService _izinTalepService;
+        private readonly ISifreService _sifreService;
+        private readonly IEmailService _emailService;
         private readonly IConfiguration _configuration;
 
         public AuthController(
             IKullaniciService kullaniciService,
             IKisiRepository kisiRepository,
             IPersonelWebSifreRepository personelWebSifreRepository,
+            IAuthorizationService authorizationService,
+            ISessionContext sessionContext,
+            IIzinTalepService izinTalepService,
+            ISifreService sifreService,
+            IEmailService emailService,
             IConfiguration configuration)
         {
             _kullaniciService = kullaniciService;
             _kisiRepository = kisiRepository;
             _personelWebSifreRepository = personelWebSifreRepository;
+            _authorizationService = authorizationService;
+            _sessionContext = sessionContext;
+            _izinTalepService = izinTalepService;
+            _sifreService = sifreService;
+            _emailService = emailService;
             _configuration = configuration;
         }
 
@@ -45,10 +62,30 @@ namespace CeyPASS.Api.Controllers
                 // 1. Kurumsal Kullanıcı Kontrolü
                 var kullanici = _kullaniciService.GirisYap(request.Username, request.Password);
                 
-                // 2. Kurumsal değilse Personel Portalı Kontrolü
+                // 2. Kurumsal değilse: (Web ile birebir) username bir kimlik (TC/Sicil/Email) ise kurumsal hesaba düşmeyi dene
                 if (kullanici == null)
                 {
-                    var kisi = _kisiRepository.GetByLoginIdentifier(request.Username);
+                    var kisiForCorp = _kisiRepository.GetByLoginIdentifier(request.Username);
+                    if (kisiForCorp != null)
+                    {
+                        var corpAccount = _kullaniciService.GetByPersonelId(kisiForCorp.PersonelId);
+                        if (corpAccount != null && corpAccount.Sifre == request.Password)
+                        {
+                            return Success(new CeyPASS.Entities.Concrete.AuthUserDTO
+                            {
+                                KullaniciId = corpAccount.KullaniciId,
+                                FirmaId = corpAccount.FirmaId ?? 0,
+                                KullaniciAdi = corpAccount.KullaniciAdi,
+                                AdSoyad = corpAccount.AdSoyad,
+                                Rol = corpAccount.RolTanimi,
+                                RolId = corpAccount.RolId,
+                                SicilNo = corpAccount.PersonelId?.ToString()
+                            });
+                        }
+                    }
+
+                    // 3. Kurumsal değilse Personel Portalı Kontrolü (Web ile aynı fallback)
+                    var kisi = kisiForCorp ?? _kisiRepository.GetByLoginIdentifier(request.Username);
                     if (kisi != null && _personelWebSifreRepository.Dogrula(kisi.PersonelId, request.Password))
                     {
                         return Success(new CeyPASS.Entities.Concrete.AuthUserDTO
@@ -83,6 +120,129 @@ namespace CeyPASS.Api.Controllers
             {
                 return StatusCode(500, ApiResult.Failure($"Giriş hatası: {ex.Message}"));
             }
+        }
+
+        public sealed class AbilitiesResponse
+        {
+            public Dictionary<string, bool> View { get; set; } = new();
+            public Dictionary<string, Dictionary<string, bool>> Actions { get; set; } = new();
+            public bool IsSupervisor { get; set; }
+            public int? RolId { get; set; }
+            public string? RolAdi { get; set; }
+        }
+
+        [Authorize]
+        [HttpGet("abilities")]
+        public ActionResult<ApiResult<AbilitiesResponse>> GetAbilities()
+        {
+            var pages = new[]
+            {
+                "Dashboard",
+                "Profil",
+                "IzinTalepleri",
+                "Avans",
+                "Personeller",
+                "KisiHareketler",
+                "Izinler",
+                "AylikPuantaj",
+                "Raporlar",
+                "Firmalar",
+                "Isyerler",
+                "Departmanlar",
+                "Pozisyonlar",
+                "Vardiyalar",
+                "CalismaStatuleri",
+                "Cihazlar",
+                "ResmiTatiller",
+            };
+
+            var view = new Dictionary<string, bool>();
+            foreach (var p in pages)
+            {
+                view[p] = _authorizationService.ViewAbility(p);
+            }
+
+            // Mobile needs action-level permissions (create/update/delete) per page.
+            var actions = new Dictionary<string, Dictionary<string, bool>>();
+            foreach (var p in pages)
+            {
+                actions[p] = new Dictionary<string, bool>
+                {
+                    ["Create"] = _authorizationService.Can(p, YetkiTipleri.Create),
+                    ["Update"] = _authorizationService.Can(p, YetkiTipleri.Update),
+                    ["Delete"] = _authorizationService.Can(p, YetkiTipleri.Delete),
+                    ["Export"] = _authorizationService.Can(p, YetkiTipleri.Export),
+                    ["Approve"] = _authorizationService.Can(p, YetkiTipleri.Approve),
+                };
+            }
+
+            // Web'deki gibi: sicilNo varsa supervisor kontrolü
+            bool isSupervisor = false;
+            if (!string.IsNullOrWhiteSpace(_sessionContext.AktifSicilNo))
+            {
+                try { isSupervisor = _izinTalepService.IsSupervisor(_sessionContext.AktifSicilNo); } catch { }
+            }
+
+            return Ok(ApiResult<AbilitiesResponse>.Ok(new AbilitiesResponse
+            {
+                View = view,
+                Actions = actions,
+                IsSupervisor = isSupervisor,
+                RolId = _sessionContext.RolId,
+                RolAdi = _sessionContext.RolAdi
+            }));
+        }
+
+        public sealed class ForgotPasswordStartRequest
+        {
+            public string? Username { get; set; }
+        }
+
+        [HttpPost("forgot-password")]
+        public ActionResult<ApiResult<object>> ForgotPassword([FromBody] ForgotPasswordStartRequest request)
+        {
+            var username = (request.Username ?? string.Empty).Trim();
+            if (string.IsNullOrEmpty(username))
+                return BadRequest(ApiResult.Failure("Kullanıcı adını girin."));
+
+            var sonuc = _sifreService.SifreSifirlamaBaslat(username);
+            if (!sonuc.Basarili)
+            {
+                var msg = sonuc.HataMesaji ?? "İşlem başarısız.";
+                if (msg.StartsWith("NO_EMAIL|")) msg = msg.Replace("NO_EMAIL|", "");
+                return BadRequest(ApiResult.Failure(msg));
+            }
+
+            var maskedEmail = _emailService.MaskEmail(sonuc.Email ?? string.Empty);
+            return Ok(ApiResult<object>.Ok(new { maskedEmail }));
+        }
+
+        public sealed class ForgotPasswordConfirmRequest
+        {
+            public string? Username { get; set; }
+            public string? Kod { get; set; }
+            public string? YeniSifre { get; set; }
+            public string? YeniSifreTekrar { get; set; }
+        }
+
+        [HttpPost("forgot-password/confirm")]
+        public ActionResult<ApiResult<object>> ForgotPasswordConfirm([FromBody] ForgotPasswordConfirmRequest request)
+        {
+            var username = (request.Username ?? string.Empty).Trim();
+            if (string.IsNullOrEmpty(username))
+                return BadRequest(ApiResult.Failure("Kullanıcı adını girin."));
+
+            var sonuc = _sifreService.SifreSifirlamaTamamla(
+                username,
+                request.Kod ?? string.Empty,
+                request.YeniSifre ?? string.Empty,
+                request.YeniSifreTekrar ?? string.Empty
+            );
+
+            if (!sonuc.Basarili)
+                return BadRequest(ApiResult.Failure(sonuc.HataMesaji ?? "Şifre güncellenemedi."));
+
+            return Ok(ApiResult<object>.Ok(new { ok = true }));
         }
 
         private ActionResult Success(CeyPASS.Entities.Concrete.AuthUserDTO user)

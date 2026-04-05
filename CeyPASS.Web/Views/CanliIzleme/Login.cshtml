@@ -1,6 +1,6 @@
 @model CeyPASS.Web.Models.CanliIzleme.CanliIzlemeLoginModel
 @{
-    ViewData["Title"] = "Canlı İzleme - Giriş";
+    ViewData["Title"] = "Canlı İzleme Giriş";
     Layout = null;
     var firmalar = ViewBag.Firmalar as List<(int Id, string Ad)> ?? new List<(int, string)>();
 }
@@ -11,6 +11,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - CeyPASS</title>
+    <partial name="_Favicons" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">

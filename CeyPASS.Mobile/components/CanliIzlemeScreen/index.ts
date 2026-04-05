@@ -1,0 +1,2 @@
+export { CanliIzlemeScreen } from "../CanliIzlemeScreen";
+

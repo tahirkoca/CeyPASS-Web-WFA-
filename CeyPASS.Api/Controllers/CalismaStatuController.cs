@@ -15,7 +15,7 @@ namespace CeyPASS.Api.Controllers
         private readonly ICalismaStatuService _calismaStatuService;
         private readonly ISessionContext _sessionContext;
         private readonly IAuthorizationService _authorizationService;
-        private const string PageName = "Statuleri";
+        private const string PageName = "CalismaStatuleri";
 
         public CalismaStatuController(
             ICalismaStatuService calismaStatuService,
@@ -40,9 +40,11 @@ namespace CeyPASS.Api.Controllers
         {
             if (!_authorizationService.Can(PageName, YetkiTipleri.Create)) return Forbid();
 
-            int id = _calismaStatuService.GetNextId();
-            bool ok = _calismaStatuService.Add(id, request.Ad);
-            return ok ? Ok(ApiResult<int>.Ok(id, "Çalışma statüsü başarıyla eklendi.")) : BadRequest(ApiResult.Failure("İşlem başarısız."));
+            if (string.IsNullOrWhiteSpace(request.Ad)) return BadRequest(ApiResult<int>.Failure("Çalışma statüsü adı boş olamaz."));
+
+            bool ok = _calismaStatuService.AddAuto(request.Ad.Trim());
+            if (!ok) return BadRequest(ApiResult<int>.Failure("İşlem başarısız."));
+            return Ok(ApiResult<int>.Ok(0, "Çalışma statüsü başarıyla eklendi."));
         }
 
         [HttpPut("{id}")]
@@ -50,7 +52,8 @@ namespace CeyPASS.Api.Controllers
         {
             if (!_authorizationService.Can(PageName, YetkiTipleri.Update)) return Forbid();
 
-            bool ok = _calismaStatuService.Update(id, request.Ad);
+            if (string.IsNullOrWhiteSpace(request.Ad)) return BadRequest(ApiResult.Failure("Çalışma statüsü adı boş olamaz."));
+            bool ok = _calismaStatuService.Update(id, request.Ad.Trim());
             return ok ? Ok(ApiResult.Ok("Çalışma statüsü güncellendi.")) : BadRequest(ApiResult.Failure("İşlem başarısız."));
         }
 

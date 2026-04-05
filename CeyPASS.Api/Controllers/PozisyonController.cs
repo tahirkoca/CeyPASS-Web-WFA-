@@ -35,6 +35,22 @@ namespace CeyPASS.Api.Controllers
             return Ok(ApiResult<List<LookupItem>>.Ok(list));
         }
 
+        [HttpGet("{id}")]
+        public ActionResult<ApiResult<PozisyonDetail>> GetById(int id)
+        {
+            if (!_authorizationService.ViewAbility(PageName)) return Forbid();
+
+            var data = _pozisyonService.GetForEdit(id);
+            if (!data.HasValue) return NotFound(ApiResult<PozisyonDetail>.Failure("Kayıt bulunamadı."));
+
+            return Ok(ApiResult<PozisyonDetail>.Ok(new PozisyonDetail
+            {
+                Id = data.Value.id,
+                Ad = data.Value.ad ?? "",
+                Aciklama = data.Value.ack ?? ""
+            }));
+        }
+
         [HttpPost]
         public ActionResult<ApiResult> Post([FromBody] PozisyonRequest request)
         {
@@ -49,6 +65,9 @@ namespace CeyPASS.Api.Controllers
         {
             if (!_authorizationService.Can(PageName, YetkiTipleri.Update)) return Forbid();
 
+            var existing = _pozisyonService.GetForEdit(id);
+            if (!existing.HasValue) return NotFound(ApiResult.Failure("Kayıt bulunamadı."));
+
             bool ok = _pozisyonService.Update(id, request.Ad, request.Aciklama ?? "");
             return ok ? Ok(ApiResult.Ok("Pozisyon güncellendi.")) : BadRequest(ApiResult.Failure("İşlem başarısız."));
         }
@@ -58,9 +77,19 @@ namespace CeyPASS.Api.Controllers
         {
             if (!_authorizationService.Can(PageName, YetkiTipleri.Delete)) return Forbid();
 
+            var existing = _pozisyonService.GetForEdit(id);
+            if (!existing.HasValue) return NotFound(ApiResult.Failure("Kayıt bulunamadı."));
+
             bool ok = _pozisyonService.Delete(id);
             return ok ? Ok(ApiResult.Ok("Pozisyon silindi.")) : BadRequest(ApiResult.Failure("İşlem başarısız."));
         }
+    }
+
+    public class PozisyonDetail
+    {
+        public int Id { get; set; }
+        public string Ad { get; set; } = null!;
+        public string? Aciklama { get; set; }
     }
 
     public class PozisyonRequest

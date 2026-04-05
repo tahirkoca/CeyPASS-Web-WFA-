@@ -84,7 +84,11 @@ SELECT
         ELSE c.CihazAdi
     END AS CihazAdi,
     k.Tarih,
-    k.Tip,
+    CASE
+        WHEN k.Tip IN (N'G', N'Giriş', N'Giris') THEN N'Giriş'
+        WHEN k.Tip IN (N'Ç', N'C', N'Çıkış', N'Cikis') THEN N'Çıkış'
+        ELSE k.Tip
+    END AS Tip,
     k.KayitZamani,
     k.AktifMi
 FROM dbo.KisiHareketler AS k
@@ -116,7 +120,7 @@ WHERE k.FirmaId = @p0
             }
             else
             {
-                sb.AppendLine("  AND (k.Tip IN (N'Giriş', N'Çıkış', N'Cikis'))");
+                sb.AppendLine("  AND (k.Tip IN (N'G', N'Ç', N'C', N'Giriş', N'Çıkış', N'Giris', N'Cikis'))");
             }
 
             if (personIds != null && personIds.Count > 0)
@@ -134,7 +138,7 @@ WHERE k.FirmaId = @p0
                 sb.AppendLine(")");
             }
 
-            sb.AppendLine("ORDER BY k.Tarih");
+            sb.AppendLine("ORDER BY k.Tarih DESC");
 
             string sql = sb.ToString();
 
@@ -196,7 +200,7 @@ WHERE k.FirmaId = @p0
             }
             else
             {
-                sbWhere.AppendLine("  AND (k.Tip IN (N'Giriş', N'Çıkış', N'Cikis'))");
+                sbWhere.AppendLine("  AND (k.Tip IN (N'G', N'Ç', N'C', N'Giriş', N'Çıkış', N'Giris', N'Cikis'))");
             }
 
             if (personIds != null && personIds.Count > 0)
@@ -233,7 +237,11 @@ SELECT
         ELSE c.CihazAdi
     END AS CihazAdi,
     k.Tarih,
-    k.Tip,
+    CASE
+        WHEN k.Tip IN (N'G', N'Giriş', N'Giris') THEN N'Giriş'
+        WHEN k.Tip IN (N'Ç', N'C', N'Çıkış', N'Cikis') THEN N'Çıkış'
+        ELSE k.Tip
+    END AS Tip,
     k.KayitZamani,
     k.AktifMi
 ";
@@ -241,7 +249,7 @@ SELECT
             var pageSql = new StringBuilder();
             pageSql.Append(selectSql);
             pageSql.Append(sbWhere);
-            pageSql.AppendLine("ORDER BY k.Tarih");
+            pageSql.AppendLine("ORDER BY k.Tarih DESC");
             pageSql.AppendLine("OFFSET @po ROWS FETCH NEXT @pf ROWS ONLY");
             parameters.Add(new Microsoft.Data.SqlClient.SqlParameter("@po", (page - 1) * pageSize));
             parameters.Add(new Microsoft.Data.SqlClient.SqlParameter("@pf", pageSize));
