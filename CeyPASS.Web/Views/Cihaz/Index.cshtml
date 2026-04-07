@@ -106,6 +106,9 @@
                                                             </button>
                                                         </form>
                                                     }
+                                                    <button type="button" class="btn btn-sm btn-info text-white btn-qr-modal" data-id="@cihaz.CihazId" data-isim="@cihaz.CihazAdi" title="QR Kod Üret">
+                                                        <i class="bi bi-qr-code"></i>
+                                                    </button>
                                                 </div>
                                             </td>
                                         </tr>
@@ -142,27 +145,38 @@
     </div>
 </div>
 
+<div class="modal fade" id="qrModal" tabindex="-1" aria-labelledby="qrModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content text-center">
+            <div class="modal-header border-bottom-0 pb-0">
+                <h5 class="modal-title w-100" id="qrModalLabel">Turnike QR Kodu</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+            </div>
+            <div class="modal-body pt-2 pb-4 px-4">
+                <p class="text-muted small mb-3" id="qrCihazIsim"></p>
+                <div class="d-inline-block border rounded shadow-sm p-2" style="background:#fff;" id="qrImgContainer">
+                    <img id="qrImg" src="" alt="QR Kod" style="width:256px; height:256px; display:block;" />
+                </div>
+                <div id="qrError" class="alert alert-danger d-none mt-3 text-start" role="alert">
+                    <div class="d-flex align-items-center mb-2">
+                        <i class="bi bi-geo-alt-fill fs-4 me-2"></i>
+                        <strong class="fs-5">QR Üretilemedi!</strong>
+                    </div>
+                    <p class="mb-0">
+                        Bu cihaz için <strong>Enlem ve Boylam (Konum)</strong> verisi tanımlanmamış. Güvenlik kuralları gereği, personelin işlem esnasında cihaza yakın olduğunu konum bazlı doğrulayabilmemiz için cihaz konumunun girilmesi zorunludur.
+                    </p>
+                </div>
+                <div class="mt-4" id="qrYazdirContainer">
+                    <button type="button" class="btn btn-outline-primary w-100" id="qrYazdirBtn">
+                        <i class="bi bi-printer me-1"></i> Yazdır / PDF Kaydet
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
-    <script>
-    (function () {
-        var silOnayModalEl = document.getElementById('silOnayModal');
-        var silOnayModalBody = document.getElementById('silOnayModalBody');
-        var silOnayModalSilBtn = document.getElementById('silOnayModalSilBtn');
-        if (silOnayModalEl && silOnayModalBody && silOnayModalSilBtn) {
-            document.querySelectorAll('.btn-sil-onay').forEach(function (btn) {
-                btn.addEventListener('click', function () {
-                    var form = this.closest('form');
-                    var msg = this.getAttribute('data-msg') || 'Emin misiniz?';
-                    var btnText = this.getAttribute('data-btn-text') || 'Onayla';
-                    silOnayModalBody.textContent = msg;
-                    silOnayModalSilBtn.innerHTML = '<i class="bi bi-trash me-1"></i>' + btnText;
-                    var modal = new bootstrap.Modal(silOnayModalEl);
-                    silOnayModalSilBtn.onclick = function () { modal.hide(); if (form) form.submit(); };
-                    modal.show();
-                });
-            });
-        }
-    })();
-    </script>
+    <script src="~/js/cihaz-index.js"></script>
 }

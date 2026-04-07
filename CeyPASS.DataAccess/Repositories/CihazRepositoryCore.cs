@@ -58,7 +58,10 @@ namespace CeyPASS.DataAccess.Repositories
                 Notlar = e.Notlar,
                 CihazTipi = e.CihazTipi,
                 AktifMi = e.AktifMi,
-                BaglandiMi = e.BaglandiMi
+                BaglandiMi = e.BaglandiMi,
+                Latitude = e.Latitude,
+                Longitude = e.Longitude,
+                MesafeToleransMetre = e.MesafeToleransMetre
             };
         }
 
@@ -73,7 +76,10 @@ namespace CeyPASS.DataAccess.Repositories
                 Notlar = c.Notlar,
                 CihazTipi = (byte)c.CihazTipi,
                 AktifMi = true,
-                BaglandiMi = false
+                BaglandiMi = false,
+                Latitude = c.Latitude,
+                Longitude = c.Longitude,
+                MesafeToleransMetre = c.MesafeToleransMetre
             };
 
             _context.Cihazlar.Add(entity);
@@ -96,6 +102,9 @@ namespace CeyPASS.DataAccess.Repositories
             entity.Port = c.Port;
             entity.Notlar = c.Notlar;
             entity.CihazTipi = (byte)c.CihazTipi;
+            entity.Latitude = c.Latitude;
+            entity.Longitude = c.Longitude;
+            entity.MesafeToleransMetre = c.MesafeToleransMetre;
 
             _context.SaveChanges();
         }

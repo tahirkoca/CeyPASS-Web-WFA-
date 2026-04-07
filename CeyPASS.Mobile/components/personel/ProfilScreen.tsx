@@ -244,6 +244,23 @@ export function ProfilScreen(props: { user: any; onOpenMenu?: () => void; onNavi
               </View>
             </View>
 
+            <TouchableOpacity 
+              activeOpacity={0.8}
+              onPress={() => props.onNavigate?.("qrGiris")}
+              className="mt-4 bg-emerald-600 rounded-2xl p-4 shadow-sm flex-row items-center justify-between"
+            >
+              <View className="flex-row items-center">
+                <View className="w-10 h-10 rounded-full bg-white/20 items-center justify-center">
+                  <MaterialCommunityIcons name="qrcode-scan" size={20} color="white" />
+                </View>
+                <View className="ml-3">
+                  <Text className="text-white font-extrabold text-[15px]">QR Kod ile Giriş Yap</Text>
+                  <Text className="text-white/80 text-[11px] font-semibold">Güvenli lokasyon doğrulaması ile</Text>
+                </View>
+              </View>
+              <MaterialCommunityIcons name="chevron-right" size={24} color="white" />
+            </TouchableOpacity>
+
             <View className="mt-4 bg-white rounded-2xl border border-[#f1f5f9] overflow-hidden">
               <Row label="Sicil No" value={sicilNo} />
               <Row label="TC Kimlik No" value={tc} />

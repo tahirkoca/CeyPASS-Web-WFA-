@@ -30,6 +30,7 @@ import { IzinlerimScreen } from './components/personel/IzinlerimScreen';
 import { AvanslarimScreen } from './components/personel/AvanslarimScreen';
 import { YetkiliPaneliScreen } from './components/personel/YetkiliPaneliScreen';
 import { PersonellerScreen } from './components/personel/PersonellerScreen';
+import { QrGirisScreen } from './components/personel/QrGirisScreen';
 import { KisiHareketleriScreen } from './components/kurumsal/KisiHareketleriScreen';
 import { IzinlerScreen } from './components/kurumsal/IzinlerScreen';
 import { RaporlarScreen } from './components/kurumsal/RaporlarScreen';
@@ -87,6 +88,7 @@ export default function App() {
     | "cihazlar"
     | "resmiTatiller"
     | "adminPanel"
+    | "qrGiris"
     | "placeholder"
   >("dashboard");
   const [activeKey, setActiveKey] = useState<string>("dashboard");
@@ -365,6 +367,7 @@ export default function App() {
       if (key === "izinTalepleri") return !!canView("IzinTalepleri");
       if (key === "avansTalepleri") return !!canView("Avans");
       if (key === "adminPanel") return (abilities?.rolId ?? abilities?.RolId) === 1;
+      if (key === "qrGiris") return !!canView("Profil") && hasSicil;
       return false;
     };
 
@@ -436,6 +439,13 @@ export default function App() {
                   setActivePage(k as any);
                 }}
               />
+            ) : safePage === "qrGiris" ? (
+              <View className="flex-1">
+                <QrGirisScreen onBack={() => {
+                  setActiveKey("profil");
+                  setActivePage("profil");
+                }} />
+              </View>
             ) : (
               <View className="flex-1 items-center justify-center bg-[#f8fafc] px-6">
                 <Text className="text-[#1e293b] font-extrabold text-[16px] text-center">Bu ekran yakında.</Text>

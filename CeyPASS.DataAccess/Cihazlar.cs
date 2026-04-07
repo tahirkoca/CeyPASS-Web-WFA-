@@ -24,5 +24,8 @@ namespace CeyPASS.DataAccess
         public string Notlar { get; set; }
         public byte CihazTipi { get; set; }
         public string CihazModeli { get; set; }
+        public decimal? Latitude { get; set; }
+        public decimal? Longitude { get; set; }
+        public int? MesafeToleransMetre { get; set; }
     }
 }

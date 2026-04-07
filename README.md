@@ -23,6 +23,13 @@ Hem Web hem de Masaüstü üzerinden aşağıdaki tüm işlemleri yapabilirsiniz
 *   **Raporlama:** Gelişmiş PDKS raporları ve grafikler.
 *   **Kart İşlemleri:** Kart atama, yetkilendirme ve güncelleme.
 *   **Bildirimler:** SignalR ile anlık sistem bildirimleri.
+*   **Mobil QR Geçiş Sistemi:** Personelin mobil uygulama üzerinden cihazlardaki QR kodları okutarak hızlı ve güvenli geçiş yapabilmesi.
+*   **Güvenlik Katmanları:**
+    *   **Geofencing (Konum Doğrulama):** İşlem sırasında personelin cihazın fiziksel konumuna yakınlığı (varsayılan 50m) kontrol edilir.
+    *   **Sahte Konum (Mock Location) Koruması:** Fake GPS uygulamalarıyla yapılan girişimler anında tespit edilir ve reddedilir.
+    *   **Gerçek Cihaz Kontrolü:** İşlemlerin emülatörler üzerinden değil, yalnızca fiziksel mobil cihazlar üzerinden yapılması zorunlu kılınmıştır.
+    *   **Mükerrer Kayıt Engelleme:** 5 saniye içindeki ardışık denemeler filtrelenerek sistem yükü ve hatalı kayıtlar önlenir.
+    *   **JWT & API Güvenliği:** Mobil iletişim tamamen şifrelenmiş JWT tokenları üzerinden yürütülür.
 
 ## 🛠 Mimari ve Teknolojiler
 
@@ -180,6 +187,13 @@ You can perform all the following operations via both Web and Desktop:
 *   **Reporting:** Advanced PDKS reports and charts.
 *   **Card Operations:** Card assignment, authorization, and updates.
 *   **Notifications:** Instant system notifications via SignalR.
+*   **Mobile QR Access System:** Quick and secure access by scanning QR codes on devices via the mobile app.
+*   **Security Layers:**
+    *   **Geofencing (Location Validation):** Verifies the user's proximity (default 50m) to the physical device during the transaction.
+    *   **Mock Location Protection:** Attempts using Fake GPS applications are instantly detected and rejected.
+    *   **Real Device Enforcement:** Transactions are only allowed from physical mobile devices, blocking emulators.
+    *   **Double-Tap Protection:** Consecutive attempts within 5 seconds are filtered to prevent duplicate logs.
+    *   **JWT & API Security:** All mobile communications are secured via encrypted JWT tokens.
 
 ## 🛠 Architecture & Technologies
 

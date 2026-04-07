@@ -234,4 +234,5 @@ void RegisterCeyPassServices(IServiceCollection services)
     services.AddTransient<IEmailService, ApiEmailService>();
     services.AddTransient<IKisiEkraniLookUpService, KisiEkraniLookupService>();
     services.AddTransient<IPushNotificationService, FcmPushService>();
+    services.AddTransient<IMobileQrService, MobileQrService>();
 }

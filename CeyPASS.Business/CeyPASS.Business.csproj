@@ -13,6 +13,7 @@
   <ItemGroup>
     <ProjectReference Include="..\CeyPASS.DataAccess\CeyPASS.DataAccess.csproj" />
     <ProjectReference Include="..\CeyPASS.Entities\CeyPASS.Entities.csproj" />
+    <ProjectReference Include="..\CeyPASS.Models\CeyPASS.Models.csproj" />
   </ItemGroup>
 
   <ItemGroup>

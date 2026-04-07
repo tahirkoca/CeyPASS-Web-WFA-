@@ -142,7 +142,11 @@ namespace CeyPASS.Api.Controllers
             if (!_sessionContext.IsAdmin() && authKind != "CanliIzleme") return Forbid();
             if (!_sessionContext.AktifFirmaId.HasValue) return BadRequest(ApiResult.Failure("Firma bilgisi bulunamadı."));
 
-            var passes = _canliIzlemeService.GetLastPasses(_sessionContext.AktifFirmaId.Value, take);
+            // Web CanliIzlemeController.GetLastPassesInternal ile aynı: YEMEKHANE → yemekhane geçişleri
+            var rol = _sessionContext.RolAdi;
+            var passes = IsYemekhaneRole(rol)
+                ? _canliIzlemeService.GetLastPassesYemekhane(_sessionContext.AktifFirmaId.Value, take)
+                : _canliIzlemeService.GetLastPasses(_sessionContext.AktifFirmaId.Value, take);
             var result = passes.Select(x => new
             {
                 personelId = x.PersonelId,
@@ -165,7 +169,11 @@ namespace CeyPASS.Api.Controllers
             if (!_sessionContext.IsAdmin() && authKind != "CanliIzleme") return Forbid();
             if (!_sessionContext.AktifFirmaId.HasValue) return BadRequest(ApiResult.Failure("Firma bilgisi bulunamadı."));
 
-            var moves = _kisiHareketService.GetLastMovesByFirma(take, _sessionContext.AktifFirmaId.Value);
+            // Web GetLastMovesInternal: YEMEKHANE ve DANIŞMA değilse yemekhane hareket listesi
+            var rol = _sessionContext.RolAdi;
+            var moves = (IsYemekhaneRole(rol) && !IsDanismaRole(rol))
+                ? _kisiHareketService.GetLastMovesByFirmaYemekhane(take, _sessionContext.AktifFirmaId.Value)
+                : _kisiHareketService.GetLastMovesByFirma(take, _sessionContext.AktifFirmaId.Value);
             var result = moves.Select(x => new
             {
                 tarih = x.Tarih,
@@ -196,6 +204,16 @@ namespace CeyPASS.Api.Controllers
                 departman = dto.Departman,
                 fotoBase64 = (dto.Foto != null && dto.Foto.Length > 0) ? Convert.ToBase64String(dto.Foto) : null
             }));
+        }
+
+        private static bool IsYemekhaneRole(string? rolAdi) =>
+            string.Equals(rolAdi ?? string.Empty, "YEMEKHANE", StringComparison.OrdinalIgnoreCase);
+
+        private static bool IsDanismaRole(string? rolAdi)
+        {
+            var r = rolAdi ?? "";
+            return r.IndexOf("DANIŞMA", StringComparison.OrdinalIgnoreCase) >= 0
+                   || r.IndexOf("DANISMA", StringComparison.OrdinalIgnoreCase) >= 0;
         }
     }
 }

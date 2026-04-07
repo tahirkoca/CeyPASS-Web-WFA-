@@ -31,7 +31,19 @@
     },
     "newArchEnabled": true,
     "plugins": [
-      "expo-secure-store"
+      "expo-secure-store",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "İşyerinize hızlı geçiş yapabilmeniz için QR kod okutması adına kameranıza erişim izni gereklidir."
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "İşyeri kapısında olduğunuzu doğrulamak için konumunuza erişim izni gereklidir."
+        }
+      ]
     ]
   }
 }

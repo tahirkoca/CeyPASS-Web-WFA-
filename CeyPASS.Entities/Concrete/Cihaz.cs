@@ -1,4 +1,4 @@
-﻿namespace CeyPASS.Entities.Concrete
+namespace CeyPASS.Entities.Concrete
 {
     public class Cihaz
     {
@@ -10,6 +10,9 @@
         public string Notlar { get; set; }       
         public int CihazTipi { get; set; }        
         public bool AktifMi { get; set; } = true;
-        public bool BaglandiMi { get; set; }     
+        public bool BaglandiMi { get; set; }
+        public decimal? Latitude { get; set; }
+        public decimal? Longitude { get; set; }
+        public int? MesafeToleransMetre { get; set; }
     }
 }
