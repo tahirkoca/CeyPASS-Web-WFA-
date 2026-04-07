@@ -22,9 +22,10 @@ jobs:
       - name: Sync files
         run: |
           rsync -av --exclude='.github' --exclude='.git' company/ personal/
+          LAST_COMMIT_MSG=$(git -C company log -1 --pretty=%s)
           cd personal
           git config user.email "action@github.com"
           git config user.name "GitHub Action"
           git add -A
-          git commit -m "Sync from company repo" || echo "Nothing to commit"
+          git commit -m "$LAST_COMMIT_MSG" || echo "Nothing to commit"
           git push
