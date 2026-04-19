@@ -131,6 +131,10 @@ namespace CeyPASS.WFA.UserControls.Raporlar
             try
             {
                 _report = _rsvc.CalistirRapor(procedureAdi, parametreler);
+                // Grid’i sıfırla ki kolonlar yeni DataTable sırasıyla oluşsun
+                dgRaporlar.DataSource = null;
+                dgRaporlar.Columns.Clear();
+                dgRaporlar.AutoGenerateColumns = true;
                 dgRaporlar.DataSource = _report;
                 LogHelper.Info(PageName, "RaporGetir", "Tamamlandı", $"{{\"rows\":{_report?.Rows.Count ?? 0},\"cols\":{_report?.Columns.Count ?? 0}}}", cid);
             }
@@ -205,6 +209,9 @@ namespace CeyPASS.WFA.UserControls.Raporlar
                     }
                 }
                 _report.DefaultView.RowFilter = string.Join(" OR ", filterConditions);
+                dgRaporlar.DataSource = null;
+                dgRaporlar.Columns.Clear();
+                dgRaporlar.AutoGenerateColumns = true;
                 dgRaporlar.DataSource = _report.DefaultView;
             }
             WinFormsAuthHelper.ApplyPageAuthorization(_auth, _session, PageName, this);
