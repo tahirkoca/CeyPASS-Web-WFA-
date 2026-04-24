@@ -1,13 +1,14 @@
-USE [master]
-GO
-
-CREATE DATABASE [CeyPASS]
-GO
+-- ============================================================
+-- CeyPASS Veritabanı Kurulum Scripti
+-- Tarih  : 22.04.2026
+-- Not    : Bu script herhangi bir SQL Server instance'ına
+--          sorunsuz kurulabilmesi için hazırlanmıştır.
+--          DB'yi elle oluşturun ya da kendi yolunuzu verin.
+-- ============================================================
 
 USE [CeyPASS]
 GO
-
-/****** Object:  UserDefinedFunction [dbo].[fn_IzinSureDakika]    Script Date: 13.04.2026 10:28:37 ******/
+/****** Object:  UserDefinedFunction [dbo].[fn_IzinSureDakika]    Script Date: 22.04.2026 16:30:29 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -74,7 +75,7 @@ BEGIN
     RETURN CONVERT(int, ROUND(@NetGun * 450 /*dk*/, 0));
 END
 GO
-/****** Object:  Table [dbo].[Kisiler]    Script Date: 13.04.2026 10:28:37 ******/
+/****** Object:  Table [dbo].[Kisiler]    Script Date: 22.04.2026 16:30:29 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -109,7 +110,7 @@ CREATE TABLE [dbo].[Kisiler](
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[YemekhaneGirisLimitler]    Script Date: 13.04.2026 10:28:37 ******/
+/****** Object:  Table [dbo].[YemekhaneGirisLimitler]    Script Date: 22.04.2026 16:30:29 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -126,7 +127,7 @@ UNIQUE NONCLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  View [dbo].[vw_Personeller]    Script Date: 13.04.2026 10:28:37 ******/
+/****** Object:  View [dbo].[vw_Personeller]    Script Date: 22.04.2026 16:30:29 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -141,7 +142,7 @@ FROM     dbo.PuantajsizKartlar p
 LEFT JOIN dbo.YemekhaneGirisLimitler y ON y.PersonelId = p.KartId AND y.AktifMi = 1
 WHERE  p.AktifMi = 1;
 GO
-/****** Object:  Table [dbo].[YemekhaneEngellenenKullanicilar]    Script Date: 13.04.2026 10:28:37 ******/
+/****** Object:  Table [dbo].[YemekhaneEngellenenKullanicilar]    Script Date: 22.04.2026 16:30:29 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -160,7 +161,7 @@ PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  View [dbo].[vw_YemekhaneEngellenenBekleyenler]    Script Date: 13.04.2026 10:28:37 ******/
+/****** Object:  View [dbo].[vw_YemekhaneEngellenenBekleyenler]    Script Date: 22.04.2026 16:30:29 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -206,7 +207,7 @@ WHERE b.TekrarEklendiMi = 0
   AND CAST(b.EngellemeTarihi AS date) >= DATEADD(DAY, -1, CAST(GETDATE() AS date))
   AND p.AktifMi = 1;
 GO
-/****** Object:  Table [dbo].[AvansTalepleri]    Script Date: 13.04.2026 10:28:37 ******/
+/****** Object:  Table [dbo].[AvansTalepleri]    Script Date: 22.04.2026 16:30:29 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -227,7 +228,7 @@ PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[Bildirimler]    Script Date: 13.04.2026 10:28:37 ******/
+/****** Object:  Table [dbo].[Bildirimler]    Script Date: 22.04.2026 16:30:29 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -248,7 +249,7 @@ CREATE TABLE [dbo].[Bildirimler](
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[Bolumler]    Script Date: 13.04.2026 10:28:37 ******/
+/****** Object:  Table [dbo].[Bolumler]    Script Date: 22.04.2026 16:30:29 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -264,7 +265,7 @@ PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[CalismaSekilleri]    Script Date: 13.04.2026 10:28:37 ******/
+/****** Object:  Table [dbo].[CalismaSekilleri]    Script Date: 22.04.2026 16:30:29 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -284,7 +285,7 @@ PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[CalismaStatusu]    Script Date: 13.04.2026 10:28:37 ******/
+/****** Object:  Table [dbo].[CalismaStatusu]    Script Date: 22.04.2026 16:30:29 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -294,7 +295,7 @@ CREATE TABLE [dbo].[CalismaStatusu](
 	[CalismaStatuAdi] [nvarchar](50) NULL
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[CanliIzlemeHesaplari]    Script Date: 13.04.2026 10:28:37 ******/
+/****** Object:  Table [dbo].[CanliIzlemeHesaplari]    Script Date: 22.04.2026 16:30:29 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -313,7 +314,7 @@ PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[CihazGrupDetay]    Script Date: 13.04.2026 10:28:37 ******/
+/****** Object:  Table [dbo].[CihazGrupDetay]    Script Date: 22.04.2026 16:30:29 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -328,7 +329,7 @@ PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[CihazGruplari]    Script Date: 13.04.2026 10:28:37 ******/
+/****** Object:  Table [dbo].[CihazGruplari]    Script Date: 22.04.2026 16:30:29 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -344,7 +345,7 @@ PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[Cihazlar]    Script Date: 13.04.2026 10:28:37 ******/
+/****** Object:  Table [dbo].[Cihazlar]    Script Date: 22.04.2026 16:30:29 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -373,7 +374,7 @@ PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[CihazTetikKuyrugu]    Script Date: 13.04.2026 10:28:37 ******/
+/****** Object:  Table [dbo].[CihazTetikKuyrugu]    Script Date: 22.04.2026 16:30:29 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -391,7 +392,7 @@ CREATE TABLE [dbo].[CihazTetikKuyrugu](
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[CihazTipler]    Script Date: 13.04.2026 10:28:37 ******/
+/****** Object:  Table [dbo].[CihazTipler]    Script Date: 22.04.2026 16:30:29 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -405,7 +406,7 @@ PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[CokluSicilBaglantilari]    Script Date: 13.04.2026 10:28:37 ******/
+/****** Object:  Table [dbo].[CokluSicilBaglantilari]    Script Date: 22.04.2026 16:30:29 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -428,7 +429,7 @@ CREATE TABLE [dbo].[CokluSicilBaglantilari](
 	[GuncelleyenKullaniciId] [int] NULL
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[Departmanlar]    Script Date: 13.04.2026 10:28:37 ******/
+/****** Object:  Table [dbo].[Departmanlar]    Script Date: 22.04.2026 16:30:29 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -443,7 +444,7 @@ PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[FinalPuantajVerisi]    Script Date: 13.04.2026 10:28:37 ******/
+/****** Object:  Table [dbo].[FinalPuantajVerisi]    Script Date: 22.04.2026 16:30:29 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -469,7 +470,7 @@ UNIQUE NONCLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[Firmalar]    Script Date: 13.04.2026 10:28:37 ******/
+/****** Object:  Table [dbo].[Firmalar]    Script Date: 22.04.2026 16:30:29 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -484,7 +485,7 @@ PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[Isyerler]    Script Date: 13.04.2026 10:28:37 ******/
+/****** Object:  Table [dbo].[Isyerler]    Script Date: 22.04.2026 16:30:29 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -501,7 +502,7 @@ CREATE TABLE [dbo].[Isyerler](
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[IzinTalepleri]    Script Date: 13.04.2026 10:28:37 ******/
+/****** Object:  Table [dbo].[IzinTalepleri]    Script Date: 22.04.2026 16:30:29 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -540,7 +541,7 @@ PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[IzinTipleri]    Script Date: 13.04.2026 10:28:37 ******/
+/****** Object:  Table [dbo].[IzinTipleri]    Script Date: 22.04.2026 16:30:29 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -564,7 +565,28 @@ UNIQUE NONCLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[KisiCihazYetkileri]    Script Date: 13.04.2026 10:28:37 ******/
+/****** Object:  Table [dbo].[KartNoDegisiklikleri]    Script Date: 22.04.2026 16:30:29 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[KartNoDegisiklikleri](
+	[Id] [int] IDENTITY(1,1) NOT NULL,
+	[PersonelId] [nvarchar](30) NOT NULL,
+	[OldKartNo] [nvarchar](30) NULL,
+	[NewKartNo] [nvarchar](30) NULL,
+	[ChangedAt] [datetime2](0) NOT NULL,
+	[Status] [tinyint] NOT NULL,
+	[ProcessedAt] [datetime2](0) NULL,
+	[ProcessedBy] [nvarchar](100) NULL,
+	[ErrorMessage] [nvarchar](4000) NULL,
+ CONSTRAINT [PK_KartNoDegisiklikleri] PRIMARY KEY CLUSTERED 
+(
+	[Id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[KisiCihazYetkileri]    Script Date: 22.04.2026 16:30:29 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -582,7 +604,7 @@ PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[KisiHareketler]    Script Date: 13.04.2026 10:28:37 ******/
+/****** Object:  Table [dbo].[KisiHareketler]    Script Date: 22.04.2026 16:30:29 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -602,7 +624,7 @@ PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[KisiIzinler]    Script Date: 13.04.2026 10:28:37 ******/
+/****** Object:  Table [dbo].[KisiIzinler]    Script Date: 22.04.2026 16:30:29 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -627,7 +649,7 @@ PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[KullaniciEkstraYetkilendirme]    Script Date: 13.04.2026 10:28:37 ******/
+/****** Object:  Table [dbo].[KullaniciEkstraYetkilendirme]    Script Date: 22.04.2026 16:30:29 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -639,7 +661,7 @@ CREATE TABLE [dbo].[KullaniciEkstraYetkilendirme](
 	[Allowed] [bit] NOT NULL
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[KullaniciFirmaIsyeriYetkileri]    Script Date: 13.04.2026 10:28:37 ******/
+/****** Object:  Table [dbo].[KullaniciFirmaIsyeriYetkileri]    Script Date: 22.04.2026 16:30:29 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -656,7 +678,7 @@ PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[Kullanicilar]    Script Date: 13.04.2026 10:28:37 ******/
+/****** Object:  Table [dbo].[Kullanicilar]    Script Date: 22.04.2026 16:30:29 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -675,7 +697,7 @@ PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[KullaniciSifreKurtarma]    Script Date: 13.04.2026 10:28:37 ******/
+/****** Object:  Table [dbo].[KullaniciSifreKurtarma]    Script Date: 22.04.2026 16:30:29 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -688,7 +710,7 @@ CREATE TABLE [dbo].[KullaniciSifreKurtarma](
 	[Kullanildi] [bit] NOT NULL
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[MobilUygulamaTokenleri]    Script Date: 13.04.2026 10:28:37 ******/
+/****** Object:  Table [dbo].[MobilUygulamaTokenleri]    Script Date: 22.04.2026 16:30:29 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -703,7 +725,7 @@ CREATE TABLE [dbo].[MobilUygulamaTokenleri](
 	[IsActive] [bit] NOT NULL
 ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[PersonelWebSifreler]    Script Date: 13.04.2026 10:28:37 ******/
+/****** Object:  Table [dbo].[PersonelWebSifreler]    Script Date: 22.04.2026 16:30:29 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -720,7 +742,7 @@ PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[Pozisyonlar]    Script Date: 13.04.2026 10:28:37 ******/
+/****** Object:  Table [dbo].[Pozisyonlar]    Script Date: 22.04.2026 16:30:29 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -735,7 +757,7 @@ PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[PuantajOnay]    Script Date: 13.04.2026 10:28:37 ******/
+/****** Object:  Table [dbo].[PuantajOnay]    Script Date: 22.04.2026 16:30:29 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -752,7 +774,7 @@ CREATE TABLE [dbo].[PuantajOnay](
 	[GuncelleyenKullaniciId] [int] NULL
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[PuantajsizKartAtamalari]    Script Date: 13.04.2026 10:28:37 ******/
+/****** Object:  Table [dbo].[PuantajsizKartAtamalari]    Script Date: 22.04.2026 16:30:29 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -773,7 +795,7 @@ PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[PuantajTipleri]    Script Date: 13.04.2026 10:28:37 ******/
+/****** Object:  Table [dbo].[PuantajTipleri]    Script Date: 22.04.2026 16:30:29 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -786,7 +808,7 @@ CREATE TABLE [dbo].[PuantajTipleri](
 	[OlusturmaZamani] [datetime2](3) NULL
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[RaporTanimlari]    Script Date: 13.04.2026 10:28:37 ******/
+/****** Object:  Table [dbo].[RaporTanimlari]    Script Date: 22.04.2026 16:30:29 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -803,7 +825,7 @@ PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[ResmiTatiller]    Script Date: 13.04.2026 10:28:37 ******/
+/****** Object:  Table [dbo].[ResmiTatiller]    Script Date: 22.04.2026 16:30:29 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -818,7 +840,7 @@ PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[Roller]    Script Date: 13.04.2026 10:28:37 ******/
+/****** Object:  Table [dbo].[Roller]    Script Date: 22.04.2026 16:30:29 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -832,7 +854,7 @@ PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[SayfaYetkileri]    Script Date: 13.04.2026 10:28:37 ******/
+/****** Object:  Table [dbo].[SayfaYetkileri]    Script Date: 22.04.2026 16:30:29 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -844,7 +866,7 @@ CREATE TABLE [dbo].[SayfaYetkileri](
 	[YetkiTipi] [nvarchar](50) NOT NULL
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[SenkronizasyonModulKullanicilar]    Script Date: 13.04.2026 10:28:37 ******/
+/****** Object:  Table [dbo].[SenkronizasyonModulKullanicilar]    Script Date: 22.04.2026 16:30:29 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -856,7 +878,7 @@ CREATE TABLE [dbo].[SenkronizasyonModulKullanicilar](
 	[Sifre] [nvarchar](100) NULL
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[SistemAyarlar]    Script Date: 13.04.2026 10:28:37 ******/
+/****** Object:  Table [dbo].[SistemAyarlar]    Script Date: 22.04.2026 16:30:29 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -872,7 +894,7 @@ PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[SistemLoglari]    Script Date: 13.04.2026 10:28:37 ******/
+/****** Object:  Table [dbo].[SistemLoglari]    Script Date: 22.04.2026 16:30:29 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -893,7 +915,7 @@ CREATE TABLE [dbo].[SistemLoglari](
 	[HataMesaji] [nvarchar](max) NULL
 ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[SistemMailAlicilari]    Script Date: 13.04.2026 10:28:37 ******/
+/****** Object:  Table [dbo].[SistemMailAlicilari]    Script Date: 22.04.2026 16:30:29 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -910,7 +932,7 @@ PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[TaseronKartlari]    Script Date: 13.04.2026 10:28:37 ******/
+/****** Object:  Table [dbo].[TaseronKartlari]    Script Date: 22.04.2026 16:30:29 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -924,7 +946,7 @@ CREATE TABLE [dbo].[TaseronKartlari](
 	[GuncellemeTarihi] [datetime2](3) NULL
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[UstYetkililer]    Script Date: 13.04.2026 10:28:37 ******/
+/****** Object:  Table [dbo].[UstYetkililer]    Script Date: 22.04.2026 16:30:29 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -939,7 +961,7 @@ PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Table [dbo].[YemekhaneGecisHareketler]    Script Date: 13.04.2026 10:28:37 ******/
+/****** Object:  Table [dbo].[YemekhaneGecisHareketler]    Script Date: 22.04.2026 16:30:29 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -958,12 +980,30 @@ PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-/****** Object:  Index [IX_CihazTetikKuyrugu_OkunduMu]    Script Date: 13.04.2026 10:28:37 ******/
+/****** Object:  Index [IX_CihazTetikKuyrugu_OkunduMu]    Script Date: 22.04.2026 16:30:29 ******/
 CREATE NONCLUSTERED INDEX [IX_CihazTetikKuyrugu_OkunduMu] ON [dbo].[CihazTetikKuyrugu]
 (
 	[OkunduMu] ASC
 )
 INCLUDE([CihazId]) WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+GO
+/****** Object:  Index [IX_KartNoDegisiklikleri_Pending]    Script Date: 22.04.2026 16:30:29 ******/
+CREATE NONCLUSTERED INDEX [IX_KartNoDegisiklikleri_Pending] ON [dbo].[KartNoDegisiklikleri]
+(
+	[Status] ASC,
+	[ChangedAt] ASC
+)
+INCLUDE([PersonelId],[OldKartNo],[NewKartNo]) WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+GO
+SET ANSI_PADDING ON
+GO
+/****** Object:  Index [IX_KartNoDegisiklikleri_PersonelId]    Script Date: 22.04.2026 16:30:29 ******/
+CREATE NONCLUSTERED INDEX [IX_KartNoDegisiklikleri_PersonelId] ON [dbo].[KartNoDegisiklikleri]
+(
+	[PersonelId] ASC,
+	[Status] ASC,
+	[ChangedAt] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 GO
 ALTER TABLE [dbo].[AvansTalepleri] ADD  CONSTRAINT [DF_AvansTalepleri_TalepTarihi]  DEFAULT (getdate()) FOR [TalepTarihi]
 GO
@@ -1006,6 +1046,10 @@ GO
 ALTER TABLE [dbo].[IzinTipleri] ADD  DEFAULT ((1)) FOR [AktifMi]
 GO
 ALTER TABLE [dbo].[IzinTipleri] ADD  DEFAULT (sysutcdatetime()) FOR [OlusturmaZamani]
+GO
+ALTER TABLE [dbo].[KartNoDegisiklikleri] ADD  CONSTRAINT [DF_KartNoDegisiklikleri_ChangedAt]  DEFAULT (sysutcdatetime()) FOR [ChangedAt]
+GO
+ALTER TABLE [dbo].[KartNoDegisiklikleri] ADD  CONSTRAINT [DF_KartNoDegisiklikleri_Status]  DEFAULT ((0)) FOR [Status]
 GO
 ALTER TABLE [dbo].[KisiCihazYetkileri] ADD  CONSTRAINT [DF_KCY_AktifMi]  DEFAULT ((1)) FOR [AktifMi]
 GO
@@ -1051,7 +1095,7 @@ ON DELETE CASCADE
 GO
 ALTER TABLE [dbo].[CihazGrupDetay] CHECK CONSTRAINT [FK_CihazGrupDetay_GrupId]
 GO
-/****** Object:  StoredProcedure [dbo].[sp_AktifPersonellerRaporu]    Script Date: 13.04.2026 10:28:37 ******/
+/****** Object:  StoredProcedure [dbo].[sp_AktifPersonellerRaporu]    Script Date: 22.04.2026 16:30:29 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -1120,7 +1164,7 @@ BEGIN
     DROP TABLE IF EXISTS #Isyerleri;
 END
 GO
-/****** Object:  StoredProcedure [dbo].[sp_AnlikDisaridakilerRaporu]    Script Date: 13.04.2026 10:28:37 ******/
+/****** Object:  StoredProcedure [dbo].[sp_AnlikDisaridakilerRaporu]    Script Date: 22.04.2026 16:30:29 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -1219,7 +1263,7 @@ BEGIN
     SELECT
         AP.PersonelId                                       AS [Sicil No],
         AP.Ad + N' ' + AP.Soyad                             AS [Adı Soyadı],
-        IY.IsyeriAdi                                        AS [İşyeri],
+		I.IsyeriAdi                                         AS [İşyeri],
         FORMAT(SH.Tarih, 'dd.MM.yyyy dddd', 'tr-TR')        AS [Son Hareket Tarihi],
         FORMAT(SH.Tarih, 'HH:mm')                           AS [Son Hareket Saati],
         SH.CihazAdi                                         AS [Son Turnike],
@@ -1230,14 +1274,14 @@ BEGIN
     FROM AktifPersoneller AP
     INNER JOIN BugunHareketiOlanlar BHO ON BHO.PersonelId = AP.PersonelId
     LEFT JOIN SonHareket SH ON SH.PersonelId = AP.PersonelId
-    LEFT JOIN dbo.Isyerler IY ON IY.IsyeriId = AP.IsyeriId AND IY.FirmaId = AP.FirmaId
+	LEFT JOIN dbo.Isyerler I ON I.IsyeriId = AP.IsyeriId AND I.FirmaId = AP.FirmaId
     WHERE
         AP.PersonelId NOT IN (SELECT PersonelId FROM GunlukIzinliler)
         AND (SH.Tip IS NULL OR SH.Tip <> N'Giriş')
     ORDER BY SH.Tarih DESC;
 END
 GO
-/****** Object:  StoredProcedure [dbo].[sp_AnlikIceridekilerRaporu]    Script Date: 13.04.2026 10:28:37 ******/
+/****** Object:  StoredProcedure [dbo].[sp_AnlikIceridekilerRaporu]    Script Date: 22.04.2026 16:30:29 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -1347,7 +1391,7 @@ BEGIN
     SELECT
         AP.PersonelId                                       AS [Sicil No],
         AP.Ad + N' ' + AP.Soyad                             AS [Adı Soyadı],
-        IY.IsyeriAdi                                        AS [İşyeri],
+		I.IsyeriAdi                                        AS [İşyeri],
         FORMAT(SH.Tarih, 'dd.MM.yyyy dddd', 'tr-TR')        AS [Son Hareket Tarihi],
         FORMAT(SH.Tarih, 'HH:mm')                           AS [Son Giriş Saati],
         SH.CihazAdi                                         AS [Giriş Turnikesi],
@@ -1355,14 +1399,14 @@ BEGIN
     FROM AktifPersoneller AP
     INNER JOIN BugunHareketiOlanlar BHO ON BHO.PersonelId = AP.PersonelId
     INNER JOIN SonHareket SH ON SH.PersonelId = AP.PersonelId
-    LEFT JOIN dbo.Isyerler IY ON IY.IsyeriId = AP.IsyeriId AND IY.FirmaId = AP.FirmaId
+	LEFT JOIN Isyerler I ON I.IsyeriId = AP.IsyeriId AND I.FirmaId = AP.FirmaId
     WHERE
         AP.PersonelId NOT IN (SELECT PersonelId FROM GunlukIzinliler)
         AND SH.Tip = N'Giriş'
     ORDER BY SH.Tarih DESC;
 END
 GO
-/****** Object:  StoredProcedure [dbo].[sp_Ayar_Get]    Script Date: 13.04.2026 10:28:37 ******/
+/****** Object:  StoredProcedure [dbo].[sp_Ayar_Get]    Script Date: 22.04.2026 16:30:29 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -1376,7 +1420,7 @@ BEGIN
     SELECT TOP(1) AyarDegeri FROM dbo.SistemAyarlar WITH (UPDLOCK, HOLDLOCK) WHERE AyarAdi=@AyarAdi;
 END
 GO
-/****** Object:  StoredProcedure [dbo].[sp_Ayar_Set]    Script Date: 13.04.2026 10:28:37 ******/
+/****** Object:  StoredProcedure [dbo].[sp_Ayar_Set]    Script Date: 22.04.2026 16:30:29 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -1399,7 +1443,7 @@ BEGIN
         VALUES (@AyarAdi, @AyarDegeri, sysdatetime(), @KullaniciId);
 END
 GO
-/****** Object:  StoredProcedure [dbo].[sp_AylikPuantajVeri]    Script Date: 13.04.2026 10:28:37 ******/
+/****** Object:  StoredProcedure [dbo].[sp_AylikPuantajVeri]    Script Date: 22.04.2026 16:30:29 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -1735,6 +1779,7 @@ BEGIN
     LEFT JOIN GunEk ge ON ge.Tarih = f.Tarih
 )
 
+
 SELECT
   c.Tarih,
   c.VardiyaTuru,
@@ -1767,7 +1812,7 @@ ORDER BY c.Tarih;
 
 END
 GO
-/****** Object:  StoredProcedure [dbo].[sp_CokluSicileAktar]    Script Date: 13.04.2026 10:28:37 ******/
+/****** Object:  StoredProcedure [dbo].[sp_CokluSicileAktar]    Script Date: 22.04.2026 16:30:29 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -1895,7 +1940,7 @@ BEGIN
                 GETDATE(), @KullaniciId);
 END
 GO
-/****** Object:  StoredProcedure [dbo].[sp_DashboardAnaEkran]    Script Date: 13.04.2026 10:28:37 ******/
+/****** Object:  StoredProcedure [dbo].[sp_DashboardAnaEkran]    Script Date: 22.04.2026 16:30:29 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -2268,7 +2313,7 @@ BEGIN
 
 END
 GO
-/****** Object:  StoredProcedure [dbo].[sp_DevamsizlarRaporu]    Script Date: 13.04.2026 10:28:37 ******/
+/****** Object:  StoredProcedure [dbo].[sp_DevamsizlarRaporu]    Script Date: 22.04.2026 16:30:29 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -2396,7 +2441,7 @@ BEGIN
     OPTION (MAXRECURSION 0);
 END
 GO
-/****** Object:  StoredProcedure [dbo].[sp_FazlaMesai]    Script Date: 13.04.2026 10:28:37 ******/
+/****** Object:  StoredProcedure [dbo].[sp_FazlaMesai]    Script Date: 22.04.2026 16:30:29 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -2577,7 +2622,7 @@ BEGIN
   ORDER BY k.FirmaId, k.IsyeriId, [Adı Soyadı], g.Gun;
 END
 GO
-/****** Object:  StoredProcedure [dbo].[sp_GunlukGecKalanlarRaporu]    Script Date: 13.04.2026 10:28:37 ******/
+/****** Object:  StoredProcedure [dbo].[sp_GunlukGecKalanlarRaporu]    Script Date: 22.04.2026 16:30:29 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -2659,7 +2704,7 @@ BEGIN
   SELECT
       K.PersonelId                                     AS [Sicil No],
       K.Ad + N' ' + K.Soyad                            AS [Adı Soyadı],
-      IY.IsyeriAdi                                     AS [İşyeri],
+	  I.IsyeriAdi                                     AS [İşyeri],
       FORMAT(FI.Gun, 'dd.MM.yyyy dddd', 'tr-TR')       AS [Tarih],
       FORMAT(Best.BeklenenDT,   'HH:mm')               AS [Beklenen Giriş Saati],
       FORMAT(Best.ToleransliDT, 'HH:mm')               AS [Toleranslı Giriş Saati],
@@ -2667,7 +2712,7 @@ BEGIN
       DATEDIFF(MINUTE, Best.ToleransliDT, FI.IlkGiris) AS [Geç Kalma Süresi(Dakika)]
   FROM FirstIn FI
   INNER JOIN dbo.Kisiler K ON K.PersonelId = FI.PersonelId
-  LEFT JOIN dbo.Isyerler IY ON IY.IsyeriId = K.IsyeriId AND IY.FirmaId = K.FirmaId
+  LEFT JOIN dbo.Isyerler I ON I.IsyeriId = K.IsyeriId AND I.FirmaId = K.FirmaId
   OUTER APPLY (
       SELECT TOP (1)
           BeklenenDT =
@@ -2694,7 +2739,7 @@ BEGIN
   ORDER BY FI.Gun DESC, [Geç Kalma Süresi(Dakika)] DESC, FI.IlkGiris;
 END
 GO
-/****** Object:  StoredProcedure [dbo].[sp_GunlukHareketiBulunanlarRaporu]    Script Date: 13.04.2026 10:28:37 ******/
+/****** Object:  StoredProcedure [dbo].[sp_GunlukHareketiBulunanlarRaporu]    Script Date: 22.04.2026 16:30:29 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -2775,18 +2820,18 @@ BEGIN
     SELECT
         K.PersonelId                                            AS [Sicil No],
         K.Ad + N' ' + K.Soyad                                   AS [Adı Soyadı],
-        IY.IsyeriAdi                                            AS [İşyeri],
+		I.IsyeriAdi                                            AS [İşyeri],
         FORMAT(FM.Gun, 'dd.MM.yyyy dddd', 'tr-TR')              AS [Tarih],
         FORMAT(FM.Zaman, 'HH:mm')                               AS [İlk Hareket Saati],
         FM.Tip                                                  AS [İlk Hareket Tipi],
         FM.CihazAdi                                             AS [İlk Hareket Turnikesi]
     FROM FirstMove FM
     INNER JOIN dbo.Kisiler K ON K.PersonelId = FM.PersonelId
-    LEFT JOIN dbo.Isyerler IY ON IY.IsyeriId = K.IsyeriId AND IY.FirmaId = K.FirmaId
+	LEFT JOIN dbo.Isyerler I ON I.IsyeriId = K.IsyeriId AND I.FirmaId = K.FirmaId
     ORDER BY FM.Gun DESC, FM.Zaman ASC;
 END
 GO
-/****** Object:  StoredProcedure [dbo].[sp_GunlukIzinlilerRaporu]    Script Date: 13.04.2026 10:28:37 ******/
+/****** Object:  StoredProcedure [dbo].[sp_GunlukIzinlilerRaporu]    Script Date: 22.04.2026 16:30:29 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -2863,7 +2908,7 @@ BEGIN
     OPTION (MAXRECURSION 4000);
 END
 GO
-/****** Object:  StoredProcedure [dbo].[sp_GunlukYemekSayisi]    Script Date: 13.04.2026 10:28:37 ******/
+/****** Object:  StoredProcedure [dbo].[sp_GunlukYemekSayisi]    Script Date: 22.04.2026 16:30:29 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -2901,11 +2946,11 @@ BEGIN
             y.PersonelId,
             k.FirmaId,
             k.IsyeriId,
-            iy.IsyeriAdi
+			i.IsyeriAdi
         FROM dbo.YemekhaneGecisHareketler y
         INNER JOIN dbo.Kisiler k   ON k.PersonelId = y.PersonelId
         INNER JOIN dbo.Cihazlar c  ON c.CihazId    = y.CihazId
-        LEFT JOIN dbo.Isyerler iy  ON iy.IsyeriId  = k.IsyeriId AND iy.FirmaId = k.FirmaId
+		LEFT JOIN dbo.Isyerler i ON i.IsyeriId = k.IsyeriId AND i.FirmaId = k.FirmaId
         WHERE y.Tarih >= @TarihBaslangic
           AND y.Tarih <  DATEADD(DAY, 1, @TarihBitis)
           AND c.CihazAdi COLLATE Turkish_CI_AI LIKE N'%yemekhane%'  -- sadece Yemekhane cihazları
@@ -2916,7 +2961,7 @@ BEGIN
     (
         SELECT
             Gun,
-            IsyeriAdi,
+			IsyeriAdi,
             CASE 
                 WHEN FirmaId = 101 AND IsyeriId = 14 THEN N'Akaryakıt'
                 WHEN FirmaId = 101 AND IsyeriId = 13 THEN N'İstanbul Merkez'
@@ -2926,15 +2971,15 @@ BEGIN
     )
     SELECT
         FORMAT(Gun, 'dd.MM.yyyy dddd', 'tr-TR') AS Tarih,
-        IsyeriAdi AS [İşyeri],
+		IsyeriAdi AS [İşyeri],
         Departman,
         COUNT(*) AS [Toplam Yemek Adedi]               -- tekilleştirme yok: kaç geçiş varsa o
     FROM Departmanli
     GROUP BY Gun, IsyeriAdi, Departman
-    ORDER BY Gun, IsyeriAdi, Departman;
+	ORDER BY Gun, IsyeriAdi, Departman;
 END
 GO
-/****** Object:  StoredProcedure [dbo].[sp_IlkGirisSonCikisRaporu]    Script Date: 13.04.2026 10:28:37 ******/
+/****** Object:  StoredProcedure [dbo].[sp_IlkGirisSonCikisRaporu]    Script Date: 22.04.2026 16:30:29 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -2966,7 +3011,7 @@ BEGIN
     SELECT 
         k.PersonelId AS [Sicil No],
         k.Ad + ' ' + k.Soyad AS [Ad Soyad],
-        iy.IsyeriAdi AS [İşyeri],
+		i.IsyeriAdi AS [İşyeri],
         FORMAT(CONVERT(DATE, kh.Tarih), 'dd.MM.yyyy dddd', 'tr-TR') AS Tarih,
 
         -- İLK GİRİŞ
@@ -2988,9 +3033,9 @@ BEGIN
                 ISNULL( FORMAT(MAX(CASE WHEN kh.Tip = N'Çıkış' THEN kh.Tarih END), 'HH:mm:ss'), 'HAREKETİ YOK' )
         END AS [Son Çıkış]
 
-    FROM dbo.KisiHareketler kh
-    INNER JOIN dbo.Kisiler k ON k.PersonelId = kh.PersonelId
-    LEFT JOIN dbo.Isyerler iy ON iy.IsyeriId = k.IsyeriId AND iy.FirmaId = k.FirmaId
+    FROM CeyPASS.dbo.KisiHareketler kh
+    INNER JOIN CeyPASS.dbo.Kisiler k ON k.PersonelId = kh.PersonelId
+	LEFT JOIN dbo.Isyerler i ON i.IsyeriId = k.IsyeriId AND i.FirmaId = k.FirmaId
     WHERE 
         kh.Tarih BETWEEN @BaslangicTarihi AND @BitisTarihi
         AND kh.AktifMi = 1
@@ -2998,12 +3043,12 @@ BEGIN
         AND k.FirmaId IN (SELECT FirmaId FROM @FirmaIds)
         AND k.IsyeriId IN (SELECT IsyeriId FROM @IsyeriIds)
     GROUP BY 
-        k.PersonelId, k.Ad, k.Soyad, k.IsyeriId, iy.IsyeriAdi, CONVERT(DATE, kh.Tarih)
+        k.PersonelId, k.Ad, k.Soyad, k.IsyeriId, i.IsyeriAdi, CONVERT(DATE, kh.Tarih)
     ORDER BY 
         Tarih, [Ad Soyad];
 END
 GO
-/****** Object:  StoredProcedure [dbo].[sp_IseBaslayanlarRaporu]    Script Date: 13.04.2026 10:28:37 ******/
+/****** Object:  StoredProcedure [dbo].[sp_IseBaslayanlarRaporu]    Script Date: 22.04.2026 16:30:29 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -3071,7 +3116,7 @@ BEGIN
     ORDER BY k.IseGirisTarihi DESC, k.Ad, k.Soyad;
 END
 GO
-/****** Object:  StoredProcedure [dbo].[sp_IstenAyrilanlarRaporu]    Script Date: 13.04.2026 10:28:37 ******/
+/****** Object:  StoredProcedure [dbo].[sp_IstenAyrilanlarRaporu]    Script Date: 22.04.2026 16:30:29 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -3134,7 +3179,7 @@ BEGIN
     ORDER BY k.IstenCikisTarihi DESC, k.Ad, k.Soyad;
 END
 GO
-/****** Object:  StoredProcedure [dbo].[sp_MisafirKartlariRaporu]    Script Date: 13.04.2026 10:28:37 ******/
+/****** Object:  StoredProcedure [dbo].[sp_MisafirKartlariRaporu]    Script Date: 22.04.2026 16:30:29 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -3160,7 +3205,6 @@ BEGIN
         CAST(p.PersonelId AS nvarchar(30))
       ) AS [Kullanılan Kart Adı],
       ISNULL(f.FirmaAdi, CAST(p.FirmaId AS nvarchar(20))) AS [Firma Adı],
-      iy.IsyeriAdi AS [İşyeri],
       ka.MisafirAdSoyad AS [Kullanan Adı Soyadı],
       ka.Baslangic AS [Kart Alım Zamanı],
       ka.Bitis AS [Kart Teslim Zamanı],
@@ -3184,7 +3228,6 @@ BEGIN
   FROM dbo.PuantajsizKartAtamalari ka
   JOIN dbo.Kisiler p ON p.PersonelId = ka.KartId
   LEFT JOIN dbo.Firmalar f ON f.FirmaId = p.FirmaId
-  LEFT JOIN dbo.Isyerler iy ON iy.IsyeriId = p.IsyeriId AND iy.FirmaId = p.FirmaId
   WHERE
       ka.Baslangic < @TarihBitis
   AND ISNULL(ka.Bitis,'9999-12-31') > @TarihBaslangic
@@ -3192,7 +3235,7 @@ BEGIN
   ORDER BY [Kullanılan Kart Adı], ka.Baslangic;
 END
 GO
-/****** Object:  StoredProcedure [dbo].[sp_MolaRaporu]    Script Date: 13.04.2026 10:28:37 ******/
+/****** Object:  StoredProcedure [dbo].[sp_MolaRaporu]    Script Date: 22.04.2026 16:30:29 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -3233,9 +3276,9 @@ BEGIN
             KH.CihazId,
             C.CihazAdi,
             C.Notlar
-        FROM dbo.KisiHareketler KH
-        INNER JOIN dbo.Kisiler  K  ON KH.PersonelId = K.PersonelId
-        INNER JOIN dbo.Cihazlar C  ON KH.CihazId    = C.CihazId
+        FROM CeyPASS.dbo.KisiHareketler KH
+        INNER JOIN CeyPASS.dbo.Kisiler  K  ON KH.PersonelId = K.PersonelId
+        INNER JOIN CeyPASS.dbo.Cihazlar C  ON KH.CihazId    = C.CihazId
         WHERE KH.AktifMi = 1
           AND KH.Tarih BETWEEN @Baslangic AND @Bitis
           AND K.IstenCikisTarihi IS NULL
@@ -3256,8 +3299,7 @@ BEGIN
     SELECT
         K.PersonelId                        AS [Sicil No],
         K.Ad + N' ' + K.Soyad               AS [Adı Soyadı],
-        IY.IsyeriAdi                        AS [İşyeri],
-
+		I.IsyeriAdi                        AS [İşyeri],
         FORMAT(E.CikisZamani, 'dd.MM.yyyy dddd', 'tr-TR') AS [Çıkış Tarihi],
         FORMAT(E.CikisZamani, 'HH:mm:ss')                 AS [Çıkış Saati],
         E.CikisTerminal                                    AS [Çıkış Turnikesi],
@@ -3268,11 +3310,8 @@ BEGIN
 
         DATEDIFF(MINUTE, E.CikisZamani, N.GirisZamani)     AS [Mola(Dakika)]
     FROM Exits E
-    INNER JOIN dbo.Kisiler K
-        ON K.PersonelId = E.PersonelId
-    LEFT JOIN dbo.Isyerler IY
-        ON IY.IsyeriId = K.IsyeriId
-       AND IY.FirmaId  = K.FirmaId
+    INNER JOIN CeyPASS.dbo.Kisiler K ON K.PersonelId = E.PersonelId
+	LEFT JOIN dbo.Isyerler I ON I.IsyeriId = K.IsyeriId AND I.FirmaId  = K.FirmaId
     OUTER APPLY (  -- aynı gün içinde, eşiklere uyan ilk giriş
         SELECT TOP (1)
             b2.Tarih     AS GirisZamani,
@@ -3289,7 +3328,7 @@ BEGIN
     ORDER BY K.PersonelId, E.CikisZamani;
 END
 GO
-/****** Object:  StoredProcedure [dbo].[sp_OnayKontrolMekanizmasi]    Script Date: 13.04.2026 10:28:37 ******/
+/****** Object:  StoredProcedure [dbo].[sp_OnayKontrolMekanizmasi]    Script Date: 22.04.2026 16:30:29 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -3323,7 +3362,7 @@ BEGIN
   SELECT CAST(0 AS BIT) AS Allowed;
 END
 GO
-/****** Object:  StoredProcedure [dbo].[sp_Puantaj_Final_Upsert]    Script Date: 13.04.2026 10:28:37 ******/
+/****** Object:  StoredProcedure [dbo].[sp_Puantaj_Final_Upsert]    Script Date: 22.04.2026 16:30:29 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -3356,7 +3395,7 @@ BEGIN
     VALUES (S.PersonelId, S.Ad, S.Soyad, @Tarih, @CalismaTipi, @Saat, GETDATE());
 END
 GO
-/****** Object:  StoredProcedure [dbo].[sp_Puantaj_Onay_Upsert]    Script Date: 13.04.2026 10:28:37 ******/
+/****** Object:  StoredProcedure [dbo].[sp_Puantaj_Onay_Upsert]    Script Date: 22.04.2026 16:30:29 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -3387,7 +3426,7 @@ BEGIN
         VALUES (@PersonelId, @Tarih, @OnayDurumu, @DuzenlenmisFMDakika, @Aciklama, GETDATE(), @KullaniciId);
 END
 GO
-/****** Object:  StoredProcedure [dbo].[sp_PuantajTipleri_GetActive]    Script Date: 13.04.2026 10:28:37 ******/
+/****** Object:  StoredProcedure [dbo].[sp_PuantajTipleri_GetActive]    Script Date: 22.04.2026 16:30:29 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -3402,7 +3441,7 @@ BEGIN
     ORDER BY Ad;
 END
 GO
-/****** Object:  StoredProcedure [dbo].[sp_ResmiTatilEkle]    Script Date: 13.04.2026 10:28:37 ******/
+/****** Object:  StoredProcedure [dbo].[sp_ResmiTatilEkle]    Script Date: 22.04.2026 16:30:29 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -3437,7 +3476,7 @@ BEGIN
        VALUES (S.Tarih, S.Ad, ISNULL(S.CalismaSaati, 7.50));
 END
 GO
-/****** Object:  StoredProcedure [dbo].[sp_ResmiTatiller_DoldurSabit]    Script Date: 13.04.2026 10:28:37 ******/
+/****** Object:  StoredProcedure [dbo].[sp_ResmiTatiller_DoldurSabit]    Script Date: 22.04.2026 16:30:29 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -3490,7 +3529,7 @@ BEGIN
   ;
 END
 GO
-/****** Object:  StoredProcedure [dbo].[sp_TumHareketlerRaporu]    Script Date: 13.04.2026 10:28:37 ******/
+/****** Object:  StoredProcedure [dbo].[sp_TumHareketlerRaporu]    Script Date: 22.04.2026 16:30:29 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -3526,7 +3565,7 @@ BEGIN
     SELECT 
         K.PersonelId AS [Sicil No],
         K.Ad+' '+K.Soyad AS [Adı Soyadı],
-        IY.IsyeriAdi AS [İşyeri],
+		I.IsyeriAdi AS [İşyeri],
         FORMAT(KH.Tarih, 'dd.MM.yyyy dddd', 'tr-TR') AS [Tarih],
         FORMAT(KH.Tarih, 'HH:mm:ss') AS [Saat],
         CASE 
@@ -3535,10 +3574,10 @@ BEGIN
             ELSE 'ACCESS'
         END AS [Hareket Tipi],
         C.CihazAdi AS [Terminal Adı]
-    FROM dbo.KisiHareketler KH
-    INNER JOIN dbo.Kisiler K ON KH.PersonelId = K.PersonelId
-    INNER JOIN dbo.Cihazlar C ON KH.CihazId = C.CihazId
-    LEFT JOIN dbo.Isyerler IY ON IY.IsyeriId = K.IsyeriId AND IY.FirmaId = K.FirmaId
+    FROM CeyPASS.dbo.KisiHareketler KH
+    INNER JOIN CeyPASS.dbo.Kisiler K ON KH.PersonelId = K.PersonelId
+    INNER JOIN CeyPASS.dbo.Cihazlar C ON KH.CihazId = C.CihazId
+	LEFT JOIN dbo.Isyerler I ON I.IsyeriId = K.IsyeriId AND I.FirmaId = K.FirmaId
     WHERE 
         KH.Tarih BETWEEN @Baslangic AND @Bitis
         AND K.IstenCikisTarihi IS NULL
@@ -3548,7 +3587,7 @@ BEGIN
     ORDER BY KH.Tarih ASC;
 END
 GO
-/****** Object:  StoredProcedure [dbo].[sp_YemekhaneGecisRaporu]    Script Date: 13.04.2026 10:28:37 ******/
+/****** Object:  StoredProcedure [dbo].[sp_YemekhaneGecisRaporu]    Script Date: 22.04.2026 16:30:29 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -3583,7 +3622,7 @@ BEGIN
             NULLIF(LTRIM(RTRIM(ISNULL(K.Ad, N'') + N' ' + ISNULL(K.Soyad, N''))), N''),
             K.PersonelId
         ) AS [Ad Soyad],
-        IY.IsyeriAdi AS [İşyeri],
+		I.IsyeriAdi AS [İşyeri],
         C.CihazAdi AS [Turnike],
         FORMAT(YGH.KayitZamani, 'dd.MM.yyyy dddd', 'tr-TR') AS [Hareket Günü],
         FORMAT(YGH.KayitZamani, 'HH:mm:ss') AS [Kart Okuma Zamanı]
@@ -3592,11 +3631,56 @@ BEGIN
     INNER JOIN Kisiler  AS K ON K.PersonelId = YGH.PersonelId
                             AND K.IstenCikisTarihi IS NULL
                             AND (NOT EXISTS (SELECT 1 FROM @FirmaIds) OR K.FirmaId IN (SELECT FirmaId FROM @FirmaIds))
+	LEFT JOIN dbo.Isyerler I ON I.IsyeriId = K.IsyeriId AND I.FirmaId = K.FirmaId
                             --AND (NOT EXISTS (SELECT 1 FROM @IsyeriIds) OR K.IsyeriId IN (SELECT IsyeriId FROM @IsyeriIds))
-    LEFT JOIN dbo.Isyerler IY ON IY.IsyeriId = K.IsyeriId AND IY.FirmaId = K.FirmaId
     WHERE
         YGH.KayitZamani BETWEEN @BaslangicTarihi AND @BitisTarihi
     ORDER BY
         YGH.KayitZamani ASC;
+END
+GO
+GO
+/****** Object:  Trigger [dbo].[TR_Kisiler_KartNo_Audit]    Script Date: 22.04.2026 16:34:24 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TRIGGER [dbo].[TR_Kisiler_KartNo_Audit]
+ON [dbo].[Kisiler]
+AFTER UPDATE
+AS
+BEGIN
+    SET NOCOUNT ON;
+    -- Sadece KartNo değiştiyse yaz
+    IF NOT UPDATE(KartNo)
+        RETURN;
+    ;WITH Changed AS
+    (
+        SELECT
+            i.PersonelId,
+            CAST(d.KartNo AS NVARCHAR(30)) AS OldKartNo,
+            CAST(i.KartNo AS NVARCHAR(30)) AS NewKartNo
+        FROM inserted i
+        INNER JOIN deleted d ON d.PersonelId = i.PersonelId
+        WHERE
+            ISNULL(CAST(d.KartNo AS NVARCHAR(30)), N'') <> ISNULL(CAST(i.KartNo AS NVARCHAR(30)), N'')
+    )
+    INSERT INTO dbo.KartNoDegisiklikleri (PersonelId, OldKartNo, NewKartNo, ChangedAt, Status)
+    SELECT
+        c.PersonelId,
+        NULLIF(c.OldKartNo, N'') AS OldKartNo,
+        NULLIF(c.NewKartNo, N'') AS NewKartNo,
+        SYSUTCDATETIME(),
+        0
+    FROM Changed c
+    WHERE NOT EXISTS
+    (
+        -- Aynı PersonelId için hâlihazırda bekleyen aynı değişiklik varsa duplicate üretme
+        SELECT 1
+        FROM dbo.KartNoDegisiklikleri k
+        WHERE k.PersonelId = c.PersonelId
+          AND k.Status = 0
+          AND ISNULL(k.NewKartNo, N'') = ISNULL(NULLIF(c.NewKartNo, N''), N'')
+    );
 END
 GO

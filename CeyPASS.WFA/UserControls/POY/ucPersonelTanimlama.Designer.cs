@@ -1052,1074 +1052,1126 @@ namespace CeyPASS.WFA.UserControls
 
         private void InitializeComponent()
         {
-            this.pnlMain = new System.Windows.Forms.Panel();
-            this.pnlContent = new System.Windows.Forms.Panel();
-            this.tabCtrlPersonel = new System.Windows.Forms.TabControl();
-            this.tabPersonelSayfa = new System.Windows.Forms.TabPage();
-            this.tlpTab1 = new System.Windows.Forms.TableLayoutPanel();
-            this.cmbFirma = new System.Windows.Forms.ComboBox();
-            this.label1 = new System.Windows.Forms.Label();
-            this.lblAdSoyad = new System.Windows.Forms.Label();
-            this.txtAdSoyad = new System.Windows.Forms.TextBox();
-            this.lblTc = new System.Windows.Forms.Label();
-            this.txtKimlikNo = new System.Windows.Forms.TextBox();
-            this.lblSicil = new System.Windows.Forms.Label();
-            this.txtSicilNo = new System.Windows.Forms.TextBox();
-            this.lblKartNo = new System.Windows.Forms.Label();
-            this.txtPersonelKartNo = new System.Windows.Forms.TextBox();
-            this.lblFirmaKart = new System.Windows.Forms.Label();
-            this.txtFirmaDisiKartNo = new System.Windows.Forms.TextBox();
-            this.lblIseGiris = new System.Windows.Forms.Label();
-            this.dtpIseGiris = new System.Windows.Forms.DateTimePicker();
-            this.lblIstenCikis = new System.Windows.Forms.Label();
-            this.dtpIstenCikis = new System.Windows.Forms.DateTimePicker();
-            this.lblDepartman = new System.Windows.Forms.Label();
-            this.cmbDepartman = new System.Windows.Forms.ComboBox();
-            this.lblBolum = new System.Windows.Forms.Label();
-            this.cmbBolum = new System.Windows.Forms.ComboBox();
-            this.lblPozisyon = new System.Windows.Forms.Label();
-            this.cmbPozisyon = new System.Windows.Forms.ComboBox();
-            this.pnlRightCol = new System.Windows.Forms.Panel();
-            this.pnlChecks = new System.Windows.Forms.FlowLayoutPanel();
-            this.chkFirmaPersoneliMi = new System.Windows.Forms.CheckBox();
-            this.chkPuantajYapilirMi = new System.Windows.Forms.CheckBox();
-            this.chkYemekHakkiVarMi = new System.Windows.Forms.CheckBox();
-            this.chkZiyaretciMi = new System.Windows.Forms.CheckBox();
-            this.chkAracKartiMi = new System.Windows.Forms.CheckBox();
-            this.chkTaseronCalisanMi = new System.Windows.Forms.CheckBox();
-            this.pnlPhotoContainer = new System.Windows.Forms.Panel();
-            this.tlpPhotoBtns = new System.Windows.Forms.TableLayoutPanel();
-            this.btnFotoEkle = new System.Windows.Forms.Button();
-            this.btnFotoSil = new System.Windows.Forms.Button();
-            this.pbKisiFoto = new System.Windows.Forms.PictureBox();
-            this.tabEkBilgilerSayfa = new System.Windows.Forms.TabPage();
-            this.tlpTab2 = new System.Windows.Forms.TableLayoutPanel();
-            this.lblEmail = new System.Windows.Forms.Label();
-            this.txtEmail = new System.Windows.Forms.TextBox();
-            this.lblCep = new System.Windows.Forms.Label();
-            this.txtCepTel = new System.Windows.Forms.TextBox();
-            this.lblDogum = new System.Windows.Forms.Label();
-            this.dtpDogumGunu = new System.Windows.Forms.DateTimePicker();
-            this.lblIsyeri = new System.Windows.Forms.Label();
-            this.cmbIsyeri = new System.Windows.Forms.ComboBox();
-            this.lblStatu = new System.Windows.Forms.Label();
-            this.cmbCalismaStatu = new System.Windows.Forms.ComboBox();
-            this.lblYemek = new System.Windows.Forms.Label();
-            this.nudYemekAdedi = new System.Windows.Forms.NumericUpDown();
-            this.lblVardiya = new System.Windows.Forms.Label();
-            this.chkVardiyalar = new System.Windows.Forms.CheckedListBox();
-            this.pnlFooter = new System.Windows.Forms.Panel();
-            this.btnVazgec = new System.Windows.Forms.Button();
-            this.btnKaydet = new System.Windows.Forms.Button();
-            this.pnlLeft = new System.Windows.Forms.Panel();
-            this.lstKisiler = new System.Windows.Forms.ListBox();
-            this.pnlLeftHeader = new System.Windows.Forms.Panel();
-            this.btnAra = new System.Windows.Forms.Button();
-            this.txtAra = new System.Windows.Forms.TextBox();
-            this.pnlTopFilter = new System.Windows.Forms.Panel();
-            this.cmbKartTipi = new System.Windows.Forms.ComboBox();
-            this.lblKartTipi = new System.Windows.Forms.Label();
-            this.cmbFirmaFilter = new System.Windows.Forms.ComboBox();
-            this.labelFirma = new System.Windows.Forms.Label();
-            this.cmbIsyeriFilter = new System.Windows.Forms.ComboBox();
-            this.lblIsyeriFilter = new System.Windows.Forms.Label();
-            this.pnlActions = new System.Windows.Forms.FlowLayoutPanel();
-            this.btnKisiGuncelle = new System.Windows.Forms.Button();
-            this.btnKisiSil = new System.Windows.Forms.Button();
-            this.btnKisiEkle = new System.Windows.Forms.Button();
-            this.dinamikButon = new System.Windows.Forms.Button();
-            this.pnlMain.SuspendLayout();
-            this.pnlContent.SuspendLayout();
-            this.tabCtrlPersonel.SuspendLayout();
-            this.tabPersonelSayfa.SuspendLayout();
-            this.tlpTab1.SuspendLayout();
-            this.pnlRightCol.SuspendLayout();
-            this.pnlChecks.SuspendLayout();
-            this.pnlPhotoContainer.SuspendLayout();
-            this.tlpPhotoBtns.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.pbKisiFoto)).BeginInit();
-            this.tabEkBilgilerSayfa.SuspendLayout();
-            this.tlpTab2.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.nudYemekAdedi)).BeginInit();
-            this.pnlFooter.SuspendLayout();
-            this.pnlLeft.SuspendLayout();
-            this.pnlLeftHeader.SuspendLayout();
-            this.pnlTopFilter.SuspendLayout();
-            this.pnlActions.SuspendLayout();
-            this.SuspendLayout();
+            pnlMain = new Panel();
+            pnlContent = new Panel();
+            tabCtrlPersonel = new TabControl();
+            tabPersonelSayfa = new TabPage();
+            tlpTab1 = new TableLayoutPanel();
+            cmbFirma = new ComboBox();
+            label1 = new Label();
+            lblAdSoyad = new Label();
+            txtAdSoyad = new TextBox();
+            lblTc = new Label();
+            txtKimlikNo = new TextBox();
+            lblSicil = new Label();
+            txtSicilNo = new TextBox();
+            lblKartNo = new Label();
+            txtPersonelKartNo = new TextBox();
+            lblFirmaKart = new Label();
+            txtFirmaDisiKartNo = new TextBox();
+            lblIseGiris = new Label();
+            dtpIseGiris = new DateTimePicker();
+            lblIstenCikis = new Label();
+            dtpIstenCikis = new DateTimePicker();
+            lblDepartman = new Label();
+            cmbDepartman = new ComboBox();
+            lblBolum = new Label();
+            cmbBolum = new ComboBox();
+            lblPozisyon = new Label();
+            cmbPozisyon = new ComboBox();
+            pnlRightCol = new Panel();
+            pnlChecks = new FlowLayoutPanel();
+            chkFirmaPersoneliMi = new CheckBox();
+            chkPuantajYapilirMi = new CheckBox();
+            chkYemekHakkiVarMi = new CheckBox();
+            chkZiyaretciMi = new CheckBox();
+            chkAracKartiMi = new CheckBox();
+            chkTaseronCalisanMi = new CheckBox();
+            pnlPhotoContainer = new Panel();
+            tlpPhotoBtns = new TableLayoutPanel();
+            btnFotoEkle = new Button();
+            btnFotoSil = new Button();
+            pbKisiFoto = new PictureBox();
+            tabEkBilgilerSayfa = new TabPage();
+            tlpTab2 = new TableLayoutPanel();
+            lblEmail = new Label();
+            txtEmail = new TextBox();
+            lblCep = new Label();
+            txtCepTel = new TextBox();
+            lblDogum = new Label();
+            dtpDogumGunu = new DateTimePicker();
+            lblIsyeri = new Label();
+            cmbIsyeri = new ComboBox();
+            lblStatu = new Label();
+            cmbCalismaStatu = new ComboBox();
+            lblYemek = new Label();
+            nudYemekAdedi = new NumericUpDown();
+            lblVardiya = new Label();
+            chkVardiyalar = new CheckedListBox();
+            pnlFooter = new Panel();
+            btnVazgec = new Button();
+            btnKaydet = new Button();
+            pnlLeft = new Panel();
+            lstKisiler = new ListBox();
+            pnlLeftHeader = new Panel();
+            btnAra = new Button();
+            txtAra = new TextBox();
+            pnlTopFilter = new Panel();
+            cmbKartTipi = new ComboBox();
+            lblKartTipi = new Label();
+            cmbFirmaFilter = new ComboBox();
+            labelFirma = new Label();
+            cmbIsyeriFilter = new ComboBox();
+            lblIsyeriFilter = new Label();
+            pnlActions = new FlowLayoutPanel();
+            btnKisiGuncelle = new Button();
+            btnKisiSil = new Button();
+            btnKisiEkle = new Button();
+            dinamikButon = new Button();
+            pnlMain.SuspendLayout();
+            pnlContent.SuspendLayout();
+            tabCtrlPersonel.SuspendLayout();
+            tabPersonelSayfa.SuspendLayout();
+            tlpTab1.SuspendLayout();
+            pnlRightCol.SuspendLayout();
+            pnlChecks.SuspendLayout();
+            pnlPhotoContainer.SuspendLayout();
+            tlpPhotoBtns.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)pbKisiFoto).BeginInit();
+            tabEkBilgilerSayfa.SuspendLayout();
+            tlpTab2.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)nudYemekAdedi).BeginInit();
+            pnlFooter.SuspendLayout();
+            pnlLeft.SuspendLayout();
+            pnlLeftHeader.SuspendLayout();
+            pnlTopFilter.SuspendLayout();
+            pnlActions.SuspendLayout();
+            SuspendLayout();
             // 
             // pnlMain
             // 
-            this.pnlMain.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(240)))), ((int)(((byte)(242)))), ((int)(((byte)(245)))));
-            this.pnlMain.Controls.Add(this.pnlContent);
-            this.pnlMain.Controls.Add(this.pnlLeft);
-            this.pnlMain.Controls.Add(this.pnlTopFilter);
-            this.pnlMain.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.pnlMain.Location = new System.Drawing.Point(0, 0);
-            this.pnlMain.Name = "pnlMain";
-            this.pnlMain.Padding = new System.Windows.Forms.Padding(10);
-            this.pnlMain.Size = new System.Drawing.Size(1485, 855);
-            this.pnlMain.TabIndex = 0;
+            pnlMain.BackColor = Color.FromArgb(240, 242, 245);
+            pnlMain.Controls.Add(pnlContent);
+            pnlMain.Controls.Add(pnlLeft);
+            pnlMain.Controls.Add(pnlTopFilter);
+            pnlMain.Dock = DockStyle.Fill;
+            pnlMain.Location = new Point(0, 0);
+            pnlMain.Margin = new Padding(3, 4, 3, 4);
+            pnlMain.Name = "pnlMain";
+            pnlMain.Padding = new Padding(10, 12, 10, 12);
+            pnlMain.Size = new Size(1485, 1069);
+            pnlMain.TabIndex = 0;
             // 
             // pnlContent
             // 
-            this.pnlContent.Controls.Add(this.tabCtrlPersonel);
-            this.pnlContent.Controls.Add(this.pnlFooter);
-            this.pnlContent.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.pnlContent.Location = new System.Drawing.Point(310, 134);
-            this.pnlContent.Name = "pnlContent";
-            this.pnlContent.Padding = new System.Windows.Forms.Padding(10, 0, 0, 0);
-            this.pnlContent.Size = new System.Drawing.Size(1165, 711);
-            this.pnlContent.TabIndex = 2;
+            pnlContent.Controls.Add(tabCtrlPersonel);
+            pnlContent.Controls.Add(pnlFooter);
+            pnlContent.Dock = DockStyle.Fill;
+            pnlContent.Location = new Point(310, 167);
+            pnlContent.Margin = new Padding(3, 4, 3, 4);
+            pnlContent.Name = "pnlContent";
+            pnlContent.Padding = new Padding(10, 0, 0, 0);
+            pnlContent.Size = new Size(1165, 890);
+            pnlContent.TabIndex = 2;
             // 
             // tabCtrlPersonel
             // 
-            this.tabCtrlPersonel.Controls.Add(this.tabPersonelSayfa);
-            this.tabCtrlPersonel.Controls.Add(this.tabEkBilgilerSayfa);
-            this.tabCtrlPersonel.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.tabCtrlPersonel.Font = new System.Drawing.Font("Segoe UI", 10F);
-            this.tabCtrlPersonel.ItemSize = new System.Drawing.Size(150, 35);
-            this.tabCtrlPersonel.Location = new System.Drawing.Point(10, 0);
-            this.tabCtrlPersonel.Name = "tabCtrlPersonel";
-            this.tabCtrlPersonel.SelectedIndex = 0;
-            this.tabCtrlPersonel.Size = new System.Drawing.Size(1155, 631);
-            this.tabCtrlPersonel.SizeMode = System.Windows.Forms.TabSizeMode.Fixed;
-            this.tabCtrlPersonel.TabIndex = 0;
+            tabCtrlPersonel.Controls.Add(tabPersonelSayfa);
+            tabCtrlPersonel.Controls.Add(tabEkBilgilerSayfa);
+            tabCtrlPersonel.Dock = DockStyle.Fill;
+            tabCtrlPersonel.Font = new Font("Segoe UI", 10F);
+            tabCtrlPersonel.ItemSize = new Size(150, 35);
+            tabCtrlPersonel.Location = new Point(10, 0);
+            tabCtrlPersonel.Margin = new Padding(3, 4, 3, 4);
+            tabCtrlPersonel.Name = "tabCtrlPersonel";
+            tabCtrlPersonel.SelectedIndex = 0;
+            tabCtrlPersonel.Size = new Size(1155, 790);
+            tabCtrlPersonel.SizeMode = TabSizeMode.Fixed;
+            tabCtrlPersonel.TabIndex = 0;
             // 
             // tabPersonelSayfa
             // 
-            this.tabPersonelSayfa.BackColor = System.Drawing.Color.White;
-            this.tabPersonelSayfa.Controls.Add(this.tlpTab1);
-            this.tabPersonelSayfa.Location = new System.Drawing.Point(4, 39);
-            this.tabPersonelSayfa.Name = "tabPersonelSayfa";
-            this.tabPersonelSayfa.Padding = new System.Windows.Forms.Padding(20);
-            this.tabPersonelSayfa.Size = new System.Drawing.Size(1147, 588);
-            this.tabPersonelSayfa.TabIndex = 0;
-            this.tabPersonelSayfa.Text = "Personel Bilgileri";
+            tabPersonelSayfa.BackColor = Color.White;
+            tabPersonelSayfa.Controls.Add(tlpTab1);
+            tabPersonelSayfa.Location = new Point(4, 39);
+            tabPersonelSayfa.Margin = new Padding(3, 4, 3, 4);
+            tabPersonelSayfa.Name = "tabPersonelSayfa";
+            tabPersonelSayfa.Padding = new Padding(20, 25, 20, 25);
+            tabPersonelSayfa.Size = new Size(1147, 747);
+            tabPersonelSayfa.TabIndex = 0;
+            tabPersonelSayfa.Text = "Personel Bilgileri";
             // 
             // tlpTab1
             // 
-            this.tlpTab1.ColumnCount = 3;
-            this.tlpTab1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 33F));
-            this.tlpTab1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 33F));
-            this.tlpTab1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 34F));
-            this.tlpTab1.Controls.Add(this.cmbFirma, 0, 11);
-            this.tlpTab1.Controls.Add(this.label1, 0, 10);
-            this.tlpTab1.Controls.Add(this.lblAdSoyad, 0, 0);
-            this.tlpTab1.Controls.Add(this.txtAdSoyad, 0, 1);
-            this.tlpTab1.Controls.Add(this.lblTc, 0, 2);
-            this.tlpTab1.Controls.Add(this.txtKimlikNo, 0, 3);
-            this.tlpTab1.Controls.Add(this.lblSicil, 0, 4);
-            this.tlpTab1.Controls.Add(this.txtSicilNo, 0, 5);
-            this.tlpTab1.Controls.Add(this.lblKartNo, 0, 6);
-            this.tlpTab1.Controls.Add(this.txtPersonelKartNo, 0, 7);
-            this.tlpTab1.Controls.Add(this.lblFirmaKart, 0, 8);
-            this.tlpTab1.Controls.Add(this.txtFirmaDisiKartNo, 0, 9);
-            this.tlpTab1.Controls.Add(this.lblIseGiris, 1, 0);
-            this.tlpTab1.Controls.Add(this.dtpIseGiris, 1, 1);
-            this.tlpTab1.Controls.Add(this.lblIstenCikis, 1, 2);
-            this.tlpTab1.Controls.Add(this.dtpIstenCikis, 1, 3);
-            this.tlpTab1.Controls.Add(this.lblDepartman, 1, 4);
-            this.tlpTab1.Controls.Add(this.cmbDepartman, 1, 5);
-            this.tlpTab1.Controls.Add(this.lblBolum, 1, 6);
-            this.tlpTab1.Controls.Add(this.cmbBolum, 1, 7);
-            this.tlpTab1.Controls.Add(this.lblPozisyon, 1, 8);
-            this.tlpTab1.Controls.Add(this.cmbPozisyon, 1, 9);
-            this.tlpTab1.Controls.Add(this.pnlRightCol, 2, 0);
-            this.tlpTab1.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.tlpTab1.Location = new System.Drawing.Point(20, 20);
-            this.tlpTab1.Name = "tlpTab1";
-            this.tlpTab1.RowCount = 12;
-            this.tlpTab1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 25F));
-            this.tlpTab1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 40F));
-            this.tlpTab1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 25F));
-            this.tlpTab1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 40F));
-            this.tlpTab1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 25F));
-            this.tlpTab1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 40F));
-            this.tlpTab1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 25F));
-            this.tlpTab1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 40F));
-            this.tlpTab1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 25F));
-            this.tlpTab1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 40F));
-            this.tlpTab1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 26F));
-            this.tlpTab1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-            this.tlpTab1.Size = new System.Drawing.Size(1107, 548);
-            this.tlpTab1.TabIndex = 0;
+            tlpTab1.ColumnCount = 3;
+            tlpTab1.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33F));
+            tlpTab1.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33F));
+            tlpTab1.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 34F));
+            tlpTab1.Controls.Add(cmbFirma, 0, 11);
+            tlpTab1.Controls.Add(label1, 0, 10);
+            tlpTab1.Controls.Add(lblAdSoyad, 0, 0);
+            tlpTab1.Controls.Add(txtAdSoyad, 0, 1);
+            tlpTab1.Controls.Add(lblTc, 0, 2);
+            tlpTab1.Controls.Add(txtKimlikNo, 0, 3);
+            tlpTab1.Controls.Add(lblSicil, 0, 4);
+            tlpTab1.Controls.Add(txtSicilNo, 0, 5);
+            tlpTab1.Controls.Add(lblKartNo, 0, 6);
+            tlpTab1.Controls.Add(txtPersonelKartNo, 0, 7);
+            tlpTab1.Controls.Add(lblFirmaKart, 0, 8);
+            tlpTab1.Controls.Add(txtFirmaDisiKartNo, 0, 9);
+            tlpTab1.Controls.Add(lblIseGiris, 1, 0);
+            tlpTab1.Controls.Add(dtpIseGiris, 1, 1);
+            tlpTab1.Controls.Add(lblIstenCikis, 1, 2);
+            tlpTab1.Controls.Add(dtpIstenCikis, 1, 3);
+            tlpTab1.Controls.Add(lblDepartman, 1, 4);
+            tlpTab1.Controls.Add(cmbDepartman, 1, 5);
+            tlpTab1.Controls.Add(lblBolum, 1, 6);
+            tlpTab1.Controls.Add(cmbBolum, 1, 7);
+            tlpTab1.Controls.Add(lblPozisyon, 1, 8);
+            tlpTab1.Controls.Add(cmbPozisyon, 1, 9);
+            tlpTab1.Controls.Add(pnlRightCol, 2, 0);
+            tlpTab1.Dock = DockStyle.Fill;
+            tlpTab1.Location = new Point(20, 25);
+            tlpTab1.Margin = new Padding(3, 4, 3, 4);
+            tlpTab1.Name = "tlpTab1";
+            tlpTab1.RowCount = 12;
+            tlpTab1.RowStyles.Add(new RowStyle(SizeType.Absolute, 31F));
+            tlpTab1.RowStyles.Add(new RowStyle(SizeType.Absolute, 50F));
+            tlpTab1.RowStyles.Add(new RowStyle(SizeType.Absolute, 31F));
+            tlpTab1.RowStyles.Add(new RowStyle(SizeType.Absolute, 50F));
+            tlpTab1.RowStyles.Add(new RowStyle(SizeType.Absolute, 31F));
+            tlpTab1.RowStyles.Add(new RowStyle(SizeType.Absolute, 50F));
+            tlpTab1.RowStyles.Add(new RowStyle(SizeType.Absolute, 31F));
+            tlpTab1.RowStyles.Add(new RowStyle(SizeType.Absolute, 50F));
+            tlpTab1.RowStyles.Add(new RowStyle(SizeType.Absolute, 31F));
+            tlpTab1.RowStyles.Add(new RowStyle(SizeType.Absolute, 50F));
+            tlpTab1.RowStyles.Add(new RowStyle(SizeType.Absolute, 32F));
+            tlpTab1.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
+            tlpTab1.Size = new Size(1107, 697);
+            tlpTab1.TabIndex = 0;
             // 
             // cmbFirma
             // 
-            this.cmbFirma.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.cmbFirma.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.cmbFirma.Font = new System.Drawing.Font("Segoe UI", 10F);
-            this.cmbFirma.FormattingEnabled = true;
-            this.cmbFirma.Location = new System.Drawing.Point(3, 354);
-            this.cmbFirma.Name = "cmbFirma";
-            this.cmbFirma.Size = new System.Drawing.Size(359, 31);
-            this.cmbFirma.TabIndex = 23;
+            cmbFirma.Dock = DockStyle.Fill;
+            cmbFirma.DropDownStyle = ComboBoxStyle.DropDownList;
+            cmbFirma.Font = new Font("Segoe UI", 10F);
+            cmbFirma.FormattingEnabled = true;
+            cmbFirma.Location = new Point(3, 441);
+            cmbFirma.Margin = new Padding(3, 4, 3, 4);
+            cmbFirma.Name = "cmbFirma";
+            cmbFirma.Size = new Size(359, 31);
+            cmbFirma.TabIndex = 23;
             // 
             // label1
             // 
-            this.label1.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.label1.AutoSize = true;
-            this.label1.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
-            this.label1.ForeColor = System.Drawing.Color.Gray;
-            this.label1.Location = new System.Drawing.Point(3, 331);
-            this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(49, 20);
-            this.label1.TabIndex = 21;
-            this.label1.Text = "Firma";
+            label1.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
+            label1.AutoSize = true;
+            label1.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            label1.ForeColor = Color.Gray;
+            label1.Location = new Point(3, 417);
+            label1.Name = "label1";
+            label1.Size = new Size(49, 20);
+            label1.TabIndex = 21;
+            label1.Text = "Firma";
             // 
             // lblAdSoyad
             // 
-            this.lblAdSoyad.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.lblAdSoyad.AutoSize = true;
-            this.lblAdSoyad.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
-            this.lblAdSoyad.ForeColor = System.Drawing.Color.Gray;
-            this.lblAdSoyad.Location = new System.Drawing.Point(3, 5);
-            this.lblAdSoyad.Name = "lblAdSoyad";
-            this.lblAdSoyad.Size = new System.Drawing.Size(83, 20);
-            this.lblAdSoyad.TabIndex = 0;
-            this.lblAdSoyad.Text = "Adı Soyadı";
+            lblAdSoyad.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
+            lblAdSoyad.AutoSize = true;
+            lblAdSoyad.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            lblAdSoyad.ForeColor = Color.Gray;
+            lblAdSoyad.Location = new Point(3, 11);
+            lblAdSoyad.Name = "lblAdSoyad";
+            lblAdSoyad.Size = new Size(83, 20);
+            lblAdSoyad.TabIndex = 0;
+            lblAdSoyad.Text = "Adı Soyadı";
             // 
             // txtAdSoyad
             // 
-            this.txtAdSoyad.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.txtAdSoyad.Font = new System.Drawing.Font("Segoe UI", 10F);
-            this.txtAdSoyad.Location = new System.Drawing.Point(3, 28);
-            this.txtAdSoyad.Name = "txtAdSoyad";
-            this.txtAdSoyad.Size = new System.Drawing.Size(359, 30);
-            this.txtAdSoyad.TabIndex = 1;
+            txtAdSoyad.Dock = DockStyle.Fill;
+            txtAdSoyad.Font = new Font("Segoe UI", 10F);
+            txtAdSoyad.Location = new Point(3, 35);
+            txtAdSoyad.Margin = new Padding(3, 4, 3, 4);
+            txtAdSoyad.Name = "txtAdSoyad";
+            txtAdSoyad.Size = new Size(359, 30);
+            txtAdSoyad.TabIndex = 1;
             // 
             // lblTc
             // 
-            this.lblTc.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.lblTc.AutoSize = true;
-            this.lblTc.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
-            this.lblTc.ForeColor = System.Drawing.Color.Gray;
-            this.lblTc.Location = new System.Drawing.Point(3, 70);
-            this.lblTc.Name = "lblTc";
-            this.lblTc.Size = new System.Drawing.Size(99, 20);
-            this.lblTc.TabIndex = 2;
-            this.lblTc.Text = "TC Kimlik No";
+            lblTc.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
+            lblTc.AutoSize = true;
+            lblTc.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            lblTc.ForeColor = Color.Gray;
+            lblTc.Location = new Point(3, 92);
+            lblTc.Name = "lblTc";
+            lblTc.Size = new Size(99, 20);
+            lblTc.TabIndex = 2;
+            lblTc.Text = "TC Kimlik No";
             // 
             // txtKimlikNo
             // 
-            this.txtKimlikNo.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.txtKimlikNo.Font = new System.Drawing.Font("Segoe UI", 10F);
-            this.txtKimlikNo.Location = new System.Drawing.Point(3, 93);
-            this.txtKimlikNo.MaxLength = 11;
-            this.txtKimlikNo.Name = "txtKimlikNo";
-            this.txtKimlikNo.Size = new System.Drawing.Size(359, 30);
-            this.txtKimlikNo.TabIndex = 3;
+            txtKimlikNo.Dock = DockStyle.Fill;
+            txtKimlikNo.Font = new Font("Segoe UI", 10F);
+            txtKimlikNo.Location = new Point(3, 116);
+            txtKimlikNo.Margin = new Padding(3, 4, 3, 4);
+            txtKimlikNo.MaxLength = 11;
+            txtKimlikNo.Name = "txtKimlikNo";
+            txtKimlikNo.Size = new Size(359, 30);
+            txtKimlikNo.TabIndex = 3;
             // 
             // lblSicil
             // 
-            this.lblSicil.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.lblSicil.AutoSize = true;
-            this.lblSicil.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
-            this.lblSicil.ForeColor = System.Drawing.Color.Gray;
-            this.lblSicil.Location = new System.Drawing.Point(3, 135);
-            this.lblSicil.Name = "lblSicil";
-            this.lblSicil.Size = new System.Drawing.Size(61, 20);
-            this.lblSicil.TabIndex = 4;
-            this.lblSicil.Text = "Sicil No";
+            lblSicil.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
+            lblSicil.AutoSize = true;
+            lblSicil.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            lblSicil.ForeColor = Color.Gray;
+            lblSicil.Location = new Point(3, 173);
+            lblSicil.Name = "lblSicil";
+            lblSicil.Size = new Size(61, 20);
+            lblSicil.TabIndex = 4;
+            lblSicil.Text = "Sicil No";
             // 
             // txtSicilNo
             // 
-            this.txtSicilNo.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.txtSicilNo.Font = new System.Drawing.Font("Segoe UI", 10F);
-            this.txtSicilNo.Location = new System.Drawing.Point(3, 158);
-            this.txtSicilNo.Name = "txtSicilNo";
-            this.txtSicilNo.Size = new System.Drawing.Size(359, 30);
-            this.txtSicilNo.TabIndex = 5;
+            txtSicilNo.Dock = DockStyle.Fill;
+            txtSicilNo.Font = new Font("Segoe UI", 10F);
+            txtSicilNo.Location = new Point(3, 197);
+            txtSicilNo.Margin = new Padding(3, 4, 3, 4);
+            txtSicilNo.Name = "txtSicilNo";
+            txtSicilNo.Size = new Size(359, 30);
+            txtSicilNo.TabIndex = 5;
             // 
             // lblKartNo
             // 
-            this.lblKartNo.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.lblKartNo.AutoSize = true;
-            this.lblKartNo.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
-            this.lblKartNo.ForeColor = System.Drawing.Color.Gray;
-            this.lblKartNo.Location = new System.Drawing.Point(3, 200);
-            this.lblKartNo.Name = "lblKartNo";
-            this.lblKartNo.Size = new System.Drawing.Size(128, 20);
-            this.lblKartNo.TabIndex = 6;
-            this.lblKartNo.Text = "Personel Kart No";
+            lblKartNo.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
+            lblKartNo.AutoSize = true;
+            lblKartNo.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            lblKartNo.ForeColor = Color.Gray;
+            lblKartNo.Location = new Point(3, 254);
+            lblKartNo.Name = "lblKartNo";
+            lblKartNo.Size = new Size(128, 20);
+            lblKartNo.TabIndex = 6;
+            lblKartNo.Text = "Personel Kart No";
             // 
             // txtPersonelKartNo
             // 
-            this.txtPersonelKartNo.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.txtPersonelKartNo.Font = new System.Drawing.Font("Segoe UI", 10F);
-            this.txtPersonelKartNo.Location = new System.Drawing.Point(3, 223);
-            this.txtPersonelKartNo.Name = "txtPersonelKartNo";
-            this.txtPersonelKartNo.Size = new System.Drawing.Size(359, 30);
-            this.txtPersonelKartNo.TabIndex = 7;
+            txtPersonelKartNo.Dock = DockStyle.Fill;
+            txtPersonelKartNo.Font = new Font("Segoe UI", 10F);
+            txtPersonelKartNo.Location = new Point(3, 278);
+            txtPersonelKartNo.Margin = new Padding(3, 4, 3, 4);
+            txtPersonelKartNo.Name = "txtPersonelKartNo";
+            txtPersonelKartNo.Size = new Size(359, 30);
+            txtPersonelKartNo.TabIndex = 7;
             // 
             // lblFirmaKart
             // 
-            this.lblFirmaKart.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.lblFirmaKart.AutoSize = true;
-            this.lblFirmaKart.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
-            this.lblFirmaKart.ForeColor = System.Drawing.Color.Gray;
-            this.lblFirmaKart.Location = new System.Drawing.Point(3, 265);
-            this.lblFirmaKart.Name = "lblFirmaKart";
-            this.lblFirmaKart.Size = new System.Drawing.Size(138, 20);
-            this.lblFirmaKart.TabIndex = 8;
-            this.lblFirmaKart.Text = "Firma Dışı Kart No";
+            lblFirmaKart.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
+            lblFirmaKart.AutoSize = true;
+            lblFirmaKart.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            lblFirmaKart.ForeColor = Color.Gray;
+            lblFirmaKart.Location = new Point(3, 335);
+            lblFirmaKart.Name = "lblFirmaKart";
+            lblFirmaKart.Size = new Size(138, 20);
+            lblFirmaKart.TabIndex = 8;
+            lblFirmaKart.Text = "Firma Dışı Kart No";
             // 
             // txtFirmaDisiKartNo
             // 
-            this.txtFirmaDisiKartNo.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.txtFirmaDisiKartNo.Font = new System.Drawing.Font("Segoe UI", 10F);
-            this.txtFirmaDisiKartNo.Location = new System.Drawing.Point(3, 288);
-            this.txtFirmaDisiKartNo.Name = "txtFirmaDisiKartNo";
-            this.txtFirmaDisiKartNo.Size = new System.Drawing.Size(359, 30);
-            this.txtFirmaDisiKartNo.TabIndex = 9;
+            txtFirmaDisiKartNo.Dock = DockStyle.Fill;
+            txtFirmaDisiKartNo.Font = new Font("Segoe UI", 10F);
+            txtFirmaDisiKartNo.Location = new Point(3, 359);
+            txtFirmaDisiKartNo.Margin = new Padding(3, 4, 3, 4);
+            txtFirmaDisiKartNo.Name = "txtFirmaDisiKartNo";
+            txtFirmaDisiKartNo.Size = new Size(359, 30);
+            txtFirmaDisiKartNo.TabIndex = 9;
             // 
             // lblIseGiris
             // 
-            this.lblIseGiris.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.lblIseGiris.AutoSize = true;
-            this.lblIseGiris.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
-            this.lblIseGiris.ForeColor = System.Drawing.Color.Gray;
-            this.lblIseGiris.Location = new System.Drawing.Point(368, 5);
-            this.lblIseGiris.Name = "lblIseGiris";
-            this.lblIseGiris.Size = new System.Drawing.Size(108, 20);
-            this.lblIseGiris.TabIndex = 10;
-            this.lblIseGiris.Text = "İşe Giriş Tarihi";
+            lblIseGiris.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
+            lblIseGiris.AutoSize = true;
+            lblIseGiris.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            lblIseGiris.ForeColor = Color.Gray;
+            lblIseGiris.Location = new Point(368, 11);
+            lblIseGiris.Name = "lblIseGiris";
+            lblIseGiris.Size = new Size(108, 20);
+            lblIseGiris.TabIndex = 10;
+            lblIseGiris.Text = "İşe Giriş Tarihi";
             // 
             // dtpIseGiris
             // 
-            this.dtpIseGiris.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.dtpIseGiris.Font = new System.Drawing.Font("Segoe UI", 10F);
-            this.dtpIseGiris.Location = new System.Drawing.Point(368, 28);
-            this.dtpIseGiris.Name = "dtpIseGiris";
-            this.dtpIseGiris.Size = new System.Drawing.Size(359, 30);
-            this.dtpIseGiris.TabIndex = 11;
+            dtpIseGiris.Dock = DockStyle.Fill;
+            dtpIseGiris.Font = new Font("Segoe UI", 10F);
+            dtpIseGiris.Location = new Point(368, 35);
+            dtpIseGiris.Margin = new Padding(3, 4, 3, 4);
+            dtpIseGiris.Name = "dtpIseGiris";
+            dtpIseGiris.Size = new Size(359, 30);
+            dtpIseGiris.TabIndex = 11;
             // 
             // lblIstenCikis
             // 
-            this.lblIstenCikis.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.lblIstenCikis.AutoSize = true;
-            this.lblIstenCikis.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
-            this.lblIstenCikis.ForeColor = System.Drawing.Color.Gray;
-            this.lblIstenCikis.Location = new System.Drawing.Point(368, 70);
-            this.lblIstenCikis.Name = "lblIstenCikis";
-            this.lblIstenCikis.Size = new System.Drawing.Size(123, 20);
-            this.lblIstenCikis.TabIndex = 12;
-            this.lblIstenCikis.Text = "İşten Çıkış Tarihi";
+            lblIstenCikis.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
+            lblIstenCikis.AutoSize = true;
+            lblIstenCikis.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            lblIstenCikis.ForeColor = Color.Gray;
+            lblIstenCikis.Location = new Point(368, 92);
+            lblIstenCikis.Name = "lblIstenCikis";
+            lblIstenCikis.Size = new Size(123, 20);
+            lblIstenCikis.TabIndex = 12;
+            lblIstenCikis.Text = "İşten Çıkış Tarihi";
             // 
             // dtpIstenCikis
             // 
-            this.dtpIstenCikis.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.dtpIstenCikis.Font = new System.Drawing.Font("Segoe UI", 10F);
-            this.dtpIstenCikis.Location = new System.Drawing.Point(368, 93);
-            this.dtpIstenCikis.Name = "dtpIstenCikis";
-            this.dtpIstenCikis.ShowCheckBox = true;
-            this.dtpIstenCikis.Size = new System.Drawing.Size(359, 30);
-            this.dtpIstenCikis.TabIndex = 13;
+            dtpIstenCikis.Dock = DockStyle.Fill;
+            dtpIstenCikis.Font = new Font("Segoe UI", 10F);
+            dtpIstenCikis.Location = new Point(368, 116);
+            dtpIstenCikis.Margin = new Padding(3, 4, 3, 4);
+            dtpIstenCikis.Name = "dtpIstenCikis";
+            dtpIstenCikis.ShowCheckBox = true;
+            dtpIstenCikis.Size = new Size(359, 30);
+            dtpIstenCikis.TabIndex = 13;
             // 
             // lblDepartman
             // 
-            this.lblDepartman.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.lblDepartman.AutoSize = true;
-            this.lblDepartman.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
-            this.lblDepartman.ForeColor = System.Drawing.Color.Gray;
-            this.lblDepartman.Location = new System.Drawing.Point(368, 135);
-            this.lblDepartman.Name = "lblDepartman";
-            this.lblDepartman.Size = new System.Drawing.Size(88, 20);
-            this.lblDepartman.TabIndex = 14;
-            this.lblDepartman.Text = "Departman";
+            lblDepartman.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
+            lblDepartman.AutoSize = true;
+            lblDepartman.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            lblDepartman.ForeColor = Color.Gray;
+            lblDepartman.Location = new Point(368, 173);
+            lblDepartman.Name = "lblDepartman";
+            lblDepartman.Size = new Size(88, 20);
+            lblDepartman.TabIndex = 14;
+            lblDepartman.Text = "Departman";
             // 
             // cmbDepartman
             // 
-            this.cmbDepartman.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.cmbDepartman.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.cmbDepartman.Font = new System.Drawing.Font("Segoe UI", 10F);
-            this.cmbDepartman.FormattingEnabled = true;
-            this.cmbDepartman.Location = new System.Drawing.Point(368, 158);
-            this.cmbDepartman.Name = "cmbDepartman";
-            this.cmbDepartman.Size = new System.Drawing.Size(359, 31);
-            this.cmbDepartman.TabIndex = 15;
+            cmbDepartman.Dock = DockStyle.Fill;
+            cmbDepartman.DropDownStyle = ComboBoxStyle.DropDownList;
+            cmbDepartman.Font = new Font("Segoe UI", 10F);
+            cmbDepartman.FormattingEnabled = true;
+            cmbDepartman.Location = new Point(368, 197);
+            cmbDepartman.Margin = new Padding(3, 4, 3, 4);
+            cmbDepartman.Name = "cmbDepartman";
+            cmbDepartman.Size = new Size(359, 31);
+            cmbDepartman.TabIndex = 15;
             // 
             // lblBolum
             // 
-            this.lblBolum.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.lblBolum.AutoSize = true;
-            this.lblBolum.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
-            this.lblBolum.ForeColor = System.Drawing.Color.Gray;
-            this.lblBolum.Location = new System.Drawing.Point(368, 200);
-            this.lblBolum.Name = "lblBolum";
-            this.lblBolum.Size = new System.Drawing.Size(55, 20);
-            this.lblBolum.TabIndex = 16;
-            this.lblBolum.Text = "Bölüm";
+            lblBolum.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
+            lblBolum.AutoSize = true;
+            lblBolum.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            lblBolum.ForeColor = Color.Gray;
+            lblBolum.Location = new Point(368, 254);
+            lblBolum.Name = "lblBolum";
+            lblBolum.Size = new Size(55, 20);
+            lblBolum.TabIndex = 16;
+            lblBolum.Text = "Bölüm";
             // 
             // cmbBolum
             // 
-            this.cmbBolum.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.cmbBolum.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.cmbBolum.Font = new System.Drawing.Font("Segoe UI", 10F);
-            this.cmbBolum.FormattingEnabled = true;
-            this.cmbBolum.Location = new System.Drawing.Point(368, 223);
-            this.cmbBolum.Name = "cmbBolum";
-            this.cmbBolum.Size = new System.Drawing.Size(359, 31);
-            this.cmbBolum.TabIndex = 17;
+            cmbBolum.Dock = DockStyle.Fill;
+            cmbBolum.DropDownStyle = ComboBoxStyle.DropDownList;
+            cmbBolum.Font = new Font("Segoe UI", 10F);
+            cmbBolum.FormattingEnabled = true;
+            cmbBolum.Location = new Point(368, 278);
+            cmbBolum.Margin = new Padding(3, 4, 3, 4);
+            cmbBolum.Name = "cmbBolum";
+            cmbBolum.Size = new Size(359, 31);
+            cmbBolum.TabIndex = 17;
             // 
             // lblPozisyon
             // 
-            this.lblPozisyon.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.lblPozisyon.AutoSize = true;
-            this.lblPozisyon.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
-            this.lblPozisyon.ForeColor = System.Drawing.Color.Gray;
-            this.lblPozisyon.Location = new System.Drawing.Point(368, 265);
-            this.lblPozisyon.Name = "lblPozisyon";
-            this.lblPozisyon.Size = new System.Drawing.Size(71, 20);
-            this.lblPozisyon.TabIndex = 18;
-            this.lblPozisyon.Text = "Pozisyon";
+            lblPozisyon.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
+            lblPozisyon.AutoSize = true;
+            lblPozisyon.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            lblPozisyon.ForeColor = Color.Gray;
+            lblPozisyon.Location = new Point(368, 335);
+            lblPozisyon.Name = "lblPozisyon";
+            lblPozisyon.Size = new Size(71, 20);
+            lblPozisyon.TabIndex = 18;
+            lblPozisyon.Text = "Pozisyon";
             // 
             // cmbPozisyon
             // 
-            this.cmbPozisyon.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.cmbPozisyon.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.cmbPozisyon.Font = new System.Drawing.Font("Segoe UI", 10F);
-            this.cmbPozisyon.FormattingEnabled = true;
-            this.cmbPozisyon.Location = new System.Drawing.Point(368, 288);
-            this.cmbPozisyon.Name = "cmbPozisyon";
-            this.cmbPozisyon.Size = new System.Drawing.Size(359, 31);
-            this.cmbPozisyon.TabIndex = 19;
+            cmbPozisyon.Dock = DockStyle.Fill;
+            cmbPozisyon.DropDownStyle = ComboBoxStyle.DropDownList;
+            cmbPozisyon.Font = new Font("Segoe UI", 10F);
+            cmbPozisyon.FormattingEnabled = true;
+            cmbPozisyon.Location = new Point(368, 359);
+            cmbPozisyon.Margin = new Padding(3, 4, 3, 4);
+            cmbPozisyon.Name = "cmbPozisyon";
+            cmbPozisyon.Size = new Size(359, 31);
+            cmbPozisyon.TabIndex = 19;
             // 
             // pnlRightCol
             // 
-            this.pnlRightCol.Controls.Add(this.pnlChecks);
-            this.pnlRightCol.Controls.Add(this.pnlPhotoContainer);
-            this.pnlRightCol.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.pnlRightCol.Location = new System.Drawing.Point(733, 3);
-            this.pnlRightCol.Name = "pnlRightCol";
-            this.tlpTab1.SetRowSpan(this.pnlRightCol, 11);
-            this.pnlRightCol.Size = new System.Drawing.Size(371, 345);
-            this.pnlRightCol.TabIndex = 20;
+            pnlRightCol.Controls.Add(pnlChecks);
+            pnlRightCol.Controls.Add(pnlPhotoContainer);
+            pnlRightCol.Dock = DockStyle.Fill;
+            pnlRightCol.Location = new Point(733, 4);
+            pnlRightCol.Margin = new Padding(3, 4, 3, 4);
+            pnlRightCol.Name = "pnlRightCol";
+            tlpTab1.SetRowSpan(pnlRightCol, 11);
+            pnlRightCol.Size = new Size(371, 429);
+            pnlRightCol.TabIndex = 20;
             // 
             // pnlChecks
             // 
-            this.pnlChecks.Controls.Add(this.chkFirmaPersoneliMi);
-            this.pnlChecks.Controls.Add(this.chkPuantajYapilirMi);
-            this.pnlChecks.Controls.Add(this.chkYemekHakkiVarMi);
-            this.pnlChecks.Controls.Add(this.chkZiyaretciMi);
-            this.pnlChecks.Controls.Add(this.chkAracKartiMi);
-            this.pnlChecks.Controls.Add(this.chkTaseronCalisanMi);
-            this.pnlChecks.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.pnlChecks.FlowDirection = System.Windows.Forms.FlowDirection.TopDown;
-            this.pnlChecks.Location = new System.Drawing.Point(0, 200);
-            this.pnlChecks.Name = "pnlChecks";
-            this.pnlChecks.Padding = new System.Windows.Forms.Padding(0, 20, 0, 0);
-            this.pnlChecks.Size = new System.Drawing.Size(371, 145);
-            this.pnlChecks.TabIndex = 1;
+            pnlChecks.Controls.Add(chkFirmaPersoneliMi);
+            pnlChecks.Controls.Add(chkPuantajYapilirMi);
+            pnlChecks.Controls.Add(chkYemekHakkiVarMi);
+            pnlChecks.Controls.Add(chkZiyaretciMi);
+            pnlChecks.Controls.Add(chkAracKartiMi);
+            pnlChecks.Controls.Add(chkTaseronCalisanMi);
+            pnlChecks.Dock = DockStyle.Fill;
+            pnlChecks.FlowDirection = FlowDirection.TopDown;
+            pnlChecks.Location = new Point(0, 250);
+            pnlChecks.Margin = new Padding(3, 4, 3, 4);
+            pnlChecks.Name = "pnlChecks";
+            pnlChecks.Padding = new Padding(0, 25, 0, 0);
+            pnlChecks.Size = new Size(371, 179);
+            pnlChecks.TabIndex = 1;
             // 
             // chkFirmaPersoneliMi
             // 
-            this.chkFirmaPersoneliMi.AutoSize = true;
-            this.chkFirmaPersoneliMi.Font = new System.Drawing.Font("Segoe UI", 10F);
-            this.chkFirmaPersoneliMi.Location = new System.Drawing.Point(3, 23);
-            this.chkFirmaPersoneliMi.Name = "chkFirmaPersoneliMi";
-            this.chkFirmaPersoneliMi.Size = new System.Drawing.Size(147, 27);
-            this.chkFirmaPersoneliMi.TabIndex = 0;
-            this.chkFirmaPersoneliMi.Text = "Firma Personeli";
-            this.chkFirmaPersoneliMi.UseVisualStyleBackColor = true;
+            chkFirmaPersoneliMi.AutoSize = true;
+            chkFirmaPersoneliMi.Font = new Font("Segoe UI", 10F);
+            chkFirmaPersoneliMi.Location = new Point(3, 29);
+            chkFirmaPersoneliMi.Margin = new Padding(3, 4, 3, 4);
+            chkFirmaPersoneliMi.Name = "chkFirmaPersoneliMi";
+            chkFirmaPersoneliMi.Size = new Size(147, 27);
+            chkFirmaPersoneliMi.TabIndex = 0;
+            chkFirmaPersoneliMi.Text = "Firma Personeli";
+            chkFirmaPersoneliMi.UseVisualStyleBackColor = true;
             // 
             // chkPuantajYapilirMi
             // 
-            this.chkPuantajYapilirMi.AutoSize = true;
-            this.chkPuantajYapilirMi.Font = new System.Drawing.Font("Segoe UI", 10F);
-            this.chkPuantajYapilirMi.Location = new System.Drawing.Point(3, 56);
-            this.chkPuantajYapilirMi.Name = "chkPuantajYapilirMi";
-            this.chkPuantajYapilirMi.Size = new System.Drawing.Size(140, 27);
-            this.chkPuantajYapilirMi.TabIndex = 1;
-            this.chkPuantajYapilirMi.Text = "Puantaj Yapılır";
-            this.chkPuantajYapilirMi.UseVisualStyleBackColor = true;
+            chkPuantajYapilirMi.AutoSize = true;
+            chkPuantajYapilirMi.Font = new Font("Segoe UI", 10F);
+            chkPuantajYapilirMi.Location = new Point(3, 64);
+            chkPuantajYapilirMi.Margin = new Padding(3, 4, 3, 4);
+            chkPuantajYapilirMi.Name = "chkPuantajYapilirMi";
+            chkPuantajYapilirMi.Size = new Size(140, 27);
+            chkPuantajYapilirMi.TabIndex = 1;
+            chkPuantajYapilirMi.Text = "Puantaj Yapılır";
+            chkPuantajYapilirMi.UseVisualStyleBackColor = true;
             // 
             // chkYemekHakkiVarMi
             // 
-            this.chkYemekHakkiVarMi.AutoSize = true;
-            this.chkYemekHakkiVarMi.Font = new System.Drawing.Font("Segoe UI", 10F);
-            this.chkYemekHakkiVarMi.Location = new System.Drawing.Point(3, 89);
-            this.chkYemekHakkiVarMi.Name = "chkYemekHakkiVarMi";
-            this.chkYemekHakkiVarMi.Size = new System.Drawing.Size(157, 27);
-            this.chkYemekHakkiVarMi.TabIndex = 2;
-            this.chkYemekHakkiVarMi.Text = "Yemek Hakkı Var";
-            this.chkYemekHakkiVarMi.UseVisualStyleBackColor = true;
+            chkYemekHakkiVarMi.AutoSize = true;
+            chkYemekHakkiVarMi.Font = new Font("Segoe UI", 10F);
+            chkYemekHakkiVarMi.Location = new Point(3, 99);
+            chkYemekHakkiVarMi.Margin = new Padding(3, 4, 3, 4);
+            chkYemekHakkiVarMi.Name = "chkYemekHakkiVarMi";
+            chkYemekHakkiVarMi.Size = new Size(157, 27);
+            chkYemekHakkiVarMi.TabIndex = 2;
+            chkYemekHakkiVarMi.Text = "Yemek Hakkı Var";
+            chkYemekHakkiVarMi.UseVisualStyleBackColor = true;
             // 
             // chkZiyaretciMi
             // 
-            this.chkZiyaretciMi.AutoSize = true;
-            this.chkZiyaretciMi.Font = new System.Drawing.Font("Segoe UI", 10F);
-            this.chkZiyaretciMi.Location = new System.Drawing.Point(3, 122);
-            this.chkZiyaretciMi.Name = "chkZiyaretciMi";
-            this.chkZiyaretciMi.Size = new System.Drawing.Size(130, 27);
-            this.chkZiyaretciMi.TabIndex = 3;
-            this.chkZiyaretciMi.Text = "Ziyaretçi Kartı";
-            this.chkZiyaretciMi.UseVisualStyleBackColor = true;
+            chkZiyaretciMi.AutoSize = true;
+            chkZiyaretciMi.Font = new Font("Segoe UI", 10F);
+            chkZiyaretciMi.Location = new Point(3, 134);
+            chkZiyaretciMi.Margin = new Padding(3, 4, 3, 4);
+            chkZiyaretciMi.Name = "chkZiyaretciMi";
+            chkZiyaretciMi.Size = new Size(136, 27);
+            chkZiyaretciMi.TabIndex = 3;
+            chkZiyaretciMi.Text = "Ziyaretçi Kartı";
+            chkZiyaretciMi.UseVisualStyleBackColor = true;
             // 
             // chkAracKartiMi
             // 
-            this.chkAracKartiMi.AutoSize = true;
-            this.chkAracKartiMi.Font = new System.Drawing.Font("Segoe UI", 10F);
-            this.chkAracKartiMi.Location = new System.Drawing.Point(3, 155);
-            this.chkAracKartiMi.Name = "chkAracKartiMi";
-            this.chkAracKartiMi.Size = new System.Drawing.Size(108, 27);
-            this.chkAracKartiMi.TabIndex = 4;
-            this.chkAracKartiMi.Text = "Araç Kartı";
-            this.chkAracKartiMi.UseVisualStyleBackColor = true;
+            chkAracKartiMi.AutoSize = true;
+            chkAracKartiMi.Font = new Font("Segoe UI", 10F);
+            chkAracKartiMi.Location = new Point(166, 29);
+            chkAracKartiMi.Margin = new Padding(3, 4, 3, 4);
+            chkAracKartiMi.Name = "chkAracKartiMi";
+            chkAracKartiMi.Size = new Size(106, 27);
+            chkAracKartiMi.TabIndex = 4;
+            chkAracKartiMi.Text = "Araç Kartı";
+            chkAracKartiMi.UseVisualStyleBackColor = true;
             // 
             // chkTaseronCalisanMi
             // 
-            this.chkTaseronCalisanMi.AutoSize = true;
-            this.chkTaseronCalisanMi.Font = new System.Drawing.Font("Segoe UI", 10F);
-            this.chkTaseronCalisanMi.Location = new System.Drawing.Point(3, 188);
-            this.chkTaseronCalisanMi.Name = "chkTaseronCalisanMi";
-            this.chkTaseronCalisanMi.Size = new System.Drawing.Size(148, 27);
-            this.chkTaseronCalisanMi.TabIndex = 5;
-            this.chkTaseronCalisanMi.Text = "Taşeron Çalışan";
-            this.chkTaseronCalisanMi.UseVisualStyleBackColor = true;
+            chkTaseronCalisanMi.AutoSize = true;
+            chkTaseronCalisanMi.Font = new Font("Segoe UI", 10F);
+            chkTaseronCalisanMi.Location = new Point(166, 64);
+            chkTaseronCalisanMi.Margin = new Padding(3, 4, 3, 4);
+            chkTaseronCalisanMi.Name = "chkTaseronCalisanMi";
+            chkTaseronCalisanMi.Size = new Size(149, 27);
+            chkTaseronCalisanMi.TabIndex = 5;
+            chkTaseronCalisanMi.Text = "Taşeron Çalışan";
+            chkTaseronCalisanMi.UseVisualStyleBackColor = true;
             // 
             // pnlPhotoContainer
             // 
-            this.pnlPhotoContainer.Controls.Add(this.tlpPhotoBtns);
-            this.pnlPhotoContainer.Controls.Add(this.pbKisiFoto);
-            this.pnlPhotoContainer.Dock = System.Windows.Forms.DockStyle.Top;
-            this.pnlPhotoContainer.Location = new System.Drawing.Point(0, 0);
-            this.pnlPhotoContainer.Name = "pnlPhotoContainer";
-            this.pnlPhotoContainer.Size = new System.Drawing.Size(371, 200);
-            this.pnlPhotoContainer.TabIndex = 0;
+            pnlPhotoContainer.Controls.Add(tlpPhotoBtns);
+            pnlPhotoContainer.Controls.Add(pbKisiFoto);
+            pnlPhotoContainer.Dock = DockStyle.Top;
+            pnlPhotoContainer.Location = new Point(0, 0);
+            pnlPhotoContainer.Margin = new Padding(3, 4, 3, 4);
+            pnlPhotoContainer.Name = "pnlPhotoContainer";
+            pnlPhotoContainer.Size = new Size(371, 250);
+            pnlPhotoContainer.TabIndex = 0;
             // 
             // tlpPhotoBtns
             // 
-            this.tlpPhotoBtns.ColumnCount = 2;
-            this.tlpPhotoBtns.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
-            this.tlpPhotoBtns.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
-            this.tlpPhotoBtns.Controls.Add(this.btnFotoEkle, 0, 0);
-            this.tlpPhotoBtns.Controls.Add(this.btnFotoSil, 1, 0);
-            this.tlpPhotoBtns.Dock = System.Windows.Forms.DockStyle.Top;
-            this.tlpPhotoBtns.Location = new System.Drawing.Point(0, 160);
-            this.tlpPhotoBtns.Name = "tlpPhotoBtns";
-            this.tlpPhotoBtns.RowCount = 1;
-            this.tlpPhotoBtns.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 50F));
-            this.tlpPhotoBtns.Size = new System.Drawing.Size(371, 40);
-            this.tlpPhotoBtns.TabIndex = 1;
+            tlpPhotoBtns.ColumnCount = 2;
+            tlpPhotoBtns.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
+            tlpPhotoBtns.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
+            tlpPhotoBtns.Controls.Add(btnFotoEkle, 0, 0);
+            tlpPhotoBtns.Controls.Add(btnFotoSil, 1, 0);
+            tlpPhotoBtns.Dock = DockStyle.Top;
+            tlpPhotoBtns.Location = new Point(0, 200);
+            tlpPhotoBtns.Margin = new Padding(3, 4, 3, 4);
+            tlpPhotoBtns.Name = "tlpPhotoBtns";
+            tlpPhotoBtns.RowCount = 1;
+            tlpPhotoBtns.RowStyles.Add(new RowStyle(SizeType.Percent, 50F));
+            tlpPhotoBtns.Size = new Size(371, 50);
+            tlpPhotoBtns.TabIndex = 1;
             // 
             // btnFotoEkle
             // 
-            this.btnFotoEkle.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.btnFotoEkle.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnFotoEkle.Location = new System.Drawing.Point(3, 3);
-            this.btnFotoEkle.Name = "btnFotoEkle";
-            this.btnFotoEkle.Size = new System.Drawing.Size(179, 34);
-            this.btnFotoEkle.TabIndex = 0;
-            this.btnFotoEkle.Text = "Seç";
-            this.btnFotoEkle.UseVisualStyleBackColor = true;
+            btnFotoEkle.Dock = DockStyle.Fill;
+            btnFotoEkle.FlatStyle = FlatStyle.Flat;
+            btnFotoEkle.Location = new Point(3, 4);
+            btnFotoEkle.Margin = new Padding(3, 4, 3, 4);
+            btnFotoEkle.Name = "btnFotoEkle";
+            btnFotoEkle.Size = new Size(179, 42);
+            btnFotoEkle.TabIndex = 0;
+            btnFotoEkle.Text = "Seç";
+            btnFotoEkle.UseVisualStyleBackColor = true;
             // 
             // btnFotoSil
             // 
-            this.btnFotoSil.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.btnFotoSil.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnFotoSil.Location = new System.Drawing.Point(188, 3);
-            this.btnFotoSil.Name = "btnFotoSil";
-            this.btnFotoSil.Size = new System.Drawing.Size(180, 34);
-            this.btnFotoSil.TabIndex = 1;
-            this.btnFotoSil.Text = "Kaldır";
-            this.btnFotoSil.UseVisualStyleBackColor = true;
+            btnFotoSil.Dock = DockStyle.Fill;
+            btnFotoSil.FlatStyle = FlatStyle.Flat;
+            btnFotoSil.Location = new Point(188, 4);
+            btnFotoSil.Margin = new Padding(3, 4, 3, 4);
+            btnFotoSil.Name = "btnFotoSil";
+            btnFotoSil.Size = new Size(180, 42);
+            btnFotoSil.TabIndex = 1;
+            btnFotoSil.Text = "Kaldır";
+            btnFotoSil.UseVisualStyleBackColor = true;
             // 
             // pbKisiFoto
             // 
-            this.pbKisiFoto.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.pbKisiFoto.Dock = System.Windows.Forms.DockStyle.Top;
-            this.pbKisiFoto.Location = new System.Drawing.Point(0, 0);
-            this.pbKisiFoto.Name = "pbKisiFoto";
-            this.pbKisiFoto.Size = new System.Drawing.Size(371, 160);
-            this.pbKisiFoto.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
-            this.pbKisiFoto.TabIndex = 0;
-            this.pbKisiFoto.TabStop = false;
+            pbKisiFoto.BorderStyle = BorderStyle.FixedSingle;
+            pbKisiFoto.Dock = DockStyle.Top;
+            pbKisiFoto.Location = new Point(0, 0);
+            pbKisiFoto.Margin = new Padding(3, 4, 3, 4);
+            pbKisiFoto.Name = "pbKisiFoto";
+            pbKisiFoto.Size = new Size(371, 200);
+            pbKisiFoto.SizeMode = PictureBoxSizeMode.Zoom;
+            pbKisiFoto.TabIndex = 0;
+            pbKisiFoto.TabStop = false;
             // 
             // tabEkBilgilerSayfa
             // 
-            this.tabEkBilgilerSayfa.BackColor = System.Drawing.Color.White;
-            this.tabEkBilgilerSayfa.Controls.Add(this.tlpTab2);
-            this.tabEkBilgilerSayfa.Location = new System.Drawing.Point(4, 39);
-            this.tabEkBilgilerSayfa.Name = "tabEkBilgilerSayfa";
-            this.tabEkBilgilerSayfa.Padding = new System.Windows.Forms.Padding(20);
-            this.tabEkBilgilerSayfa.Size = new System.Drawing.Size(1147, 588);
-            this.tabEkBilgilerSayfa.TabIndex = 1;
-            this.tabEkBilgilerSayfa.Text = "Ek Bilgiler & Vardiya";
+            tabEkBilgilerSayfa.BackColor = Color.White;
+            tabEkBilgilerSayfa.Controls.Add(tlpTab2);
+            tabEkBilgilerSayfa.Location = new Point(4, 39);
+            tabEkBilgilerSayfa.Margin = new Padding(3, 4, 3, 4);
+            tabEkBilgilerSayfa.Name = "tabEkBilgilerSayfa";
+            tabEkBilgilerSayfa.Padding = new Padding(20, 25, 20, 25);
+            tabEkBilgilerSayfa.Size = new Size(1147, 747);
+            tabEkBilgilerSayfa.TabIndex = 1;
+            tabEkBilgilerSayfa.Text = "Ek Bilgiler & Vardiya";
             // 
             // tlpTab2
             // 
-            this.tlpTab2.ColumnCount = 2;
-            this.tlpTab2.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
-            this.tlpTab2.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
-            this.tlpTab2.Controls.Add(this.lblEmail, 0, 0);
-            this.tlpTab2.Controls.Add(this.txtEmail, 0, 1);
-            this.tlpTab2.Controls.Add(this.lblCep, 0, 2);
-            this.tlpTab2.Controls.Add(this.txtCepTel, 0, 3);
-            this.tlpTab2.Controls.Add(this.lblDogum, 0, 4);
-            this.tlpTab2.Controls.Add(this.dtpDogumGunu, 0, 5);
-            this.tlpTab2.Controls.Add(this.lblIsyeri, 0, 6);
-            this.tlpTab2.Controls.Add(this.cmbIsyeri, 0, 7);
-            this.tlpTab2.Controls.Add(this.lblStatu, 0, 8);
-            this.tlpTab2.Controls.Add(this.cmbCalismaStatu, 0, 9);
-            this.tlpTab2.Controls.Add(this.lblYemek, 0, 10);
-            this.tlpTab2.Controls.Add(this.nudYemekAdedi, 0, 11);
-            this.tlpTab2.Controls.Add(this.lblVardiya, 1, 0);
-            this.tlpTab2.Controls.Add(this.chkVardiyalar, 1, 1);
-            this.tlpTab2.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.tlpTab2.Location = new System.Drawing.Point(20, 20);
-            this.tlpTab2.Name = "tlpTab2";
-            this.tlpTab2.RowCount = 12;
-            this.tlpTab2.RowStyles.Add(new System.Windows.Forms.RowStyle());
-            this.tlpTab2.RowStyles.Add(new System.Windows.Forms.RowStyle());
-            this.tlpTab2.RowStyles.Add(new System.Windows.Forms.RowStyle());
-            this.tlpTab2.RowStyles.Add(new System.Windows.Forms.RowStyle());
-            this.tlpTab2.RowStyles.Add(new System.Windows.Forms.RowStyle());
-            this.tlpTab2.RowStyles.Add(new System.Windows.Forms.RowStyle());
-            this.tlpTab2.RowStyles.Add(new System.Windows.Forms.RowStyle());
-            this.tlpTab2.RowStyles.Add(new System.Windows.Forms.RowStyle());
-            this.tlpTab2.RowStyles.Add(new System.Windows.Forms.RowStyle());
-            this.tlpTab2.RowStyles.Add(new System.Windows.Forms.RowStyle());
-            this.tlpTab2.RowStyles.Add(new System.Windows.Forms.RowStyle());
-            this.tlpTab2.RowStyles.Add(new System.Windows.Forms.RowStyle());
-            this.tlpTab2.Size = new System.Drawing.Size(1107, 548);
-            this.tlpTab2.TabIndex = 0;
+            tlpTab2.ColumnCount = 2;
+            tlpTab2.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
+            tlpTab2.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
+            tlpTab2.Controls.Add(lblEmail, 0, 0);
+            tlpTab2.Controls.Add(txtEmail, 0, 1);
+            tlpTab2.Controls.Add(lblCep, 0, 2);
+            tlpTab2.Controls.Add(txtCepTel, 0, 3);
+            tlpTab2.Controls.Add(lblDogum, 0, 4);
+            tlpTab2.Controls.Add(dtpDogumGunu, 0, 5);
+            tlpTab2.Controls.Add(lblIsyeri, 0, 6);
+            tlpTab2.Controls.Add(cmbIsyeri, 0, 7);
+            tlpTab2.Controls.Add(lblStatu, 0, 8);
+            tlpTab2.Controls.Add(cmbCalismaStatu, 0, 9);
+            tlpTab2.Controls.Add(lblYemek, 0, 10);
+            tlpTab2.Controls.Add(nudYemekAdedi, 0, 11);
+            tlpTab2.Controls.Add(lblVardiya, 1, 0);
+            tlpTab2.Controls.Add(chkVardiyalar, 1, 1);
+            tlpTab2.Dock = DockStyle.Fill;
+            tlpTab2.Location = new Point(20, 25);
+            tlpTab2.Margin = new Padding(3, 4, 3, 4);
+            tlpTab2.Name = "tlpTab2";
+            tlpTab2.RowCount = 12;
+            tlpTab2.RowStyles.Add(new RowStyle());
+            tlpTab2.RowStyles.Add(new RowStyle());
+            tlpTab2.RowStyles.Add(new RowStyle());
+            tlpTab2.RowStyles.Add(new RowStyle());
+            tlpTab2.RowStyles.Add(new RowStyle());
+            tlpTab2.RowStyles.Add(new RowStyle());
+            tlpTab2.RowStyles.Add(new RowStyle());
+            tlpTab2.RowStyles.Add(new RowStyle());
+            tlpTab2.RowStyles.Add(new RowStyle());
+            tlpTab2.RowStyles.Add(new RowStyle());
+            tlpTab2.RowStyles.Add(new RowStyle());
+            tlpTab2.RowStyles.Add(new RowStyle());
+            tlpTab2.Size = new Size(1107, 697);
+            tlpTab2.TabIndex = 0;
             // 
             // lblEmail
             // 
-            this.lblEmail.AutoSize = true;
-            this.lblEmail.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
-            this.lblEmail.ForeColor = System.Drawing.Color.Gray;
-            this.lblEmail.Location = new System.Drawing.Point(3, 0);
-            this.lblEmail.Name = "lblEmail";
-            this.lblEmail.Padding = new System.Windows.Forms.Padding(0, 10, 0, 2);
-            this.lblEmail.Size = new System.Drawing.Size(111, 32);
-            this.lblEmail.TabIndex = 0;
-            this.lblEmail.Text = "E-Posta Adresi";
+            lblEmail.AutoSize = true;
+            lblEmail.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            lblEmail.ForeColor = Color.Gray;
+            lblEmail.Location = new Point(3, 0);
+            lblEmail.Name = "lblEmail";
+            lblEmail.Padding = new Padding(0, 12, 0, 2);
+            lblEmail.Size = new Size(111, 34);
+            lblEmail.TabIndex = 0;
+            lblEmail.Text = "E-Posta Adresi";
             // 
             // txtEmail
             // 
-            this.txtEmail.Dock = System.Windows.Forms.DockStyle.Top;
-            this.txtEmail.Font = new System.Drawing.Font("Segoe UI", 10F);
-            this.txtEmail.Location = new System.Drawing.Point(3, 35);
-            this.txtEmail.Name = "txtEmail";
-            this.txtEmail.Size = new System.Drawing.Size(547, 30);
-            this.txtEmail.TabIndex = 1;
+            txtEmail.Dock = DockStyle.Top;
+            txtEmail.Font = new Font("Segoe UI", 10F);
+            txtEmail.Location = new Point(3, 38);
+            txtEmail.Margin = new Padding(3, 4, 3, 4);
+            txtEmail.Name = "txtEmail";
+            txtEmail.Size = new Size(547, 30);
+            txtEmail.TabIndex = 1;
             // 
             // lblCep
             // 
-            this.lblCep.AutoSize = true;
-            this.lblCep.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
-            this.lblCep.ForeColor = System.Drawing.Color.Gray;
-            this.lblCep.Location = new System.Drawing.Point(3, 68);
-            this.lblCep.Name = "lblCep";
-            this.lblCep.Padding = new System.Windows.Forms.Padding(0, 10, 0, 2);
-            this.lblCep.Size = new System.Drawing.Size(100, 32);
-            this.lblCep.TabIndex = 2;
-            this.lblCep.Text = "Cep Telefonu";
+            lblCep.AutoSize = true;
+            lblCep.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            lblCep.ForeColor = Color.Gray;
+            lblCep.Location = new Point(3, 72);
+            lblCep.Name = "lblCep";
+            lblCep.Padding = new Padding(0, 12, 0, 2);
+            lblCep.Size = new Size(100, 34);
+            lblCep.TabIndex = 2;
+            lblCep.Text = "Cep Telefonu";
             // 
             // txtCepTel
             // 
-            this.txtCepTel.Dock = System.Windows.Forms.DockStyle.Top;
-            this.txtCepTel.Font = new System.Drawing.Font("Segoe UI", 10F);
-            this.txtCepTel.Location = new System.Drawing.Point(3, 103);
-            this.txtCepTel.Name = "txtCepTel";
-            this.txtCepTel.Size = new System.Drawing.Size(547, 30);
-            this.txtCepTel.TabIndex = 3;
+            txtCepTel.Dock = DockStyle.Top;
+            txtCepTel.Font = new Font("Segoe UI", 10F);
+            txtCepTel.Location = new Point(3, 110);
+            txtCepTel.Margin = new Padding(3, 4, 3, 4);
+            txtCepTel.Name = "txtCepTel";
+            txtCepTel.Size = new Size(547, 30);
+            txtCepTel.TabIndex = 3;
             // 
             // lblDogum
             // 
-            this.lblDogum.AutoSize = true;
-            this.lblDogum.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
-            this.lblDogum.ForeColor = System.Drawing.Color.Gray;
-            this.lblDogum.Location = new System.Drawing.Point(3, 136);
-            this.lblDogum.Name = "lblDogum";
-            this.lblDogum.Padding = new System.Windows.Forms.Padding(0, 10, 0, 2);
-            this.lblDogum.Size = new System.Drawing.Size(103, 32);
-            this.lblDogum.TabIndex = 4;
-            this.lblDogum.Text = "Doğum Günü";
+            lblDogum.AutoSize = true;
+            lblDogum.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            lblDogum.ForeColor = Color.Gray;
+            lblDogum.Location = new Point(3, 144);
+            lblDogum.Name = "lblDogum";
+            lblDogum.Padding = new Padding(0, 12, 0, 2);
+            lblDogum.Size = new Size(103, 34);
+            lblDogum.TabIndex = 4;
+            lblDogum.Text = "Doğum Günü";
             // 
             // dtpDogumGunu
             // 
-            this.dtpDogumGunu.Dock = System.Windows.Forms.DockStyle.Top;
-            this.dtpDogumGunu.Font = new System.Drawing.Font("Segoe UI", 10F);
-            this.dtpDogumGunu.Format = System.Windows.Forms.DateTimePickerFormat.Short;
-            this.dtpDogumGunu.Location = new System.Drawing.Point(3, 171);
-            this.dtpDogumGunu.Name = "dtpDogumGunu";
-            this.dtpDogumGunu.Size = new System.Drawing.Size(547, 30);
-            this.dtpDogumGunu.TabIndex = 5;
+            dtpDogumGunu.Dock = DockStyle.Top;
+            dtpDogumGunu.Font = new Font("Segoe UI", 10F);
+            dtpDogumGunu.Format = DateTimePickerFormat.Short;
+            dtpDogumGunu.Location = new Point(3, 182);
+            dtpDogumGunu.Margin = new Padding(3, 4, 3, 4);
+            dtpDogumGunu.Name = "dtpDogumGunu";
+            dtpDogumGunu.Size = new Size(547, 30);
+            dtpDogumGunu.TabIndex = 5;
             // 
             // lblIsyeri
             // 
-            this.lblIsyeri.AutoSize = true;
-            this.lblIsyeri.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
-            this.lblIsyeri.ForeColor = System.Drawing.Color.Gray;
-            this.lblIsyeri.Location = new System.Drawing.Point(3, 204);
-            this.lblIsyeri.Name = "lblIsyeri";
-            this.lblIsyeri.Padding = new System.Windows.Forms.Padding(0, 10, 0, 2);
-            this.lblIsyeri.Size = new System.Drawing.Size(47, 32);
-            this.lblIsyeri.TabIndex = 6;
-            this.lblIsyeri.Text = "İşyeri";
+            lblIsyeri.AutoSize = true;
+            lblIsyeri.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            lblIsyeri.ForeColor = Color.Gray;
+            lblIsyeri.Location = new Point(3, 216);
+            lblIsyeri.Name = "lblIsyeri";
+            lblIsyeri.Padding = new Padding(0, 12, 0, 2);
+            lblIsyeri.Size = new Size(47, 34);
+            lblIsyeri.TabIndex = 6;
+            lblIsyeri.Text = "İşyeri";
             // 
             // cmbIsyeri
             // 
-            this.cmbIsyeri.Dock = System.Windows.Forms.DockStyle.Top;
-            this.cmbIsyeri.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.cmbIsyeri.Font = new System.Drawing.Font("Segoe UI", 10F);
-            this.cmbIsyeri.FormattingEnabled = true;
-            this.cmbIsyeri.Location = new System.Drawing.Point(3, 239);
-            this.cmbIsyeri.Name = "cmbIsyeri";
-            this.cmbIsyeri.Size = new System.Drawing.Size(547, 31);
-            this.cmbIsyeri.TabIndex = 7;
+            cmbIsyeri.Dock = DockStyle.Top;
+            cmbIsyeri.DropDownStyle = ComboBoxStyle.DropDownList;
+            cmbIsyeri.Font = new Font("Segoe UI", 10F);
+            cmbIsyeri.FormattingEnabled = true;
+            cmbIsyeri.Location = new Point(3, 254);
+            cmbIsyeri.Margin = new Padding(3, 4, 3, 4);
+            cmbIsyeri.Name = "cmbIsyeri";
+            cmbIsyeri.Size = new Size(547, 31);
+            cmbIsyeri.TabIndex = 7;
             // 
             // lblStatu
             // 
-            this.lblStatu.AutoSize = true;
-            this.lblStatu.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
-            this.lblStatu.ForeColor = System.Drawing.Color.Gray;
-            this.lblStatu.Location = new System.Drawing.Point(3, 273);
-            this.lblStatu.Name = "lblStatu";
-            this.lblStatu.Padding = new System.Windows.Forms.Padding(0, 10, 0, 2);
-            this.lblStatu.Size = new System.Drawing.Size(120, 32);
-            this.lblStatu.TabIndex = 8;
-            this.lblStatu.Text = "Çalışma Statüsü";
+            lblStatu.AutoSize = true;
+            lblStatu.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            lblStatu.ForeColor = Color.Gray;
+            lblStatu.Location = new Point(3, 289);
+            lblStatu.Name = "lblStatu";
+            lblStatu.Padding = new Padding(0, 12, 0, 2);
+            lblStatu.Size = new Size(120, 34);
+            lblStatu.TabIndex = 8;
+            lblStatu.Text = "Çalışma Statüsü";
             // 
             // cmbCalismaStatu
             // 
-            this.cmbCalismaStatu.Dock = System.Windows.Forms.DockStyle.Top;
-            this.cmbCalismaStatu.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.cmbCalismaStatu.Font = new System.Drawing.Font("Segoe UI", 10F);
-            this.cmbCalismaStatu.FormattingEnabled = true;
-            this.cmbCalismaStatu.Location = new System.Drawing.Point(3, 308);
-            this.cmbCalismaStatu.Name = "cmbCalismaStatu";
-            this.cmbCalismaStatu.Size = new System.Drawing.Size(547, 31);
-            this.cmbCalismaStatu.TabIndex = 9;
+            cmbCalismaStatu.Dock = DockStyle.Top;
+            cmbCalismaStatu.DropDownStyle = ComboBoxStyle.DropDownList;
+            cmbCalismaStatu.Font = new Font("Segoe UI", 10F);
+            cmbCalismaStatu.FormattingEnabled = true;
+            cmbCalismaStatu.Location = new Point(3, 327);
+            cmbCalismaStatu.Margin = new Padding(3, 4, 3, 4);
+            cmbCalismaStatu.Name = "cmbCalismaStatu";
+            cmbCalismaStatu.Size = new Size(547, 31);
+            cmbCalismaStatu.TabIndex = 9;
             // 
             // lblYemek
             // 
-            this.lblYemek.AutoSize = true;
-            this.lblYemek.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
-            this.lblYemek.ForeColor = System.Drawing.Color.Gray;
-            this.lblYemek.Location = new System.Drawing.Point(3, 342);
-            this.lblYemek.Name = "lblYemek";
-            this.lblYemek.Padding = new System.Windows.Forms.Padding(0, 10, 0, 2);
-            this.lblYemek.Size = new System.Drawing.Size(100, 32);
-            this.lblYemek.TabIndex = 10;
-            this.lblYemek.Text = "Yemek Adedi";
+            lblYemek.AutoSize = true;
+            lblYemek.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            lblYemek.ForeColor = Color.Gray;
+            lblYemek.Location = new Point(3, 362);
+            lblYemek.Name = "lblYemek";
+            lblYemek.Padding = new Padding(0, 12, 0, 2);
+            lblYemek.Size = new Size(100, 34);
+            lblYemek.TabIndex = 10;
+            lblYemek.Text = "Yemek Adedi";
             // 
             // nudYemekAdedi
             // 
-            this.nudYemekAdedi.Dock = System.Windows.Forms.DockStyle.Top;
-            this.nudYemekAdedi.Font = new System.Drawing.Font("Segoe UI", 10F);
-            this.nudYemekAdedi.Location = new System.Drawing.Point(3, 377);
-            this.nudYemekAdedi.Name = "nudYemekAdedi";
-            this.nudYemekAdedi.Size = new System.Drawing.Size(547, 30);
-            this.nudYemekAdedi.TabIndex = 11;
+            nudYemekAdedi.Dock = DockStyle.Top;
+            nudYemekAdedi.Font = new Font("Segoe UI", 10F);
+            nudYemekAdedi.Location = new Point(3, 400);
+            nudYemekAdedi.Margin = new Padding(3, 4, 3, 4);
+            nudYemekAdedi.Maximum = new decimal(new int[] { 10000, 0, 0, 0 });
+            nudYemekAdedi.Name = "nudYemekAdedi";
+            nudYemekAdedi.Size = new Size(547, 30);
+            nudYemekAdedi.TabIndex = 11;
             // 
             // lblVardiya
             // 
-            this.lblVardiya.AutoSize = true;
-            this.lblVardiya.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
-            this.lblVardiya.ForeColor = System.Drawing.Color.Gray;
-            this.lblVardiya.Location = new System.Drawing.Point(556, 0);
-            this.lblVardiya.Name = "lblVardiya";
-            this.lblVardiya.Padding = new System.Windows.Forms.Padding(0, 10, 0, 2);
-            this.lblVardiya.Size = new System.Drawing.Size(134, 32);
-            this.lblVardiya.TabIndex = 12;
-            this.lblVardiya.Text = "Vardiya Atamaları";
+            lblVardiya.AutoSize = true;
+            lblVardiya.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            lblVardiya.ForeColor = Color.Gray;
+            lblVardiya.Location = new Point(556, 0);
+            lblVardiya.Name = "lblVardiya";
+            lblVardiya.Padding = new Padding(0, 12, 0, 2);
+            lblVardiya.Size = new Size(134, 34);
+            lblVardiya.TabIndex = 12;
+            lblVardiya.Text = "Vardiya Atamaları";
             // 
             // chkVardiyalar
             // 
-            this.chkVardiyalar.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.chkVardiyalar.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.chkVardiyalar.Font = new System.Drawing.Font("Segoe UI", 10F);
-            this.chkVardiyalar.FormattingEnabled = true;
-            this.chkVardiyalar.HorizontalScrollbar = true;
-            this.chkVardiyalar.Location = new System.Drawing.Point(556, 35);
-            this.chkVardiyalar.Name = "chkVardiyalar";
-            this.tlpTab2.SetRowSpan(this.chkVardiyalar, 11);
-            this.chkVardiyalar.Size = new System.Drawing.Size(548, 554);
-            this.chkVardiyalar.TabIndex = 13;
+            chkVardiyalar.BorderStyle = BorderStyle.FixedSingle;
+            chkVardiyalar.Dock = DockStyle.Fill;
+            chkVardiyalar.Font = new Font("Segoe UI", 10F);
+            chkVardiyalar.FormattingEnabled = true;
+            chkVardiyalar.HorizontalScrollbar = true;
+            chkVardiyalar.Location = new Point(556, 38);
+            chkVardiyalar.Margin = new Padding(3, 4, 3, 4);
+            chkVardiyalar.Name = "chkVardiyalar";
+            tlpTab2.SetRowSpan(chkVardiyalar, 11);
+            chkVardiyalar.Size = new Size(548, 692);
+            chkVardiyalar.TabIndex = 13;
             // 
             // pnlFooter
             // 
-            this.pnlFooter.BackColor = System.Drawing.Color.WhiteSmoke;
-            this.pnlFooter.Controls.Add(this.btnVazgec);
-            this.pnlFooter.Controls.Add(this.btnKaydet);
-            this.pnlFooter.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.pnlFooter.Location = new System.Drawing.Point(10, 631);
-            this.pnlFooter.Name = "pnlFooter";
-            this.pnlFooter.Padding = new System.Windows.Forms.Padding(10);
-            this.pnlFooter.Size = new System.Drawing.Size(1155, 80);
-            this.pnlFooter.TabIndex = 3;
+            pnlFooter.BackColor = Color.WhiteSmoke;
+            pnlFooter.Controls.Add(btnVazgec);
+            pnlFooter.Controls.Add(btnKaydet);
+            pnlFooter.Dock = DockStyle.Bottom;
+            pnlFooter.Location = new Point(10, 790);
+            pnlFooter.Margin = new Padding(3, 4, 3, 4);
+            pnlFooter.Name = "pnlFooter";
+            pnlFooter.Padding = new Padding(10, 12, 10, 12);
+            pnlFooter.Size = new Size(1155, 100);
+            pnlFooter.TabIndex = 3;
             // 
             // btnVazgec
             // 
-            this.btnVazgec.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnVazgec.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(108)))), ((int)(((byte)(117)))), ((int)(((byte)(125)))));
-            this.btnVazgec.FlatAppearance.BorderSize = 0;
-            this.btnVazgec.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnVazgec.Font = new System.Drawing.Font("Segoe UI", 10F);
-            this.btnVazgec.ForeColor = System.Drawing.Color.White;
-            this.btnVazgec.Location = new System.Drawing.Point(869, 20);
-            this.btnVazgec.Name = "btnVazgec";
-            this.btnVazgec.Size = new System.Drawing.Size(120, 40);
-            this.btnVazgec.TabIndex = 1;
-            this.btnVazgec.Text = "Vazgeç";
-            this.btnVazgec.UseVisualStyleBackColor = false;
-            this.btnVazgec.Visible = false;
+            btnVazgec.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            btnVazgec.BackColor = Color.FromArgb(108, 117, 125);
+            btnVazgec.FlatAppearance.BorderSize = 0;
+            btnVazgec.FlatStyle = FlatStyle.Flat;
+            btnVazgec.Font = new Font("Segoe UI", 10F);
+            btnVazgec.ForeColor = Color.White;
+            btnVazgec.Location = new Point(869, 25);
+            btnVazgec.Margin = new Padding(3, 4, 3, 4);
+            btnVazgec.Name = "btnVazgec";
+            btnVazgec.Size = new Size(120, 50);
+            btnVazgec.TabIndex = 1;
+            btnVazgec.Text = "Vazgeç";
+            btnVazgec.UseVisualStyleBackColor = false;
+            btnVazgec.Visible = false;
             // 
             // btnKaydet
             // 
-            this.btnKaydet.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnKaydet.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(123)))), ((int)(((byte)(255)))));
-            this.btnKaydet.FlatAppearance.BorderSize = 0;
-            this.btnKaydet.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnKaydet.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
-            this.btnKaydet.ForeColor = System.Drawing.Color.White;
-            this.btnKaydet.Location = new System.Drawing.Point(1009, 20);
-            this.btnKaydet.Name = "btnKaydet";
-            this.btnKaydet.Size = new System.Drawing.Size(120, 40);
-            this.btnKaydet.TabIndex = 0;
-            this.btnKaydet.Text = "Kaydet";
-            this.btnKaydet.UseVisualStyleBackColor = false;
-            this.btnKaydet.Visible = false;
+            btnKaydet.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            btnKaydet.BackColor = Color.FromArgb(0, 123, 255);
+            btnKaydet.FlatAppearance.BorderSize = 0;
+            btnKaydet.FlatStyle = FlatStyle.Flat;
+            btnKaydet.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+            btnKaydet.ForeColor = Color.White;
+            btnKaydet.Location = new Point(1009, 25);
+            btnKaydet.Margin = new Padding(3, 4, 3, 4);
+            btnKaydet.Name = "btnKaydet";
+            btnKaydet.Size = new Size(120, 50);
+            btnKaydet.TabIndex = 0;
+            btnKaydet.Text = "Kaydet";
+            btnKaydet.UseVisualStyleBackColor = false;
+            btnKaydet.Visible = false;
             // 
             // pnlLeft
             // 
-            this.pnlLeft.BackColor = System.Drawing.Color.White;
-            this.pnlLeft.Controls.Add(this.lstKisiler);
-            this.pnlLeft.Controls.Add(this.pnlLeftHeader);
-            this.pnlLeft.Dock = System.Windows.Forms.DockStyle.Left;
-            this.pnlLeft.Location = new System.Drawing.Point(10, 134);
-            this.pnlLeft.Name = "pnlLeft";
-            this.pnlLeft.Padding = new System.Windows.Forms.Padding(1);
-            this.pnlLeft.Size = new System.Drawing.Size(300, 711);
-            this.pnlLeft.TabIndex = 1;
+            pnlLeft.BackColor = Color.White;
+            pnlLeft.Controls.Add(lstKisiler);
+            pnlLeft.Controls.Add(pnlLeftHeader);
+            pnlLeft.Dock = DockStyle.Left;
+            pnlLeft.Location = new Point(10, 167);
+            pnlLeft.Margin = new Padding(3, 4, 3, 4);
+            pnlLeft.Name = "pnlLeft";
+            pnlLeft.Padding = new Padding(1);
+            pnlLeft.Size = new Size(300, 890);
+            pnlLeft.TabIndex = 1;
             // 
             // lstKisiler
             // 
-            this.lstKisiler.BorderStyle = System.Windows.Forms.BorderStyle.None;
-            this.lstKisiler.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.lstKisiler.Font = new System.Drawing.Font("Segoe UI", 11F);
-            this.lstKisiler.FormattingEnabled = true;
-            this.lstKisiler.ItemHeight = 25;
-            this.lstKisiler.Location = new System.Drawing.Point(1, 61);
-            this.lstKisiler.Name = "lstKisiler";
-            this.lstKisiler.Size = new System.Drawing.Size(298, 649);
-            this.lstKisiler.TabIndex = 1;
+            lstKisiler.BorderStyle = BorderStyle.None;
+            lstKisiler.Dock = DockStyle.Fill;
+            lstKisiler.Font = new Font("Segoe UI", 11F);
+            lstKisiler.FormattingEnabled = true;
+            lstKisiler.ItemHeight = 25;
+            lstKisiler.Location = new Point(1, 76);
+            lstKisiler.Margin = new Padding(3, 4, 3, 4);
+            lstKisiler.Name = "lstKisiler";
+            lstKisiler.Size = new Size(298, 813);
+            lstKisiler.TabIndex = 1;
             // 
             // pnlLeftHeader
             // 
-            this.pnlLeftHeader.BackColor = System.Drawing.Color.WhiteSmoke;
-            this.pnlLeftHeader.Controls.Add(this.btnAra);
-            this.pnlLeftHeader.Controls.Add(this.txtAra);
-            this.pnlLeftHeader.Dock = System.Windows.Forms.DockStyle.Top;
-            this.pnlLeftHeader.Location = new System.Drawing.Point(1, 1);
-            this.pnlLeftHeader.Name = "pnlLeftHeader";
-            this.pnlLeftHeader.Size = new System.Drawing.Size(298, 60);
-            this.pnlLeftHeader.TabIndex = 0;
+            pnlLeftHeader.BackColor = Color.WhiteSmoke;
+            pnlLeftHeader.Controls.Add(btnAra);
+            pnlLeftHeader.Controls.Add(txtAra);
+            pnlLeftHeader.Dock = DockStyle.Top;
+            pnlLeftHeader.Location = new Point(1, 1);
+            pnlLeftHeader.Margin = new Padding(3, 4, 3, 4);
+            pnlLeftHeader.Name = "pnlLeftHeader";
+            pnlLeftHeader.Size = new Size(298, 75);
+            pnlLeftHeader.TabIndex = 0;
             // 
             // btnAra
             // 
-            this.btnAra.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(123)))), ((int)(((byte)(255)))));
-            this.btnAra.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnAra.ForeColor = System.Drawing.Color.White;
-            this.btnAra.Location = new System.Drawing.Point(220, 13);
-            this.btnAra.Name = "btnAra";
-            this.btnAra.Size = new System.Drawing.Size(70, 30);
-            this.btnAra.TabIndex = 1;
-            this.btnAra.Text = "Ara";
-            this.btnAra.UseVisualStyleBackColor = false;
+            btnAra.BackColor = Color.FromArgb(0, 123, 255);
+            btnAra.FlatStyle = FlatStyle.Flat;
+            btnAra.ForeColor = Color.White;
+            btnAra.Location = new Point(220, 16);
+            btnAra.Margin = new Padding(3, 4, 3, 4);
+            btnAra.Name = "btnAra";
+            btnAra.Size = new Size(70, 38);
+            btnAra.TabIndex = 1;
+            btnAra.Text = "Ara";
+            btnAra.UseVisualStyleBackColor = false;
             // 
             // txtAra
             // 
-            this.txtAra.Font = new System.Drawing.Font("Segoe UI", 10F);
-            this.txtAra.Location = new System.Drawing.Point(10, 15);
-            this.txtAra.Name = "txtAra";
-            this.txtAra.Size = new System.Drawing.Size(200, 30);
-            this.txtAra.TabIndex = 0;
+            txtAra.Font = new Font("Segoe UI", 10F);
+            txtAra.Location = new Point(10, 19);
+            txtAra.Margin = new Padding(3, 4, 3, 4);
+            txtAra.Name = "txtAra";
+            txtAra.Size = new Size(200, 30);
+            txtAra.TabIndex = 0;
             // 
             // pnlTopFilter
             // 
-            this.pnlTopFilter.BackColor = System.Drawing.Color.White;
-            this.pnlTopFilter.Controls.Add(this.cmbKartTipi);
-            this.pnlTopFilter.Controls.Add(this.lblKartTipi);
-            this.pnlTopFilter.Controls.Add(this.cmbFirmaFilter);
-            this.pnlTopFilter.Controls.Add(this.labelFirma);
-            this.pnlTopFilter.Controls.Add(this.cmbIsyeriFilter);
-            this.pnlTopFilter.Controls.Add(this.lblIsyeriFilter);
-            this.pnlTopFilter.Controls.Add(this.pnlActions);
-            this.pnlTopFilter.Dock = System.Windows.Forms.DockStyle.Top;
-            this.pnlTopFilter.Location = new System.Drawing.Point(10, 10);
-            this.pnlTopFilter.Name = "pnlTopFilter";
-            this.pnlTopFilter.Padding = new System.Windows.Forms.Padding(10);
-            this.pnlTopFilter.Size = new System.Drawing.Size(1465, 124);
-            this.pnlTopFilter.TabIndex = 0;
-            // 
-            // lblKartTipi
-            // 
-            this.lblKartTipi.AutoSize = true;
-            this.lblKartTipi.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
-            this.lblKartTipi.Location = new System.Drawing.Point(20, 30);
-            this.lblKartTipi.Name = "lblKartTipi";
-            this.lblKartTipi.Size = new System.Drawing.Size(76, 23);
-            this.lblKartTipi.TabIndex = 0;
-            this.lblKartTipi.Text = "Kart tipi:";
+            pnlTopFilter.BackColor = Color.White;
+            pnlTopFilter.Controls.Add(cmbKartTipi);
+            pnlTopFilter.Controls.Add(lblKartTipi);
+            pnlTopFilter.Controls.Add(cmbFirmaFilter);
+            pnlTopFilter.Controls.Add(labelFirma);
+            pnlTopFilter.Controls.Add(cmbIsyeriFilter);
+            pnlTopFilter.Controls.Add(lblIsyeriFilter);
+            pnlTopFilter.Controls.Add(pnlActions);
+            pnlTopFilter.Dock = DockStyle.Top;
+            pnlTopFilter.Location = new Point(10, 12);
+            pnlTopFilter.Margin = new Padding(3, 4, 3, 4);
+            pnlTopFilter.Name = "pnlTopFilter";
+            pnlTopFilter.Padding = new Padding(10, 12, 10, 12);
+            pnlTopFilter.Size = new Size(1465, 155);
+            pnlTopFilter.TabIndex = 0;
             // 
             // cmbKartTipi
             // 
-            this.cmbKartTipi.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.cmbKartTipi.Font = new System.Drawing.Font("Segoe UI", 11F);
-            this.cmbKartTipi.FormattingEnabled = true;
-            this.cmbKartTipi.Items.AddRange(new object[] { "Puantaj Yapılanlar", "Puantaj Yapılmayanlar" });
-            this.cmbKartTipi.Location = new System.Drawing.Point(105, 26);
-            this.cmbKartTipi.Name = "cmbKartTipi";
-            this.cmbKartTipi.Size = new System.Drawing.Size(220, 33);
-            this.cmbKartTipi.TabIndex = 1;
-            this.cmbKartTipi.SelectedIndex = 0;
+            cmbKartTipi.DropDownStyle = ComboBoxStyle.DropDownList;
+            cmbKartTipi.Font = new Font("Segoe UI", 11F);
+            cmbKartTipi.FormattingEnabled = true;
+            cmbKartTipi.Items.AddRange(new object[] { "Puantaj Yapılanlar", "Puantaj Yapılmayanlar" });
+            cmbKartTipi.Location = new Point(105, 32);
+            cmbKartTipi.Margin = new Padding(3, 4, 3, 4);
+            cmbKartTipi.Name = "cmbKartTipi";
+            cmbKartTipi.Size = new Size(220, 33);
+            cmbKartTipi.TabIndex = 1;
+            // 
+            // lblKartTipi
+            // 
+            lblKartTipi.AutoSize = true;
+            lblKartTipi.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+            lblKartTipi.Location = new Point(20, 38);
+            lblKartTipi.Name = "lblKartTipi";
+            lblKartTipi.Size = new Size(82, 23);
+            lblKartTipi.TabIndex = 0;
+            lblKartTipi.Text = "Kart tipi:";
             // 
             // cmbFirmaFilter
             // 
-            this.cmbFirmaFilter.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.cmbFirmaFilter.Font = new System.Drawing.Font("Segoe UI", 11F);
-            this.cmbFirmaFilter.Location = new System.Drawing.Point(400, 26);
-            this.cmbFirmaFilter.Name = "cmbFirmaFilter";
-            this.cmbFirmaFilter.Size = new System.Drawing.Size(300, 33);
-            this.cmbFirmaFilter.TabIndex = 3;
+            cmbFirmaFilter.DropDownStyle = ComboBoxStyle.DropDownList;
+            cmbFirmaFilter.Font = new Font("Segoe UI", 11F);
+            cmbFirmaFilter.Location = new Point(400, 32);
+            cmbFirmaFilter.Margin = new Padding(3, 4, 3, 4);
+            cmbFirmaFilter.Name = "cmbFirmaFilter";
+            cmbFirmaFilter.Size = new Size(300, 33);
+            cmbFirmaFilter.TabIndex = 3;
             // 
             // labelFirma
             // 
-            this.labelFirma.AutoSize = true;
-            this.labelFirma.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
-            this.labelFirma.Location = new System.Drawing.Point(335, 30);
-            this.labelFirma.Name = "labelFirma";
-            this.labelFirma.Size = new System.Drawing.Size(61, 23);
-            this.labelFirma.TabIndex = 2;
-            this.labelFirma.Text = "Firma:";
-            // 
-            // lblIsyeriFilter
-            // 
-            this.lblIsyeriFilter.AutoSize = true;
-            this.lblIsyeriFilter.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
-            this.lblIsyeriFilter.Location = new System.Drawing.Point(20, 78);
-            this.lblIsyeriFilter.Name = "lblIsyeriFilter";
-            this.lblIsyeriFilter.Size = new System.Drawing.Size(61, 23);
-            this.lblIsyeriFilter.TabIndex = 4;
-            this.lblIsyeriFilter.Text = "İşyeri:";
+            labelFirma.AutoSize = true;
+            labelFirma.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+            labelFirma.Location = new Point(335, 38);
+            labelFirma.Name = "labelFirma";
+            labelFirma.Size = new Size(61, 23);
+            labelFirma.TabIndex = 2;
+            labelFirma.Text = "Firma:";
             // 
             // cmbIsyeriFilter
             // 
-            this.cmbIsyeriFilter.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.cmbIsyeriFilter.Font = new System.Drawing.Font("Segoe UI", 11F);
-            this.cmbIsyeriFilter.Location = new System.Drawing.Point(105, 74);
-            this.cmbIsyeriFilter.Name = "cmbIsyeriFilter";
-            this.cmbIsyeriFilter.Size = new System.Drawing.Size(595, 33);
-            this.cmbIsyeriFilter.TabIndex = 5;
+            cmbIsyeriFilter.DropDownStyle = ComboBoxStyle.DropDownList;
+            cmbIsyeriFilter.Font = new Font("Segoe UI", 11F);
+            cmbIsyeriFilter.Location = new Point(105, 92);
+            cmbIsyeriFilter.Margin = new Padding(3, 4, 3, 4);
+            cmbIsyeriFilter.Name = "cmbIsyeriFilter";
+            cmbIsyeriFilter.Size = new Size(595, 33);
+            cmbIsyeriFilter.TabIndex = 5;
+            // 
+            // lblIsyeriFilter
+            // 
+            lblIsyeriFilter.AutoSize = true;
+            lblIsyeriFilter.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+            lblIsyeriFilter.Location = new Point(20, 98);
+            lblIsyeriFilter.Name = "lblIsyeriFilter";
+            lblIsyeriFilter.Size = new Size(57, 23);
+            lblIsyeriFilter.TabIndex = 4;
+            lblIsyeriFilter.Text = "İşyeri:";
             // 
             // pnlActions
             // 
-            this.pnlActions.Controls.Add(this.btnKisiGuncelle);
-            this.pnlActions.Controls.Add(this.btnKisiSil);
-            this.pnlActions.Controls.Add(this.btnKisiEkle);
-            this.pnlActions.Dock = System.Windows.Forms.DockStyle.Right;
-            this.pnlActions.FlowDirection = System.Windows.Forms.FlowDirection.RightToLeft;
-            this.pnlActions.Location = new System.Drawing.Point(918, 10);
-            this.pnlActions.Name = "pnlActions";
-            this.pnlActions.Padding = new System.Windows.Forms.Padding(10);
-            this.pnlActions.Size = new System.Drawing.Size(537, 104);
-            this.pnlActions.TabIndex = 0;
+            pnlActions.Controls.Add(btnKisiGuncelle);
+            pnlActions.Controls.Add(btnKisiSil);
+            pnlActions.Controls.Add(btnKisiEkle);
+            pnlActions.Dock = DockStyle.Right;
+            pnlActions.FlowDirection = FlowDirection.RightToLeft;
+            pnlActions.Location = new Point(918, 12);
+            pnlActions.Margin = new Padding(3, 4, 3, 4);
+            pnlActions.Name = "pnlActions";
+            pnlActions.Padding = new Padding(10, 12, 10, 12);
+            pnlActions.Size = new Size(537, 131);
+            pnlActions.TabIndex = 0;
             // 
             // btnKisiGuncelle
             // 
-            this.btnKisiGuncelle.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(23)))), ((int)(((byte)(162)))), ((int)(((byte)(184)))));
-            this.btnKisiGuncelle.FlatAppearance.BorderSize = 0;
-            this.btnKisiGuncelle.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnKisiGuncelle.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
-            this.btnKisiGuncelle.ForeColor = System.Drawing.Color.White;
-            this.btnKisiGuncelle.Image = global::CeyPASS.WFA.Properties.Resources.icons8_update_50;
-            this.btnKisiGuncelle.Location = new System.Drawing.Point(337, 15);
-            this.btnKisiGuncelle.Margin = new System.Windows.Forms.Padding(5);
-            this.btnKisiGuncelle.Name = "btnKisiGuncelle";
-            this.btnKisiGuncelle.Size = new System.Drawing.Size(175, 74);
-            this.btnKisiGuncelle.TabIndex = 0;
-            this.btnKisiGuncelle.Text = "Güncelle";
-            this.btnKisiGuncelle.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageBeforeText;
-            this.btnKisiGuncelle.UseVisualStyleBackColor = false;
+            btnKisiGuncelle.BackColor = Color.FromArgb(23, 162, 184);
+            btnKisiGuncelle.FlatAppearance.BorderSize = 0;
+            btnKisiGuncelle.FlatStyle = FlatStyle.Flat;
+            btnKisiGuncelle.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            btnKisiGuncelle.ForeColor = Color.White;
+            btnKisiGuncelle.Image = Properties.Resources.icons8_update_50;
+            btnKisiGuncelle.Location = new Point(337, 18);
+            btnKisiGuncelle.Margin = new Padding(5, 6, 5, 6);
+            btnKisiGuncelle.Name = "btnKisiGuncelle";
+            btnKisiGuncelle.Size = new Size(175, 92);
+            btnKisiGuncelle.TabIndex = 0;
+            btnKisiGuncelle.Text = "Güncelle";
+            btnKisiGuncelle.TextImageRelation = TextImageRelation.ImageBeforeText;
+            btnKisiGuncelle.UseVisualStyleBackColor = false;
             // 
             // btnKisiSil
             // 
-            this.btnKisiSil.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(220)))), ((int)(((byte)(53)))), ((int)(((byte)(69)))));
-            this.btnKisiSil.FlatAppearance.BorderSize = 0;
-            this.btnKisiSil.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnKisiSil.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
-            this.btnKisiSil.ForeColor = System.Drawing.Color.White;
-            this.btnKisiSil.Image = global::CeyPASS.WFA.Properties.Resources.icons8_minus_50;
-            this.btnKisiSil.Location = new System.Drawing.Point(185, 15);
-            this.btnKisiSil.Margin = new System.Windows.Forms.Padding(5);
-            this.btnKisiSil.Name = "btnKisiSil";
-            this.btnKisiSil.Size = new System.Drawing.Size(142, 74);
-            this.btnKisiSil.TabIndex = 1;
-            this.btnKisiSil.Text = "Sil";
-            this.btnKisiSil.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageBeforeText;
-            this.btnKisiSil.UseVisualStyleBackColor = false;
+            btnKisiSil.BackColor = Color.FromArgb(220, 53, 69);
+            btnKisiSil.FlatAppearance.BorderSize = 0;
+            btnKisiSil.FlatStyle = FlatStyle.Flat;
+            btnKisiSil.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            btnKisiSil.ForeColor = Color.White;
+            btnKisiSil.Image = Properties.Resources.icons8_minus_50;
+            btnKisiSil.Location = new Point(185, 18);
+            btnKisiSil.Margin = new Padding(5, 6, 5, 6);
+            btnKisiSil.Name = "btnKisiSil";
+            btnKisiSil.Size = new Size(142, 92);
+            btnKisiSil.TabIndex = 1;
+            btnKisiSil.Text = "Sil";
+            btnKisiSil.TextImageRelation = TextImageRelation.ImageBeforeText;
+            btnKisiSil.UseVisualStyleBackColor = false;
             // 
             // btnKisiEkle
             // 
-            this.btnKisiEkle.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(167)))), ((int)(((byte)(69)))));
-            this.btnKisiEkle.FlatAppearance.BorderSize = 0;
-            this.btnKisiEkle.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnKisiEkle.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
-            this.btnKisiEkle.ForeColor = System.Drawing.Color.White;
-            this.btnKisiEkle.Image = global::CeyPASS.WFA.Properties.Resources.icons8_add_50;
-            this.btnKisiEkle.Location = new System.Drawing.Point(24, 15);
-            this.btnKisiEkle.Margin = new System.Windows.Forms.Padding(5);
-            this.btnKisiEkle.Name = "btnKisiEkle";
-            this.btnKisiEkle.Size = new System.Drawing.Size(151, 74);
-            this.btnKisiEkle.TabIndex = 2;
-            this.btnKisiEkle.Text = "Ekle";
-            this.btnKisiEkle.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageBeforeText;
-            this.btnKisiEkle.UseVisualStyleBackColor = false;
+            btnKisiEkle.BackColor = Color.FromArgb(40, 167, 69);
+            btnKisiEkle.FlatAppearance.BorderSize = 0;
+            btnKisiEkle.FlatStyle = FlatStyle.Flat;
+            btnKisiEkle.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            btnKisiEkle.ForeColor = Color.White;
+            btnKisiEkle.Image = Properties.Resources.icons8_add_50;
+            btnKisiEkle.Location = new Point(24, 18);
+            btnKisiEkle.Margin = new Padding(5, 6, 5, 6);
+            btnKisiEkle.Name = "btnKisiEkle";
+            btnKisiEkle.Size = new Size(151, 92);
+            btnKisiEkle.TabIndex = 2;
+            btnKisiEkle.Text = "Ekle";
+            btnKisiEkle.TextImageRelation = TextImageRelation.ImageBeforeText;
+            btnKisiEkle.UseVisualStyleBackColor = false;
             // 
             // dinamikButon
             // 
-            this.dinamikButon.Location = new System.Drawing.Point(0, 0);
-            this.dinamikButon.Name = "dinamikButon";
-            this.dinamikButon.Size = new System.Drawing.Size(75, 23);
-            this.dinamikButon.TabIndex = 0;
+            dinamikButon.Location = new Point(0, 0);
+            dinamikButon.Name = "dinamikButon";
+            dinamikButon.Size = new Size(75, 23);
+            dinamikButon.TabIndex = 0;
             // 
             // ucPersonelTanimlama
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.Controls.Add(this.pnlMain);
-            this.Name = "ucPersonelTanimlama";
-            this.Size = new System.Drawing.Size(1485, 855);
-            this.pnlMain.ResumeLayout(false);
-            this.pnlContent.ResumeLayout(false);
-            this.tabCtrlPersonel.ResumeLayout(false);
-            this.tabPersonelSayfa.ResumeLayout(false);
-            this.tlpTab1.ResumeLayout(false);
-            this.tlpTab1.PerformLayout();
-            this.pnlRightCol.ResumeLayout(false);
-            this.pnlChecks.ResumeLayout(false);
-            this.pnlChecks.PerformLayout();
-            this.pnlPhotoContainer.ResumeLayout(false);
-            this.tlpPhotoBtns.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)(this.pbKisiFoto)).EndInit();
-            this.tabEkBilgilerSayfa.ResumeLayout(false);
-            this.tlpTab2.ResumeLayout(false);
-            this.tlpTab2.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.nudYemekAdedi)).EndInit();
-            this.pnlFooter.ResumeLayout(false);
-            this.pnlLeft.ResumeLayout(false);
-            this.pnlLeftHeader.ResumeLayout(false);
-            this.pnlLeftHeader.PerformLayout();
-            this.pnlTopFilter.ResumeLayout(false);
-            this.pnlTopFilter.PerformLayout();
-            this.pnlActions.ResumeLayout(false);
-            this.ResumeLayout(false);
+            AutoScaleDimensions = new SizeF(8F, 20F);
+            AutoScaleMode = AutoScaleMode.Font;
+            Controls.Add(pnlMain);
+            Margin = new Padding(3, 4, 3, 4);
+            Name = "ucPersonelTanimlama";
+            Size = new Size(1485, 1069);
+            pnlMain.ResumeLayout(false);
+            pnlContent.ResumeLayout(false);
+            tabCtrlPersonel.ResumeLayout(false);
+            tabPersonelSayfa.ResumeLayout(false);
+            tlpTab1.ResumeLayout(false);
+            tlpTab1.PerformLayout();
+            pnlRightCol.ResumeLayout(false);
+            pnlChecks.ResumeLayout(false);
+            pnlChecks.PerformLayout();
+            pnlPhotoContainer.ResumeLayout(false);
+            tlpPhotoBtns.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)pbKisiFoto).EndInit();
+            tabEkBilgilerSayfa.ResumeLayout(false);
+            tlpTab2.ResumeLayout(false);
+            tlpTab2.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)nudYemekAdedi).EndInit();
+            pnlFooter.ResumeLayout(false);
+            pnlLeft.ResumeLayout(false);
+            pnlLeftHeader.ResumeLayout(false);
+            pnlLeftHeader.PerformLayout();
+            pnlTopFilter.ResumeLayout(false);
+            pnlTopFilter.PerformLayout();
+            pnlActions.ResumeLayout(false);
+            ResumeLayout(false);
 
         }
 
