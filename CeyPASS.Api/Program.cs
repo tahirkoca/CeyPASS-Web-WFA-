@@ -189,6 +189,8 @@ void RegisterCeyPassServices(IServiceCollection services)
     services.AddTransient<IKisiHareketRepository, KisiHareketRepositoryCore>();
     services.AddTransient<IKisiIzinlerRepository, KisiIzinlerRepositoryCore>();
     services.AddTransient<IKisiRepository, KisiRepositoryCore>();
+    services.AddTransient<IKullaniciFirmaIsyeriYetkiRepository, KullaniciFirmaIsyeriYetkiRepositoryCore>();
+    services.AddTransient<IKullaniciFirmaIsyeriYetkiService, KullaniciFirmaIsyeriYetkiService>();
     services.AddTransient<IPuantajRepository, PuantajRepositoryCore>();
     services.AddTransient<IIzinTalepRepository, IzinTalepRepositoryCore>();
     services.AddTransient<IUstYetkiliRepository, UstYetkiliRepositoryCore>();

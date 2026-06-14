@@ -1,10 +1,10 @@
 using Microsoft.AspNetCore.Mvc;
 using CeyPASS.Business.Abstractions;
 using CeyPASS.Entities.Concrete;
+using CeyPASS.Infrastructure.Helpers;
 using Microsoft.Extensions.Caching.Memory;
 using System;
 using System.Collections.Generic;
-using System.Data;
 using System.Linq;
 
 namespace CeyPASS.Web.Controllers
@@ -16,11 +16,14 @@ namespace CeyPASS.Web.Controllers
         private readonly ISessionContext _sessionContext;
         private readonly IAuthorizationService _authorizationService;
         private readonly IFirmaService _firmaService;
+        private readonly IKisiEkraniLookUpService _lookupService;
+        private readonly IPuantajService _puantajService;
         private readonly IMemoryCache _cache;
         private const string PageName = "KisiHareketler";
         private const int DefaultPageSize = 50;
         private static readonly int[] AllowedPageSizes = new[] { 20, 50, 100, 200 };
         private const string CacheVerPrefix = "kisihareket_ver_";
+        private const string CacheVerScopeAllFirms = "allfirms";
 
         public KisiHareketController(
             IKisiHareketService kisiHareketService,
@@ -28,6 +31,8 @@ namespace CeyPASS.Web.Controllers
             ISessionContext sessionContext,
             IAuthorizationService authorizationService,
             IFirmaService firmaService,
+            IKisiEkraniLookUpService lookupService,
+            IPuantajService puantajService,
             IMemoryCache cache)
         {
             _kisiHareketService = kisiHareketService;
@@ -35,10 +40,12 @@ namespace CeyPASS.Web.Controllers
             _sessionContext = sessionContext;
             _authorizationService = authorizationService;
             _firmaService = firmaService;
+            _lookupService = lookupService;
+            _puantajService = puantajService;
             _cache = cache;
         }
 
-        public IActionResult Index(int? firmaId = null, string personelIds = null, DateTime? baslangic = null, DateTime? bitis = null, bool? sadeceAktif = null, bool? sadecePasif = null, bool? sadeceYemekhane = null, string kartTipi = null, int page = 1, int pageSize = DefaultPageSize)
+        public IActionResult Index(int? firmaId = null, int? isyeriId = null, string personelIds = null, DateTime? baslangic = null, DateTime? bitis = null, bool? sadeceAktif = null, bool? sadecePasif = null, bool? sadeceYemekhane = null, string kartTipi = null, int page = 1, int pageSize = DefaultPageSize)
         {
             // Check authorization
             if (!_authorizationService.ViewAbility(PageName))
@@ -64,7 +71,7 @@ namespace CeyPASS.Web.Controllers
 
             // Kart tipi: puantajsiz = Puantaj Yapılmayanlar, aksi halde Puantaj Yapılanlar
             bool puantajYapilir = kartTipi != "puantajsiz";
-            var personelList = GetPersonelList(selectedFirmaId, puantajYapilir);
+            var personelList = GetPersonelList(selectedFirmaId, puantajYapilir, isyeriId);
 
             // Seçili personel ID'leri
             List<int> seciliPersonelIds = new List<int>();
@@ -82,14 +89,15 @@ namespace CeyPASS.Web.Controllers
             if (seciliPersonelIds.Any())
             {
                 var personelKeyPart = string.Join(",", seciliPersonelIds.OrderBy(x => x));
-                var verKey = CacheVerPrefix + selectedFirmaId;
+                var verKey = CacheVerPrefix + CacheVerScopeAllFirms;
                 if (!_cache.TryGetValue(verKey, out int ver))
                 {
                     ver = 0;
                     _cache.Set(verKey, ver, TimeSpan.FromHours(1));
                 }
 
-                var cacheKey = $"kisihareket_{selectedFirmaId}_v{ver}_{kartTipi}_{personelKeyPart}_{baslangicTarih:yyyyMMddHHmmss}_{bitisTarih:yyyyMMddHHmmss}_{(sadeceAktif ?? false)}_{(sadecePasif ?? false)}_{(sadeceYemekhane ?? false)}_p{page}_s{pageSize}";
+                var isyeriSeg = IsyeriFilterCacheSegment(isyeriId, null);
+                var cacheKey = $"kisihareket_{CacheVerScopeAllFirms}_v{ver}_{kartTipi}_{isyeriSeg}_{personelKeyPart}_{baslangicTarih:yyyyMMddHHmmss}_{bitisTarih:yyyyMMddHHmmss}_{(sadeceAktif ?? false)}_{(sadecePasif ?? false)}_{(sadeceYemekhane ?? false)}_p{page}_s{pageSize}";
                 if (!_cache.TryGetValue(cacheKey, out KisiHareketCacheValue cached))
                 {
                     var items = _kisiHareketService.GetByPersonsPaged(
@@ -116,6 +124,8 @@ namespace CeyPASS.Web.Controllers
             var firmalar = isAdmin ? _firmaService.GetAll().OrderBy(f => f.FirmaAdi).ToList() : null;
 
             ViewBag.SelectedFirmaId = selectedFirmaId;
+            ViewBag.SelectedIsyeriId = isyeriId;
+            ViewBag.Isyerleri = GetYetkiliIsyeriLookups(selectedFirmaId);
             ViewBag.Firmalar = firmalar;
             ViewBag.IsAdmin = isAdmin;
             ViewBag.PersonelList = personelList;
@@ -230,31 +240,45 @@ namespace CeyPASS.Web.Controllers
             return RedirectToAction("Index");
         }
 
-        private List<PersonelLookupItem> GetPersonelList(int firmaId, bool puantajYapilir = true)
+        [HttpGet]
+        public IActionResult GetIsyerleri(int firmaId)
+        {
+            return Json(GetYetkiliIsyeriLookups(firmaId));
+        }
+
+        private List<LookupItem> GetYetkiliIsyeriLookups(int firmaId)
+        {
+            bool isAdmin = _sessionContext.IsAdmin();
+            List<FirmaIsyeriYetkiDTO> yetkiler = null;
+            if (!isAdmin && _sessionContext.AktifKullaniciId.HasValue)
+                yetkiler = _puantajService.GetKullaniciFirmaIsyeriYetkileri((int)_sessionContext.AktifKullaniciId);
+            return FirmaIsyeriYetkiHelper.FilterIsyeriLookup(
+                _lookupService.GetIsyerleri(firmaId) ?? new List<LookupItem>(),
+                firmaId,
+                yetkiler,
+                isAdmin);
+        }
+
+        private List<PersonelLookupItem> GetPersonelList(int firmaId, bool puantajYapilir = true, int? selectedIsyeriId = null)
         {
             var list = new List<PersonelLookupItem>();
             try
             {
-                var dt = _kisiHareketService.GetAktifKisilerWithSicil(firmaId, puantajYapilir);
-                if (dt != null)
+                bool isAdmin = _sessionContext.IsAdmin();
+                List<FirmaIsyeriYetkiDTO> yetkiler = null;
+                if (!isAdmin && _sessionContext.AktifKullaniciId.HasValue)
+                    yetkiler = _puantajService.GetKullaniciFirmaIsyeriYetkileri((int)_sessionContext.AktifKullaniciId);
+                var (single, idIn) = FirmaIsyeriYetkiHelper.ResolveKisiQueryIsyeriFilter(
+                    firmaId, selectedIsyeriId, yetkiler, isAdmin);
+                var kisiler = _kisiQueryService.GetAktifKisilerByFirma(firmaId, null, puantajYapilir, single, idIn)
+                    ?? new List<KisiListItem>();
+                foreach (var k in kisiler)
                 {
-                    bool hasId = dt.Columns.Contains("PersonelId");
-                    bool hasAdSoyad = dt.Columns.Contains("AdSoyad");
-
-                    foreach (DataRow row in dt.Rows)
-                    {
-                        int id = 0;
-                        string ad = string.Empty;
-
-                        if (hasId && row["PersonelId"] != DBNull.Value)
-                            int.TryParse(row["PersonelId"].ToString(), out id);
-
-                        if (hasAdSoyad && row["AdSoyad"] != DBNull.Value)
-                            ad = row["AdSoyad"].ToString();
-
-                        if (id > 0 && !string.IsNullOrWhiteSpace(ad))
-                            list.Add(new PersonelLookupItem { Id = id, Ad = ad });
-                    }
+                    if (string.IsNullOrWhiteSpace(k.PersonelId) || string.IsNullOrWhiteSpace(k.AdSoyad))
+                        continue;
+                    if (!int.TryParse(k.PersonelId, out int id) || id <= 0)
+                        continue;
+                    list.Add(new PersonelLookupItem { Id = id, Ad = k.AdSoyad });
                 }
             }
             catch (Exception)
@@ -265,9 +289,18 @@ namespace CeyPASS.Web.Controllers
             return list;
         }
 
+        private static string IsyeriFilterCacheSegment(int? isyeriId, IReadOnlyList<int> isyeriIdIn)
+        {
+            if (isyeriId.HasValue) return isyeriId.Value.ToString();
+            if (isyeriIdIn != null && isyeriIdIn.Count > 0)
+                return "in_" + string.Join("_", isyeriIdIn.OrderBy(x => x));
+            if (isyeriIdIn != null) return "in_none";
+            return "all";
+        }
+
         private void BumpVer(int firmaId)
         {
-            var key = CacheVerPrefix + firmaId;
+            var key = CacheVerPrefix + CacheVerScopeAllFirms;
             if (!_cache.TryGetValue(key, out int ver)) ver = 0;
             ver++;
             _cache.Set(key, ver, TimeSpan.FromHours(1));

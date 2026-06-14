@@ -13,6 +13,7 @@ namespace CeyPASS.WFA.UserControls.VMY
         private readonly ISessionContext _session;
         private readonly ICalismaSekliService _vsvc;
         private readonly IAuthorizationService _auth;
+        private readonly IKullaniciFirmaIsyeriYetkiService _yetkiSvc;
         private ScreenMode _mode = ScreenMode.List;
         private bool _wired = false;
         AuthorizationHelper authHelp;
@@ -24,12 +25,13 @@ namespace CeyPASS.WFA.UserControls.VMY
         /// </summary>
         public bool AdminPanelMode { get; set; }
 
-        public ucCalismaSekilleri(ISessionContext session, ICalismaSekliService vsvc, IAuthorizationService auth)
+        public ucCalismaSekilleri(ISessionContext session, ICalismaSekliService vsvc, IAuthorizationService auth, IKullaniciFirmaIsyeriYetkiService yetkiSvc)
         {
             InitializeComponent();
             _session = session;
             _vsvc = vsvc;
             _auth = auth;
+            _yetkiSvc = yetkiSvc;
             authHelp = new AuthorizationHelper(_session, _auth);
             var cid = Guid.NewGuid().ToString("N");
             AppTheme.ApplyToControl(this);
@@ -218,6 +220,15 @@ namespace CeyPASS.WFA.UserControls.VMY
         private void Save()
         {
             var cid = Guid.NewGuid().ToString("N");
+            int firmaId = (int)_session.AktifFirmaId;
+            bool isAdmin = FirmaIsyeriYetkiHelper.IsAdmin(_session.RolId);
+            var yetkiler = _yetkiSvc.GetYetkiler((int)_session.AktifKullaniciId);
+            if (!FirmaIsyeriYetkiHelper.IsFirmaAuthorized(firmaId, yetkiler, isAdmin))
+            {
+                MessageBox.Show("Bu firma için işlem yetkiniz yok.", "Uyarı", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
             if (_mode == ScreenMode.Add && !_auth.Can(PageName, YetkiTipleri.Create))
             { System.Media.SystemSounds.Beep.Play(); return; }
 

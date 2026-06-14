@@ -118,7 +118,8 @@ namespace CeyPASS.WFA.Forms
         }
         private void btnRaporlar_Click(object sender, EventArgs e)
         {
-            AutoOpenTUserControl<ucRaporlar>(islemEkraniPanel);
+            var raporlar = AutoOpenTUserControl<ucRaporlar>(islemEkraniPanel);
+            raporlar.RefreshForActiveFirma();
         }
         private void islemEkrani_FormClosing(object sender, FormClosingEventArgs e)
         {

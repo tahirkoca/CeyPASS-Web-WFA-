@@ -26,9 +26,10 @@ namespace CeyPASS.WFA
         private readonly IKisiHareketService _khsvc;
         private readonly IKisiDetayService _kdsvc;
         private readonly IMisafirKartService _mksvc;
+        private readonly IKullaniciFirmaIsyeriYetkiService _yetkiSvc;
         private readonly IServiceProvider _sp;
 
-        public girisEkrani(ISessionContext session,ICanliIzlemeService svc,ISifreService ssvc,IKullaniciService ksvc,IEmailService esvc,IKisiHareketService khsvc,IKisiDetayService kdsvc,IMisafirKartService mksvc, IServiceProvider sp)
+        public girisEkrani(ISessionContext session,ICanliIzlemeService svc,ISifreService ssvc,IKullaniciService ksvc,IEmailService esvc,IKisiHareketService khsvc,IKisiDetayService kdsvc,IMisafirKartService mksvc, IKullaniciFirmaIsyeriYetkiService yetkiSvc, IServiceProvider sp)
         {
             InitializeComponent();
             SendMessage(txtSifre.Handle, EM_SETCUEBANNER, 0, "Şifrenizi giriniz");
@@ -42,6 +43,7 @@ namespace CeyPASS.WFA
             _khsvc = khsvc;
             _kdsvc = kdsvc;
             _mksvc = mksvc;
+            _yetkiSvc = yetkiSvc;
             _sp = sp;
         }
         private void girisEkrani_Load(object sender, EventArgs e) 
@@ -65,14 +67,18 @@ namespace CeyPASS.WFA
 
             if (kullanici != null)
             {
-                if (kullanici.FirmaId == null)
+                var yetkiler = _yetkiSvc.GetYetkiler(kullanici.KullaniciId);
+                bool isAdmin = FirmaIsyeriYetkiHelper.IsAdmin(kullanici.RolId);
+                var aktifFirmaId = FirmaIsyeriYetkiHelper.ResolveAktifFirmaId(kullanici.FirmaId, yetkiler, isAdmin);
+
+                if (!aktifFirmaId.HasValue)
                 {
-                    MessageBox.Show("Bu kullanıcıya tanımlı firma bulunamadı.");
+                    MessageBox.Show("Bu kullanıcıya tanımlı firma veya firma yetkisi bulunamadı.");
                     return;
                 }
 
                 _session.AktifKullaniciId = kullanici.KullaniciId;
-                _session.AktifFirmaId = kullanici.FirmaId;
+                _session.AktifFirmaId = aktifFirmaId;
                 _session.AdSoyad = kullanici.AdSoyad;
                 _session.RolAdi = kullanici.RolTanimi;
                 _session.RolId= kullanici.RolId;

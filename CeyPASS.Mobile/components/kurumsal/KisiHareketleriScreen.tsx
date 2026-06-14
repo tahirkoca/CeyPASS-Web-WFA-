@@ -334,6 +334,8 @@ export function KisiHareketleriScreen(props: { user: any; abilities: any; onOpen
 
   const [kartTipi, setKartTipi] = useState<"puantaj" | "puantajsiz">("puantaj");
   const [firmaId, setFirmaId] = useState<number | null>(null);
+  const [isyeriId, setIsyeriId] = useState<number | null>(null);
+  const [isyeriList, setIsyeriList] = useState<{ id: number; ad: string }[]>([]);
   const [personelIds, setPersonelIds] = useState<number[]>([]);
 
   const [sadeceAktif, setSadeceAktif] = useState(false);
@@ -359,6 +361,7 @@ export function KisiHareketleriScreen(props: { user: any; abilities: any; onOpen
   const [totalPages, setTotalPages] = useState(1);
 
   const [firmaModal, setFirmaModal] = useState(false);
+  const [isyeriModal, setIsyeriModal] = useState(false);
   const [kartTipiModal, setKartTipiModal] = useState(false);
   const [pageSizeModal, setPageSizeModal] = useState(false);
   const [personelModal, setPersonelModal] = useState(false);
@@ -413,18 +416,34 @@ export function KisiHareketleriScreen(props: { user: any; abilities: any; onOpen
 
   const personelSelectItems = useMemo(() => personelList.map((p) => ({ key: String(p.id), label: p.ad })), [personelList]);
 
-  const loadLookups = async (desiredFirmaId?: number | null, desiredKartTipi?: "puantaj" | "puantajsiz") => {
+  const loadLookups = async (
+    desiredFirmaId?: number | null,
+    desiredKartTipi?: "puantaj" | "puantajsiz",
+    desiredIsyeriId?: number | null
+  ) => {
     const fId = desiredFirmaId ?? firmaId;
     const kTip = desiredKartTipi ?? kartTipi;
-    const res = await kisiHareketService.lookups({ firmaId: fId, kartTipi: kTip });
+    const iId = desiredIsyeriId !== undefined ? desiredIsyeriId : isyeriId;
+    const res = await kisiHareketService.lookups({
+      firmaId: fId,
+      kartTipi: kTip,
+      isyeriId: iId ?? undefined,
+    });
     if (!res?.success) throw new Error(res?.message ?? "Lookups alınamadı.");
     const data = res.data ?? (res as any).Data ?? {};
     const firm = data.Firmalar ?? data.firmalar ?? [];
     const act = data.AktifFirma ?? data.aktifFirma ?? null;
     const ppl = data.PersonelList ?? data.personelList ?? [];
+    const isy = data.Isyerleri ?? data.isyerleri ?? [];
     setFirmalar(Array.isArray(firm) ? firm : []);
     setAktifFirma(act);
     setPersonelList(parsePersonelList(ppl));
+    setIsyeriList(
+      (Array.isArray(isy) ? isy : []).map((x: any) => ({
+        id: Number(pick<any>(x, "id", "Id") ?? 0),
+        ad: (pick<any>(x, "ad", "Ad") ?? "").toString(),
+      })).filter((x) => x.id > 0 && x.ad)
+    );
 
     if (!isAdmin) {
       const afId = Number(pick<any>(act, "firmaId", "FirmaId"));
@@ -548,7 +567,7 @@ export function KisiHareketleriScreen(props: { user: any; abilities: any; onOpen
       }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [firmaId, kartTipi, personelIds.join(","), sadeceAktif, sadecePasif, sadeceYemekhane, baslangic.getTime(), bitis.getTime(), page, pageSize]);
+  }, [firmaId, kartTipi, isyeriId, personelIds.join(","), sadeceAktif, sadecePasif, sadeceYemekhane, baslangic.getTime(), bitis.getTime(), page, pageSize]);
 
   const firmaLabel = useMemo(() => {
     const fid = firmaId ?? Number(pick<any>(aktifFirma, "firmaId", "FirmaId"));
@@ -557,6 +576,17 @@ export function KisiHareketleriScreen(props: { user: any; abilities: any; onOpen
     const ad = found ? (pick<any>(found, "firmaAdi", "FirmaAdi") ?? "").toString() : (pick<any>(aktifFirma, "firmaAdi", "FirmaAdi") ?? "").toString();
     return ad || (fid ? `#${fid}` : "--");
   }, [firmaId, firmalar, aktifFirma]);
+
+  const isyeriSelectItems = useMemo(
+    () => [{ key: "", label: "Tümü" }, ...isyeriList.map((i) => ({ key: String(i.id), label: i.ad }))],
+    [isyeriList]
+  );
+
+  const isyeriLabel = useMemo(() => {
+    if (!isyeriId) return "Tümü";
+    const found = isyeriList.find((x) => x.id === isyeriId);
+    return found?.ad ?? `#${isyeriId}`;
+  }, [isyeriId, isyeriList]);
 
   const personelLabel = useMemo(() => {
     if (!personelIds.length) return "-- Personel Seçiniz --";
@@ -721,6 +751,12 @@ export function KisiHareketleriScreen(props: { user: any; abilities: any; onOpen
 
             <View className="h-3" />
 
+            <TouchableOpacity onPress={() => setIsyeriModal(true)} className="px-3 py-3 rounded-xl border border-[#e2e8f0] bg-white">
+              <RowLabel label="İşyeri" value={isyeriLabel} />
+            </TouchableOpacity>
+
+            <View className="h-3" />
+
             <TouchableOpacity
               onPress={() => openPicker("baslangic", baslangic, "filterBas")}
               className="px-3 py-3 rounded-xl border border-[#e2e8f0] bg-white"
@@ -880,11 +916,26 @@ export function KisiHareketleriScreen(props: { user: any; abilities: any; onOpen
             const id = Number(key);
             if (Number.isFinite(id) && id > 0) {
               setFirmaId(id);
+              setIsyeriId(null);
               setPersonelIds([]);
               setPage(1);
             }
           }}
           items={firmaSelectItems}
+        />
+      ) : null}
+
+      {isyeriModal ? (
+        <SelectModal
+          visible={isyeriModal}
+          title="İşyeri Seç"
+          onClose={() => setIsyeriModal(false)}
+          onPick={(key) => {
+            setIsyeriId(key ? Number(key) : null);
+            setPersonelIds([]);
+            setPage(1);
+          }}
+          items={isyeriSelectItems}
         />
       ) : null}
 

@@ -14,6 +14,9 @@
     var totalPages = ViewBag.TotalPages as int? ?? 1;
     var startIndex = totalCount == 0 ? 0 : ((currentPage - 1) * pageSize + 1);
     var endIndex = totalCount == 0 ? 0 : Math.Min(currentPage * pageSize, totalCount);
+    var isyeriIdsParam = ViewBag.IsyeriIdsParam as string ?? "";
+    var selectedIsyeriIds = ViewBag.SelectedIsyeriIds as List<int> ?? new List<int>();
+    var isyerleri = ViewBag.Isyerleri as List<CeyPASS.Entities.Concrete.LookupItem> ?? new List<CeyPASS.Entities.Concrete.LookupItem>();
 }
 <style>
     .rapor-table-wrapper {
@@ -174,6 +177,24 @@
                                     <i class="bi bi-search"></i> Rapor Getir
                                 </button>
                             </div>
+
+                            @if (isyerleri.Count > 0)
+                            {
+                                <div class="col-12">
+                                    <label class="form-label">İşyerleri <small class="text-muted">(hiç seçilmezse yetkili tüm işyerleri)</small></label>
+                                    <div class="d-flex flex-wrap gap-3 border rounded p-2 bg-light">
+                                        @foreach (var iy in isyerleri.Where(i => i.Id > 0))
+                                        {
+                                            var checkedAttr = selectedIsyeriIds.Contains(iy.Id) ? "checked" : "";
+                                            <div class="form-check">
+                                                <input class="form-check-input isyeri-chk" type="checkbox" value="@iy.Id" id="isyeri_@iy.Id" @checkedAttr />
+                                                <label class="form-check-label" for="isyeri_@iy.Id">@iy.Ad</label>
+                                            </div>
+                                        }
+                                    </div>
+                                    <input type="hidden" name="isyeriIds" id="isyeriIdsHidden" value="@isyeriIdsParam" />
+                                </div>
+                            }
                         </div>
                     </form>
                 </div>
@@ -243,7 +264,7 @@
                             <nav aria-label="Rapor sayfalama" class="mt-3">
                                 <ul class="pagination justify-content-center flex-wrap mb-0">
                                     <li class="page-item @(currentPage <= 1 ? "disabled" : "")">
-                                        <a class="page-link" href="@Url.Action("Index", new { procedureAdi = selectedProcedureAdi, tarihBaslangic = baslangicTarih, tarihBitis = bitisTarih, firmaId = selectedFirmaId, page = currentPage - 1, pageSize })" aria-label="Önceki">
+                                        <a class="page-link" href="@Url.Action("Index", new { procedureAdi = selectedProcedureAdi, tarihBaslangic = baslangicTarih, tarihBitis = bitisTarih, firmaId = selectedFirmaId, isyeriIds = isyeriIdsParam, page = currentPage - 1, pageSize })" aria-label="Önceki">
                                             <span aria-hidden="true">&laquo;</span>
                                         </a>
                                     </li>
@@ -255,7 +276,7 @@
                                         if (start > 1)
                                         {
                                             <li class="page-item">
-                                                <a class="page-link" href="@Url.Action("Index", new { procedureAdi = selectedProcedureAdi, tarihBaslangic = baslangicTarih, tarihBitis = bitisTarih, firmaId = selectedFirmaId, page = 1, pageSize })">1</a>
+                                                <a class="page-link" href="@Url.Action("Index", new { procedureAdi = selectedProcedureAdi, tarihBaslangic = baslangicTarih, tarihBitis = bitisTarih, firmaId = selectedFirmaId, isyeriIds = isyeriIdsParam, page = 1, pageSize })">1</a>
                                             </li>
                                             if (start > 2)
                                             {
@@ -266,7 +287,7 @@
                                         for (var p = start; p <= end; p++)
                                         {
                                             <li class="page-item @(p == currentPage ? "active" : "")">
-                                                <a class="page-link" href="@Url.Action("Index", new { procedureAdi = selectedProcedureAdi, tarihBaslangic = baslangicTarih, tarihBitis = bitisTarih, firmaId = selectedFirmaId, page = p, pageSize })">@p</a>
+                                                <a class="page-link" href="@Url.Action("Index", new { procedureAdi = selectedProcedureAdi, tarihBaslangic = baslangicTarih, tarihBitis = bitisTarih, firmaId = selectedFirmaId, isyeriIds = isyeriIdsParam, page = p, pageSize })">@p</a>
                                             </li>
                                         }
 
@@ -277,13 +298,13 @@
                                                 <li class="page-item disabled"><span class="page-link">…</span></li>
                                             }
                                             <li class="page-item">
-                                                <a class="page-link" href="@Url.Action("Index", new { procedureAdi = selectedProcedureAdi, tarihBaslangic = baslangicTarih, tarihBitis = bitisTarih, firmaId = selectedFirmaId, page = totalPages, pageSize })">@totalPages</a>
+                                                <a class="page-link" href="@Url.Action("Index", new { procedureAdi = selectedProcedureAdi, tarihBaslangic = baslangicTarih, tarihBitis = bitisTarih, firmaId = selectedFirmaId, isyeriIds = isyeriIdsParam, page = totalPages, pageSize })">@totalPages</a>
                                             </li>
                                         }
                                     }
 
                                     <li class="page-item @(currentPage >= totalPages ? "disabled" : "")">
-                                        <a class="page-link" href="@Url.Action("Index", new { procedureAdi = selectedProcedureAdi, tarihBaslangic = baslangicTarih, tarihBitis = bitisTarih, firmaId = selectedFirmaId, page = currentPage + 1, pageSize })" aria-label="Sonraki">
+                                        <a class="page-link" href="@Url.Action("Index", new { procedureAdi = selectedProcedureAdi, tarihBaslangic = baslangicTarih, tarihBitis = bitisTarih, firmaId = selectedFirmaId, isyeriIds = isyeriIdsParam, page = currentPage + 1, pageSize })" aria-label="Sonraki">
                                             <span aria-hidden="true">&raquo;</span>
                                         </a>
                                     </li>
@@ -322,7 +343,19 @@
     
     <script>
         document.getElementById('pageSize')?.addEventListener('change', function () {
+            syncIsyeriIdsHidden();
             this.closest('form')?.submit();
+        });
+
+        function syncIsyeriIdsHidden() {
+            var hidden = document.getElementById('isyeriIdsHidden');
+            if (!hidden) return;
+            var ids = Array.from(document.querySelectorAll('.isyeri-chk:checked')).map(function (c) { return c.value; });
+            hidden.value = ids.join(',');
+        }
+
+        document.getElementById('raporForm')?.addEventListener('submit', function () {
+            syncIsyeriIdsHidden();
         });
 
         function showToast(message, type) {

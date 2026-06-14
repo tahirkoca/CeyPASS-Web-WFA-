@@ -120,6 +120,9 @@ export function RaporlarScreen(props: { user: any; abilities: any; onOpenMenu: (
 
   const [raporModal, setRaporModal] = useState(false);
   const [pageSizeModal, setPageSizeModal] = useState(false);
+  const [isyeriModal, setIsyeriModal] = useState(false);
+  const [isyeriList, setIsyeriList] = useState<{ id: number; ad: string }[]>([]);
+  const [selectedIsyeriIds, setSelectedIsyeriIds] = useState<number[]>([]);
   const [datePickerOpen, setDatePickerOpen] = useState<null | "bas" | "bit">(null);
   const [pickerTemp, setPickerTemp] = useState<Date>(new Date());
 
@@ -155,10 +158,21 @@ export function RaporlarScreen(props: { user: any; abilities: any; onOpenMenu: (
       setLoading(true);
       setError(null);
       try {
-        const r = await raporService.list();
+        const [r, iy] = await Promise.all([raporService.list(), raporService.isyerleri()]);
         if (!r?.success) throw new Error(r?.message ?? "Raporlar alınamadı.");
         const list = r.data ?? (r as any).Data ?? [];
         setRaporlar(Array.isArray(list) ? list : []);
+        if (iy?.success) {
+          const raw = iy.data ?? (iy as any).Data ?? [];
+          setIsyeriList(
+            (Array.isArray(raw) ? raw : [])
+              .map((x: any) => ({
+                id: Number(pick<any>(x, "id", "Id") ?? 0),
+                ad: String(pick<any>(x, "ad", "Ad") ?? ""),
+              }))
+              .filter((x) => x.id > 0 && x.ad)
+          );
+        }
       } catch (e: any) {
         setError(e?.message ?? "Beklenmeyen hata");
       } finally {
@@ -183,6 +197,14 @@ export function RaporlarScreen(props: { user: any; abilities: any; onOpenMenu: (
 
   const pageSizeItems = useMemo(() => [50, 100, 200, 500].map((n) => ({ key: String(n), label: String(n) })), []);
 
+  const isyeriLabel = useMemo(() => {
+    if (!selectedIsyeriIds.length) return "Tümü (yetkili işyerler)";
+    const names = selectedIsyeriIds
+      .map((id) => isyeriList.find((x) => x.id === id)?.ad ?? `#${id}`)
+      .join(", ");
+    return names || "Seçili işyerler";
+  }, [selectedIsyeriIds, isyeriList]);
+
   const runReport = async (forcePage?: number) => {
     if (!procedureAdi) {
       showPopup("error", "Rapor seçiniz.");
@@ -194,6 +216,7 @@ export function RaporlarScreen(props: { user: any; abilities: any; onOpenMenu: (
     try {
       const r = await raporService.run({
         procedureAdi,
+        isyeriIds: selectedIsyeriIds.length ? selectedIsyeriIds : undefined,
         tarihBaslangic: fmtIsoDate(tBas),
         tarihBitis: fmtIsoDate(tBit),
         page: p,
@@ -253,6 +276,7 @@ export function RaporlarScreen(props: { user: any; abilities: any; onOpenMenu: (
         procedureName: procedureAdi,
         exportTitle: title,
         format,
+        isyeriIds: selectedIsyeriIds.length ? selectedIsyeriIds : undefined,
         params,
       });
 
@@ -423,6 +447,14 @@ export function RaporlarScreen(props: { user: any; abilities: any; onOpenMenu: (
               <RowLabel label="Bitiş Tarihi" value={fmtDateTR(tBit)} />
             </TouchableOpacity>
             <View className="h-3" />
+            {isyeriList.length > 0 ? (
+              <>
+                <TouchableOpacity onPress={() => setIsyeriModal(true)} className="px-3 py-3 rounded-xl border border-[#e2e8f0] bg-white">
+                  <RowLabel label="İşyerleri" value={isyeriLabel} />
+                </TouchableOpacity>
+                <View className="h-3" />
+              </>
+            ) : null}
             <TouchableOpacity onPress={() => setPageSizeModal(true)} className="px-3 py-3 rounded-xl border border-[#e2e8f0] bg-white">
               <RowLabel label="Sayfa başına" value={String(pageSize)} />
             </TouchableOpacity>
@@ -639,6 +671,60 @@ export function RaporlarScreen(props: { user: any; abilities: any; onOpenMenu: (
             }
           }}
         />
+      ) : null}
+
+      {isyeriModal ? (
+        <Modal visible={isyeriModal} transparent animationType="fade" onRequestClose={() => setIsyeriModal(false)}>
+          <TouchableOpacity className="flex-1 bg-black/50 justify-center px-6" activeOpacity={1} onPress={() => setIsyeriModal(false)}>
+            <TouchableOpacity activeOpacity={1} onPress={() => {}}>
+              <View className="bg-white rounded-2xl overflow-hidden">
+                <View className="px-4 py-3 border-b border-[#f1f5f9]">
+                  <Text className="text-[#0f172a] font-extrabold text-[16px]">İşyerleri</Text>
+                  <Text className="text-[#64748b] font-semibold text-[12px] mt-1">Hiç seçilmezse yetkili tüm işyerleri dahil edilir.</Text>
+                </View>
+                <ScrollView style={{ maxHeight: 420 }}>
+                  <TouchableOpacity
+                    className="px-4 py-3 border-b border-[#f1f5f9] flex-row items-center justify-between"
+                    onPress={() => setSelectedIsyeriIds([])}
+                  >
+                    <Text className="text-[#0f172a] font-semibold">Tümü</Text>
+                    <MaterialCommunityIcons
+                      name={selectedIsyeriIds.length === 0 ? "checkbox-marked" : "checkbox-blank-outline"}
+                      size={22}
+                      color={selectedIsyeriIds.length === 0 ? "#dc2626" : "#94a3b8"}
+                    />
+                  </TouchableOpacity>
+                  {isyeriList.map((iy) => {
+                    const checked = selectedIsyeriIds.includes(iy.id);
+                    return (
+                      <TouchableOpacity
+                        key={`iy_${iy.id}`}
+                        className="px-4 py-3 border-b border-[#f1f5f9] flex-row items-center justify-between"
+                        onPress={() => {
+                          setSelectedIsyeriIds((prev) =>
+                            prev.includes(iy.id) ? prev.filter((x) => x !== iy.id) : [...prev, iy.id]
+                          );
+                        }}
+                      >
+                        <Text className="text-[#0f172a] font-semibold flex-1 pr-3">{iy.ad}</Text>
+                        <MaterialCommunityIcons
+                          name={checked ? "checkbox-marked" : "checkbox-blank-outline"}
+                          size={22}
+                          color={checked ? "#dc2626" : "#94a3b8"}
+                        />
+                      </TouchableOpacity>
+                    );
+                  })}
+                </ScrollView>
+                <View className="p-3">
+                  <TouchableOpacity className="bg-[#dc2626] rounded-xl py-3 items-center" onPress={() => setIsyeriModal(false)}>
+                    <Text className="text-white font-extrabold">Tamam</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </TouchableOpacity>
+          </TouchableOpacity>
+        </Modal>
       ) : null}
 
       {datePickerOpen ? (

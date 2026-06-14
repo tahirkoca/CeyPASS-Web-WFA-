@@ -4,6 +4,8 @@ using CeyPASS.Entities.Concrete;
 using CeyPASS.Business.Abstractions;
 using IAuthorizationService = CeyPASS.Business.Abstractions.IAuthorizationService;
 using CeyPASS.Models;
+using CeyPASS.Infrastructure.Helpers;
+using System.Collections.Generic;
 using System.Linq;
 using System;
 using System.Globalization;
@@ -22,6 +24,7 @@ namespace CeyPASS.Api.Controllers
         private readonly IAuthorizationService _authorizationService;
         private readonly IFirmaService _firmaService;
         private readonly ICalismaSekliService _calismaSekliService;
+        private readonly IPuantajService _puantajService;
         private const string PageName = "Personeller";
 
         public class PagedResponse<T>
@@ -142,7 +145,8 @@ namespace CeyPASS.Api.Controllers
             ISessionContext sessionContext,
             IAuthorizationService authorizationService,
             IFirmaService firmaService,
-            ICalismaSekliService calismaSekliService)
+            ICalismaSekliService calismaSekliService,
+            IPuantajService puantajService)
         {
             _kisiService = kisiService;
             _kisiQueryService = kisiQueryService;
@@ -151,6 +155,7 @@ namespace CeyPASS.Api.Controllers
             _authorizationService = authorizationService;
             _firmaService = firmaService;
             _calismaSekliService = calismaSekliService;
+            _puantajService = puantajService;
         }
 
         [HttpGet]
@@ -174,9 +179,17 @@ namespace CeyPASS.Api.Controllers
             }
             if (effectiveFirmaId == 0) return BadRequest(ApiResult.Failure("Firma bilgisi bulunamadı."));
 
+            bool isAdmin = _sessionContext.IsAdmin();
+            List<FirmaIsyeriYetkiDTO>? yetkiler = null;
+            if (!isAdmin && _sessionContext.AktifKullaniciId.HasValue)
+                yetkiler = _puantajService.GetKullaniciFirmaIsyeriYetkileri(_sessionContext.AktifKullaniciId.Value);
+            var (queryIsyeriId, queryIsyeriIdIn) = FirmaIsyeriYetkiHelper.ResolveKisiQueryIsyeriFilter(
+                effectiveFirmaId, isyeriId, yetkiler, isAdmin);
+
             int totalCount;
             bool effectivePuantaj = puantajYapilirMi ?? true;
-            var items = _kisiQueryService.GetAktifKisilerByFirmaPaged(effectiveFirmaId, search, effectivePuantaj, isyeriId, page, pageSize, out totalCount);
+            var items = _kisiQueryService.GetAktifKisilerByFirmaPaged(
+                effectiveFirmaId, search, effectivePuantaj, queryIsyeriId, queryIsyeriIdIn, page, pageSize, out totalCount);
 
             var totalPages = pageSize <= 0 ? 1 : (int)Math.Ceiling(totalCount / (double)pageSize);
             if (totalPages < 1) totalPages = 1;
@@ -448,14 +461,24 @@ namespace CeyPASS.Api.Controllers
             }
 
             var aktifFirma = _firmaService.GetAll().FirstOrDefault(f => f.FirmaId == effectiveFirmaId);
-            
+
+            bool isAdmin = _sessionContext.IsAdmin();
+            List<FirmaIsyeriYetkiDTO>? yetkiler = null;
+            if (!isAdmin && _sessionContext.AktifKullaniciId.HasValue)
+                yetkiler = _puantajService.GetKullaniciFirmaIsyeriYetkileri(_sessionContext.AktifKullaniciId.Value);
+            var isyerleri = FirmaIsyeriYetkiHelper.FilterIsyeriLookup(
+                _lookupService.GetIsyerleri(effectiveFirmaId) ?? new List<LookupItem>(),
+                effectiveFirmaId,
+                yetkiler,
+                isAdmin);
+
             var lookups = new
             {
                 AktifFirma = aktifFirma == null ? null : new { aktifFirma.FirmaId, aktifFirma.FirmaAdi },
-                Firmalar = _sessionContext.IsAdmin()
+                Firmalar = isAdmin
                     ? _firmaService.GetAll().OrderBy(f => f.FirmaAdi).ToList()
                     : null,
-                Isyerleri = _lookupService.GetIsyerleri(effectiveFirmaId),
+                Isyerleri = isyerleri,
                 Departmanlar = _lookupService.GetDepartmanlar(effectiveFirmaId),
                 Pozisyonlar = _lookupService.GetPozisyonlar(effectiveFirmaId),
                 Bolumler = _lookupService.GetBolumler(effectiveFirmaId),

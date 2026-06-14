@@ -9,7 +9,6 @@ using Microsoft.Extensions.Caching.Memory;
 using Moq;
 using System;
 using System.Collections.Generic;
-using System.Data;
 using Xunit;
 
 namespace CeyPASS.Tests.Web
@@ -21,6 +20,8 @@ namespace CeyPASS.Tests.Web
         private readonly Mock<ISessionContext> _sessionMock = new();
         private readonly Mock<IAuthorizationService> _authMock = new();
         private readonly Mock<IFirmaService> _firmaMock = new();
+        private readonly Mock<IKisiEkraniLookUpService> _lookupMock = new();
+        private readonly Mock<IPuantajService> _puantajMock = new();
         private readonly IMemoryCache _cache;
 
         public KisiHareketControllerTests()
@@ -38,6 +39,8 @@ namespace CeyPASS.Tests.Web
                 _sessionMock.Object,
                 _authMock.Object,
                 _firmaMock.Object,
+                _lookupMock.Object,
+                _puantajMock.Object,
                 _cache);
 
             var httpContext = new DefaultHttpContext();
@@ -71,10 +74,9 @@ namespace CeyPASS.Tests.Web
             _sessionMock.Setup(s => s.RolId).Returns(3);
             _sessionMock.Setup(s => s.AktifFirmaId).Returns(1);
 
-            var dt = new DataTable();
-            dt.Columns.Add("PersonelId", typeof(int));
-            dt.Columns.Add("AdSoyad", typeof(string));
-            _khMock.Setup(k => k.GetAktifKisilerWithSicil(It.IsAny<int>(), It.IsAny<bool>())).Returns(dt);
+            _lookupMock.Setup(l => l.GetIsyerleri(It.IsAny<int>())).Returns(new List<LookupItem>());
+            _kisiQueryMock.Setup(q => q.GetAktifKisilerByFirma(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<bool?>(), It.IsAny<int?>(), It.IsAny<IReadOnlyList<int>>()))
+                .Returns(new List<KisiListItem>());
 
             var sut = CreateSut();
 
@@ -92,10 +94,9 @@ namespace CeyPASS.Tests.Web
             _sessionMock.Setup(s => s.RolId).Returns(1);
             _sessionMock.Setup(s => s.AktifFirmaId).Returns(1);
 
-            var dt = new DataTable();
-            dt.Columns.Add("PersonelId", typeof(int));
-            dt.Columns.Add("AdSoyad", typeof(string));
-            _khMock.Setup(k => k.GetAktifKisilerWithSicil(It.IsAny<int>(), It.IsAny<bool>())).Returns(dt);
+            _lookupMock.Setup(l => l.GetIsyerleri(It.IsAny<int>())).Returns(new List<LookupItem>());
+            _kisiQueryMock.Setup(q => q.GetAktifKisilerByFirma(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<bool?>(), It.IsAny<int?>(), It.IsAny<IReadOnlyList<int>>()))
+                .Returns(new List<KisiListItem>());
             _firmaMock.Setup(f => f.GetAll()).Returns(new List<Firma>
             {
                 new Firma { FirmaId = 1, FirmaAdi = "Firma A" }
@@ -108,6 +109,29 @@ namespace CeyPASS.Tests.Web
             sonuc.Should().BeOfType<ViewResult>();
             ((bool)sut.ViewBag.IsAdmin).Should().BeTrue();
             ((object)sut.ViewBag.Firmalar).Should().NotBeNull();
+        }
+
+        [Fact]
+        public void Index_IsyeriId_ile_GetAktifKisilerByFirma_cagrilir()
+        {
+            _authMock.Setup(a => a.ViewAbility("KisiHareketler")).Returns(true);
+            _authMock.Setup(a => a.Can(It.IsAny<string>(), It.IsAny<string>())).Returns(true);
+            _sessionMock.Setup(s => s.RolId).Returns(1);
+            _sessionMock.Setup(s => s.AktifFirmaId).Returns(1);
+            _sessionMock.Setup(s => s.IsAdmin()).Returns(true);
+
+            _lookupMock.Setup(l => l.GetIsyerleri(1)).Returns(new List<LookupItem> { new LookupItem { Id = 10, Ad = "Şube A" } });
+            _kisiQueryMock.Setup(q => q.GetAktifKisilerByFirma(1, null, true, 10, null))
+                .Returns(new List<KisiListItem> { new KisiListItem { PersonelId = "100", AdSoyad = "Test [100]" } });
+            _firmaMock.Setup(f => f.GetAll()).Returns(new List<Firma> { new Firma { FirmaId = 1, FirmaAdi = "Firma A" } });
+
+            var sut = CreateSut();
+
+            var sonuc = sut.Index(firmaId: 1, isyeriId: 10);
+
+            sonuc.Should().BeOfType<ViewResult>();
+            _kisiQueryMock.Verify(q => q.GetAktifKisilerByFirma(1, null, true, 10, null), Times.Once);
+            ((int?)sut.ViewBag.SelectedIsyeriId).Should().Be(10);
         }
 
         // ─── Ekle ─────────────────────────────────────────────────────────────

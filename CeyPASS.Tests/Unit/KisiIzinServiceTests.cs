@@ -144,5 +144,45 @@ namespace CeyPASS.Tests.Unit
             isValid.Should().BeTrue();
             message.Should().BeNull();
         }
+
+        [Fact]
+        public void ValidateKayit_YarimGunYillik_Gecerli()
+        {
+            var gun = new DateTime(2025, 6, 10);
+            var dto = new IzinKayitValidasyonDTO
+            {
+                PersonelId = "1426",
+                YarimGunYillikIzinMi = true,
+                SaatlikIzinMi = true,
+                IzinTipId = 2,
+                BaslangicTarihi = gun,
+                BitisTarihi = gun,
+                BaslangicSaati = new TimeSpan(8, 30, 0),
+                BitisSaati = new TimeSpan(12, 15, 0)
+            };
+            var (isValid, message) = _sut.ValidateKayit(dto);
+            isValid.Should().BeTrue();
+            message.Should().BeNull();
+        }
+
+        [Fact]
+        public void ValidateKayit_YarimGunYillik_YanlisIzinTipi_Hata()
+        {
+            var gun = new DateTime(2025, 6, 10);
+            var dto = new IzinKayitValidasyonDTO
+            {
+                PersonelId = "1426",
+                YarimGunYillikIzinMi = true,
+                SaatlikIzinMi = true,
+                IzinTipId = 7,
+                BaslangicTarihi = gun,
+                BitisTarihi = gun,
+                BaslangicSaati = new TimeSpan(8, 30, 0),
+                BitisSaati = new TimeSpan(12, 15, 0)
+            };
+            var (isValid, message) = _sut.ValidateKayit(dto);
+            isValid.Should().BeFalse();
+            message.Should().Contain("yıllık");
+        }
     }
 }

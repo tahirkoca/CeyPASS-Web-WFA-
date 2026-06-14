@@ -3,6 +3,7 @@ using CeyPASS.Business.Abstractions;
 using CeyPASS.Entities.Concrete;
 using CeyPASS.Infrastructure.Helpers;
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.IO;
@@ -76,9 +77,12 @@ namespace CeyPASS.Web.Controllers
             }
 
             // Lookup data
+            bool isAdmin = _sessionContext.IsAdmin();
             var firmalar = GetAuthorizedFirmalar(firmaYetkileri);
-            var isyerleri = selectedFirmaId > 0 ? _isyeriService.GetIsyerleriByFirma(selectedFirmaId) : new List<IsyeriItem>();
-            var kisiler = selectedFirmaId > 0 ? _kisiQueryService.GetAktifKisilerByFirma(selectedFirmaId) : new List<KisiListItem>();
+            var isyerleri = GetYetkiliIsyeriler(selectedFirmaId, kullaniciYetkileri, isAdmin);
+            var kisiler = selectedFirmaId > 0
+                ? GetYetkiliKisilerForPuantaj(selectedFirmaId, isyeriId, selectedYil, selectedAy, kullaniciYetkileri, isAdmin)
+                : new List<KisiListItem>();
             var puantajTipleri = _puantajService.GetPuantajTipleri();
             var ekKayitGun = _puantajService.GetEkKayitGun();
 
@@ -348,7 +352,9 @@ namespace CeyPASS.Web.Controllers
         [HttpGet]
         public IActionResult GetIsyerleri(int firmaId)
         {
-            var isyerleri = _isyeriService.GetIsyerleriByFirma(firmaId);
+            var yetkiler = LoadKullaniciYetkileri();
+            bool isAdmin = _sessionContext.IsAdmin();
+            var isyerleri = GetYetkiliIsyeriler(firmaId, yetkiler, isAdmin);
             return Json(isyerleri.Select(i => new { Id = i.IsyeriId, Ad = i.Ad }));
         }
 
@@ -357,13 +363,53 @@ namespace CeyPASS.Web.Controllers
         {
             int yilVal = yil ?? DateTime.Today.Year;
             int ayVal = ay ?? DateTime.Today.Month;
-            if (isyeriId.HasValue && isyeriId.Value > 0)
-            {
-                var kisilerPuantaj = _kisiService.GetKisilerForPuantaj(firmaId, isyeriId.Value, yilVal, ayVal);
-                return Json(kisilerPuantaj.Select(k => new { PersonelId = k.PersonelId, AdSoyad = (k.Ad + " " + k.Soyad).Trim() }));
-            }
-            var kisiler = _kisiQueryService.GetAktifKisilerByFirma(firmaId);
+            var yetkiler = LoadKullaniciYetkileri();
+            bool isAdmin = _sessionContext.IsAdmin();
+            var kisiler = GetYetkiliKisilerForPuantaj(firmaId, isyeriId, yilVal, ayVal, yetkiler, isAdmin);
             return Json(kisiler.Select(k => new { PersonelId = k.PersonelId, AdSoyad = k.AdSoyad }));
+        }
+
+        private List<FirmaIsyeriYetkiDTO> LoadKullaniciYetkileri()
+        {
+            if (!_sessionContext.AktifKullaniciId.HasValue)
+                return new List<FirmaIsyeriYetkiDTO>();
+            return _puantajService.GetKullaniciFirmaIsyeriYetkileri((int)_sessionContext.AktifKullaniciId)
+                ?? new List<FirmaIsyeriYetkiDTO>();
+        }
+
+        private List<IsyeriItem> GetYetkiliIsyeriler(int firmaId, List<FirmaIsyeriYetkiDTO> yetkiler, bool isAdmin)
+        {
+            if (firmaId <= 0)
+                return new List<IsyeriItem>();
+            return FirmaIsyeriYetkiHelper.FilterIsyeriler(
+                _isyeriService.GetIsyerleriByFirma(firmaId) ?? new List<IsyeriItem>(),
+                firmaId,
+                yetkiler,
+                isAdmin);
+        }
+
+        private List<KisiListItem> GetYetkiliKisilerForPuantaj(
+            int firmaId,
+            int? selectedIsyeriId,
+            int yil,
+            int ay,
+            List<FirmaIsyeriYetkiDTO> yetkiler,
+            bool isAdmin)
+        {
+            if (selectedIsyeriId.HasValue && selectedIsyeriId.Value > 0)
+            {
+                var kp = _kisiService.GetKisilerForPuantaj(firmaId, selectedIsyeriId.Value, yil, ay);
+                return kp.Select(k => new KisiListItem
+                {
+                    PersonelId = k.PersonelId,
+                    AdSoyad = ((k.Ad ?? "") + " " + (k.Soyad ?? "")).Trim()
+                }).ToList();
+            }
+
+            var (single, idIn) = FirmaIsyeriYetkiHelper.ResolveKisiQueryIsyeriFilter(
+                firmaId, selectedIsyeriId, yetkiler, isAdmin);
+            return _kisiQueryService.GetAktifKisilerByFirma(firmaId, isyeriId: single, isyeriIdIn: idIn)
+                ?? new List<KisiListItem>();
         }
 
         private List<Firma> GetAuthorizedFirmalar(HashSet<int> firmaYetkileri)

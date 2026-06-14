@@ -18,6 +18,10 @@ namespace CeyPASS.WFA.UserControls.EO
         private readonly IKisiQueryService _kqsvc;
         private readonly IAuthorizationService _auth;
         private readonly IFirmaService _firmaSvc;
+        private readonly IKullaniciFirmaIsyeriYetkiService _yetkiSvc;
+        private readonly IKisiEkraniLookUpService _iklsvc;
+        private List<FirmaIsyeriYetkiDTO> _kullaniciYetkileri = new();
+        private bool _isAdmin;
         AuthorizationHelper authHelp;
         private const string PageName = "KisiHareketler";
         private const string PageNameUI = "Kişi Hareketleri";
@@ -32,7 +36,7 @@ namespace CeyPASS.WFA.UserControls.EO
         }
         private bool PuantajYapilanlarSecili => cmbKartTipi.SelectedIndex != 1;
 
-        public ucKisiHareketler(ISessionContext session, IKisiHareketService khsvc, IKisiQueryService kqsvc, IAuthorizationService auth, IFirmaService firmaSvc)
+        public ucKisiHareketler(ISessionContext session, IKisiHareketService khsvc, IKisiQueryService kqsvc, IAuthorizationService auth, IFirmaService firmaSvc, IKullaniciFirmaIsyeriYetkiService yetkiSvc, IKisiEkraniLookUpService iklsvc)
         {
             InitializeComponent();
             _session = session;
@@ -40,6 +44,8 @@ namespace CeyPASS.WFA.UserControls.EO
             _kqsvc = kqsvc;
             _auth = auth;
             _firmaSvc = firmaSvc;
+            _yetkiSvc = yetkiSvc;
+            _iklsvc = iklsvc;
 
             authHelp = new AuthorizationHelper(_session, _auth);
             WinFormsAuthHelper.ApplyPageAuthorization(_auth, _session, PageName, this);
@@ -65,6 +71,11 @@ namespace CeyPASS.WFA.UserControls.EO
             btnHareketSil.Click += (s, e) => SoftDeleteSelected();
             chkKisiler.KeyDown += chkKisiler_KeyDown;
             cmbKartTipi.SelectedIndexChanged += (s, e) => LoadPersons();
+            cmbIsyeriFilter.SelectedIndexChanged += cmbIsyeriFilter_SelectedIndexChanged;
+
+            var hareketBilgi = new ToolTip();
+            hareketBilgi.SetToolTip(btnHareketleriGetir, "Seçilen personelin tüm firmalardaki hareketleri listelenir (Firma kolonu: kartın okunduğu firma).");
+            hareketBilgi.SetToolTip(dgKisiHareketler, "Seçilen personelin tüm firmalardaki hareketleri listelenir.");
 
             if (!_auth.ViewAbility(PageName))
             {
@@ -84,7 +95,11 @@ namespace CeyPASS.WFA.UserControls.EO
                 cmbKartTipi.Items.Add("Puantaj Yapılmayanlar");
                 cmbKartTipi.DropDownStyle = ComboBoxStyle.DropDownList;
                 cmbKartTipi.SelectedIndex = 0;
+                _isAdmin = FirmaIsyeriYetkiHelper.IsAdmin(_session.RolId);
+                if (_session.AktifKullaniciId.HasValue)
+                    _kullaniciYetkileri = _yetkiSvc.GetYetkiler((int)_session.AktifKullaniciId) ?? new List<FirmaIsyeriYetkiDTO>();
                 LoadFirmaComboBox();
+                IsyeriFilteriniYukle(SelectedFirmaId);
                 LoadPersons();
 
                 AppTheme.ApplyToControl(this);
@@ -110,42 +125,32 @@ namespace CeyPASS.WFA.UserControls.EO
             {
                 cmbFirma.SelectedIndexChanged -= cmbFirma_SelectedIndexChanged;
 
-                bool isAdmin = _session.RolId == 1 || _session.RolId == 2;
+                var firmalar = FirmaIsyeriYetkiHelper.FilterFirmalar(_firmaSvc.GetAll(), _kullaniciYetkileri, _isAdmin)
+                    .OrderBy(f => f.FirmaAdi)
+                    .ToList();
 
-                if (isAdmin)
+                bool showFirmaCombo = (_isAdmin || firmalar.Count > 1) && firmalar.Any();
+                lblFirma.Visible = showFirmaCombo;
+                cmbFirma.Visible = showFirmaCombo;
+
+                if (showFirmaCombo)
                 {
-                    var firmalar = _firmaSvc.GetAll().OrderBy(f => f.FirmaAdi).ToList();
+                    cmbFirma.DataSource = firmalar;
+                    cmbFirma.DisplayMember = "FirmaAdi";
+                    cmbFirma.ValueMember = "FirmaId";
+                    cmbFirma.Enabled = true;
 
-                    if (firmalar != null && firmalar.Any())
-                    {
-                        cmbFirma.DataSource = firmalar;
-                        cmbFirma.DisplayMember = "FirmaAdi";
-                        cmbFirma.ValueMember = "FirmaId";
-                        cmbFirma.Enabled = true;
-
-                        if (firmalar.Any(f => f.FirmaId == _session.AktifFirmaId))
-                        {
-                            cmbFirma.SelectedValue = _session.AktifFirmaId;
-                        }
-
-                        pnlFirmaFilter.Visible = true;
-                    }
-                    else
-                    {
-                        pnlFirmaFilter.Visible = false;
-                    }
+                    if (firmalar.Any(f => f.FirmaId == _session.AktifFirmaId))
+                        cmbFirma.SelectedValue = _session.AktifFirmaId;
                 }
-                else
-                {
-                    pnlFirmaFilter.Visible = false;
-                }
+
+                pnlFirmaFilter.Visible = true;
 
                 cmbFirma.SelectedIndexChanged += cmbFirma_SelectedIndexChanged;
             }
             catch (Exception ex)
             {
                 LogHelper.Error(PageName, "LoadFirmaComboBox", "Firma listesi yüklenirken hata", ex);
-                pnlFirmaFilter.Visible = false;
             }
         }
         private void cmbFirma_SelectedIndexChanged(object sender, EventArgs e)
@@ -154,6 +159,8 @@ namespace CeyPASS.WFA.UserControls.EO
             {
                 if (cmbFirma.SelectedValue != null && cmbFirma.SelectedValue is int)
                 {
+                    IsyeriFilteriniYukle(SelectedFirmaId);
+                    TemizlePersonelSecimi();
                     LoadPersons();
                 }
             }
@@ -162,34 +169,101 @@ namespace CeyPASS.WFA.UserControls.EO
                 LogHelper.Error(PageName, "cmbFirma_SelectedIndexChanged", "Firma değiştirilirken hata", ex);
             }
         }
+
+        private void cmbIsyeriFilter_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            try
+            {
+                TemizlePersonelSecimi();
+                LoadPersons();
+            }
+            catch (Exception ex)
+            {
+                LogHelper.Error(PageName, "cmbIsyeriFilter_SelectedIndexChanged", "İşyeri değiştirilirken hata", ex);
+            }
+        }
+
+        private void IsyeriFilteriniYukle(int firmaId)
+        {
+            cmbIsyeriFilter.SelectedIndexChanged -= cmbIsyeriFilter_SelectedIndexChanged;
+            try
+            {
+                var list = _iklsvc.GetIsyerleri(firmaId) ?? new List<LookupItem>();
+                list = FirmaIsyeriYetkiHelper.FilterIsyeriLookup(list, firmaId, _kullaniciYetkileri, _isAdmin);
+                var data = new List<LookupItem> { new LookupItem { Id = 0, Ad = "Tümü" } };
+                data.AddRange(list);
+
+                cmbIsyeriFilter.DropDownStyle = ComboBoxStyle.DropDownList;
+                cmbIsyeriFilter.DataSource = null;
+                cmbIsyeriFilter.DisplayMember = nameof(LookupItem.Ad);
+                cmbIsyeriFilter.ValueMember = nameof(LookupItem.Id);
+                cmbIsyeriFilter.DataSource = data;
+                cmbIsyeriFilter.SelectedValue = 0;
+            }
+            catch (Exception ex)
+            {
+                LogHelper.Error(PageName, "IsyeriFilteriniYukle", "İşyeri listesi yüklenirken hata", ex);
+            }
+            finally
+            {
+                cmbIsyeriFilter.SelectedIndexChanged += cmbIsyeriFilter_SelectedIndexChanged;
+            }
+        }
+
+        private int? GetSeciliIsyeriFilterId()
+        {
+            if (cmbIsyeriFilter?.SelectedValue == null)
+                return null;
+
+            int val;
+            if (cmbIsyeriFilter.SelectedValue is int v)
+                val = v;
+            else if (!int.TryParse(cmbIsyeriFilter.SelectedValue.ToString(), out val))
+                return null;
+
+            return val <= 0 ? (int?)null : val;
+        }
+
+        private void TemizlePersonelSecimi()
+        {
+            if (chkKisiler == null) return;
+            for (int i = 0; i < chkKisiler.Items.Count; i++)
+                chkKisiler.SetItemChecked(i, false);
+        }
+
+        private string BosListeUyariMesaji(int? seciliIsyeriId)
+        {
+            if (seciliIsyeriId.HasValue && seciliIsyeriId.Value > 0)
+            {
+                var ad = cmbIsyeriFilter?.Text?.Trim();
+                return string.IsNullOrEmpty(ad)
+                    ? "Seçili işyerde personel bulunamadı."
+                    : $"\"{ad}\" işyerinde personel bulunamadı.";
+            }
+
+            return "Seçili filtreye uygun personel bulunamadı.";
+        }
+
         private void LoadPersons()
         {
             if (chkKisiler == null) return;
 
             bool puantajYapilir = PuantajYapilanlarSecili;
-            object src = _khsvc.GetAktifKisilerWithSicil(SelectedFirmaId, puantajYapilir);
+            var seciliIsyeri = GetSeciliIsyeriFilterId();
+            var (isyeriId, isyeriIdIn) = FirmaIsyeriYetkiHelper.ResolveKisiQueryIsyeriFilter(
+                SelectedFirmaId, seciliIsyeri, _kullaniciYetkileri, _isAdmin);
+
+            var data = _kqsvc.GetAktifKisilerByFirma(SelectedFirmaId, null, puantajYapilir, isyeriId, isyeriIdIn)
+                ?? new List<KisiListItem>();
+
             var list = new List<LookupItem>();
-
-            var dt = src as DataTable;
-            if (dt != null)
+            foreach (var k in data)
             {
-                bool hasId = dt.Columns.Contains("PersonelId");
-                bool hasAdSoyad = dt.Columns.Contains("AdSoyad");
-
-                foreach (DataRow r in dt.Rows)
-                {
-                    int id = 0;
-                    string ad = string.Empty;
-
-                    if (hasId && r["PersonelId"] != DBNull.Value)
-                        int.TryParse(r["PersonelId"].ToString(), out id);
-
-                    if (hasAdSoyad && r["AdSoyad"] != DBNull.Value)
-                        ad = r["AdSoyad"].ToString();
-
-                    if (id > 0 && !string.IsNullOrWhiteSpace(ad))
-                        list.Add(new LookupItem { Id = id, Ad = ad });
-                }
+                if (string.IsNullOrWhiteSpace(k.PersonelId) || string.IsNullOrWhiteSpace(k.AdSoyad))
+                    continue;
+                if (!int.TryParse(k.PersonelId, out int id) || id <= 0)
+                    continue;
+                list.Add(new LookupItem { Id = id, Ad = k.AdSoyad });
             }
 
             chkKisiler.BeginUpdate();
@@ -204,6 +278,8 @@ namespace CeyPASS.WFA.UserControls.EO
 
                 if (chkKisiler.Items.Count > 0)
                     chkKisiler.SelectedIndex = 0;
+                else
+                    MessageBox.Show(BosListeUyariMesaji(seciliIsyeri), "Bilgi", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             finally
             {
@@ -211,7 +287,8 @@ namespace CeyPASS.WFA.UserControls.EO
             }
 
             chkKisiler.CheckOnClick = true;
-            LogHelper.Info("KisiHareketler", "LoadPeople", "Kişi listesi yüklendi", detayJson: $"{{\"FirmaId\":{SelectedFirmaId},\"Adet\":{chkKisiler.Items.Count}}}");
+            LogHelper.Info("KisiHareketler", "LoadPeople", "Kişi listesi yüklendi",
+                detayJson: $"{{\"FirmaId\":{SelectedFirmaId},\"IsyeriId\":{(seciliIsyeri.HasValue ? seciliIsyeri.Value.ToString() : "null")},\"Adet\":{chkKisiler.Items.Count}}}");
         }
         private void LoadGrid()
         {
@@ -231,7 +308,7 @@ namespace CeyPASS.WFA.UserControls.EO
                 var bit = dtpHareketBitisTarihi.Value;
 
                 LogHelper.Info("KisiHareketler", "LoadGrid", "Grid sorgusu başlatıldı",
-                    detayJson: $"{{\"SeciliIds\":\"{string.Join(",", ids)}\",\"Baslangic\":\"{bas:yyyy-MM-dd HH:mm}\",\"Bitis\":\"{bit:yyyy-MM-dd HH:mm}\",\"Aktif\":{(chbAktifHareketler.Checked ? 1 : 0)},\"Pasif\":{(chbPasifHareketler.Checked ? 1 : 0)},\"Yemekhane\":{(chbYemekhaneHareketleri.Checked ? 1 : 0)},\"FirmaId\":{SelectedFirmaId}}}",
+                    detayJson: $"{{\"SeciliIds\":\"{string.Join(",", ids)}\",\"Baslangic\":\"{bas:yyyy-MM-dd HH:mm}\",\"Bitis\":\"{bit:yyyy-MM-dd HH:mm}\",\"Aktif\":{(chbAktifHareketler.Checked ? 1 : 0)},\"Pasif\":{(chbPasifHareketler.Checked ? 1 : 0)},\"Yemekhane\":{(chbYemekhaneHareketleri.Checked ? 1 : 0)},\"PersonelFirmaId\":{SelectedFirmaId},\"TumFirmalarHareket\":{(ids.Count > 0).ToString().ToLower()}}}",
                     cid: cid);
 
                 var dt = _khsvc.GetByPersons(ids, bas, bit, chbAktifHareketler.Checked, chbPasifHareketler.Checked, chbYemekhaneHareketleri.Checked, SelectedFirmaId);

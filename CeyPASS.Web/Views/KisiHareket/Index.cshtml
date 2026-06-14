@@ -2,6 +2,8 @@
 @{
     ViewData["Title"] = "Kişi Hareketleri";
     var selectedFirmaId = ViewBag.SelectedFirmaId as int? ?? 0;
+    var selectedIsyeriId = ViewBag.SelectedIsyeriId as int?;
+    var isyerleri = ViewBag.Isyerleri as List<CeyPASS.Entities.Concrete.LookupItem>;
     var firmalar = ViewBag.Firmalar as List<CeyPASS.Entities.Concrete.Firma>;
     var isAdmin = ViewBag.IsAdmin as bool? ?? false;
     var personelList = ViewBag.PersonelList as List<CeyPASS.Web.Controllers.PersonelLookupItem> ?? new List<CeyPASS.Web.Controllers.PersonelLookupItem>();
@@ -80,6 +82,27 @@
                             {
                                 <input type="hidden" name="firmaId" value="@selectedFirmaId" />
                             }
+
+                            <div class="col-12 col-xl-2">
+                                <label for="isyeriId" class="form-label">İşyeri:</label>
+                                <select name="isyeriId" id="isyeriId" class="form-select" title="Personel listesini işyerine göre filtreler">
+                                    <option value="">Tümü</option>
+                                    @if (isyerleri != null && isyerleri.Any())
+                                    {
+                                        foreach (var i in isyerleri)
+                                        {
+                                            if (selectedIsyeriId.HasValue && i.Id == selectedIsyeriId.Value)
+                                            {
+                                                <option value="@i.Id" selected="selected">@i.Ad</option>
+                                            }
+                                            else
+                                            {
+                                                <option value="@i.Id">@i.Ad</option>
+                                            }
+                                        }
+                                    }
+                                </select>
+                            </div>
 
                             <div class="col-12 col-xl-2">
                                 <label for="kartTipi" class="form-label">Kart Tipi:</label>
@@ -499,8 +522,42 @@
             modal.show();
         }
 
-        // Firma veya kart tipi değiştiğinde sayfayı yenile (personel listesi güncellenir)
-        $('#firmaId, #kartTipi').change(function() {
+        document.getElementById('isyeriId')?.addEventListener('change', function () {
+            $('.personel-checkbox').prop('checked', false);
+            $('#filterForm input[name="personelIds"]').remove();
+            $('#filterForm').submit();
+        });
+
+        var firmaEl = document.getElementById('firmaId');
+        if (firmaEl) {
+            firmaEl.addEventListener('change', function () {
+                var fid = this.value;
+                var isyeriEl = document.getElementById('isyeriId');
+                if (!isyeriEl || !fid) {
+                    $('#filterForm').submit();
+                    return;
+                }
+                fetch('@Url.Action("GetIsyerleri", "KisiHareket")?firmaId=' + encodeURIComponent(fid), { credentials: 'same-origin' })
+                    .then(function (r) { return r.json(); })
+                    .then(function (items) {
+                        isyeriEl.innerHTML = '<option value="">Tümü</option>';
+                        (items || []).forEach(function (i) {
+                            var opt = document.createElement('option');
+                            opt.value = i.id != null ? i.id : (i.Id != null ? i.Id : '');
+                            opt.textContent = i.ad != null ? i.ad : (i.Ad != null ? i.Ad : '');
+                            isyeriEl.appendChild(opt);
+                        });
+                        $('.personel-checkbox').prop('checked', false);
+                        $('#filterForm input[name="personelIds"]').remove();
+                        $('#filterForm').submit();
+                    })
+                    .catch(function () { $('#filterForm').submit(); });
+            });
+        }
+
+        $('#kartTipi').change(function() {
+            $('.personel-checkbox').prop('checked', false);
+            $('#filterForm input[name="personelIds"]').remove();
             $('#filterForm').submit();
         });
     </script>

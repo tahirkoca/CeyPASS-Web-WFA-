@@ -4,6 +4,7 @@ using CeyPASS.Entities.Concrete;
 using CeyPASS.Business.Abstractions;
 using IAuthorizationService = CeyPASS.Business.Abstractions.IAuthorizationService;
 using CeyPASS.Models;
+using CeyPASS.Infrastructure.Helpers;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -120,7 +121,10 @@ namespace CeyPASS.Api.Controllers
             if (firmaYetkileri.Count > 0 && !firmaYetkileri.Contains(effectiveFirmaId))
                 effectiveFirmaId = _sessionContext.AktifFirmaId ?? effectiveFirmaId;
 
-            var kisiler = _kisiQueryService.GetAktifKisilerByFirma(effectiveFirmaId);
+            bool isAdmin = _sessionContext.IsAdmin();
+            var (isyeriId, isyeriIdIn) = FirmaIsyeriYetkiHelper.ResolveKisiQueryIsyeriFilter(
+                effectiveFirmaId, null, yetkiler, isAdmin);
+            var kisiler = _kisiQueryService.GetAktifKisilerByFirma(effectiveFirmaId, isyeriId: isyeriId, isyeriIdIn: isyeriIdIn);
             var izinTipleri = _izinTipService.GetAktif();
 
             var aktifFirma = firmalar.FirstOrDefault(f => f.FirmaId == effectiveFirmaId);

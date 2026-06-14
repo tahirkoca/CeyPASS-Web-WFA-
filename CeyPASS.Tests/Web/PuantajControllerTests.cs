@@ -124,7 +124,7 @@ namespace CeyPASS.Tests.Web
             _puantajMock.Setup(p => p.GetKullaniciFirmaIsyeriYetkileri(It.IsAny<int>())).Returns(new List<FirmaIsyeriYetkiDTO>());
             _firmaMock.Setup(f => f.GetPuantajFirmalar()).Returns(new List<Firma>());
             _isyeriMock.Setup(i => i.GetIsyerleriByFirma(It.IsAny<int>())).Returns(new List<IsyeriItem>());
-            _kisiQueryMock.Setup(q => q.GetAktifKisilerByFirma(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<bool?>(), It.IsAny<int?>())).Returns(new List<KisiListItem>());
+            _kisiQueryMock.Setup(q => q.GetAktifKisilerByFirma(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<bool?>(), It.IsAny<int?>(), It.IsAny<IReadOnlyList<int>>())).Returns(new List<KisiListItem>());
             _puantajMock.Setup(p => p.GetPuantajTipleri()).Returns(new List<PuantajTipDTO>());
             _puantajMock.Setup(p => p.GetEkKayitGun()).Returns(0);
 
@@ -204,7 +204,7 @@ namespace CeyPASS.Tests.Web
         [Fact]
         public void GetKisiler_IsyeriIdYok_KisiQueryServiseCagrilir()
         {
-            _kisiQueryMock.Setup(q => q.GetAktifKisilerByFirma(1, It.IsAny<string>(), It.IsAny<bool?>(), It.IsAny<int?>()))
+            _kisiQueryMock.Setup(q => q.GetAktifKisilerByFirma(1, It.IsAny<string>(), It.IsAny<bool?>(), It.IsAny<int?>(), It.IsAny<IReadOnlyList<int>>()))
                 .Returns(new List<KisiListItem> { new KisiListItem { PersonelId = "P1", AdSoyad = "Ali Veli" } });
 
             var sonuc = _sut.GetKisiler(1, null, null, null);

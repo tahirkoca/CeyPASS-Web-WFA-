@@ -6,6 +6,7 @@ using CeyPASS.Entities.Concrete;
 using CeyPASS.Infrastructure.Helpers;
 using Microsoft.Extensions.Caching.Memory;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Drawing;
@@ -21,6 +22,7 @@ namespace CeyPASS.Web.Controllers
         private readonly IAuthorizationService _authorizationService;
         private readonly ICalismaSekliService _calismaSekliService;
         private readonly IFirmaService _firmaService;
+        private readonly IPuantajService _puantajService;
         private readonly IMemoryCache _cache;
         private const string PageName = "Personeller";
         private const int DefaultPageSize = 20;
@@ -35,6 +37,7 @@ namespace CeyPASS.Web.Controllers
             IAuthorizationService authorizationService,
             ICalismaSekliService calismaSekliService,
             IFirmaService firmaService,
+            IPuantajService puantajService,
             IMemoryCache cache)
         {
             _kisiService = kisiService;
@@ -44,6 +47,7 @@ namespace CeyPASS.Web.Controllers
             _authorizationService = authorizationService;
             _calismaSekliService = calismaSekliService;
             _firmaService = firmaService;
+            _puantajService = puantajService;
             _cache = cache;
         }
 
@@ -80,11 +84,18 @@ namespace CeyPASS.Web.Controllers
                 _cache.Set(verKey, ver, TimeSpan.FromHours(1));
             }
 
-            var cacheKey = $"personel_list_{selectedFirmaId}_v{ver}_{(isyeriId.HasValue ? isyeriId.Value.ToString() : "all")}_{(puantajYapilan ? "puantaj" : "puantajsiz")}_{searchNorm}_p{page}_s{pageSize}";
+            List<FirmaIsyeriYetkiDTO> yetkiler = null;
+            if (!isAdmin && _sessionContext.AktifKullaniciId.HasValue)
+                yetkiler = _puantajService.GetKullaniciFirmaIsyeriYetkileri((int)_sessionContext.AktifKullaniciId);
+            var (queryIsyeriId, queryIsyeriIdIn) = FirmaIsyeriYetkiHelper.ResolveKisiQueryIsyeriFilter(
+                selectedFirmaId, isyeriId, yetkiler, isAdmin);
+
+            var cacheKey = $"personel_list_{selectedFirmaId}_v{ver}_{IsyeriFilterCacheSegment(queryIsyeriId, queryIsyeriIdIn)}_{(puantajYapilan ? "puantaj" : "puantajsiz")}_{searchNorm}_p{page}_s{pageSize}";
             if (!_cache.TryGetValue(cacheKey, out PersonelListCacheValue cached))
             {
                 int totalCount;
-                var items = _kisiQueryService.GetAktifKisilerByFirmaPaged(selectedFirmaId, search, puantajYapilirMi, isyeriId, page, pageSize, out totalCount);
+                var items = _kisiQueryService.GetAktifKisilerByFirmaPaged(
+                    selectedFirmaId, search, puantajYapilirMi, queryIsyeriId, queryIsyeriIdIn, page, pageSize, out totalCount);
                 cached = new PersonelListCacheValue(items, totalCount);
                 _cache.Set(cacheKey, cached, TimeSpan.FromMinutes(2));
             }
@@ -97,7 +108,7 @@ namespace CeyPASS.Web.Controllers
 
             // Load lookup data for filters
             var firmalar = isAdmin ? _firmaService.GetAll().OrderBy(f => f.FirmaAdi).ToList() : null;
-            var isyerleri = _lookupService.GetIsyerleri(selectedFirmaId);
+            var isyerleri = GetYetkiliIsyeriLookups(selectedFirmaId);
 
             ViewBag.Search = search;
             ViewBag.SelectedFirmaId = selectedFirmaId;
@@ -492,8 +503,7 @@ namespace CeyPASS.Web.Controllers
         [HttpGet]
         public IActionResult GetIsyerleri(int firmaId)
         {
-            var isyerleri = _lookupService.GetIsyerleri(firmaId);
-            return Json(isyerleri);
+            return Json(GetYetkiliIsyeriLookups(firmaId));
         }
 
         [HttpGet]
@@ -521,11 +531,33 @@ namespace CeyPASS.Web.Controllers
 
             ViewBag.Departmanlar = _lookupService.GetDepartmanlar(firmaId);
             ViewBag.Pozisyonlar = _lookupService.GetPozisyonlar(firmaId);
-            ViewBag.Isyerleri = _lookupService.GetIsyerleri(firmaId);
+            ViewBag.Isyerleri = GetYetkiliIsyeriLookups(firmaId);
             ViewBag.Bolumler = _lookupService.GetBolumler(firmaId);
             ViewBag.CalismaSekilleri = _calismaSekliService.GetAll(firmaId);
             ViewBag.CalismaStatuleri = _lookupService.GetCalismaStatuleri(firmaId);
             ViewBag.Firmalar = _firmaService.GetAll().OrderBy(f => f.FirmaAdi).ToList();
+        }
+
+        private List<LookupItem> GetYetkiliIsyeriLookups(int firmaId)
+        {
+            bool isAdmin = _sessionContext.IsAdmin();
+            List<FirmaIsyeriYetkiDTO> yetkiler = null;
+            if (!isAdmin && _sessionContext.AktifKullaniciId.HasValue)
+                yetkiler = _puantajService.GetKullaniciFirmaIsyeriYetkileri((int)_sessionContext.AktifKullaniciId);
+            return FirmaIsyeriYetkiHelper.FilterIsyeriLookup(
+                _lookupService.GetIsyerleri(firmaId) ?? new List<LookupItem>(),
+                firmaId,
+                yetkiler,
+                isAdmin);
+        }
+
+        private static string IsyeriFilterCacheSegment(int? isyeriId, IReadOnlyList<int> isyeriIdIn)
+        {
+            if (isyeriId.HasValue) return isyeriId.Value.ToString();
+            if (isyeriIdIn != null && isyeriIdIn.Count > 0)
+                return "in_" + string.Join("_", isyeriIdIn.OrderBy(x => x));
+            if (isyeriIdIn != null) return "in_none";
+            return "all";
         }
     }
 }

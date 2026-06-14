@@ -1,4 +1,4 @@
-﻿"DeployProject"
+"DeployProject"
 {
 "VSVersion" = "3:800"
 "ProjectType" = "8:{978C614F-708E-4E1A-B201-565925725DBA}"
@@ -15,13 +15,49 @@
     {
         "Entry"
         {
+        "MsmKey" = "8:_0197259BC2C945379C747F6EC829E7E1"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_080A01FA07C3483C89B1E332A10E5E44"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
         "MsmKey" = "8:_463B9083AA4F4E609186F6B474258F64"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
         {
-        "MsmKey" = "8:_7162FE0B065647248D5542E3C2D26411"
+        "MsmKey" = "8:_637BBF3A55E14C66872372658EB36874"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_C321EC02A556489A909CBEB764607374"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_C9DE0FFC57384310A4CDEA36817FBF69"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_D55273F0E21C463EB6665E6FA8B2B8F1"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_E1B94BBA0E734052BE357190F405BAC8"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
@@ -43,6 +79,14 @@
         "PrivateKeyFile" = "8:"
         "TimeStampServer" = "8:"
         "InstallerBootstrapper" = "3:2"
+            "BootstrapperCfg:{63ACBE69-63AA-4F98-B2B6-99F9E24495F2}"
+            {
+            "Enabled" = "11:TRUE"
+            "PromptEnabled" = "11:TRUE"
+            "PrerequisitesLocation" = "2:1"
+            "Url" = "8:"
+            "ComponentsUrl" = "8:"
+            }
         }
         "Release"
         {
@@ -59,6 +103,22 @@
         "PrivateKeyFile" = "8:"
         "TimeStampServer" = "8:"
         "InstallerBootstrapper" = "3:2"
+            "BootstrapperCfg:{63ACBE69-63AA-4F98-B2B6-99F9E24495F2}"
+            {
+            "Enabled" = "11:TRUE"
+            "PromptEnabled" = "11:TRUE"
+            "PrerequisitesLocation" = "2:1"
+            "Url" = "8:"
+            "ComponentsUrl" = "8:"
+                "Items"
+                {
+                    "{EDC2488A-8267-493A-A98E-7D9C3B36CDF3}:.NETFramework,Version=v4.7.2"
+                    {
+                    "Name" = "8:Microsoft .NET Framework 4.7.2 (x86 and x64)"
+                    "ProductCode" = "8:.NETFramework,Version=v4.7.2"
+                    }
+                }
+            }
         }
     }
     "Deployable"
@@ -76,14 +136,164 @@
         {
             "LaunchCondition"
             {
+                "{A06ECF26-33A3-4562-8140-9B0E340D4F24}:_659C6525C0D34CB2A8EB1FC39E6A9A72"
+                {
+                "Name" = "8:.NET Core"
+                "Message" = "8:[VSDNETCOREMSG]"
+                "AllowLaterVersions" = "11:FALSE"
+                "InstallUrl" = "8:https://dotnet.microsoft.com/download/dotnet-core/[NetCoreVerMajorDotMinor]"
+                "IsNETCore" = "11:TRUE"
+                "Architecture" = "2:0"
+                "Runtime" = "2:0"
+                }
             }
         }
         "File"
         {
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_0197259BC2C945379C747F6EC829E7E1"
+            {
+            "SourcePath" = "8:..\\CeyPASS.WFA\\bin\\Release\\net8.0-windows\\win-x86\\publish\\Microsoft.Web.WebView2.WinForms.xml"
+            "TargetName" = "8:Microsoft.Web.WebView2.WinForms.xml"
+            "Tag" = "8:"
+            "Folder" = "8:_4C8E98D32EAB4527AE3E789C93C97DAA"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_080A01FA07C3483C89B1E332A10E5E44"
+            {
+            "SourcePath" = "8:..\\CeyPASS.WFA\\bin\\Release\\net8.0-windows\\win-x86\\publish\\appsettings.json"
+            "TargetName" = "8:appsettings.json"
+            "Tag" = "8:"
+            "Folder" = "8:_4C8E98D32EAB4527AE3E789C93C97DAA"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_463B9083AA4F4E609186F6B474258F64"
             {
             "SourcePath" = "8:..\\..\\..\\..\\Desktop\\Company\\CeyPASS Logo\\CeyPASS\\ico\\CeyPass 200.ico"
             "TargetName" = "8:CeyPass 200.ico"
+            "Tag" = "8:"
+            "Folder" = "8:_4C8E98D32EAB4527AE3E789C93C97DAA"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_637BBF3A55E14C66872372658EB36874"
+            {
+            "SourcePath" = "8:..\\CeyPASS.WFA\\bin\\Release\\net8.0-windows\\win-x86\\publish\\CeyPASS.WFA.dll.config"
+            "TargetName" = "8:CeyPASS.WFA.dll.config"
+            "Tag" = "8:"
+            "Folder" = "8:_4C8E98D32EAB4527AE3E789C93C97DAA"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_C321EC02A556489A909CBEB764607374"
+            {
+            "SourcePath" = "8:..\\CeyPASS.WFA\\bin\\Release\\net8.0-windows\\win-x86\\publish\\Microsoft.Web.WebView2.Wpf.xml"
+            "TargetName" = "8:Microsoft.Web.WebView2.Wpf.xml"
+            "Tag" = "8:"
+            "Folder" = "8:_4C8E98D32EAB4527AE3E789C93C97DAA"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_C9DE0FFC57384310A4CDEA36817FBF69"
+            {
+            "SourcePath" = "8:..\\CeyPASS.WFA\\bin\\Release\\net8.0-windows\\win-x86\\publish\\appsettings.Local.json"
+            "TargetName" = "8:appsettings.Local.json"
+            "Tag" = "8:"
+            "Folder" = "8:_4C8E98D32EAB4527AE3E789C93C97DAA"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_D55273F0E21C463EB6665E6FA8B2B8F1"
+            {
+            "SourcePath" = "8:..\\CeyPASS.WFA\\bin\\Release\\net8.0-windows\\win-x86\\publish\\CeyPASS.WFA.exe"
+            "TargetName" = "8:CeyPASS.WFA.exe"
+            "Tag" = "8:"
+            "Folder" = "8:_4C8E98D32EAB4527AE3E789C93C97DAA"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_E1B94BBA0E734052BE357190F405BAC8"
+            {
+            "SourcePath" = "8:..\\CeyPASS.WFA\\bin\\Release\\net8.0-windows\\win-x86\\publish\\Microsoft.Web.WebView2.Core.xml"
+            "TargetName" = "8:Microsoft.Web.WebView2.Core.xml"
             "Tag" = "8:"
             "Folder" = "8:_4C8E98D32EAB4527AE3E789C93C97DAA"
             "Condition" = "8:"
@@ -155,9 +365,9 @@
         "Product"
         {
         "Name" = "8:Microsoft Visual Studio"
-        "ProductName" = "8:CeyPASSDesktop.Setup"
+        "ProductName" = "8:CeyPASS"
         "ProductCode" = "8:{3CCBC0E1-1D76-49B5-A068-03FE3D1D9A09}"
-        "PackageCode" = "8:{693D6412-3C51-4893-A6E3-79BFFF263C67}"
+        "PackageCode" = "8:{855F0CE1-6594-4EF2-BBF7-EEA698F550CC}"
         "UpgradeCode" = "8:{E22DCB4E-5CD5-432E-816B-5674A6C857AF}"
         "AspNetVersion" = "8:4.0.30319.0"
         "RestartWWWService" = "11:FALSE"
@@ -165,12 +375,12 @@
         "DetectNewerInstalledVersion" = "11:TRUE"
         "InstallAllUsers" = "11:FALSE"
         "ProductVersion" = "8:1.0.0"
-        "Manufacturer" = "8:Default Company Name"
+        "Manufacturer" = "8:Cey Holding"
         "ARPHELPTELEPHONE" = "8:"
         "ARPHELPLINK" = "8:"
         "Title" = "8:CeyPASSDesktop.Setup"
         "Subject" = "8:"
-        "ARPCONTACT" = "8:Default Company Name"
+        "ARPCONTACT" = "8:Cey Holding"
         "Keywords" = "8:"
         "ARPCOMMENTS" = "8:"
         "ARPURLINFOABOUT" = "8:"
@@ -277,7 +487,7 @@
         }
         "Shortcut"
         {
-            "{970C0BB2-C7D0-45D7-ABFA-7EC378858BC0}:_39F4F24A068E4ABF966E3D480CB167DC"
+            "{970C0BB2-C7D0-45D7-ABFA-7EC378858BC0}:_03CEF67FFFD84CB9997736079EDE3025"
             {
             "Name" = "8:CeyPASS"
             "Arguments" = "8:"
@@ -285,27 +495,13 @@
             "ShowCmd" = "3:1"
             "IconIndex" = "3:0"
             "Transitive" = "11:FALSE"
-            "Target" = "8:_7162FE0B065647248D5542E3C2D26411"
-            "Folder" = "8:_4C8E98D32EAB4527AE3E789C93C97DAA"
-            "WorkingFolder" = "8:_4C8E98D32EAB4527AE3E789C93C97DAA"
-            "Icon" = "8:_463B9083AA4F4E609186F6B474258F64"
-            "Feature" = "8:"
-            }
-            "{970C0BB2-C7D0-45D7-ABFA-7EC378858BC0}:_D8685A4C334A4FA98B30CDB6D3761EB7"
-            {
-            "Name" = "8:CeyPASS"
-            "Arguments" = "8:"
-            "Description" = "8:"
-            "ShowCmd" = "3:1"
-            "IconIndex" = "3:0"
-            "Transitive" = "11:FALSE"
-            "Target" = "8:_7162FE0B065647248D5542E3C2D26411"
+            "Target" = "8:_D55273F0E21C463EB6665E6FA8B2B8F1"
             "Folder" = "8:_8ADE1F3299584E708AD46B9147C7315C"
             "WorkingFolder" = "8:_4C8E98D32EAB4527AE3E789C93C97DAA"
             "Icon" = "8:_463B9083AA4F4E609186F6B474258F64"
             "Feature" = "8:"
             }
-            "{970C0BB2-C7D0-45D7-ABFA-7EC378858BC0}:_EFFD8DF6DD7C4430B163452A4327B8A0"
+            "{970C0BB2-C7D0-45D7-ABFA-7EC378858BC0}:_364A4DF76B7945B89FC9B6BDF88436D5"
             {
             "Name" = "8:CeyPASS"
             "Arguments" = "8:"
@@ -313,8 +509,22 @@
             "ShowCmd" = "3:1"
             "IconIndex" = "3:0"
             "Transitive" = "11:FALSE"
-            "Target" = "8:_7162FE0B065647248D5542E3C2D26411"
+            "Target" = "8:_D55273F0E21C463EB6665E6FA8B2B8F1"
             "Folder" = "8:_4AC420CC47D049E99FB43C2DFBAD6FDB"
+            "WorkingFolder" = "8:_4C8E98D32EAB4527AE3E789C93C97DAA"
+            "Icon" = "8:_463B9083AA4F4E609186F6B474258F64"
+            "Feature" = "8:"
+            }
+            "{970C0BB2-C7D0-45D7-ABFA-7EC378858BC0}:_7C7D5F2F1F074733A0E2B07650A80CB5"
+            {
+            "Name" = "8:CeyPASS"
+            "Arguments" = "8:"
+            "Description" = "8:"
+            "ShowCmd" = "3:1"
+            "IconIndex" = "3:0"
+            "Transitive" = "11:FALSE"
+            "Target" = "8:_D55273F0E21C463EB6665E6FA8B2B8F1"
+            "Folder" = "8:_4C8E98D32EAB4527AE3E789C93C97DAA"
             "WorkingFolder" = "8:_4C8E98D32EAB4527AE3E789C93C97DAA"
             "Icon" = "8:_463B9083AA4F4E609186F6B474258F64"
             "Feature" = "8:"
@@ -718,34 +928,6 @@
         }
         "ProjectOutput"
         {
-            "{5259A561-127C-4D43-A0A1-72F10C7B3BF8}:_7162FE0B065647248D5542E3C2D26411"
-            {
-            "SourcePath" = "8:..\\CeyPASS.WFA\\obj\\Release\\net8.0-windows\\apphost.exe"
-            "TargetName" = "8:"
-            "Tag" = "8:"
-            "Folder" = "8:_4C8E98D32EAB4527AE3E789C93C97DAA"
-            "Condition" = "8:"
-            "Transitive" = "11:FALSE"
-            "Vital" = "11:TRUE"
-            "ReadOnly" = "11:FALSE"
-            "Hidden" = "11:FALSE"
-            "System" = "11:FALSE"
-            "Permanent" = "11:FALSE"
-            "SharedLegacy" = "11:FALSE"
-            "PackageAs" = "3:1"
-            "Register" = "3:1"
-            "Exclude" = "11:FALSE"
-            "IsDependency" = "11:FALSE"
-            "IsolateTo" = "8:"
-            "ProjectOutputGroupRegister" = "3:1"
-            "OutputConfiguration" = "8:"
-            "OutputGroupCanonicalName" = "8:PublishItems"
-            "OutputProjectGuid" = "8:{B2C3D4E5-F6A7-4B5C-9D0E-1F2A3B4C5D6E}"
-            "ShowKeyOutput" = "11:TRUE"
-                "ExcludeFilters"
-                {
-                }
-            }
         }
     }
 }

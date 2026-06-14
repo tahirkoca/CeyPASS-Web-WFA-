@@ -25,6 +25,9 @@ namespace CeyPASS.WFA.UserControls
         private readonly IAuthorizationService _auth;
         private readonly ICalismaSekliService _calismaSekliSvc;
         private readonly IFirmaService _firmaSvc;
+        private readonly IKullaniciFirmaIsyeriYetkiService _yetkiSvc;
+        private List<FirmaIsyeriYetkiDTO> _kullaniciYetkileri = new();
+        private bool _isAdmin;
         AuthorizationHelper authHelp;
         private bool _istenCikisModu = false;
         private bool _isYeniKayit = false;
@@ -36,7 +39,7 @@ namespace CeyPASS.WFA.UserControls
         private const string PageName = "Personeller";
         private const string PageNameUI = "Personeller";
 
-        public ucPersonelTanimlama(ISessionContext session, IKisiService kisiSvc, IKisiQueryService kisiQuerySvc, IKisiEkraniLookUpService lookups, ICalismaSekliService calismaSekliSvc, IAuthorizationService authSvc, IFirmaService firmaSvc)
+        public ucPersonelTanimlama(ISessionContext session, IKisiService kisiSvc, IKisiQueryService kisiQuerySvc, IKisiEkraniLookUpService lookups, ICalismaSekliService calismaSekliSvc, IAuthorizationService authSvc, IFirmaService firmaSvc, IKullaniciFirmaIsyeriYetkiService yetkiSvc)
         {
             InitializeComponent();
             SendMessage(txtCepTel.Handle, EM_SETCUEBANNER, 0, "05.. - ... - .. - .. şeklinde giriniz");
@@ -59,6 +62,7 @@ namespace CeyPASS.WFA.UserControls
             _calismaSekliSvc = calismaSekliSvc;
             _auth = authSvc;
             _firmaSvc = firmaSvc;
+            _yetkiSvc = yetkiSvc;
             authHelp = new AuthorizationHelper(_session, _auth);
 
             if (!_auth.ViewAbility(PageName))
@@ -124,6 +128,8 @@ namespace CeyPASS.WFA.UserControls
             {
                 if (cmbKartTipi.Items.Count > 0 && cmbKartTipi.SelectedIndex < 0)
                     cmbKartTipi.SelectedIndex = 0; // Puantaj Yapılanlar
+                _isAdmin = FirmaIsyeriYetkiHelper.IsAdmin(_session.RolId);
+                _kullaniciYetkileri = _yetkiSvc.GetYetkiler((int)_session.AktifKullaniciId);
                 FirmaFilteriniYukle();
 
                 int firmaId = GetSeciliFirmaId();
@@ -152,21 +158,10 @@ namespace CeyPASS.WFA.UserControls
                 if (tumFirmalar == null || tumFirmalar.Count == 0)
                     return;
 
-                bool isAdmin = _session.RolId == 1 || _session.RolId == 2;
-
-                List<Firma> liste;
-                if (isAdmin)
-                {
-                    liste = tumFirmalar.OrderBy(f => f.FirmaAdi).ToList();
-                    cmbFirmaFilter.Enabled = true;
-                }
-                else
-                {
-                    liste = tumFirmalar
-                        .Where(f => f.FirmaId == _session.AktifFirmaId)
-                        .ToList();
-                    cmbFirmaFilter.Enabled = false;
-                }
+                var liste = FirmaIsyeriYetkiHelper.FilterFirmalar(tumFirmalar, _kullaniciYetkileri, _isAdmin)
+                    .OrderBy(f => f.FirmaAdi)
+                    .ToList();
+                cmbFirmaFilter.Enabled = _isAdmin || liste.Count > 1;
 
                 cmbFirmaFilter.DataSource = null;
                 cmbFirmaFilter.DisplayMember = "FirmaAdi";
@@ -204,18 +199,24 @@ namespace CeyPASS.WFA.UserControls
         private void cmbFirmaFilter_SelectedIndexChanged(object sender, EventArgs e)
         {
             int firmaId = GetSeciliFirmaId();
+            _sonSecilen = null;
+            DetayFormunuTemizle();
             IsyeriFilteriniYukle(firmaId);
             CombosunuYukle(firmaId);
             VardiyaYukle(firmaId);
-            KisileriYukle(firmaId);
+            KisileriYukle(firmaId, preserveSelection: false);
         }
         private void cmbKartTipi_SelectedIndexChanged(object sender, EventArgs e)
         {
-            KisileriYukle(GetSeciliFirmaId());
+            _sonSecilen = null;
+            DetayFormunuTemizle();
+            KisileriYukle(GetSeciliFirmaId(), preserveSelection: false);
         }
         private void cmbIsyeriFilter_SelectedIndexChanged(object sender, EventArgs e)
         {
-            KisileriYukle(GetSeciliFirmaId());
+            _sonSecilen = null;
+            DetayFormunuTemizle();
+            KisileriYukle(GetSeciliFirmaId(), preserveSelection: false);
         }
         private bool GetPuantajYapilanSecili()
         {
@@ -277,6 +278,10 @@ namespace CeyPASS.WFA.UserControls
                     txtPersonelKartNo.ReadOnly = false;
                     WinFormsAuthHelper.ApplyPageAuthorization(_auth, _session, PageName, this);
                 }
+                else
+                {
+                    DetayFormunuTemizle();
+                }
 
                 ApplyCheckboxRules();
             }
@@ -286,35 +291,58 @@ namespace CeyPASS.WFA.UserControls
                 throw;
             }
         }
-        private void KisileriYukle(int firmaId)
+        private void KisileriYukle(int firmaId, bool preserveSelection = true)
         {
             var cid = Guid.NewGuid().ToString("N");
             try
             {
-                _sonSecilen = lstKisiler.SelectedItem as KisiListItem;
+                if (preserveSelection)
+                    _sonSecilen ??= lstKisiler.SelectedItem as KisiListItem;
 
                 bool? puantajYapilirMi = GetPuantajYapilanSecili();
-                int? isyeriId = GetSeciliIsyeriFilterId();
-                var data = _kqsvc.GetAktifKisilerByFirma(firmaId, _aktifFiltre, puantajYapilirMi, isyeriId);
+                var (isyeriId, isyeriIdIn) = FirmaIsyeriYetkiHelper.ResolveKisiQueryIsyeriFilter(
+                    firmaId, GetSeciliIsyeriFilterId(), _kullaniciYetkileri, _isAdmin);
+                var data = _kqsvc.GetAktifKisilerByFirma(firmaId, _aktifFiltre, puantajYapilirMi, isyeriId, isyeriIdIn) ?? new List<KisiListItem>();
 
-                lstKisiler.DataSource = null;
-                lstKisiler.DisplayMember = nameof(KisiListItem.AdSoyad);
-                lstKisiler.ValueMember = nameof(KisiListItem.PersonelId);
-                lstKisiler.DataSource = data;
-
-                if (_sonSecilen != null)
+                lstKisiler.SelectedIndexChanged -= lstKisiler_SelectedIndexChanged;
+                try
                 {
-                    var tekrar = data.FirstOrDefault(x => x.PersonelId == _sonSecilen.PersonelId);
-                    if (tekrar != null)
-                        lstKisiler.SelectedItem = tekrar;
-                    else if (lstKisiler.Items.Count > 0)
-                        lstKisiler.SelectedIndex = 0;
+                    lstKisiler.DataSource = null;
+                    lstKisiler.ClearSelected();
+                    lstKisiler.DisplayMember = nameof(KisiListItem.AdSoyad);
+                    lstKisiler.ValueMember = nameof(KisiListItem.PersonelId);
+                    lstKisiler.DataSource = data;
+
+                    if (data.Count == 0)
+                    {
+                        DetayFormunuTemizle();
+                        MessageBox.Show(
+                            BosListeUyariMesaji(GetSeciliIsyeriFilterId()),
+                            "Bilgi",
+                            MessageBoxButtons.OK,
+                            MessageBoxIcon.Information);
+                    }
+                    else
+                    {
+                        KisiListItem secilecek = null;
+                        if (_sonSecilen != null)
+                            secilecek = data.FirstOrDefault(x => x.PersonelId == _sonSecilen.PersonelId);
+
+                        if (secilecek != null)
+                            lstKisiler.SelectedItem = secilecek;
+                        else
+                            lstKisiler.SelectedIndex = 0;
+
+                        lstKisiler_SelectedIndexChanged(lstKisiler, EventArgs.Empty);
+                    }
                 }
-                else if (lstKisiler.Items.Count > 0)
-                    lstKisiler.SelectedIndex = 0;
+                finally
+                {
+                    lstKisiler.SelectedIndexChanged += lstKisiler_SelectedIndexChanged;
+                }
 
                 LogHelper.Info(PageName, "KisileriYukle", $"Kişiler yüklendi. Sayı={data?.Count}",
-                    $"{{\"filter\":\"{_aktifFiltre}\",\"firmaId\":{firmaId},\"isyeriId\":{(isyeriId.HasValue ? isyeriId.Value.ToString() : "null")}}}", cid);
+                    $"{{\"filter\":\"{_aktifFiltre}\",\"firmaId\":{firmaId},\"isyeriId\":{(isyeriId.HasValue ? isyeriId.Value.ToString() : "null")},\"isyeriIdIn\":{(isyeriIdIn == null ? "null" : string.Join(",", isyeriIdIn))}}}", cid);
             }
             catch (Exception ex)
             {
@@ -329,7 +357,7 @@ namespace CeyPASS.WFA.UserControls
             try
             {
                 var list = _iklsvc.GetIsyerleri(firmaId) ?? new List<LookupItem>();
-                // "Tümü" seçeneği
+                list = FirmaIsyeriYetkiHelper.FilterIsyeriLookup(list, firmaId, _kullaniciYetkileri, _isAdmin);
                 var data = new List<LookupItem> { new LookupItem { Id = 0, Ad = "Tümü" } };
                 data.AddRange(list);
 
@@ -363,6 +391,22 @@ namespace CeyPASS.WFA.UserControls
 
             return val <= 0 ? (int?)null : val;
         }
+
+        private string BosListeUyariMesaji(int? seciliIsyeriId)
+        {
+            if (seciliIsyeriId.HasValue && seciliIsyeriId.Value > 0)
+            {
+                var ad = cmbIsyeriFilter?.Text?.Trim();
+                return string.IsNullOrEmpty(ad)
+                    ? "Seçili işyerde personel bulunamadı."
+                    : $"\"{ad}\" işyerinde personel bulunamadı.";
+            }
+
+            if (!string.IsNullOrWhiteSpace(_aktifFiltre))
+                return "Arama kriterine uygun personel bulunamadı.";
+
+            return "Seçili filtreye uygun personel bulunamadı.";
+        }
         private void KisiyiGetir(string kisiId)
         {
             var cid = Guid.NewGuid().ToString("N");
@@ -372,6 +416,19 @@ namespace CeyPASS.WFA.UserControls
                 if (d == null)
                 {
                     MessageBox.Show("Kişi bulunamadı.");
+                    DetayFormunuTemizle();
+                    return;
+                }
+
+                int filterFirmaId = GetSeciliFirmaId();
+                if (d.FirmaId > 0 && filterFirmaId > 0 && d.FirmaId != filterFirmaId)
+                {
+                    MessageBox.Show(
+                        "Seçilen personel bu firmaya ait değil.",
+                        "Uyarı",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Warning);
+                    DetayFormunuTemizle();
                     return;
                 }
 
@@ -536,16 +593,13 @@ namespace CeyPASS.WFA.UserControls
                 throw;
             }
         }
-        private void YeniKayitModunaGec()
+        private void DetayFormunuTemizle()
         {
-            if (!_auth.Can(PageName, YetkiTipleri.Create))
-            {
-                System.Media.SystemSounds.Beep.Play();
-                return;
-            }
-
-            _isYeniKayit = true;
+            _isYeniKayit = false;
+            _guncelleModu = false;
             _istenCikisModu = false;
+            _originalPersonelId = null;
+            _fotoDirty = false;
 
             txtAdSoyad.Clear();
             txtSicilNo.Clear();
@@ -555,33 +609,62 @@ namespace CeyPASS.WFA.UserControls
             txtEmail.Clear();
             txtFirmaDisiKartNo.Clear();
 
-            txtPersonelKartNo.ReadOnly = false;
-            txtSicilNo.ReadOnly = false;
-
             pbKisiFoto.Image = null;
 
             dtpIseGiris.Value = DateTime.Today;
             dtpDogumGunu.Checked = false;
             dtpIstenCikis.Checked = false;
             dtpIstenCikis.Enabled = false;
+            dtpIstenCikis.Format = DateTimePickerFormat.Custom;
+            dtpIstenCikis.CustomFormat = "'Aktif Çalışıyor...'";
 
-            if (cmbFirma.Items.Count > 0) cmbFirma.SelectedIndex = 0;
             if (cmbDepartman.Items.Count > 0) cmbDepartman.SelectedIndex = 0;
             if (cmbPozisyon.Items.Count > 0) cmbPozisyon.SelectedIndex = 0;
             if (cmbIsyeri.Items.Count > 0) cmbIsyeri.SelectedIndex = 0;
             if (cmbCalismaStatu.Items.Count > 0) cmbCalismaStatu.SelectedIndex = 0;
             if (cmbBolum.Items.Count > 0) cmbBolum.SelectedIndex = 0;
 
+            int filterFirmaId = GetSeciliFirmaId();
+            if (filterFirmaId > 0 && cmbFirma.Items.Count > 0)
+            {
+                try { cmbFirma.SelectedValue = filterFirmaId; }
+                catch { if (cmbFirma.Items.Count > 0) cmbFirma.SelectedIndex = 0; }
+            }
+            else if (cmbFirma.Items.Count > 0)
+                cmbFirma.SelectedIndex = 0;
+
             for (int i = 0; i < chkVardiyalar.Items.Count; i++)
                 chkVardiyalar.SetItemChecked(i, false);
 
-            chkFirmaPersoneliMi.Checked = true;
-            chkPuantajYapilirMi.Checked = true;
+            chkFirmaPersoneliMi.Checked = false;
+            chkPuantajYapilirMi.Checked = false;
             chkYemekHakkiVarMi.Checked = false;
             chkZiyaretciMi.Checked = false;
             chkAracKartiMi.Checked = false;
             chkTaseronCalisanMi.Checked = false;
             nudYemekAdedi.Value = 0;
+
+            IslemButonlariniGoster(false);
+            ApplyCheckboxRules();
+            WinFormsAuthHelper.ApplyPageAuthorization(_auth, _session, PageName, this);
+        }
+
+        private void YeniKayitModunaGec()
+        {
+            if (!_auth.Can(PageName, YetkiTipleri.Create))
+            {
+                System.Media.SystemSounds.Beep.Play();
+                return;
+            }
+
+            DetayFormunuTemizle();
+            _isYeniKayit = true;
+
+            txtPersonelKartNo.ReadOnly = false;
+            txtSicilNo.ReadOnly = false;
+
+            chkFirmaPersoneliMi.Checked = true;
+            chkPuantajYapilirMi.Checked = true;
 
             ApplyCheckboxRules();
             txtAdSoyad.Focus();
@@ -767,7 +850,7 @@ namespace CeyPASS.WFA.UserControls
                         TcKimlikNo = txtKimlikNo.Text.Trim(),
                         PozisyonId = GetComboNullableInt(cmbPozisyon),
                         DepartmanId = GetComboNullableInt(cmbDepartman),
-                        IsyeriId = GetComboNullableInt(cmbIsyeri),
+                        IsyeriId = GetComboNullableInt(cmbIsyeri, allowZeroAsValidId: true),
                         BolumId = GetComboNullableInt(cmbBolum),
                         FirmaId = GetComboNullableInt(cmbFirma) ?? GetSeciliFirmaId(),
                         IseGirisTarihi = dtpIseGiris.Value.Date,
@@ -864,7 +947,7 @@ namespace CeyPASS.WFA.UserControls
                         ? ((int)cmbCalismaStatu.SelectedValue).ToString()
                         : null,
                     FirmaId = (cmbFirma.SelectedValue as int?) ?? GetSeciliFirmaId(),
-                    IsyeriId = cmbIsyeri.SelectedValue as int?,
+                    IsyeriId = GetComboNullableInt(cmbIsyeri, allowZeroAsValidId: true),
                     BolumId = cmbBolum.SelectedValue as int?,
                     CalismaSekli = SecilenVardiyaIds(),
                     CepTel = txtCepTel.Text.Trim(),
@@ -1058,18 +1141,28 @@ namespace CeyPASS.WFA.UserControls
             btnKaydet.Visible = goster;
             btnVazgec.Visible = goster;
         }
-        private int? GetComboNullableInt(ComboBox cmb)
+        /// <param name="allowZeroAsValidId">
+        /// true: işyeri gibi Id=0 geçerli olabilir; yalnızca null veya negatif (ör. -1 sentinel) → null.
+        /// false: önceki davranış — 0 ve negatif değerler null sayılır (pozisyon/departman/bölüm).
+        /// </param>
+        private int? GetComboNullableInt(ComboBox cmb, bool allowZeroAsValidId = false)
         {
             if (cmb?.SelectedValue == null)
                 return null;
 
-            // Direkt int geldiyse
             if (cmb.SelectedValue is int i)
+            {
+                if (allowZeroAsValidId)
+                    return i < 0 ? (int?)null : i;
                 return i > 0 ? i : (int?)null;
+            }
 
-            // string / object geldiyse
             if (int.TryParse(cmb.SelectedValue.ToString(), out var parsed))
+            {
+                if (allowZeroAsValidId)
+                    return parsed < 0 ? (int?)null : parsed;
                 return parsed > 0 ? parsed : (int?)null;
+            }
 
             return null;
         }

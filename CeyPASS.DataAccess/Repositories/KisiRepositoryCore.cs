@@ -22,7 +22,7 @@ namespace CeyPASS.DataAccess.Repositories
             return _context.Kisiler.Any(k => k.PersonelId == personelId);
         }
 
-        public List<KisiListItem> GetAktifByFirma(int firmId, string search = null, bool? puantajYapilirMi = true, int? isyeriId = null, bool? ziyaretciMi = null)
+        public List<KisiListItem> GetAktifByFirma(int firmId, string search = null, bool? puantajYapilirMi = true, int? isyeriId = null, IReadOnlyList<int> isyeriIdIn = null, bool? ziyaretciMi = null)
         {
             var q = _context.Kisiler
                 .Where(k => k.FirmaId == firmId && k.IstenCikisTarihi == null);
@@ -30,8 +30,7 @@ namespace CeyPASS.DataAccess.Repositories
             if (puantajYapilirMi.HasValue)
                 q = q.Where(k => k.PuantajYapilirMi == puantajYapilirMi.Value);
 
-            if (isyeriId.HasValue)
-                q = q.Where(k => k.IsyeriId == isyeriId.Value);
+            q = ApplyIsyeriFilter(q, isyeriId, isyeriIdIn);
 
             if (ziyaretciMi.HasValue)
                 q = q.Where(k => k.ZiyaretciMi == ziyaretciMi.Value);
@@ -57,7 +56,7 @@ namespace CeyPASS.DataAccess.Repositories
                 .ToList();
         }
 
-        public List<KisiListItem> GetAktifByFirmaPaged(int firmId, string search, bool? puantajYapilirMi, int? isyeriId, int page, int pageSize, out int totalCount)
+        public List<KisiListItem> GetAktifByFirmaPaged(int firmId, string search, bool? puantajYapilirMi, int? isyeriId, IReadOnlyList<int> isyeriIdIn, int page, int pageSize, out int totalCount)
         {
             if (page < 1) page = 1;
             if (pageSize < 1) pageSize = 20;
@@ -68,8 +67,7 @@ namespace CeyPASS.DataAccess.Repositories
             if (puantajYapilirMi.HasValue)
                 q = q.Where(k => k.PuantajYapilirMi == puantajYapilirMi.Value);
 
-            if (isyeriId.HasValue)
-                q = q.Where(k => k.IsyeriId == isyeriId.Value);
+            q = ApplyIsyeriFilter(q, isyeriId, isyeriIdIn);
 
             if (!string.IsNullOrWhiteSpace(search))
             {
@@ -94,6 +92,21 @@ namespace CeyPASS.DataAccess.Repositories
                     AdSoyad = ((k.Ad ?? "") + " " + (k.Soyad ?? "")).Trim()
                 })
                 .ToList();
+        }
+
+        private static IQueryable<Kisiler> ApplyIsyeriFilter(IQueryable<Kisiler> q, int? isyeriId, IReadOnlyList<int> isyeriIdIn)
+        {
+            if (isyeriId.HasValue)
+                return q.Where(k => k.IsyeriId == isyeriId.Value);
+
+            if (isyeriIdIn != null)
+            {
+                if (isyeriIdIn.Count == 0)
+                    return q.Where(k => false);
+                return q.Where(k => k.IsyeriId.HasValue && isyeriIdIn.Contains(k.IsyeriId.Value));
+            }
+
+            return q;
         }
 
         public KisiDetay GetDetay(string personelId)

@@ -17,6 +17,7 @@ namespace CeyPASS.WFA.UserControls.EO
     {
         private readonly ISessionContext _session;
         private readonly IPuantajService _psvc;
+        private readonly IKullaniciFirmaIsyeriYetkiService _yetkiSvc;
         private readonly IFirmaService _fsvc;
         private readonly IIsyeriService _isvc;
         private readonly IKisiService _ksvc;
@@ -33,11 +34,12 @@ namespace CeyPASS.WFA.UserControls.EO
         private const string PageName = "AylikPuantaj";
         private const string PageNameUI = "Aylık Puantaj";
 
-        public ucAylikPuantajEkrani(ISessionContext session, IPuantajService psvc, IFirmaService fsvc, IIsyeriService isvc, IKisiService ksvc, IAuthorizationService auth)
+        public ucAylikPuantajEkrani(ISessionContext session, IPuantajService psvc, IFirmaService fsvc, IIsyeriService isvc, IKisiService ksvc, IAuthorizationService auth, IKullaniciFirmaIsyeriYetkiService yetkiSvc)
         {
             InitializeComponent();
             _session = session;
             _psvc = psvc;
+            _yetkiSvc = yetkiSvc;
             _fsvc = fsvc;
             _isvc = isvc;
             _ksvc = ksvc;
@@ -66,7 +68,7 @@ namespace CeyPASS.WFA.UserControls.EO
                 _seciliAy = DateTime.Now.Month;
                 _ekKayitGun = _psvc.GetEkKayitGun();
                 txtEkKayitGunu.Text = _ekKayitGun.ToString();
-                _kullaniciYetkileri = _psvc.GetKullaniciFirmaIsyeriYetkileri((int)_session.AktifKullaniciId);
+                _kullaniciYetkileri = _yetkiSvc.GetYetkiler((int)_session.AktifKullaniciId);
                 _firmaYetkileri = _kullaniciYetkileri.Select(y => y.FirmaId).Distinct().ToHashSet();
                 GridHazirla();
                 AySecimleriniYukle();
@@ -160,10 +162,8 @@ namespace CeyPASS.WFA.UserControls.EO
         }
         private void FirmalariYukle()
         {
-            var firmalar = _fsvc.GetPuantajFirmalar();
-
-            if (_firmaYetkileri.Count > 0)
-                firmalar = firmalar.Where(f => _firmaYetkileri.Contains(f.FirmaId)).ToList();
+            bool isAdmin = FirmaIsyeriYetkiHelper.IsAdmin(_session.RolId);
+            var firmalar = FirmaIsyeriYetkiHelper.FilterFirmalar(_fsvc.GetPuantajFirmalar(), _kullaniciYetkileri, isAdmin);
 
             cmbFirmaSecimi.DisplayMember = "FirmaAdi";
             cmbFirmaSecimi.ValueMember = "FirmaId";
@@ -180,25 +180,9 @@ namespace CeyPASS.WFA.UserControls.EO
             if (cmbFirmaSecimi.SelectedValue == null) return;
             int firmaId = Convert.ToInt32(cmbFirmaSecimi.SelectedValue);
 
-            var isyerleri = _isvc.GetIsyerleriByFirma(firmaId);
-
-            // YENİ FİLTRELEME - Sadece bu firmada yetkili olduğu işyerlerini getir
-            var yetkiliIsyerleri = _kullaniciYetkileri
-                .Where(y => y.FirmaId == firmaId)
-                .ToList();
-
-            // Eğer IsyeriId NULL olan yetki varsa, tüm işyerlerini göster
-            bool tumIsyerleriGoster = yetkiliIsyerleri.Any(y => !y.IsyeriId.HasValue);
-
-            if (!tumIsyerleriGoster)
-            {
-                var yetkiliIsyeriIdler = yetkiliIsyerleri
-                    .Where(y => y.IsyeriId.HasValue)
-                    .Select(y => y.IsyeriId.Value)
-                    .ToHashSet();
-
-                isyerleri = isyerleri.Where(i => yetkiliIsyeriIdler.Contains(i.IsyeriId)).ToList();
-            }
+            bool isAdmin = FirmaIsyeriYetkiHelper.IsAdmin(_session.RolId);
+            var isyerleri = FirmaIsyeriYetkiHelper.FilterIsyeriler(
+                _isvc.GetIsyerleriByFirma(firmaId), firmaId, _kullaniciYetkileri, isAdmin);
 
             cmbIsyeriSecimi.DisplayMember = "Ad";
             cmbIsyeriSecimi.ValueMember = "IsyeriId";

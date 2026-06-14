@@ -26,7 +26,7 @@ namespace CeyPASS.WFA.UserControls.Izinler
         private readonly IIzinTipService _isvc;
         private readonly IFirmaService _fsvc;
         private readonly IKisiIzinService _kisvc;
-        private readonly IPuantajService _psvc;
+        private readonly IKullaniciFirmaIsyeriYetkiService _yetkiSvc;
         AuthorizationHelper authHelp;
         private ScreenMode _mode = ScreenMode.List;
         private int? _editingIzinId = null;
@@ -36,12 +36,13 @@ namespace CeyPASS.WFA.UserControls.Izinler
         private bool _kisilerLoaded = false;
         private bool _izinlerLoaded = false;
         private bool _izinTipleriLoaded = false;
+        private bool _suppressIzinCheckboxSync = false;
         private const string PageName = "Izinler";
         private const string PageNameUI = "İzinler";
         private const int TUMU_INT = 0;
         private const string TUMU_STR = "ALL";
 
-        public ucIzinler(ISessionContext session, IAuthorizationService auth, IKisiQueryService ksvc, IIzinTipService isvc, IFirmaService fsvc, IKisiIzinService kisvc, IPuantajService psvc)
+        public ucIzinler(ISessionContext session, IAuthorizationService auth, IKisiQueryService ksvc, IIzinTipService isvc, IFirmaService fsvc, IKisiIzinService kisvc, IKullaniciFirmaIsyeriYetkiService yetkiSvc)
         {
             InitializeComponent();
             txtAciklama.HandleCreated += (s, e) =>
@@ -59,7 +60,7 @@ namespace CeyPASS.WFA.UserControls.Izinler
             _isvc = isvc;
             _fsvc = fsvc;
             _kisvc = kisvc;
-            _psvc = psvc;
+            _yetkiSvc = yetkiSvc;
 
             authHelp = new AuthorizationHelper(_session, _auth);
             if (!_auth.ViewAbility(PageName))
@@ -99,7 +100,7 @@ namespace CeyPASS.WFA.UserControls.Izinler
                 return;
             }
 
-            _kullaniciYetkileri = _psvc.GetKullaniciFirmaIsyeriYetkileri((int)_session.AktifKullaniciId);
+            _kullaniciYetkileri = _yetkiSvc.GetYetkiler((int)_session.AktifKullaniciId);
             _firmaYetkileri = _kullaniciYetkileri
                 .Select(y => y.FirmaId)
                 .Distinct()
@@ -131,9 +132,8 @@ namespace CeyPASS.WFA.UserControls.Izinler
         {
             try
             {
-                var list = _fsvc.GetPuantajFirmalar();
-                if (_firmaYetkileri.Count > 0)
-                    list = list.Where(f => _firmaYetkileri.Contains(f.FirmaId)).ToList();
+                bool isAdmin = FirmaIsyeriYetkiHelper.IsAdmin(_session.RolId);
+                var list = FirmaIsyeriYetkiHelper.FilterFirmalar(_fsvc.GetPuantajFirmalar(), _kullaniciYetkileri, isAdmin);
 
                 if (_firmaYetkileri.Count == 0)
                 {
@@ -161,9 +161,18 @@ namespace CeyPASS.WFA.UserControls.Izinler
             if (cmbFirmalarSecimi.SelectedValue == null ||
                 !int.TryParse(cmbFirmalarSecimi.SelectedValue.ToString(), out var firmaId))
                 return;
+
+            if (firmaId == TUMU_INT && _session.AktifFirmaId.HasValue)
+                firmaId = (int)_session.AktifFirmaId.Value;
+            if (firmaId <= 0)
+                return;
+
             try
             {
-                var kisiler = _ksvc.GetAktifKisilerByFirma(firmaId);
+                bool isAdmin = FirmaIsyeriYetkiHelper.IsAdmin(_session.RolId);
+                var (isyeriId, isyeriIdIn) = FirmaIsyeriYetkiHelper.ResolveKisiQueryIsyeriFilter(
+                    firmaId, null, _kullaniciYetkileri, isAdmin);
+                var kisiler = _ksvc.GetAktifKisilerByFirma(firmaId, isyeriId: isyeriId, isyeriIdIn: isyeriIdIn);
                 kisiler.Insert(0, new KisiListItem { PersonelId = TUMU_STR, AdSoyad = "— TÜMÜ —" });
                 cmbKisilerSecimi.DisplayMember = "AdSoyad";
                 cmbKisilerSecimi.ValueMember = "PersonelId";
@@ -217,6 +226,9 @@ namespace CeyPASS.WFA.UserControls.Izinler
             dtpIzinBitisTarihi.Value = DateTime.Today;
             dtpIzinBaslangicSaati.Value = DateTime.Today.AddHours(9);
             dtpIzinBitisSaati.Value = DateTime.Today.AddHours(18);
+
+            if (cmbYarimGunDilim.Items.Count > 0)
+                cmbYarimGunDilim.SelectedIndex = 0;
         }
         private void WireEvents()
         {
@@ -231,6 +243,9 @@ namespace CeyPASS.WFA.UserControls.Izinler
             btnVazgec.Click -= btnVazgec_Click;
 
             chkSaatlikIzinMi.CheckedChanged -= chkSaatlikIzinMi_CheckedChanged;
+            chkYarimGunYillikIzin.CheckedChanged -= chkYarimGunYillikIzin_CheckedChanged;
+            cmbYarimGunDilim.SelectedIndexChanged -= cmbYarimGunDilim_SelectedIndexChanged;
+            dtpIzinBaslangicTarihi.ValueChanged -= dtpIzinBaslangicTarihi_ValueChanged_YarimGunSync;
 
             dgIzinlerTablosu.DataBindingComplete -= dgIzinlerTablosu_DataBindingComplete;
             dgIzinlerTablosu.DataError -= dgIzinlerTablosu_DataError;
@@ -244,6 +259,9 @@ namespace CeyPASS.WFA.UserControls.Izinler
             btnVazgec.Click += btnVazgec_Click;
 
             chkSaatlikIzinMi.CheckedChanged += chkSaatlikIzinMi_CheckedChanged;
+            chkYarimGunYillikIzin.CheckedChanged += chkYarimGunYillikIzin_CheckedChanged;
+            cmbYarimGunDilim.SelectedIndexChanged += cmbYarimGunDilim_SelectedIndexChanged;
+            dtpIzinBaslangicTarihi.ValueChanged += dtpIzinBaslangicTarihi_ValueChanged_YarimGunSync;
 
             dgIzinlerTablosu.DataBindingComplete += dgIzinlerTablosu_DataBindingComplete;
             dgIzinlerTablosu.DataError += dgIzinlerTablosu_DataError;
@@ -257,6 +275,7 @@ namespace CeyPASS.WFA.UserControls.Izinler
 
             btnKaydet.Visible = true;
             btnVazgec.Visible = true;
+            btnKaydet.Tag = mode == ScreenMode.Add ? YetkiTipleri.Create : YetkiTipleri.Update;
 
             btnIzinEkle.Enabled = false;
             btnIzinGuncelle.Enabled = false;
@@ -266,7 +285,9 @@ namespace CeyPASS.WFA.UserControls.Izinler
             if (mode == ScreenMode.Edit && editId.HasValue)
                 LoadSelectedRowToInputs(editId.Value);
             WinFormsAuthHelper.ApplyPageAuthorization(_auth, _session, PageName, this);
-
+            btnKaydet.Enabled = mode == ScreenMode.Add
+                ? _auth.Can(PageName, YetkiTipleri.Create)
+                : _auth.Can(PageName, YetkiTipleri.Update);
         }
         private void ExitEditMode()
         {
@@ -281,13 +302,58 @@ namespace CeyPASS.WFA.UserControls.Izinler
             btnIzinSil.Enabled = dgIzinlerTablosu.CurrentRow != null;
             btnIzinleriGoster.Enabled = true;
             txtAciklama.Clear();
+            ResetYarimGunUi(clearChecks: true);
             WinFormsAuthHelper.ApplyPageAuthorization(_auth, _session, PageName, this);
         }
         private void LoadSelectedRowToInputs(int kisiIzinId)
         {
+            var kayit = _kisvc.GetById(kisiIzinId);
+            if (kayit != null)
+            {
+                dtpIzinBaslangicTarihi.Value = kayit.Baslangic.Date;
+                dtpIzinBaslangicSaati.Value = DateTime.Today + kayit.Baslangic.TimeOfDay;
+                dtpIzinBitisTarihi.Value = kayit.Bitis.Date;
+                dtpIzinBitisSaati.Value = DateTime.Today + kayit.Bitis.TimeOfDay;
+                txtAciklama.Text = kayit.Aciklama ?? "";
+
+                bool yarimGun = YarimGunYillikIzinHelper.KayitYarimGunYillikIzinMi(
+                    kayit.IzinId, kayit.SaatlikIzinMi, kayit.SureDakika, kayit.Aciklama);
+
+                _suppressIzinCheckboxSync = true;
+                try
+                {
+                    chkYarimGunYillikIzin.Checked = yarimGun;
+                    chkSaatlikIzinMi.Checked = kayit.SaatlikIzinMi && !yarimGun;
+
+                    if (yarimGun)
+                    {
+                        if (YarimGunYillikIzinHelper.TryDilimFromAciklama(kayit.Aciklama, out var dilim))
+                            cmbYarimGunDilim.SelectedIndex = (int)dilim;
+                        else if (kayit.Baslangic.TimeOfDay.Hours >= 12)
+                            cmbYarimGunDilim.SelectedIndex = (int)YarimGunYillikIzinHelper.Dilim.OgledenSonra;
+                        else
+                            cmbYarimGunDilim.SelectedIndex = (int)YarimGunYillikIzinHelper.Dilim.Sabah;
+                    }
+                }
+                finally
+                {
+                    _suppressIzinCheckboxSync = false;
+                }
+
+                if (!_izinTipleriLoaded)
+                    cmbIzinTipleri_Enter(cmbIzinlerSecimi, EventArgs.Empty);
+                cmbIzinlerSecimi.SelectedValue = kayit.IzinId;
+
+                if (!_kisilerLoaded)
+                    cmbKisiListesi_Enter(cmbKisilerSecimi, EventArgs.Empty);
+                cmbKisilerSecimi.SelectedValue = kayit.PersonelId;
+
+                ApplyYarimGunYillikIzinRule();
+                ApplySaatlikIzinRule();
+                return;
+            }
+
             if (dgIzinlerTablosu.CurrentRow == null) return;
-            if (dgIzinlerTablosu.Columns.Contains("KisiIzinId"))
-                dgIzinlerTablosu.Columns["KisiIzinId"].Visible = false;
 
             var row = dgIzinlerTablosu.CurrentRow;
 
@@ -304,6 +370,7 @@ namespace CeyPASS.WFA.UserControls.Izinler
 
             var satIzinText = Convert.ToString(row.Cells["Saatlik İzin Mi"].Value);
             chkSaatlikIzinMi.Checked = satIzinText == "EVET";
+            chkYarimGunYillikIzin.Checked = false;
 
             if (!_kisilerLoaded)
                 cmbKisiListesi_Enter(cmbKisilerSecimi, EventArgs.Empty);
@@ -337,12 +404,16 @@ namespace CeyPASS.WFA.UserControls.Izinler
         }
         private void ApplySaatlikIzinRule()
         {
+            if (chkYarimGunYillikIzin.Checked)
+                return;
+
             if (cmbIzinlerSecimi.DataSource == null) return;
 
             bool saatlik = chkSaatlikIzinMi.Checked;
 
             dtpIzinBaslangicSaati.Enabled = saatlik;
             dtpIzinBitisSaati.Enabled = saatlik;
+            txtAciklama.ReadOnly = false;
 
             if (saatlik)
             {
@@ -355,10 +426,132 @@ namespace CeyPASS.WFA.UserControls.Izinler
             }
             else
             {
-                cmbIzinlerSecimi.Enabled = true;
+                cmbIzinlerSecimi.Enabled = _mode != ScreenMode.List;
             }
         }
-        private void chkSaatlikIzinMi_CheckedChanged(object sender, EventArgs e) => ApplySaatlikIzinRule();
+
+        private void ApplyYarimGunYillikIzinRule()
+        {
+            bool yarimGun = chkYarimGunYillikIzin.Checked;
+
+            cmbYarimGunDilim.Enabled = yarimGun;
+            chkSaatlikIzinMi.Enabled = !yarimGun;
+            dtpIzinBaslangicSaati.Enabled = !yarimGun;
+            dtpIzinBitisSaati.Enabled = !yarimGun;
+            txtAciklama.ReadOnly = yarimGun;
+
+            if (!_izinTipleriLoaded && yarimGun)
+                cmbIzinTipleri_Enter(cmbIzinlerSecimi, EventArgs.Empty);
+
+            if (yarimGun)
+            {
+                if (cmbYarimGunDilim.SelectedIndex < 0 && cmbYarimGunDilim.Items.Count > 0)
+                    cmbYarimGunDilim.SelectedIndex = 0;
+
+                cmbIzinlerSecimi.SelectedValue = YarimGunYillikIzinHelper.YillikIzinTipId;
+                cmbIzinlerSecimi.Enabled = false;
+
+                dtpIzinBitisTarihi.Value = dtpIzinBaslangicTarihi.Value.Date;
+                UygulaYarimGunSaatleriUi();
+            }
+            else
+            {
+                cmbIzinlerSecimi.Enabled = _mode != ScreenMode.List;
+            }
+        }
+
+        private void UygulaYarimGunSaatleriUi()
+        {
+            if (!chkYarimGunYillikIzin.Checked || cmbYarimGunDilim.SelectedIndex < 0)
+                return;
+
+            var dilim = (YarimGunYillikIzinHelper.Dilim)cmbYarimGunDilim.SelectedIndex;
+            var gun = dtpIzinBaslangicTarihi.Value.Date;
+            YarimGunYillikIzinHelper.KayitZamanlari(dilim, gun, out var bas, out var bit);
+
+            dtpIzinBaslangicSaati.Value = DateTime.Today + bas.TimeOfDay;
+            dtpIzinBitisSaati.Value = DateTime.Today + bit.TimeOfDay;
+            dtpIzinBitisTarihi.Value = gun;
+            txtAciklama.Text = YarimGunYillikIzinHelper.AciklamaMetni(dilim);
+        }
+
+        private void ResetYarimGunUi(bool clearChecks)
+        {
+            _suppressIzinCheckboxSync = true;
+            try
+            {
+                if (clearChecks)
+                {
+                    chkYarimGunYillikIzin.Checked = false;
+                    chkSaatlikIzinMi.Checked = false;
+                }
+                if (cmbYarimGunDilim.Items.Count > 0)
+                    cmbYarimGunDilim.SelectedIndex = 0;
+            }
+            finally
+            {
+                _suppressIzinCheckboxSync = false;
+            }
+            cmbYarimGunDilim.Enabled = false;
+            txtAciklama.ReadOnly = false;
+            chkSaatlikIzinMi.Enabled = true;
+        }
+
+        private void chkSaatlikIzinMi_CheckedChanged(object sender, EventArgs e)
+        {
+            if (_suppressIzinCheckboxSync) return;
+            if (chkSaatlikIzinMi.Checked)
+            {
+                _suppressIzinCheckboxSync = true;
+                chkYarimGunYillikIzin.Checked = false;
+                _suppressIzinCheckboxSync = false;
+            }
+            ApplySaatlikIzinRule();
+            ApplyYarimGunYillikIzinRule();
+        }
+
+        private void chkYarimGunYillikIzin_CheckedChanged(object sender, EventArgs e)
+        {
+            if (_suppressIzinCheckboxSync) return;
+            if (chkYarimGunYillikIzin.Checked)
+            {
+                _suppressIzinCheckboxSync = true;
+                chkSaatlikIzinMi.Checked = false;
+                _suppressIzinCheckboxSync = false;
+
+                if (_mode == ScreenMode.List)
+                {
+                    if (!_auth.Can(PageName, YetkiTipleri.Create))
+                    {
+                        _suppressIzinCheckboxSync = true;
+                        chkYarimGunYillikIzin.Checked = false;
+                        _suppressIzinCheckboxSync = false;
+                        System.Media.SystemSounds.Beep.Play();
+                        return;
+                    }
+                    cmbKisiListesi_Enter(cmbKisilerSecimi, EventArgs.Empty);
+                    cmbIzinTipleri_Enter(cmbIzinlerSecimi, EventArgs.Empty);
+                    EnterEditMode(ScreenMode.Add);
+                }
+            }
+            ApplyYarimGunYillikIzinRule();
+            ApplySaatlikIzinRule();
+        }
+
+        private void cmbYarimGunDilim_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (chkYarimGunYillikIzin.Checked)
+                UygulaYarimGunSaatleriUi();
+        }
+
+        private void dtpIzinBaslangicTarihi_ValueChanged_YarimGunSync(object sender, EventArgs e)
+        {
+            if (chkYarimGunYillikIzin.Checked)
+            {
+                dtpIzinBitisTarihi.Value = dtpIzinBaslangicTarihi.Value.Date;
+                UygulaYarimGunSaatleriUi();
+            }
+        }
         private void btnIzinleriGoster_Click(object sender, EventArgs e)
         {
             if (!_auth.Can(PageName, YetkiTipleri.View))
@@ -420,7 +613,20 @@ namespace CeyPASS.WFA.UserControls.Izinler
             dtpIzinBitisTarihi.Value = DateTime.Today;
             dtpIzinBaslangicSaati.Value = DateTime.Today.AddHours(9);
             dtpIzinBitisSaati.Value = DateTime.Today.AddHours(18);
-            chkSaatlikIzinMi.Checked = false;
+            ResetYarimGunUi(clearChecks: true);
+
+            if (cmbFirmalarSecimi.SelectedValue != null &&
+                int.TryParse(cmbFirmalarSecimi.SelectedValue.ToString(), out var fId) &&
+                fId == TUMU_INT &&
+                _session.AktifFirmaId.HasValue)
+            {
+                var aktif = (int)_session.AktifFirmaId.Value;
+                if (cmbFirmalarSecimi.Items.Cast<Firma>().Any(f => f.FirmaId == aktif))
+                    cmbFirmalarSecimi.SelectedValue = aktif;
+            }
+
+            cmbKisiListesi_Enter(cmbKisilerSecimi, EventArgs.Empty);
+            cmbIzinTipleri_Enter(cmbIzinlerSecimi, EventArgs.Empty);
             EnterEditMode(ScreenMode.Add);
         }
         private void btnIzinSil_Click(object sender, EventArgs e)
@@ -542,15 +748,20 @@ namespace CeyPASS.WFA.UserControls.Izinler
                 izinTipId = itId;
             }
 
-            bool saatlik = chkSaatlikIzinMi.Checked;
+            bool yarimGun = chkYarimGunYillikIzin.Checked;
+            bool saatlik = yarimGun || chkSaatlikIzinMi.Checked;
+
+            if (yarimGun)
+                izinTipId = YarimGunYillikIzinHelper.YillikIzinTipId;
 
             var dto = new IzinKayitValidasyonDTO
             {
                 SaatlikIzinMi = saatlik,
+                YarimGunYillikIzinMi = yarimGun,
                 PersonelId = personelId,
                 IzinTipId = izinTipId,
                 BaslangicTarihi = dtpIzinBaslangicTarihi.Value,
-                BitisTarihi = dtpIzinBitisTarihi.Value,
+                BitisTarihi = yarimGun ? dtpIzinBaslangicTarihi.Value : dtpIzinBitisTarihi.Value,
                 BaslangicSaati = saatlik ? dtpIzinBaslangicSaati.Value.TimeOfDay : (TimeSpan?)null,
                 BitisSaati = saatlik ? dtpIzinBitisSaati.Value.TimeOfDay : (TimeSpan?)null
             };
@@ -567,6 +778,16 @@ namespace CeyPASS.WFA.UserControls.Izinler
 
             try
             {
+                if (_mode == ScreenMode.List)
+                {
+                    MessageBox.Show(
+                        "Kayıt eklemek veya güncellemek için önce «İzin Ekle» veya «Güncelle» butonuna tıklayın.",
+                        "Bilgi",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Information);
+                    return;
+                }
+
                 if (_mode == ScreenMode.Add)
                 {
                     if (!_auth.Can(PageName, YetkiTipleri.Create))
@@ -586,9 +807,12 @@ namespace CeyPASS.WFA.UserControls.Izinler
                     }
                 }
 
+                if (chkYarimGunYillikIzin.Checked)
+                    UygulaYarimGunSaatleriUi();
+
                 if (!ValidateInputs(out var m))
                 {
-                    MessageBox.Show(m);
+                    MessageBox.Show(m, "Uyarı", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     return;
                 }
 
@@ -598,7 +822,8 @@ namespace CeyPASS.WFA.UserControls.Izinler
                     fId != TUMU_INT)
                     selectedFirmaId = fId;
 
-                bool saatlik = chkSaatlikIzinMi.Checked;
+                bool yarimGun = chkYarimGunYillikIzin.Checked;
+                bool saatlik = yarimGun || chkSaatlikIzinMi.Checked;
                 string personelId = null;
 
                 if (cmbKisilerSecimi.SelectedValue != null &&
@@ -629,12 +854,20 @@ namespace CeyPASS.WFA.UserControls.Izinler
 
                 if (string.IsNullOrWhiteSpace(personelId))
                 {
-                    MessageBox.Show("Kayıt için lütfen belirli bir kişi seçiniz.");
+                    MessageBox.Show(
+                        "Kayıt için «Kişi» listesinden «— TÜMÜ —» dışında bir personel seçiniz.",
+                        "Uyarı",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Warning);
+                    cmbKisilerSecimi.Focus();
                     return;
                 }
 
-                if (cmbIzinlerSecimi.SelectedValue == null ||
-                    !int.TryParse(cmbIzinlerSecimi.SelectedValue.ToString(), out var izinTipId))
+                int izinTipId;
+                if (yarimGun)
+                    izinTipId = YarimGunYillikIzinHelper.YillikIzinTipId;
+                else if (cmbIzinlerSecimi.SelectedValue == null ||
+                    !int.TryParse(cmbIzinlerSecimi.SelectedValue.ToString(), out izinTipId))
                 {
                     MessageBox.Show("Lütfen bir izin tipi seçiniz.");
                     return;
@@ -643,7 +876,19 @@ namespace CeyPASS.WFA.UserControls.Izinler
                 string aciklama = txtAciklama.Text?.Trim() ?? "";
 
                 DateTime bas, bit;
-                if (saatlik)
+                if (yarimGun)
+                {
+                    if (cmbYarimGunDilim.SelectedIndex < 0)
+                    {
+                        MessageBox.Show("Yarım gün için sabah veya öğleden sonra dilimini seçiniz.");
+                        return;
+                    }
+                    var dilim = (YarimGunYillikIzinHelper.Dilim)cmbYarimGunDilim.SelectedIndex;
+                    YarimGunYillikIzinHelper.KayitZamanlari(dilim, dtpIzinBaslangicTarihi.Value.Date, out bas, out bit);
+                    aciklama = YarimGunYillikIzinHelper.AciklamaMetni(dilim);
+                    saatlik = true;
+                }
+                else if (saatlik)
                 {
                     bas = dtpIzinBaslangicTarihi.Value.Date + dtpIzinBaslangicSaati.Value.TimeOfDay;
                     bit = dtpIzinBitisTarihi.Value.Date + dtpIzinBitisSaati.Value.TimeOfDay;
@@ -671,11 +916,19 @@ namespace CeyPASS.WFA.UserControls.Izinler
 
                 if (!ok)
                 {
-                    MessageBox.Show("İşlem başarısız.");
+                    MessageBox.Show(
+                        "İşlem başarısız. Veritabanı bağlantısı veya yetkileri kontrol edin.",
+                        "Hata",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Error);
                     return;
                 }
                 LogHelper.Info(PageName, _mode.ToString(), "İzin kaydı başarıyla tamamlandı", detayJson: $"{{\"IzinTipId\":{izinTipId},\"Saatlik\":{saatlik.ToString().ToLower()},\"Bas\":\"{bas:yyyy-MM-dd HH:mm}\",\"Bit\":\"{bit:yyyy-MM-dd HH:mm}\"}}");
                 MessageBox.Show("Kayıt tamamlandı.", "Bilgi", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                if (_izinTipleriLoaded && cmbIzinlerSecimi.Items.Count > 0)
+                    cmbIzinlerSecimi.SelectedValue = TUMU_INT;
+
                 ExitEditMode();
                 ListeyiYenile();
             }

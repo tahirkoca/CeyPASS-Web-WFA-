@@ -22,6 +22,7 @@ namespace CeyPASS.Tests.Web
         private readonly Mock<IAuthorizationService> _authMock = new();
         private readonly Mock<ICalismaSekliService> _calismaSekliMock = new();
         private readonly Mock<IFirmaService> _firmaMock = new();
+        private readonly Mock<IPuantajService> _puantajMock = new();
         private readonly IMemoryCache _cache = new MemoryCache(new MemoryCacheOptions());
         private readonly PersonelController _sut;
 
@@ -37,7 +38,11 @@ namespace CeyPASS.Tests.Web
                 _authMock.Object,
                 _calismaSekliMock.Object,
                 _firmaMock.Object,
+                _puantajMock.Object,
                 _cache);
+
+            _puantajMock.Setup(p => p.GetKullaniciFirmaIsyeriYetkileri(It.IsAny<int>()))
+                .Returns(new List<FirmaIsyeriYetkiDTO>());
 
             var httpContext = new DefaultHttpContext();
             _sut.ControllerContext = new ControllerContext { HttpContext = httpContext };

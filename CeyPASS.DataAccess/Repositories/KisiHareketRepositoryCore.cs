@@ -71,6 +71,8 @@ ORDER BY KH.Tarih DESC";
 
         public DataTable GetByPersons(List<int> personIds, DateTime bas, DateTime bit, bool onlyAktif, bool onlyPasif, bool onlyYemekhane, int firmaId)
         {
+            bool sicilSecili = personIds != null && personIds.Count > 0;
+
             var sb = new StringBuilder(@"
 SELECT
     k.Id,
@@ -95,17 +97,29 @@ FROM dbo.KisiHareketler AS k
 LEFT JOIN dbo.Kisiler  AS p ON p.PersonelId = k.PersonelId
 LEFT JOIN dbo.Cihazlar AS c ON c.CihazId   = k.CihazId
 LEFT JOIN dbo.Firmalar AS f ON f.FirmaId   = k.FirmaId
-WHERE k.FirmaId = @p0
-  AND k.Tarih >= @p1
-  AND k.Tarih <= @p2
-");
+WHERE ");
 
-            var parameters = new List<Microsoft.Data.SqlClient.SqlParameter>
+            var parameters = new List<Microsoft.Data.SqlClient.SqlParameter>();
+            int paramIndex = 0;
+
+            if (sicilSecili)
             {
-                new Microsoft.Data.SqlClient.SqlParameter("@p0", firmaId),
-                new Microsoft.Data.SqlClient.SqlParameter("@p1", bas),
-                new Microsoft.Data.SqlClient.SqlParameter("@p2", bit)
-            };
+                sb.AppendLine("k.Tarih >= @p0");
+                sb.AppendLine("  AND k.Tarih <= @p1");
+                parameters.Add(new Microsoft.Data.SqlClient.SqlParameter("@p0", bas));
+                parameters.Add(new Microsoft.Data.SqlClient.SqlParameter("@p1", bit));
+                paramIndex = 2;
+            }
+            else
+            {
+                sb.AppendLine("k.FirmaId = @p0");
+                sb.AppendLine("  AND k.Tarih >= @p1");
+                sb.AppendLine("  AND k.Tarih <= @p2");
+                parameters.Add(new Microsoft.Data.SqlClient.SqlParameter("@p0", firmaId));
+                parameters.Add(new Microsoft.Data.SqlClient.SqlParameter("@p1", bas));
+                parameters.Add(new Microsoft.Data.SqlClient.SqlParameter("@p2", bit));
+                paramIndex = 3;
+            }
 
             if (onlyAktif && !onlyPasif)
                 sb.AppendLine("  AND k.AktifMi = 1");
@@ -123,12 +137,12 @@ WHERE k.FirmaId = @p0
                 sb.AppendLine("  AND (k.Tip IN (N'G', N'Ç', N'C', N'Giriş', N'Çıkış', N'Giris', N'Cikis'))");
             }
 
-            if (personIds != null && personIds.Count > 0)
+            if (sicilSecili)
             {
                 var inParams = new List<string>(personIds.Count);
                 for (int i = 0; i < personIds.Count; i++)
                 {
-                    var pn = "@p" + (3 + i);
+                    var pn = "@p" + (paramIndex + i);
                     inParams.Add(pn);
                     parameters.Add(new Microsoft.Data.SqlClient.SqlParameter(pn, personIds[i]));
                 }
@@ -170,22 +184,36 @@ WHERE k.FirmaId = @p0
             if (page < 1) page = 1;
             if (pageSize < 1) pageSize = 20;
 
+            bool sicilSecili = personIds != null && personIds.Count > 0;
+
             var sbWhere = new StringBuilder(@"
 FROM dbo.KisiHareketler AS k
 LEFT JOIN dbo.Kisiler  AS p ON p.PersonelId = k.PersonelId
 LEFT JOIN dbo.Cihazlar AS c ON c.CihazId   = k.CihazId
 LEFT JOIN dbo.Firmalar AS f ON f.FirmaId   = k.FirmaId
-WHERE k.FirmaId = @p0
-  AND k.Tarih >= @p1
-  AND k.Tarih <= @p2
-");
+WHERE ");
 
-            var parameters = new List<Microsoft.Data.SqlClient.SqlParameter>
+            var parameters = new List<Microsoft.Data.SqlClient.SqlParameter>();
+            int paramIndex = 0;
+
+            if (sicilSecili)
             {
-                new Microsoft.Data.SqlClient.SqlParameter("@p0", firmaId),
-                new Microsoft.Data.SqlClient.SqlParameter("@p1", bas),
-                new Microsoft.Data.SqlClient.SqlParameter("@p2", bit)
-            };
+                sbWhere.AppendLine("k.Tarih >= @p0");
+                sbWhere.AppendLine("  AND k.Tarih <= @p1");
+                parameters.Add(new Microsoft.Data.SqlClient.SqlParameter("@p0", bas));
+                parameters.Add(new Microsoft.Data.SqlClient.SqlParameter("@p1", bit));
+                paramIndex = 2;
+            }
+            else
+            {
+                sbWhere.AppendLine("k.FirmaId = @p0");
+                sbWhere.AppendLine("  AND k.Tarih >= @p1");
+                sbWhere.AppendLine("  AND k.Tarih <= @p2");
+                parameters.Add(new Microsoft.Data.SqlClient.SqlParameter("@p0", firmaId));
+                parameters.Add(new Microsoft.Data.SqlClient.SqlParameter("@p1", bas));
+                parameters.Add(new Microsoft.Data.SqlClient.SqlParameter("@p2", bit));
+                paramIndex = 3;
+            }
 
             if (onlyAktif && !onlyPasif)
                 sbWhere.AppendLine("  AND k.AktifMi = 1");
@@ -203,12 +231,12 @@ WHERE k.FirmaId = @p0
                 sbWhere.AppendLine("  AND (k.Tip IN (N'G', N'Ç', N'C', N'Giriş', N'Çıkış', N'Giris', N'Cikis'))");
             }
 
-            if (personIds != null && personIds.Count > 0)
+            if (sicilSecili)
             {
                 var inParams = new List<string>(personIds.Count);
                 for (int i = 0; i < personIds.Count; i++)
                 {
-                    var pn = "@p" + (3 + i);
+                    var pn = "@p" + (paramIndex + i);
                     inParams.Add(pn);
                     parameters.Add(new Microsoft.Data.SqlClient.SqlParameter(pn, personIds[i]));
                 }

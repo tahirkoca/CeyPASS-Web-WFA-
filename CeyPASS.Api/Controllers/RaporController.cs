@@ -23,18 +23,24 @@ namespace CeyPASS.Api.Controllers
         private readonly IAuthorizationService _authorizationService;
         private readonly ISessionContext _sessionContext;
         private readonly IKullaniciQueryService _kullaniciQueryService;
+        private readonly IKullaniciFirmaIsyeriYetkiService _yetkiSvc;
+        private readonly IKisiEkraniLookUpService _lookupService;
         private const string PageName = "Raporlar";
 
         public RaporController(
             IRaporService raporService,
             IAuthorizationService authorizationService,
             ISessionContext sessionContext,
-            IKullaniciQueryService kullaniciQueryService)
+            IKullaniciQueryService kullaniciQueryService,
+            IKullaniciFirmaIsyeriYetkiService yetkiSvc,
+            IKisiEkraniLookUpService lookupService)
         {
             _raporService = raporService;
             _authorizationService = authorizationService;
             _sessionContext = sessionContext;
             _kullaniciQueryService = kullaniciQueryService;
+            _yetkiSvc = yetkiSvc;
+            _lookupService = lookupService;
         }
 
         public sealed class PagedResponse<T>
@@ -56,6 +62,7 @@ namespace CeyPASS.Api.Controllers
         {
             public string ProcedureAdi { get; set; } = string.Empty;
             public int? FirmaId { get; set; }
+            public List<int>? IsyeriIds { get; set; }
             public DateTime TarihBaslangic { get; set; }
             public DateTime TarihBitis { get; set; }
             public int Page { get; set; } = 1;
@@ -68,6 +75,31 @@ namespace CeyPASS.Api.Controllers
             if (!_authorizationService.ViewAbility(PageName)) return Forbid();
             var raporlar = _raporService.GetirRaporlar();
             return Ok(ApiResult<List<CeyPASS.Entities.Concrete.RaporTanimi>>.Ok(raporlar));
+        }
+
+        [HttpGet("isyerleri")]
+        public ActionResult<ApiResult<List<LookupItem>>> GetIsyerleri()
+        {
+            if (!_authorizationService.ViewAbility(PageName)) return Forbid();
+
+            int firmaId = _sessionContext.AktifFirmaId ?? 0;
+            if (firmaId == 0) return BadRequest(ApiResult.Failure("Firma bilgisi bulunamadı."));
+
+            bool isAdmin = _sessionContext.IsAdmin();
+            List<FirmaIsyeriYetkiDTO>? yetkiler = null;
+            if (_sessionContext.AktifKullaniciId.HasValue)
+                yetkiler = _yetkiSvc.GetYetkiler(_sessionContext.AktifKullaniciId.Value);
+
+            if (!FirmaIsyeriYetkiHelper.IsFirmaAuthorized(firmaId, yetkiler, isAdmin))
+                return Forbid();
+
+            var items = FirmaIsyeriYetkiHelper.FilterIsyeriLookup(
+                _lookupService.GetIsyerleri(firmaId) ?? new List<LookupItem>(),
+                firmaId,
+                yetkiler,
+                isAdmin);
+
+            return Ok(ApiResult<List<LookupItem>>.Ok(items));
         }
 
         [HttpPost("run")]
@@ -85,16 +117,33 @@ namespace CeyPASS.Api.Controllers
             if (request.Page < 1) request.Page = 1;
             if (request.PageSize < 1) request.PageSize = 100;
 
-            var isyeriIdList = _kullaniciQueryService.GetFirmayaAitIsyeriIdleri(firmaId) ?? new List<int>();
+            bool isAdmin = _sessionContext.IsAdmin();
+            List<FirmaIsyeriYetkiDTO>? yetkiler = null;
+            if (_sessionContext.AktifKullaniciId.HasValue)
+                yetkiler = _yetkiSvc.GetYetkiler(_sessionContext.AktifKullaniciId.Value);
+
+            if (!FirmaIsyeriYetkiHelper.IsFirmaAuthorized(firmaId, yetkiler, isAdmin))
+                return Forbid();
+
+            var (isyeriIdCsv, status) = BuildRaporIsyeriIdListCsv(
+                firmaId,
+                request.IsyeriIds,
+                yetkiler,
+                isAdmin);
+
+            if (status == FirmaIsyeriYetkiHelper.RaporIsyeriListStatus.UnauthorizedSelection)
+                return BadRequest(ApiResult.Failure("Seçilen işyerlerden bazıları için yetkiniz yok."));
+            if (status == FirmaIsyeriYetkiHelper.RaporIsyeriListStatus.NoAccess)
+                return Forbid();
+
             string firmaIdCsv = firmaId > 0 ? firmaId.ToString() : "";
-            string isyeriIdCsv = isyeriIdList.Count > 0 ? string.Join(",", isyeriIdList) : "";
 
             var parametreler = new Dictionary<string, object>
             {
                 { "@FirmaIdList", firmaIdCsv },
-                { "@IsyeriIdList", isyeriIdCsv },
-                { "@TarihBaslangic", request.TarihBaslangic },
-                { "@TarihBitis", request.TarihBitis },
+                { "@IsyeriIdList", isyeriIdCsv ?? "" },
+                { "@TarihBaslangic", RaporTarihHelper.ToReportRangeStart(request.TarihBaslangic) },
+                { "@TarihBitis", RaporTarihHelper.ToReportRangeEnd(request.TarihBitis) },
             };
 
             DataTable dt = _raporService.CalistirRapor(request.ProcedureAdi, parametreler);
@@ -149,33 +198,43 @@ namespace CeyPASS.Api.Controllers
                 if (string.IsNullOrWhiteSpace(request.ProcedureName))
                     return BadRequest(ApiResult.Failure("Rapor seçiniz."));
 
-                // Web ile aynı parametreler: @FirmaIdList, @IsyeriIdList, @TarihBaslangic, @TarihBitis
                 int firmaId = _sessionContext.AktifFirmaId ?? 0;
-                if (_sessionContext.IsAdmin())
-                {
-                    // admin olsa bile, export'ta firmaId'yi session'dan alıyoruz (web de navbar aktif firmayı baz alıyor)
-                    firmaId = _sessionContext.AktifFirmaId ?? firmaId;
-                }
                 if (firmaId == 0) return BadRequest(ApiResult.Failure("Firma bilgisi bulunamadı."));
+
+                bool isAdmin = _sessionContext.IsAdmin();
+                List<FirmaIsyeriYetkiDTO>? yetkiler = null;
+                if (_sessionContext.AktifKullaniciId.HasValue)
+                    yetkiler = _yetkiSvc.GetYetkiler(_sessionContext.AktifKullaniciId.Value);
+
+                if (!FirmaIsyeriYetkiHelper.IsFirmaAuthorized(firmaId, yetkiler, isAdmin))
+                    return Forbid();
 
                 if (!request.Params.ContainsKey("@FirmaIdList"))
                     request.Params["@FirmaIdList"] = firmaId.ToString();
 
                 if (!request.Params.ContainsKey("@IsyeriIdList"))
                 {
-                    var isyeriIdList = _kullaniciQueryService.GetFirmayaAitIsyeriIdleri(firmaId) ?? new List<int>();
-                    request.Params["@IsyeriIdList"] = isyeriIdList.Count > 0 ? string.Join(",", isyeriIdList) : "";
+                    var (isyeriIdCsv, status) = BuildRaporIsyeriIdListCsv(
+                        firmaId,
+                        request.IsyeriIds,
+                        yetkiler,
+                        isAdmin);
+
+                    if (status == FirmaIsyeriYetkiHelper.RaporIsyeriListStatus.UnauthorizedSelection)
+                        return BadRequest(ApiResult.Failure("Seçilen işyerlerden bazıları için yetkiniz yok."));
+                    if (status == FirmaIsyeriYetkiHelper.RaporIsyeriListStatus.NoAccess)
+                        return Forbid();
+
+                    request.Params["@IsyeriIdList"] = isyeriIdCsv ?? "";
                 }
 
-                // Tarih parametreleri yoksa hata (export'in çalışması için zorunlu)
                 if (!request.Params.ContainsKey("@TarihBaslangic") || !request.Params.ContainsKey("@TarihBitis"))
                     return BadRequest(ApiResult.Failure("Tarih parametreleri eksik."));
 
-                // JSON -> .NET type normalize (mobile Date/string gelebilir)
                 if (TryGetDateParam(request.Params, "@TarihBaslangic", out var tb))
-                    request.Params["@TarihBaslangic"] = tb;
+                    request.Params["@TarihBaslangic"] = RaporTarihHelper.ToReportRangeStart(tb);
                 if (TryGetDateParam(request.Params, "@TarihBitis", out var te))
-                    request.Params["@TarihBitis"] = te;
+                    request.Params["@TarihBitis"] = RaporTarihHelper.ToReportRangeEnd(te);
 
                 DataTable dt = _raporService.CalistirRapor(request.ProcedureName, request.Params);
                 if (dt == null || dt.Rows.Count == 0) return BadRequest(ApiResult.Failure("Rapor için veri bulunamadı."));
@@ -183,8 +242,8 @@ namespace CeyPASS.Api.Controllers
                 string fileName = $"{request.ExportTitle}_{DateTime.Now:yyyyMMddHHmm}";
                 string extension = request.Format.ToLower() == "excel" ? "xlsx" : "pdf";
                 string fullFileName = $"{fileName}.{extension}";
-                string contentType = request.Format.ToLower() == "excel" 
-                    ? "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" 
+                string contentType = request.Format.ToLower() == "excel"
+                    ? "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                     : "application/pdf";
 
                 string tempPath = Path.Combine(Path.GetTempPath(), fullFileName);
@@ -209,6 +268,22 @@ namespace CeyPASS.Api.Controllers
             }
         }
 
+        private (string? csv, FirmaIsyeriYetkiHelper.RaporIsyeriListStatus status) BuildRaporIsyeriIdListCsv(
+            int firmaId,
+            IReadOnlyList<int>? selectedIsyeriIds,
+            List<FirmaIsyeriYetkiDTO>? yetkiler,
+            bool isAdmin)
+        {
+            var firmaIsyeriIds = _kullaniciQueryService.GetFirmayaAitIsyeriIdleri(firmaId) ?? new List<int>();
+            var maxCsv = _yetkiSvc.BuildIsyeriIdListCsv(firmaId, yetkiler, isAdmin, firmaIsyeriIds);
+            return FirmaIsyeriYetkiHelper.ResolveRaporIsyeriIdListCsv(
+                firmaId,
+                selectedIsyeriIds,
+                maxCsv,
+                yetkiler,
+                isAdmin);
+        }
+
         private static bool TryGetDateParam(Dictionary<string, object> p, string key, out DateTime dt)
         {
             dt = default;
@@ -223,7 +298,6 @@ namespace CeyPASS.Api.Controllers
                     var s = je.GetString();
                     return TryParseDateTimeLoose(s, out dt);
                 }
-                // Some clients might send epoch
                 if (je.ValueKind == JsonValueKind.Number && je.TryGetInt64(out var l))
                 {
                     try { dt = DateTimeOffset.FromUnixTimeMilliseconds(l).DateTime; return true; } catch { return false; }
@@ -238,7 +312,6 @@ namespace CeyPASS.Api.Controllers
         {
             dt = default;
             if (string.IsNullOrWhiteSpace(s)) return false;
-            // Accept yyyy-MM-dd and ISO strings
             if (DateTime.TryParse(s, CultureInfo.InvariantCulture, DateTimeStyles.AssumeLocal, out dt)) return true;
             return DateTime.TryParse(s, CultureInfo.GetCultureInfo("tr-TR"), DateTimeStyles.AssumeLocal, out dt);
         }
@@ -248,7 +321,8 @@ namespace CeyPASS.Api.Controllers
     {
         public string ProcedureName { get; set; } = string.Empty;
         public string ExportTitle { get; set; } = "Rapor";
-        public string Format { get; set; } = "pdf"; // pdf or excel
+        public string Format { get; set; } = "pdf";
+        public List<int>? IsyeriIds { get; set; }
         public Dictionary<string, object> Params { get; set; } = new();
     }
 }

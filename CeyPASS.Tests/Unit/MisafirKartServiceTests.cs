@@ -30,7 +30,7 @@ namespace CeyPASS.Tests.Unit
                 new KisiListItem { PersonelId = null, AdSoyad = "Boş Kart" },
                 new KisiListItem { PersonelId = "   ", AdSoyad = "Boş Kart 2" }
             };
-            _kisiRepoMock.Setup(r => r.GetAktifByFirma(1, null, false, null, true)).Returns(kartlar);
+            _kisiRepoMock.Setup(r => r.GetAktifByFirma(1, null, false, null, null, true)).Returns(kartlar);
 
             var sonuc = _sut.GetCardsForNew(1);
 
@@ -44,7 +44,7 @@ namespace CeyPASS.Tests.Unit
             {
                 new KisiListItem { PersonelId = "KART001", AdSoyad = "Ziyaretçi Kartı" }
             };
-            _kisiRepoMock.Setup(r => r.GetAktifByFirma(1, null, false, null, true)).Returns(kartlar);
+            _kisiRepoMock.Setup(r => r.GetAktifByFirma(1, null, false, null, null, true)).Returns(kartlar);
             _atamaRepoMock.Setup(a => a.ExistsActiveForCard("KART001")).Returns(true);
 
             var sonuc = _sut.GetCardsForNew(1);
@@ -59,7 +59,7 @@ namespace CeyPASS.Tests.Unit
             {
                 new KisiListItem { PersonelId = "KART001", AdSoyad = "Müsait Kart" }
             };
-            _kisiRepoMock.Setup(r => r.GetAktifByFirma(1, null, false, null, true)).Returns(kartlar);
+            _kisiRepoMock.Setup(r => r.GetAktifByFirma(1, null, false, null, null, true)).Returns(kartlar);
             _atamaRepoMock.Setup(a => a.ExistsActiveForCard("KART001")).Returns(false);
 
             var sonuc = _sut.GetCardsForNew(1);

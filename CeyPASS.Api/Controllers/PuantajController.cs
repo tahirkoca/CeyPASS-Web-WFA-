@@ -65,7 +65,14 @@ namespace CeyPASS.Api.Controllers
                 if (firmaYetkileri.Count > 0 && !firmaYetkileri.Contains(selectedFirmaId))
                     selectedFirmaId = firmaYetkileri.First();
 
-                List<IsyeriItemEntity> isyerleri = selectedFirmaId > 0 ? _isyeriService.GetIsyerleriByFirma(selectedFirmaId) : new List<IsyeriItemEntity>();
+                bool isAdmin = _sessionContext.IsAdmin();
+                List<IsyeriItemEntity> isyerleri = selectedFirmaId > 0
+                    ? FirmaIsyeriYetkiHelper.FilterIsyeriler(
+                        _isyeriService.GetIsyerleriByFirma(selectedFirmaId) ?? new List<IsyeriItemEntity>(),
+                        selectedFirmaId,
+                        yetkiler,
+                        isAdmin)
+                    : new List<IsyeriItemEntity>();
 
                 List<PuantajPersonelItemDto> kisiler;
                 if (selectedFirmaId > 0 && selectedIsyeriId.HasValue && selectedIsyeriId.Value > 0)
@@ -79,7 +86,10 @@ namespace CeyPASS.Api.Controllers
                 }
                 else if (selectedFirmaId > 0)
                 {
-                    var kq = _kisiQueryService.GetAktifKisilerByFirma(selectedFirmaId) ?? new List<KisiListItem>();
+                    var (single, idIn) = FirmaIsyeriYetkiHelper.ResolveKisiQueryIsyeriFilter(
+                        selectedFirmaId, selectedIsyeriId, yetkiler, isAdmin);
+                    var kq = _kisiQueryService.GetAktifKisilerByFirma(
+                        selectedFirmaId, isyeriId: single, isyeriIdIn: idIn) ?? new List<KisiListItem>();
                     kisiler = kq.Select(k => new PuantajPersonelItemDto { PersonelId = k.PersonelId, AdSoyad = k.AdSoyad ?? "" }).ToList();
                 }
                 else

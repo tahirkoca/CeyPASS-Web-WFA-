@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using CeyPASS.Business.Abstractions;
 using CeyPASS.DataAccess.Abstractions;
 using CeyPASS.Entities.Concrete;
+using CeyPASS.Infrastructure.Helpers;
 using Microsoft.Extensions.Caching.Memory;
 using System;
 using System.Collections.Generic;
@@ -100,7 +101,7 @@ namespace CeyPASS.Web.Controllers
             totalCount = cached.TotalCount;
 
             // Lookup data
-            var kisiler = _kisiQueryService.GetAktifKisilerByFirma(selectedFirmaId);
+            var kisiler = GetYetkiliKisilerForFirma(selectedFirmaId);
             var izinTipleri = _izinTipService.GetAktif();
 
             ViewBag.Kisiler = kisiler;
@@ -141,7 +142,7 @@ namespace CeyPASS.Web.Controllers
             };
 
             ViewBag.Firmalar = GetAuthorizedFirmalar(firmaYetkileri);
-            ViewBag.Kisiler = _kisiQueryService.GetAktifKisilerByFirma(model.FirmaId);
+            ViewBag.Kisiler = GetYetkiliKisilerForFirma(model.FirmaId);
             ViewBag.IzinTipleri = _izinTipService.GetAktif();
             
             return View(model);
@@ -176,7 +177,7 @@ namespace CeyPASS.Web.Controllers
                 var kullaniciYetkileri = _puantajService.GetKullaniciFirmaIsyeriYetkileri((int)_sessionContext.AktifKullaniciId);
                 var firmaYetkileri = kullaniciYetkileri.Select(y => y.FirmaId).Distinct().ToHashSet();
                 ViewBag.Firmalar = GetAuthorizedFirmalar(firmaYetkileri);
-                ViewBag.Kisiler = _kisiQueryService.GetAktifKisilerByFirma(izin.FirmaId);
+                ViewBag.Kisiler = GetYetkiliKisilerForFirma(izin.FirmaId);
                 ViewBag.IzinTipleri = _izinTipService.GetAktif();
                 return View(izin);
             }
@@ -205,7 +206,7 @@ namespace CeyPASS.Web.Controllers
                     var kullaniciYetkileri = _puantajService.GetKullaniciFirmaIsyeriYetkileri((int)_sessionContext.AktifKullaniciId);
                     var firmaYetkileri = kullaniciYetkileri.Select(y => y.FirmaId).Distinct().ToHashSet();
                     ViewBag.Firmalar = GetAuthorizedFirmalar(firmaYetkileri);
-                    ViewBag.Kisiler = _kisiQueryService.GetAktifKisilerByFirma(izin.FirmaId);
+                    ViewBag.Kisiler = GetYetkiliKisilerForFirma(izin.FirmaId);
                     ViewBag.IzinTipleri = _izinTipService.GetAktif();
                     return View(izin);
                 }
@@ -216,7 +217,7 @@ namespace CeyPASS.Web.Controllers
                 var kullaniciYetkileri = _puantajService.GetKullaniciFirmaIsyeriYetkileri((int)_sessionContext.AktifKullaniciId);
                 var firmaYetkileri = kullaniciYetkileri.Select(y => y.FirmaId).Distinct().ToHashSet();
                 ViewBag.Firmalar = GetAuthorizedFirmalar(firmaYetkileri);
-                ViewBag.Kisiler = _kisiQueryService.GetAktifKisilerByFirma(izin.FirmaId);
+                ViewBag.Kisiler = GetYetkiliKisilerForFirma(izin.FirmaId);
                 ViewBag.IzinTipleri = _izinTipService.GetAktif();
                 return View(izin);
             }
@@ -241,7 +242,7 @@ namespace CeyPASS.Web.Controllers
             var kullaniciYetkileri = _puantajService.GetKullaniciFirmaIsyeriYetkileri((int)_sessionContext.AktifKullaniciId);
             var firmaYetkileri = kullaniciYetkileri.Select(y => y.FirmaId).Distinct().ToHashSet();
             ViewBag.Firmalar = GetAuthorizedFirmalar(firmaYetkileri);
-            ViewBag.Kisiler = _kisiQueryService.GetAktifKisilerByFirma(izin.FirmaId);
+            ViewBag.Kisiler = GetYetkiliKisilerForFirma(izin.FirmaId);
             ViewBag.IzinTipleri = _izinTipService.GetAktif();
             return View(izin);
         }
@@ -283,7 +284,7 @@ namespace CeyPASS.Web.Controllers
                 var kullaniciYetkileri = _puantajService.GetKullaniciFirmaIsyeriYetkileri((int)_sessionContext.AktifKullaniciId);
                 var firmaYetkileri = kullaniciYetkileri.Select(y => y.FirmaId).Distinct().ToHashSet();
                 ViewBag.Firmalar = GetAuthorizedFirmalar(firmaYetkileri);
-                ViewBag.Kisiler = _kisiQueryService.GetAktifKisilerByFirma(mevcut.FirmaId);
+                ViewBag.Kisiler = GetYetkiliKisilerForFirma(mevcut.FirmaId);
                 ViewBag.IzinTipleri = _izinTipService.GetAktif();
                 return View(izin);
             }
@@ -321,7 +322,7 @@ namespace CeyPASS.Web.Controllers
             var k2 = _puantajService.GetKullaniciFirmaIsyeriYetkileri((int)_sessionContext.AktifKullaniciId);
             var f2 = k2.Select(y => y.FirmaId).Distinct().ToHashSet();
             ViewBag.Firmalar = GetAuthorizedFirmalar(f2);
-            ViewBag.Kisiler = _kisiQueryService.GetAktifKisilerByFirma(izin.FirmaId);
+            ViewBag.Kisiler = GetYetkiliKisilerForFirma(izin.FirmaId);
             ViewBag.IzinTipleri = _izinTipService.GetAktif();
             return View(izin);
         }
@@ -365,6 +366,17 @@ namespace CeyPASS.Web.Controllers
             _cache.Set(key, ver, TimeSpan.FromHours(1));
         }
 
+        private List<KisiListItem> GetYetkiliKisilerForFirma(int firmaId, int? selectedIsyeriId = null)
+        {
+            bool isAdmin = _sessionContext.IsAdmin();
+            List<FirmaIsyeriYetkiDTO> yetkiler = null;
+            if (!isAdmin && _sessionContext.AktifKullaniciId.HasValue)
+                yetkiler = _puantajService.GetKullaniciFirmaIsyeriYetkileri((int)_sessionContext.AktifKullaniciId);
+            var (single, idIn) = FirmaIsyeriYetkiHelper.ResolveKisiQueryIsyeriFilter(
+                firmaId, selectedIsyeriId, yetkiler, isAdmin);
+            return _kisiQueryService.GetAktifKisilerByFirma(firmaId, isyeriId: single, isyeriIdIn: idIn);
+        }
+
         private sealed class IzinCacheValue
         {
             public IzinCacheValue(List<KisiIzinListRow> items, int totalCount)
@@ -379,7 +391,7 @@ namespace CeyPASS.Web.Controllers
         [HttpGet]
         public IActionResult GetKisiler(int firmaId)
         {
-            var kisiler = _kisiQueryService.GetAktifKisilerByFirma(firmaId);
+            var kisiler = GetYetkiliKisilerForFirma(firmaId);
             return Json(kisiler.Select(k => new { PersonelId = k.PersonelId, AdSoyad = k.AdSoyad }));
         }
 

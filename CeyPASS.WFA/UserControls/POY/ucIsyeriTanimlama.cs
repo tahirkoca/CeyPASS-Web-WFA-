@@ -2,8 +2,10 @@ using CeyPASS.Business.Abstractions;
 using CeyPASS.Entities.Concrete;
 using CeyPASS.Infrastructure.Helpers;
 using System;
+using System.Collections.Generic;
 using System.Data;
 using System.Drawing;
+using System.Linq;
 using System.Windows.Forms;
 
 namespace CeyPASS.WFA.UserControls
@@ -14,6 +16,9 @@ namespace CeyPASS.WFA.UserControls
         private readonly ISessionContext _session;
         private readonly IIsyeriService _isvc;
         private readonly IAuthorizationService _auth;
+        private readonly IKullaniciFirmaIsyeriYetkiService _yetkiSvc;
+        private List<FirmaIsyeriYetkiDTO> _kullaniciYetkileri = new();
+        private bool _isAdmin;
         private ScreenMode _mode = ScreenMode.List;     
         AuthorizationHelper authHelp;
         private bool _eventsWired;
@@ -22,12 +27,15 @@ namespace CeyPASS.WFA.UserControls
         private const string PageName = "Isyerler";
         private const string PageNameUI = "İşyerleri";
 
-        public ucIsyeriTanimlama(ISessionContext session,IIsyeriService isvc,IAuthorizationService auth)
+        public ucIsyeriTanimlama(ISessionContext session,IIsyeriService isvc,IAuthorizationService auth, IKullaniciFirmaIsyeriYetkiService yetkiSvc)
         {
             InitializeComponent();
             _session = session;
             _isvc = isvc;
             _auth = auth;
+            _yetkiSvc = yetkiSvc;
+            _isAdmin = FirmaIsyeriYetkiHelper.IsAdmin(_session.RolId);
+            _kullaniciYetkileri = _yetkiSvc.GetYetkiler((int)_session.AktifKullaniciId);
 
             authHelp = new AuthorizationHelper(_session, _auth);
             if (!_auth.ViewAbility(PageName))
@@ -215,6 +223,8 @@ namespace CeyPASS.WFA.UserControls
                     int iId = ToInt(r["IsyeriId"]);
                     string ad = ToStr(r["IsyeriAdi"]);
                     if (iId < 0) continue;
+                    if (!FirmaIsyeriYetkiHelper.IsFirmaAuthorized(fId, _kullaniciYetkileri, _isAdmin)) continue;
+                    if (!FirmaIsyeriYetkiHelper.IsIsyeriAuthorized(fId, iId, _kullaniciYetkileri, _isAdmin)) continue;
                     chkIsyerleri.Items.Add(new IsyeriItem(fId, iId, ad));
                 }
 

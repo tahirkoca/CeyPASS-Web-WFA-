@@ -15,6 +15,7 @@ namespace CeyPASS.WFA.UserControls.Ayarlar
         private readonly ISessionContext _session;
         private readonly ICihazService _svc;
         private readonly IAuthorizationService _auth;
+        private readonly IKullaniciFirmaIsyeriYetkiService _yetkiSvc;
         AuthorizationHelper authHelp;
         private bool _wired;
         private const string PageName = "Cihazlar";
@@ -25,12 +26,13 @@ namespace CeyPASS.WFA.UserControls.Ayarlar
         /// </summary>
         public bool AdminPanelMode { get; set; }
 
-        public ucCihazlar(ISessionContext session, ICihazService svc, IAuthorizationService auth)
+        public ucCihazlar(ISessionContext session, ICihazService svc, IAuthorizationService auth, IKullaniciFirmaIsyeriYetkiService yetkiSvc)
         {
             InitializeComponent();
             _session = session;
             _svc = svc;
             _auth = auth;
+            _yetkiSvc = yetkiSvc;
             authHelp = new AuthorizationHelper(_session, _auth);
             BeautifyList(chkCihazlar);
             WireEventsOnce();
@@ -105,6 +107,18 @@ namespace CeyPASS.WFA.UserControls.Ayarlar
         {
             try
             {
+                if (!AdminPanelMode)
+                {
+                    int firmaId = (int)_session.AktifFirmaId;
+                    bool isAdmin = FirmaIsyeriYetkiHelper.IsAdmin(_session.RolId);
+                    var yetkiler = _yetkiSvc.GetYetkiler((int)_session.AktifKullaniciId);
+                    if (!FirmaIsyeriYetkiHelper.IsFirmaAuthorized(firmaId, yetkiler, isAdmin))
+                    {
+                        chkCihazlar.Items.Clear();
+                        return;
+                    }
+                }
+
                 var raw = AdminPanelMode
                     ? _svc.GetListe(sadeceAktif: false, firmaId: null)
                     : _svc.GetListe(sadeceAktif: true, firmaId: (int)_session.AktifFirmaId);

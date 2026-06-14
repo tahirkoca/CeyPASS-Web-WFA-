@@ -40,9 +40,19 @@ export const raporService = {
     });
   },
 
+  async isyerleri(): Promise<ApiResult<{ id?: number; Id?: number; ad?: string; Ad?: string }[]>> {
+    return await cachedGet<ApiResult<any>>("/Rapor/isyerleri", {
+      timeout: 15000,
+      keyPrefix: "/Rapor/isyerleri",
+      softTtlMs: 5 * 60 * 1000,
+      hardTtlMs: 60 * 60 * 1000,
+    });
+  },
+
   async run(payload: {
     procedureAdi: string;
     firmaId?: number | null;
+    isyeriIds?: number[];
     tarihBaslangic: string; // yyyy-MM-dd
     tarihBitis: string; // yyyy-MM-dd
     page?: number;
@@ -56,6 +66,7 @@ export const raporService = {
     procedureName: string;
     exportTitle: string;
     format: "pdf" | "excel";
+    isyeriIds?: number[];
     params: Record<string, any>;
   }): Promise<any> {
     // returns binary file

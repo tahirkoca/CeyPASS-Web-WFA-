@@ -826,12 +826,25 @@ export function PersonellerScreen(props: { user: any; abilities?: any; onOpenMen
   }, [filterModal.kind, firmalar, isyerleri]);
 
   function applyFilter(key: string) {
-    if (filterModal.kind === "kartTipi") setKartTipi((key as any) || "puantaj");
+    if (filterModal.kind === "kartTipi") {
+      setKartTipi((key as any) || "puantaj");
+      setDetail(null);
+      setDetailVisible(false);
+      setEditVisible(false);
+    }
     else if (filterModal.kind === "firma") {
       setFirmaId(key ? Number(key) : null);
       setIsyeriId(null);
+      setDetail(null);
+      setDetailVisible(false);
+      setEditVisible(false);
     }
-    else if (filterModal.kind === "isyeri") setIsyeriId(key ? Number(key) : null);
+    else if (filterModal.kind === "isyeri") {
+      setIsyeriId(key ? Number(key) : null);
+      setDetail(null);
+      setDetailVisible(false);
+      setEditVisible(false);
+    }
     else if (filterModal.kind === "pageSize") setPageSize(Number(key) || 20);
     setFilterModal({ kind: "", visible: false });
   }
@@ -1009,7 +1022,13 @@ export function PersonellerScreen(props: { user: any; abilities?: any; onOpenMen
                 })}
               </View>
             ) : (
-              <Text className="text-[#64748b] font-semibold">Kayıt bulunamadı.</Text>
+              <Text className="text-[#64748b] font-semibold">
+                {isyeriId
+                  ? "Seçili işyerde kayıt bulunamadı."
+                  : q?.trim()
+                    ? "Arama kriterine uygun kayıt bulunamadı."
+                    : "Kayıt bulunamadı."}
+              </Text>
             )}
 
             <View className="mt-4 flex-row items-center justify-between">

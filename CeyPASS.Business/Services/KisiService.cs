@@ -1,6 +1,7 @@
 using CeyPASS.Business.Abstractions;
 using CeyPASS.DataAccess.Abstractions;
 using CeyPASS.Entities.Concrete;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 
@@ -10,11 +11,16 @@ namespace CeyPASS.Business.Services
     {
         private readonly IKisiRepository _kisiRepo;
         private readonly IYemekhaneRepository _yemekhaneRepo;
+        private readonly ILogger<KisiService>? _logger;
 
-        public KisiService(IKisiRepository kisiRepo, IYemekhaneRepository yemekhaneRepo)
+        public KisiService(
+            IKisiRepository kisiRepo,
+            IYemekhaneRepository yemekhaneRepo,
+            ILogger<KisiService>? logger = null)
         {
             _kisiRepo = kisiRepo;
             _yemekhaneRepo = yemekhaneRepo;
+            _logger = logger;
         }
 
         public void YeniKisiEkle(Kisi kisi, bool firmaPersoneli, bool puantajYapilabilir, bool yemekHakkiVar, int gunlukYemekLimiti, string puantajsizKartId, string puantajsizKartNo, string puantajsizKartAdi)
@@ -53,8 +59,10 @@ namespace CeyPASS.Business.Services
 
                 return true;
             }
-            catch
+            catch (Exception ex)
             {
+                _logger?.LogError(ex, "KisiGuncelle başarısız. PersonelId={PersonelId}, OriginalPersonelId={OriginalPersonelId}",
+                    kisi?.PersonelId, originalPersonelId);
                 return false;
             }
         }

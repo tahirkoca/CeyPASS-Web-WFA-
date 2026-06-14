@@ -17,17 +17,19 @@ namespace CeyPASS.WFA.UserControls.Dashboard
         private readonly IDashboardService _svc;
         private readonly IAuthorizationService _auth;
         private readonly IFirmaService _firmaSvc;
+        private readonly IKullaniciFirmaIsyeriYetkiService _yetkiSvc;
         private const string PageName = "Dashboard";
         private const string PageNameUI = "Ana Sayfa";
         public event EventHandler<ReportRequest> ReportRequested;
 
-        public ucDashboard(ISessionContext session, IDashboardService dsvc, IAuthorizationService asvc, IFirmaService firmaSvc)
+        public ucDashboard(ISessionContext session, IDashboardService dsvc, IAuthorizationService asvc, IFirmaService firmaSvc, IKullaniciFirmaIsyeriYetkiService yetkiSvc)
         {
             InitializeComponent();
             _session = session;
             _svc = dsvc;
             _auth = asvc;
             _firmaSvc = firmaSvc;
+            _yetkiSvc = yetkiSvc;
         }
 
         private void ucDashboard_Load(object sender, EventArgs e)
@@ -55,13 +57,14 @@ namespace CeyPASS.WFA.UserControls.Dashboard
             {
                 cmbFirma.SelectedIndexChanged -= cmbFirma_SelectedIndexChanged;
 
-                bool isAdmin = _session.RolId == 1 || _session.RolId == 2;
-                if (isAdmin)
-                {
-                    var firmalar = _firmaSvc.GetAll()
-                        .OrderBy(f => f.FirmaAdi)
-                        .ToList();
+                bool isAdmin = FirmaIsyeriYetkiHelper.IsAdmin(_session.RolId);
+                var yetkiler = _yetkiSvc.GetYetkiler((int)_session.AktifKullaniciId);
+                var firmalar = FirmaIsyeriYetkiHelper.FilterFirmalar(_firmaSvc.GetAll(), yetkiler, isAdmin)
+                    .OrderBy(f => f.FirmaAdi)
+                    .ToList();
 
+                if (isAdmin || firmalar.Count > 1)
+                {
                     cmbFirma.DataSource = firmalar;
                     cmbFirma.DisplayMember = "FirmaAdi";
                     cmbFirma.ValueMember = "FirmaId";
@@ -78,11 +81,11 @@ namespace CeyPASS.WFA.UserControls.Dashboard
                         cmbFirma.SelectedValue = _selectedFirmaId;
                     }
 
-                    pnlFirmaFilter.Visible = true;
+                    pnlFirmaFilter.Visible = firmalar.Count > 0;
                 }
                 else
                 {
-                    _selectedFirmaId = (int)_session.AktifFirmaId;
+                    _selectedFirmaId = firmalar.FirstOrDefault()?.FirmaId ?? (int)_session.AktifFirmaId;
                     pnlFirmaFilter.Visible = false;
                 }
 

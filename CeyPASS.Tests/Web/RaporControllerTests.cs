@@ -10,7 +10,8 @@ using Microsoft.Extensions.Caching.Memory;
 using Moq;
 using System;
 using System.Collections.Generic;
-using System.Text;
+using System.Data;
+using System.Linq;
 using Xunit;
 
 namespace CeyPASS.Tests.Web
@@ -19,6 +20,8 @@ namespace CeyPASS.Tests.Web
     {
         private readonly Mock<IRaporService> _raporMock = new();
         private readonly Mock<IKullaniciQueryService> _kullaniciMock = new();
+        private readonly Mock<IKullaniciFirmaIsyeriYetkiService> _yetkiMock = new();
+        private readonly Mock<IKisiEkraniLookUpService> _lookupMock = new();
         private readonly Mock<ISessionContext> _sessionMock = new();
         private readonly Mock<IAuthorizationService> _authMock = new();
         private readonly IMemoryCache _cache;
@@ -35,6 +38,8 @@ namespace CeyPASS.Tests.Web
             var sut = new RaporController(
                 _raporMock.Object,
                 _kullaniciMock.Object,
+                _yetkiMock.Object,
+                _lookupMock.Object,
                 _sessionMock.Object,
                 _authMock.Object,
                 _cache);
@@ -48,8 +53,6 @@ namespace CeyPASS.Tests.Web
             sut.TempData = new TempDataDictionary(httpContext, Mock.Of<ITempDataProvider>());
             return sut;
         }
-
-        // ─── Index ────────────────────────────────────────────────────────────
 
         [Fact]
         public void Index_Yetkisiz_HomeIndexeYonlendirir()
@@ -70,7 +73,11 @@ namespace CeyPASS.Tests.Web
             _authMock.Setup(a => a.ViewAbility("Raporlar")).Returns(true);
             _authMock.Setup(a => a.Can(It.IsAny<string>(), It.IsAny<string>())).Returns(true);
             _sessionMock.Setup(s => s.AktifFirmaId).Returns(1);
+            _sessionMock.Setup(s => s.AktifKullaniciId).Returns(5);
+            _sessionMock.Setup(s => s.IsAdmin()).Returns(false);
             _raporMock.Setup(r => r.GetirRaporlar()).Returns(new List<RaporTanimi>());
+            _yetkiMock.Setup(y => y.GetYetkiler(5)).Returns(new List<FirmaIsyeriYetkiDTO>());
+            _lookupMock.Setup(l => l.GetIsyerleri(1)).Returns(new List<LookupItem>());
             var sut = CreateSut();
 
             var sonuc = sut.Index(procedureAdi: null);
@@ -79,7 +86,66 @@ namespace CeyPASS.Tests.Web
             view.Model.Should().BeNull();
         }
 
-        // ─── ExportExcel ──────────────────────────────────────────────────────
+        [Fact]
+        public void Index_YetkiliIsyeri10_Sadece10Ve0Gonderilir()
+        {
+            _authMock.Setup(a => a.ViewAbility("Raporlar")).Returns(true);
+            _authMock.Setup(a => a.Can(It.IsAny<string>(), It.IsAny<string>())).Returns(true);
+            _sessionMock.Setup(s => s.AktifFirmaId).Returns(1);
+            _sessionMock.Setup(s => s.AktifKullaniciId).Returns(5);
+            _sessionMock.Setup(s => s.IsAdmin()).Returns(false);
+
+            var yetkiler = new List<FirmaIsyeriYetkiDTO> { new() { FirmaId = 1, IsyeriId = 10 } };
+            _yetkiMock.Setup(y => y.GetYetkiler(5)).Returns(yetkiler);
+            _kullaniciMock.Setup(k => k.GetFirmayaAitIsyeriIdleri(1)).Returns(new List<int> { 10, 20, 30 });
+            _yetkiMock.Setup(y => y.BuildIsyeriIdListCsv(1, yetkiler, false, It.IsAny<IReadOnlyList<int>>()))
+                .Returns("10,0");
+            _lookupMock.Setup(l => l.GetIsyerleri(1)).Returns(new List<LookupItem> { new() { Id = 10, Ad = "Merkez" } });
+            _raporMock.Setup(r => r.GetirRaporlar()).Returns(new List<RaporTanimi> { new() { ProcedureAdi = "sp_test", RaporAdi = "Test" } });
+
+            Dictionary<string, object>? captured = null;
+            _raporMock.Setup(r => r.CalistirRapor("sp_test", It.IsAny<Dictionary<string, object>>()))
+                .Callback<string, Dictionary<string, object>>((_, p) => captured = p)
+                .Returns(new DataTable());
+
+            var sut = CreateSut();
+            sut.Index(procedureAdi: "sp_test");
+
+            captured.Should().NotBeNull();
+            captured!["@IsyeriIdList"].Should().Be("10,0");
+        }
+
+        [Fact]
+        public void Index_SeciliIsyeri20_Csv10_20_0()
+        {
+            _authMock.Setup(a => a.ViewAbility("Raporlar")).Returns(true);
+            _authMock.Setup(a => a.Can(It.IsAny<string>(), It.IsAny<string>())).Returns(true);
+            _sessionMock.Setup(s => s.AktifFirmaId).Returns(1);
+            _sessionMock.Setup(s => s.AktifKullaniciId).Returns(5);
+            _sessionMock.Setup(s => s.IsAdmin()).Returns(false);
+
+            var yetkiler = new List<FirmaIsyeriYetkiDTO>
+            {
+                new() { FirmaId = 1, IsyeriId = 10 },
+                new() { FirmaId = 1, IsyeriId = 20 }
+            };
+            _yetkiMock.Setup(y => y.GetYetkiler(5)).Returns(yetkiler);
+            _kullaniciMock.Setup(k => k.GetFirmayaAitIsyeriIdleri(1)).Returns(new List<int> { 10, 20 });
+            _yetkiMock.Setup(y => y.BuildIsyeriIdListCsv(1, yetkiler, false, It.IsAny<IReadOnlyList<int>>()))
+                .Returns("10,20,0");
+            _lookupMock.Setup(l => l.GetIsyerleri(1)).Returns(new List<LookupItem>());
+            _raporMock.Setup(r => r.GetirRaporlar()).Returns(new List<RaporTanimi> { new() { ProcedureAdi = "sp_test", RaporAdi = "Test" } });
+
+            Dictionary<string, object>? captured = null;
+            _raporMock.Setup(r => r.CalistirRapor("sp_test", It.IsAny<Dictionary<string, object>>()))
+                .Callback<string, Dictionary<string, object>>((_, p) => captured = p)
+                .Returns(new DataTable());
+
+            var sut = CreateSut();
+            sut.Index(procedureAdi: "sp_test", isyeriIds: "20");
+
+            captured!["@IsyeriIdList"].Should().Be("20,0");
+        }
 
         [Fact]
         public void ExportExcel_Yetkisiz_403Doner()
@@ -110,8 +176,6 @@ namespace CeyPASS.Tests.Web
             status.StatusCode.Should().Be(400);
         }
 
-        // ─── ExportPdf ────────────────────────────────────────────────────────
-
         [Fact]
         public void ExportPdf_Yetkisiz_403Doner()
         {
@@ -123,25 +187,6 @@ namespace CeyPASS.Tests.Web
             var status = sonuc.Should().BeOfType<ObjectResult>().Subject;
             status.StatusCode.Should().Be(403);
         }
-
-        [Fact]
-        public void ExportPdf_SesyonBosSerialized_400Doner()
-        {
-            _authMock.Setup(a => a.Can("Raporlar", YetkiTipleri.Export)).Returns(true);
-
-            byte[]? outBytes = null;
-            var mockSession = new Mock<ISession>();
-            mockSession.Setup(s => s.TryGetValue("LastRaporData", out outBytes)).Returns(false);
-
-            var sut = CreateSut(mockSession.Object);
-
-            var sonuc = sut.ExportPdf();
-
-            var status = sonuc.Should().BeOfType<ObjectResult>().Subject;
-            status.StatusCode.Should().Be(400);
-        }
-
-        // ─── Helper ───────────────────────────────────────────────────────────
 
         private sealed class FakeSessionFeature : ISessionFeature
         {

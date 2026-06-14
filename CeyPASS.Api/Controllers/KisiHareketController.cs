@@ -4,8 +4,8 @@ using CeyPASS.Entities.Concrete;
 using CeyPASS.Business.Abstractions;
 using IAuthorizationService = CeyPASS.Business.Abstractions.IAuthorizationService;
 using CeyPASS.Models;
+using CeyPASS.Infrastructure.Helpers;
 using System;
-using System.Data;
 using System.Linq;
 using System.Collections.Generic;
 
@@ -17,6 +17,9 @@ namespace CeyPASS.Api.Controllers
     public class KisiHareketController : ControllerBase
     {
         private readonly IKisiHareketService _kisiHareketService;
+        private readonly IKisiQueryService _kisiQueryService;
+        private readonly IKisiEkraniLookUpService _lookupService;
+        private readonly IPuantajService _puantajService;
         private readonly ISessionContext _sessionContext;
         private readonly IAuthorizationService _authorizationService;
         private readonly IFirmaService _firmaService;
@@ -39,11 +42,17 @@ namespace CeyPASS.Api.Controllers
 
         public KisiHareketController(
             IKisiHareketService kisiHareketService,
+            IKisiQueryService kisiQueryService,
+            IKisiEkraniLookUpService lookupService,
+            IPuantajService puantajService,
             ISessionContext sessionContext,
             IAuthorizationService authorizationService,
             IFirmaService firmaService)
         {
             _kisiHareketService = kisiHareketService;
+            _kisiQueryService = kisiQueryService;
+            _lookupService = lookupService;
+            _puantajService = puantajService;
             _sessionContext = sessionContext;
             _authorizationService = authorizationService;
             _firmaService = firmaService;
@@ -117,7 +126,7 @@ namespace CeyPASS.Api.Controllers
         }
 
         [HttpGet("lookups")]
-        public ActionResult<ApiResult<object>> Lookups([FromQuery] int? firmaId, [FromQuery] string? kartTipi)
+        public ActionResult<ApiResult<object>> Lookups([FromQuery] int? firmaId, [FromQuery] string? kartTipi, [FromQuery] int? isyeriId = null)
         {
             if (!_authorizationService.ViewAbility(PageName)) return Forbid();
 
@@ -126,23 +135,31 @@ namespace CeyPASS.Api.Controllers
                 effectiveFirmaId = firmaId.Value;
             if (effectiveFirmaId == 0) return BadRequest(ApiResult.Failure("Firma bilgisi bulunamadı."));
 
+            bool isAdmin = _sessionContext.IsAdmin();
+            List<FirmaIsyeriYetkiDTO> yetkiler = null;
+            if (!isAdmin && _sessionContext.AktifKullaniciId.HasValue)
+                yetkiler = _puantajService.GetKullaniciFirmaIsyeriYetkileri((int)_sessionContext.AktifKullaniciId);
+
             bool puantajYapilir = kartTipi != "puantajsiz";
-            var dt = _kisiHareketService.GetAktifKisilerWithSicil(effectiveFirmaId, puantajYapilir);
+            var (single, idIn) = FirmaIsyeriYetkiHelper.ResolveKisiQueryIsyeriFilter(
+                effectiveFirmaId, isyeriId, yetkiler, isAdmin);
+            var kisiler = _kisiQueryService.GetAktifKisilerByFirma(effectiveFirmaId, null, puantajYapilir, single, idIn)
+                ?? new List<KisiListItem>();
             var list = new List<PersonelLookupItem>();
-            if (dt != null)
+            foreach (var k in kisiler)
             {
-                bool hasId = dt.Columns.Contains("PersonelId");
-                bool hasAdSoyad = dt.Columns.Contains("AdSoyad");
-                foreach (DataRow row in dt.Rows)
-                {
-                    int id = 0;
-                    string ad = string.Empty;
-                    if (hasId && row["PersonelId"] != DBNull.Value) int.TryParse(row["PersonelId"].ToString(), out id);
-                    if (hasAdSoyad && row["AdSoyad"] != DBNull.Value) ad = row["AdSoyad"].ToString() ?? string.Empty;
-                    if (id > 0 && !string.IsNullOrWhiteSpace(ad))
-                        list.Add(new PersonelLookupItem { Id = id, Ad = ad });
-                }
+                if (string.IsNullOrWhiteSpace(k.PersonelId) || string.IsNullOrWhiteSpace(k.AdSoyad))
+                    continue;
+                if (!int.TryParse(k.PersonelId, out int id) || id <= 0)
+                    continue;
+                list.Add(new PersonelLookupItem { Id = id, Ad = k.AdSoyad });
             }
+
+            var isyerleri = FirmaIsyeriYetkiHelper.FilterIsyeriLookup(
+                _lookupService.GetIsyerleri(effectiveFirmaId) ?? new List<LookupItem>(),
+                effectiveFirmaId,
+                yetkiler,
+                isAdmin);
 
             var firmalar = _sessionContext.IsAdmin()
                 ? _firmaService.GetAll().OrderBy(f => f.FirmaAdi).ToList()
@@ -153,6 +170,7 @@ namespace CeyPASS.Api.Controllers
             {
                 AktifFirma = aktifFirma == null ? null : new { aktifFirma.FirmaId, aktifFirma.FirmaAdi },
                 Firmalar = firmalar,
+                Isyerleri = isyerleri,
                 PersonelList = list
             }));
         }

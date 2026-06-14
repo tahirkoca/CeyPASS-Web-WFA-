@@ -15,6 +15,8 @@ namespace CeyPASS.Web.Controllers
     {
         private readonly IRaporService _raporService;
         private readonly IKullaniciQueryService _kullaniciQueryService;
+        private readonly IKullaniciFirmaIsyeriYetkiService _yetkiSvc;
+        private readonly IKisiEkraniLookUpService _lookupService;
         private readonly ISessionContext _sessionContext;
         private readonly IAuthorizationService _authorizationService;
         private readonly IMemoryCache _cache;
@@ -25,20 +27,23 @@ namespace CeyPASS.Web.Controllers
         public RaporController(
             IRaporService raporService,
             IKullaniciQueryService kullaniciQueryService,
+            IKullaniciFirmaIsyeriYetkiService yetkiSvc,
+            IKisiEkraniLookUpService lookupService,
             ISessionContext sessionContext,
             IAuthorizationService authorizationService,
             IMemoryCache cache)
         {
             _raporService = raporService;
             _kullaniciQueryService = kullaniciQueryService;
+            _yetkiSvc = yetkiSvc;
+            _lookupService = lookupService;
             _sessionContext = sessionContext;
             _authorizationService = authorizationService;
             _cache = cache;
         }
 
-        public IActionResult Index(string? procedureAdi = null, DateTime? tarihBaslangic = null, DateTime? tarihBitis = null, int? firmaId = null, int page = 1, int pageSize = DefaultPageSize)
+        public IActionResult Index(string? procedureAdi = null, DateTime? tarihBaslangic = null, DateTime? tarihBitis = null, int? firmaId = null, string? isyeriIds = null, int page = 1, int pageSize = DefaultPageSize)
         {
-            // Check authorization
             if (!_authorizationService.ViewAbility(PageName))
             {
                 TempData["Error"] = "Raporlar ekranını görüntüleme yetkiniz yok.";
@@ -48,55 +53,75 @@ namespace CeyPASS.Web.Controllers
             if (page < 1) page = 1;
             if (!AllowedPageSizes.Contains(pageSize)) pageSize = DefaultPageSize;
 
-            // Default tarih aralığı: Bu ay
-            DateTime baslangicTarih = tarihBaslangic ?? new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
-            DateTime bitisTarih = tarihBitis ?? DateTime.Today;
+            DateTime baslangicTarih = RaporTarihHelper.ToReportRangeStart(
+                tarihBaslangic ?? new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1));
+            DateTime bitisTarih = RaporTarihHelper.ToReportRangeEnd(tarihBitis ?? DateTime.Today);
 
-            // Rapor listesi
             var raporlar = _raporService.GetirRaporlar();
-
-            // Seçili rapor (procedureAdi'ye göre; session için önce hesaplanmalı)
             var selectedRapor = raporlar.FirstOrDefault(r => r.ProcedureAdi == procedureAdi);
 
-            // Seçili firma
             int selectedFirmaId = firmaId ?? (int)_sessionContext.AktifFirmaId;
+            bool isAdmin = _sessionContext.IsAdmin();
+            var selectedIsyeriIdList = FirmaIsyeriYetkiHelper.ParseIsyeriIds(isyeriIds);
 
-            // Rapor verisi (eğer rapor seçilmişse)
+            List<FirmaIsyeriYetkiDTO>? yetkiler = null;
+            if (_sessionContext.AktifKullaniciId.HasValue)
+                yetkiler = _yetkiSvc.GetYetkiler((int)_sessionContext.AktifKullaniciId);
+
             DataTable? raporData = null;
             int totalCount = 0;
             if (!string.IsNullOrWhiteSpace(procedureAdi))
             {
-                try
+                if (!FirmaIsyeriYetkiHelper.IsFirmaAuthorized(selectedFirmaId, yetkiler, isAdmin))
                 {
-                    var isyeriIdList = _kullaniciQueryService.GetFirmayaAitIsyeriIdleri(selectedFirmaId);
-                    string firmaIdCsv = selectedFirmaId > 0 ? selectedFirmaId.ToString() : "";
-                    string isyeriIdCsv = (isyeriIdList != null && isyeriIdList.Count > 0) ? string.Join(",", isyeriIdList) : "";
-
-                    var parametreler = new Dictionary<string, object>
-                    {
-                        { "@FirmaIdList", firmaIdCsv },
-                        { "@IsyeriIdList", isyeriIdCsv },
-                        { "@TarihBaslangic", baslangicTarih },
-                        { "@TarihBitis", bitisTarih } 
-                    };
-
-                    var cacheKey = $"rapor_{selectedFirmaId}_{procedureAdi}_{baslangicTarih:yyyyMMdd}_{bitisTarih:yyyyMMdd}";
-                    if (!_cache.TryGetValue(cacheKey, out DataTable cachedDt))
-                    {
-                        cachedDt = _raporService.CalistirRapor(procedureAdi, parametreler);
-                        _cache.Set(cacheKey, cachedDt, TimeSpan.FromMinutes(2));
-                    }
-
-                    totalCount = cachedDt?.Rows?.Count ?? 0;
-                    raporData = PageDataTable(cachedDt, page, pageSize);
-                    
-                    // Rapor verisini session'da sakla (export için)
-                    HttpContext.Session.SetString("LastRaporData", SerializeDataTable(cachedDt));
-                    HttpContext.Session.SetString("LastRaporAdi", selectedRapor?.RaporAdi ?? "Rapor");
+                    TempData["Error"] = "Seçili firma için rapor görüntüleme yetkiniz yok.";
                 }
-                catch (Exception ex)
+                else
                 {
-                    TempData["Error"] = "Rapor çalıştırılırken hata oluştu: " + ex.Message;
+                    try
+                    {
+                        var (isyeriIdCsv, status) = BuildRaporIsyeriIdListCsv(
+                            selectedFirmaId, selectedIsyeriIdList, yetkiler, isAdmin);
+
+                        if (status == FirmaIsyeriYetkiHelper.RaporIsyeriListStatus.UnauthorizedSelection)
+                        {
+                            TempData["Error"] = "Seçilen işyerlerden bazıları için yetkiniz yok.";
+                        }
+                        else if (status == FirmaIsyeriYetkiHelper.RaporIsyeriListStatus.NoAccess)
+                        {
+                            TempData["Error"] = "Seçili firma için rapor görüntüleme yetkiniz yok.";
+                        }
+                        else
+                        {
+                            string firmaIdCsv = selectedFirmaId > 0 ? selectedFirmaId.ToString() : "";
+
+                            var parametreler = new Dictionary<string, object>
+                            {
+                                { "@FirmaIdList", firmaIdCsv },
+                                { "@IsyeriIdList", isyeriIdCsv ?? "" },
+                                { "@TarihBaslangic", baslangicTarih },
+                                { "@TarihBitis", bitisTarih }
+                            };
+
+                            var isyeriSeg = string.IsNullOrEmpty(isyeriIdCsv) ? "none" : isyeriIdCsv.Replace(",", "_");
+                            var cacheKey = $"rapor_{selectedFirmaId}_{isyeriSeg}_{procedureAdi}_{baslangicTarih:yyyyMMdd}_{bitisTarih:yyyyMMdd}";
+                            if (!_cache.TryGetValue(cacheKey, out DataTable cachedDt))
+                            {
+                                cachedDt = _raporService.CalistirRapor(procedureAdi, parametreler);
+                                _cache.Set(cacheKey, cachedDt, TimeSpan.FromMinutes(2));
+                            }
+
+                            totalCount = cachedDt?.Rows?.Count ?? 0;
+                            raporData = PageDataTable(cachedDt, page, pageSize);
+
+                            HttpContext.Session.SetString("LastRaporData", SerializeDataTable(cachedDt));
+                            HttpContext.Session.SetString("LastRaporAdi", selectedRapor?.RaporAdi ?? "Rapor");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        TempData["Error"] = "Rapor çalıştırılırken hata oluştu: " + ex.Message;
+                    }
                 }
             }
 
@@ -106,6 +131,9 @@ namespace CeyPASS.Web.Controllers
             ViewBag.BaslangicTarih = baslangicTarih;
             ViewBag.BitisTarih = bitisTarih;
             ViewBag.SelectedFirmaId = selectedFirmaId;
+            ViewBag.IsyeriIdsParam = isyeriIds ?? "";
+            ViewBag.SelectedIsyeriIds = selectedIsyeriIdList;
+            ViewBag.Isyerleri = GetYetkiliIsyeriLookups(selectedFirmaId, yetkiler, isAdmin);
             ViewBag.CanExport = _authorizationService.Can(PageName, YetkiTipleri.Export);
             ViewBag.Page = page;
             ViewBag.PageSize = pageSize;
@@ -125,29 +153,26 @@ namespace CeyPASS.Web.Controllers
 
             try
             {
-                // Session'dan rapor verisini al
                 string serializedData = HttpContext.Session.GetString("LastRaporData");
                 string raporAdi = HttpContext.Session.GetString("LastRaporAdi") ?? "Rapor";
-                
+
                 if (string.IsNullOrEmpty(serializedData))
                 {
                     return StatusCode(400, new { success = false, message = "Export edilecek veri bulunamadı. Lütfen önce bir rapor çalıştırın." });
                 }
 
                 DataTable raporData = DeserializeDataTable(serializedData);
-                
+
                 if (raporData == null || raporData.Rows.Count == 0)
                 {
                     return StatusCode(400, new { success = false, message = "Export edilecek veri bulunamadı." });
                 }
 
-                // Geçici dosya oluştur
                 string fileName = $"{raporAdi}_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
                 string tempPath = System.IO.Path.Combine(System.IO.Path.GetTempPath(), fileName);
 
                 ExportHelper.ExportToExcel(raporData, tempPath);
 
-                // Dosyayı byte array olarak döndür
                 byte[] fileBytes = System.IO.File.ReadAllBytes(tempPath);
                 System.IO.File.Delete(tempPath);
 
@@ -169,29 +194,26 @@ namespace CeyPASS.Web.Controllers
 
             try
             {
-                // Session'dan rapor verisini al
                 string serializedData = HttpContext.Session.GetString("LastRaporData");
                 string raporAdi = HttpContext.Session.GetString("LastRaporAdi") ?? "Rapor";
-                
+
                 if (string.IsNullOrEmpty(serializedData))
                 {
                     return StatusCode(400, new { success = false, message = "Export edilecek veri bulunamadı. Lütfen önce bir rapor çalıştırın." });
                 }
 
                 DataTable raporData = DeserializeDataTable(serializedData);
-                
+
                 if (raporData == null || raporData.Rows.Count == 0)
                 {
                     return StatusCode(400, new { success = false, message = "Export edilecek veri bulunamadı." });
                 }
 
-                // Geçici dosya oluştur
                 string fileName = $"{raporAdi}_{DateTime.Now:yyyyMMdd_HHmmss}.pdf";
                 string tempPath = System.IO.Path.Combine(System.IO.Path.GetTempPath(), fileName);
 
                 ExportHelper.ExportToPdf(raporData, tempPath, raporAdi);
 
-                // Dosyayı byte array olarak döndür
                 byte[] fileBytes = System.IO.File.ReadAllBytes(tempPath);
                 System.IO.File.Delete(tempPath);
 
@@ -203,11 +225,34 @@ namespace CeyPASS.Web.Controllers
             }
         }
 
-        // Helper methods for DataTable serialization
+        private (string? csv, FirmaIsyeriYetkiHelper.RaporIsyeriListStatus status) BuildRaporIsyeriIdListCsv(
+            int firmaId,
+            IReadOnlyList<int> selectedIsyeriIds,
+            List<FirmaIsyeriYetkiDTO>? yetkiler,
+            bool isAdmin)
+        {
+            var firmaIsyeriIds = _kullaniciQueryService.GetFirmayaAitIsyeriIdleri(firmaId) ?? new List<int>();
+            var maxCsv = _yetkiSvc.BuildIsyeriIdListCsv(firmaId, yetkiler, isAdmin, firmaIsyeriIds);
+            return FirmaIsyeriYetkiHelper.ResolveRaporIsyeriIdListCsv(
+                firmaId,
+                selectedIsyeriIds,
+                maxCsv,
+                yetkiler,
+                isAdmin);
+        }
+
+        private List<LookupItem> GetYetkiliIsyeriLookups(int firmaId, List<FirmaIsyeriYetkiDTO>? yetkiler, bool isAdmin)
+        {
+            return FirmaIsyeriYetkiHelper.FilterIsyeriLookup(
+                _lookupService.GetIsyerleri(firmaId) ?? new List<LookupItem>(),
+                firmaId,
+                yetkiler,
+                isAdmin);
+        }
+
         private string SerializeDataTable(DataTable dt)
         {
             if (dt == null) return string.Empty;
-            // WriteXml için DataTable.TableName zorunlu; atanmamışsa hata verir.
             if (string.IsNullOrEmpty(dt.TableName))
                 dt.TableName = "RaporData";
             using (var sw = new System.IO.StringWriter())

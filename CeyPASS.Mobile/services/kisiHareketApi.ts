@@ -37,7 +37,11 @@ export type KisiHareketRow = {
 };
 
 export const kisiHareketService = {
-  async lookups(params: { firmaId?: number | null; kartTipi?: "puantaj" | "puantajsiz" }): Promise<ApiResult<any>> {
+  async lookups(params: {
+    firmaId?: number | null;
+    kartTipi?: "puantaj" | "puantajsiz";
+    isyeriId?: number | null;
+  }): Promise<ApiResult<any>> {
     return await cachedGet<ApiResult<any>>("/KisiHareket/lookups", {
       params,
       timeout: 15000,

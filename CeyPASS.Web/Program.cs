@@ -82,6 +82,8 @@ builder.Services.AddTransient<IRaporRepository, RaporRepositoryCore>();
 builder.Services.AddTransient<IKisiHareketRepository, KisiHareketRepositoryCore>();
 builder.Services.AddTransient<IKisiIzinlerRepository, KisiIzinlerRepositoryCore>();
 builder.Services.AddTransient<IKisiRepository, KisiRepositoryCore>();
+builder.Services.AddTransient<IKullaniciFirmaIsyeriYetkiRepository, KullaniciFirmaIsyeriYetkiRepositoryCore>();
+builder.Services.AddTransient<IKullaniciFirmaIsyeriYetkiService, KullaniciFirmaIsyeriYetkiService>();
 builder.Services.AddTransient<IPuantajRepository, PuantajRepositoryCore>();
 
 // Yeni modüller: İzin Talepleri / ÜstYetkili / Avans

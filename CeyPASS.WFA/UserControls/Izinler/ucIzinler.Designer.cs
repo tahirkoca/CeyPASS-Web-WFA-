@@ -64,6 +64,8 @@ namespace CeyPASS.WFA.UserControls.Izinler
             this.txtAciklama = new System.Windows.Forms.TextBox();
             this.label8 = new System.Windows.Forms.Label();
             this.chkSaatlikIzinMi = new System.Windows.Forms.CheckBox();
+            this.chkYarimGunYillikIzin = new System.Windows.Forms.CheckBox();
+            this.cmbYarimGunDilim = new System.Windows.Forms.ComboBox();
 
             this.pnlMain.SuspendLayout();
             this.pnlContent.SuspendLayout();
@@ -330,27 +332,45 @@ namespace CeyPASS.WFA.UserControls.Izinler
             this.pnlFooter.Controls.Add(this.btnKaydet);
             this.pnlFooter.Controls.Add(this.txtAciklama);
             this.pnlFooter.Controls.Add(this.label8);
+            this.pnlFooter.Controls.Add(this.cmbYarimGunDilim);
+            this.pnlFooter.Controls.Add(this.chkYarimGunYillikIzin);
             this.pnlFooter.Controls.Add(this.chkSaatlikIzinMi);
             this.pnlFooter.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.pnlFooter.Location = new System.Drawing.Point(0, 755);
+            this.pnlFooter.Location = new System.Drawing.Point(0, 735);
             this.pnlFooter.Name = "pnlFooter";
             this.pnlFooter.Padding = new System.Windows.Forms.Padding(10);
-            this.pnlFooter.Size = new System.Drawing.Size(1436, 80);
+            this.pnlFooter.Size = new System.Drawing.Size(1436, 100);
             this.pnlFooter.TabIndex = 3;
 
             this.chkSaatlikIzinMi.Text = "Saatlik İzin";
             this.chkSaatlikIzinMi.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
-            this.chkSaatlikIzinMi.Location = new System.Drawing.Point(20, 25);
+            this.chkSaatlikIzinMi.Location = new System.Drawing.Point(20, 12);
             this.chkSaatlikIzinMi.Size = new System.Drawing.Size(150, 30);
             this.chkSaatlikIzinMi.CheckedChanged += new System.EventHandler(this.chkSaatlikIzinMi_CheckedChanged);
 
+            this.chkYarimGunYillikIzin.Text = "Yarım gün (yıllık izin)";
+            this.chkYarimGunYillikIzin.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
+            this.chkYarimGunYillikIzin.Location = new System.Drawing.Point(20, 48);
+            this.chkYarimGunYillikIzin.Size = new System.Drawing.Size(200, 30);
+            this.chkYarimGunYillikIzin.CheckedChanged += new System.EventHandler(this.chkYarimGunYillikIzin_CheckedChanged);
+
+            this.cmbYarimGunDilim.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cmbYarimGunDilim.Font = new System.Drawing.Font("Segoe UI", 10F);
+            this.cmbYarimGunDilim.Location = new System.Drawing.Point(230, 48);
+            this.cmbYarimGunDilim.Size = new System.Drawing.Size(260, 31);
+            this.cmbYarimGunDilim.Enabled = false;
+            this.cmbYarimGunDilim.Items.AddRange(new object[] {
+                "Sabah (08:30-12:30)",
+                "Öğleden sonra (14:00-18:00)"});
+            this.cmbYarimGunDilim.SelectedIndexChanged += new System.EventHandler(this.cmbYarimGunDilim_SelectedIndexChanged);
+
             this.label8.Text = "Açıklama:";
             this.label8.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
-            this.label8.Location = new System.Drawing.Point(180, 10);
+            this.label8.Location = new System.Drawing.Point(500, 10);
             this.label8.Size = new System.Drawing.Size(100, 20);
 
-            this.txtAciklama.Location = new System.Drawing.Point(180, 30);
-            this.txtAciklama.Size = new System.Drawing.Size(600, 30);
+            this.txtAciklama.Location = new System.Drawing.Point(500, 30);
+            this.txtAciklama.Size = new System.Drawing.Size(480, 30);
             this.txtAciklama.Font = new System.Drawing.Font("Segoe UI", 10F);
 
             this.btnKaydet.Text = "Kaydet";
@@ -434,6 +454,8 @@ namespace CeyPASS.WFA.UserControls.Izinler
 
         private System.Windows.Forms.Panel pnlFooter;
         private System.Windows.Forms.CheckBox chkSaatlikIzinMi;
+        private System.Windows.Forms.CheckBox chkYarimGunYillikIzin;
+        private System.Windows.Forms.ComboBox cmbYarimGunDilim;
         private System.Windows.Forms.Label label8;
         private System.Windows.Forms.TextBox txtAciklama;
         private System.Windows.Forms.Button btnKaydet;

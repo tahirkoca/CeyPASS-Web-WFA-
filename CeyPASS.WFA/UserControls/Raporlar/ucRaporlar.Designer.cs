@@ -43,6 +43,9 @@ namespace CeyPASS.WFA.UserControls.Raporlar
             this.btnPdfDonustur = new System.Windows.Forms.Button();
             this.btnExceleDonustur = new System.Windows.Forms.Button();
             this.btnRaporGetir = new System.Windows.Forms.Button();
+            this.pnlIsyeriFilters = new System.Windows.Forms.Panel();
+            this.lblIsyerleri = new System.Windows.Forms.Label();
+            this.chkRaporIsyerleri = new System.Windows.Forms.CheckedListBox();
             this.pnlMain.SuspendLayout();
             this.pnlContent.SuspendLayout();
             this.pnlGridContainer.SuspendLayout();
@@ -52,6 +55,7 @@ namespace CeyPASS.WFA.UserControls.Raporlar
             this.pnlDateFilters.SuspendLayout();
             this.pnlSearchFilters.SuspendLayout();
             this.pnlActions.SuspendLayout();
+            this.pnlIsyeriFilters.SuspendLayout();
             this.SuspendLayout();
             // 
             // pnlMain
@@ -80,10 +84,10 @@ namespace CeyPASS.WFA.UserControls.Raporlar
             this.pnlGridContainer.BackColor = System.Drawing.Color.White;
             this.pnlGridContainer.Controls.Add(this.dgRaporlar);
             this.pnlGridContainer.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.pnlGridContainer.Location = new System.Drawing.Point(0, 167);
+            this.pnlGridContainer.Location = new System.Drawing.Point(0, 220);
             this.pnlGridContainer.Name = "pnlGridContainer";
-            this.pnlGridContainer.Padding = new System.Windows.Forms.Padding(10);
-            this.pnlGridContainer.Size = new System.Drawing.Size(1358, 654);
+            this.pnlGridContainer.Padding = new System.Windows.Forms.Padding(10, 6, 10, 10);
+            this.pnlGridContainer.Size = new System.Drawing.Size(1358, 603);
             this.pnlGridContainer.TabIndex = 2;
             // 
             // dgRaporlar
@@ -95,7 +99,7 @@ namespace CeyPASS.WFA.UserControls.Raporlar
             this.dgRaporlar.Location = new System.Drawing.Point(10, 10);
             this.dgRaporlar.Name = "dgRaporlar";
             this.dgRaporlar.RowHeadersWidth = 51;
-            this.dgRaporlar.Size = new System.Drawing.Size(1338, 634);
+            this.dgRaporlar.Size = new System.Drawing.Size(1338, 587);
             this.dgRaporlar.TabIndex = 0;
             // 
             // pnlFilters
@@ -105,7 +109,7 @@ namespace CeyPASS.WFA.UserControls.Raporlar
             this.pnlFilters.Dock = System.Windows.Forms.DockStyle.Top;
             this.pnlFilters.Location = new System.Drawing.Point(0, 0);
             this.pnlFilters.Name = "pnlFilters";
-            this.pnlFilters.Size = new System.Drawing.Size(1358, 167);
+            this.pnlFilters.Size = new System.Drawing.Size(1358, 220);
             this.pnlFilters.TabIndex = 0;
             // 
             // tlpFilters
@@ -117,12 +121,15 @@ namespace CeyPASS.WFA.UserControls.Raporlar
             this.tlpFilters.Controls.Add(this.pnlDateFilters, 0, 0);
             this.tlpFilters.Controls.Add(this.pnlSearchFilters, 1, 0);
             this.tlpFilters.Controls.Add(this.pnlActions, 2, 0);
+            this.tlpFilters.Controls.Add(this.pnlIsyeriFilters, 0, 1);
             this.tlpFilters.Dock = System.Windows.Forms.DockStyle.Fill;
             this.tlpFilters.Location = new System.Drawing.Point(0, 0);
             this.tlpFilters.Name = "tlpFilters";
-            this.tlpFilters.RowCount = 1;
-            this.tlpFilters.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-            this.tlpFilters.Size = new System.Drawing.Size(1358, 167);
+            this.tlpFilters.RowCount = 2;
+            this.tlpFilters.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 128F));
+            this.tlpFilters.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 86F));
+            this.tlpFilters.SetColumnSpan(this.pnlIsyeriFilters, 3);
+            this.tlpFilters.Size = new System.Drawing.Size(1358, 220);
             this.tlpFilters.TabIndex = 0;
             // 
             // pnlDateFilters
@@ -208,23 +215,25 @@ namespace CeyPASS.WFA.UserControls.Raporlar
             // 
             // txtFiltrele
             // 
-            this.txtFiltrele.Font = new System.Drawing.Font("Segoe UI", 11F);
-            this.txtFiltrele.Location = new System.Drawing.Point(10, 93);
+            this.txtFiltrele.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left))));
+            this.txtFiltrele.Font = new System.Drawing.Font("Segoe UI", 10F);
+            this.txtFiltrele.Location = new System.Drawing.Point(10, 90);
             this.txtFiltrele.Name = "txtFiltrele";
-            this.txtFiltrele.Size = new System.Drawing.Size(300, 32);
+            this.txtFiltrele.Size = new System.Drawing.Size(312, 30);
             this.txtFiltrele.TabIndex = 2;
             this.txtFiltrele.TextChanged += new System.EventHandler(this.txtFiltrele_TextChanged);
             // 
             // btnFiltrele
             // 
+            this.btnFiltrele.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left))));
             this.btnFiltrele.BackColor = System.Drawing.Color.WhiteSmoke;
             this.btnFiltrele.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnFiltrele.Image = global::CeyPASS.WFA.Properties.Resources.icons8_search_251;
             this.btnFiltrele.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            this.btnFiltrele.Location = new System.Drawing.Point(320, 92);
+            this.btnFiltrele.Location = new System.Drawing.Point(328, 90);
             this.btnFiltrele.Name = "btnFiltrele";
             this.btnFiltrele.Padding = new System.Windows.Forms.Padding(5, 0, 5, 0);
-            this.btnFiltrele.Size = new System.Drawing.Size(90, 32);
+            this.btnFiltrele.Size = new System.Drawing.Size(82, 30);
             this.btnFiltrele.TabIndex = 3;
             this.btnFiltrele.Text = "Ara";
             this.btnFiltrele.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
@@ -239,7 +248,7 @@ namespace CeyPASS.WFA.UserControls.Raporlar
             this.pnlActions.FlowDirection = System.Windows.Forms.FlowDirection.RightToLeft;
             this.pnlActions.Location = new System.Drawing.Point(861, 3);
             this.pnlActions.Name = "pnlActions";
-            this.pnlActions.Padding = new System.Windows.Forms.Padding(10);
+            this.pnlActions.Padding = new System.Windows.Forms.Padding(10, 4, 10, 4);
             this.pnlActions.Size = new System.Drawing.Size(494, 161);
             this.pnlActions.TabIndex = 2;
             // 
@@ -252,10 +261,10 @@ namespace CeyPASS.WFA.UserControls.Raporlar
             this.btnPdfDonustur.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
             this.btnPdfDonustur.ForeColor = System.Drawing.Color.White;
             this.btnPdfDonustur.Image = global::CeyPASS.WFA.Properties.Resources.icons_pdf_50;
-            this.btnPdfDonustur.Location = new System.Drawing.Point(327, 50);
-            this.btnPdfDonustur.Margin = new System.Windows.Forms.Padding(5, 40, 5, 5);
+            this.btnPdfDonustur.Location = new System.Drawing.Point(327, 13);
+            this.btnPdfDonustur.Margin = new System.Windows.Forms.Padding(5, 8, 5, 5);
             this.btnPdfDonustur.Name = "btnPdfDonustur";
-            this.btnPdfDonustur.Size = new System.Drawing.Size(142, 90);
+            this.btnPdfDonustur.Size = new System.Drawing.Size(142, 82);
             this.btnPdfDonustur.TabIndex = 0;
             this.btnPdfDonustur.Text = "PDF";
             this.btnPdfDonustur.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageBeforeText;
@@ -271,10 +280,10 @@ namespace CeyPASS.WFA.UserControls.Raporlar
             this.btnExceleDonustur.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
             this.btnExceleDonustur.ForeColor = System.Drawing.Color.White;
             this.btnExceleDonustur.Image = global::CeyPASS.WFA.Properties.Resources.icons8_excel_50;
-            this.btnExceleDonustur.Location = new System.Drawing.Point(176, 50);
-            this.btnExceleDonustur.Margin = new System.Windows.Forms.Padding(5, 40, 5, 5);
+            this.btnExceleDonustur.Location = new System.Drawing.Point(176, 13);
+            this.btnExceleDonustur.Margin = new System.Windows.Forms.Padding(5, 8, 5, 5);
             this.btnExceleDonustur.Name = "btnExceleDonustur";
-            this.btnExceleDonustur.Size = new System.Drawing.Size(141, 90);
+            this.btnExceleDonustur.Size = new System.Drawing.Size(141, 82);
             this.btnExceleDonustur.TabIndex = 1;
             this.btnExceleDonustur.Text = "Excel";
             this.btnExceleDonustur.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageBeforeText;
@@ -290,15 +299,52 @@ namespace CeyPASS.WFA.UserControls.Raporlar
             this.btnRaporGetir.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
             this.btnRaporGetir.ForeColor = System.Drawing.Color.White;
             this.btnRaporGetir.Image = global::CeyPASS.WFA.Properties.Resources.icons8_search_50;
-            this.btnRaporGetir.Location = new System.Drawing.Point(27, 50);
-            this.btnRaporGetir.Margin = new System.Windows.Forms.Padding(5, 40, 5, 5);
+            this.btnRaporGetir.Location = new System.Drawing.Point(27, 13);
+            this.btnRaporGetir.Margin = new System.Windows.Forms.Padding(5, 8, 5, 5);
             this.btnRaporGetir.Name = "btnRaporGetir";
-            this.btnRaporGetir.Size = new System.Drawing.Size(139, 90);
+            this.btnRaporGetir.Size = new System.Drawing.Size(139, 82);
             this.btnRaporGetir.TabIndex = 2;
             this.btnRaporGetir.Text = "Getir";
             this.btnRaporGetir.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageBeforeText;
             this.btnRaporGetir.UseVisualStyleBackColor = false;
             this.btnRaporGetir.Click += new System.EventHandler(this.btnRaporGetir_Click);
+            // 
+            // pnlIsyeriFilters
+            // 
+            this.pnlIsyeriFilters.Controls.Add(this.chkRaporIsyerleri);
+            this.pnlIsyeriFilters.Controls.Add(this.lblIsyerleri);
+            this.pnlIsyeriFilters.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.pnlIsyeriFilters.Location = new System.Drawing.Point(3, 129);
+            this.pnlIsyeriFilters.Name = "pnlIsyeriFilters";
+            this.pnlIsyeriFilters.Padding = new System.Windows.Forms.Padding(10, 0, 10, 2);
+            this.pnlIsyeriFilters.Size = new System.Drawing.Size(1352, 86);
+            this.pnlIsyeriFilters.TabIndex = 3;
+            // 
+            // lblIsyerleri
+            // 
+            this.lblIsyerleri.Dock = System.Windows.Forms.DockStyle.Top;
+            this.lblIsyerleri.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
+            this.lblIsyerleri.ForeColor = System.Drawing.Color.Gray;
+            this.lblIsyerleri.Location = new System.Drawing.Point(10, 2);
+            this.lblIsyerleri.Name = "lblIsyerleri";
+            this.lblIsyerleri.Size = new System.Drawing.Size(1332, 18);
+            this.lblIsyerleri.TabIndex = 0;
+            this.lblIsyerleri.Text = "İşyerleri (işaretlenmezse yetkili tüm işyerler)";
+            // 
+            // chkRaporIsyerleri
+            // 
+            this.chkRaporIsyerleri.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.chkRaporIsyerleri.CheckOnClick = true;
+            this.chkRaporIsyerleri.ColumnWidth = 220;
+            this.chkRaporIsyerleri.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.chkRaporIsyerleri.Font = new System.Drawing.Font("Segoe UI", 9.5F);
+            this.chkRaporIsyerleri.FormattingEnabled = true;
+            this.chkRaporIsyerleri.IntegralHeight = false;
+            this.chkRaporIsyerleri.Location = new System.Drawing.Point(10, 18);
+            this.chkRaporIsyerleri.MultiColumn = true;
+            this.chkRaporIsyerleri.Name = "chkRaporIsyerleri";
+            this.chkRaporIsyerleri.Size = new System.Drawing.Size(1332, 64);
+            this.chkRaporIsyerleri.TabIndex = 1;
             // 
             // ucRaporlar
             // 
@@ -318,6 +364,7 @@ namespace CeyPASS.WFA.UserControls.Raporlar
             this.pnlSearchFilters.ResumeLayout(false);
             this.pnlSearchFilters.PerformLayout();
             this.pnlActions.ResumeLayout(false);
+            this.pnlIsyeriFilters.ResumeLayout(false);
             this.ResumeLayout(false);
 
         }
@@ -348,5 +395,9 @@ namespace CeyPASS.WFA.UserControls.Raporlar
 
         private System.Windows.Forms.Panel pnlGridContainer;
         private System.Windows.Forms.DataGridView dgRaporlar;
+
+        private System.Windows.Forms.Panel pnlIsyeriFilters;
+        private System.Windows.Forms.Label lblIsyerleri;
+        private System.Windows.Forms.CheckedListBox chkRaporIsyerleri;
     }
 }

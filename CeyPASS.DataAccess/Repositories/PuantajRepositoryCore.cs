@@ -13,10 +13,12 @@ namespace CeyPASS.DataAccess.Repositories
     public class PuantajRepositoryCore : IPuantajRepository
     {
         private readonly CeyPASSDataConnectionCore _context;
+        private readonly IKullaniciFirmaIsyeriYetkiRepository _yetkiRepo;
 
-        public PuantajRepositoryCore(CeyPASSDataConnectionCore context)
+        public PuantajRepositoryCore(CeyPASSDataConnectionCore context, IKullaniciFirmaIsyeriYetkiRepository yetkiRepo)
         {
             _context = context;
+            _yetkiRepo = yetkiRepo;
         }
 
         public List<PuantajGunSatirDTO> SpPuantajAyOzet(int personelId, int yil, int ay)
@@ -331,21 +333,7 @@ namespace CeyPASS.DataAccess.Repositories
         }
 
         public List<FirmaIsyeriYetkiDTO> GetKullaniciFirmaIsyeriYetkileri(int kullaniciId)
-        {
-            var sql = @"
-SELECT 
-    FirmaId,
-    IsyeriId
-FROM KullaniciFirmaIsyeriYetkileri
-WHERE KullaniciId = @p0 
-  AND AktifMi = 1
-ORDER BY FirmaId, IsyeriId";
-
-            return _context.Database
-                .SqlQueryRaw<FirmaIsyeriYetkiDTO>(sql,
-                    new Microsoft.Data.SqlClient.SqlParameter("@p0", kullaniciId))
-                .ToList();
-        }
+            => _yetkiRepo.GetYetkiler(kullaniciId);
 
         public DataTable GetSicillerAyIcin(int yil, int ay, List<FirmaIsyeriYetkiDTO> yetkiler)
         {

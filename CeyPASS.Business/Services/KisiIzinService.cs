@@ -27,13 +27,21 @@ namespace CeyPASS.Business.Services
             if (string.IsNullOrWhiteSpace(dto.PersonelId))
                 return (false, "Kayıt için lütfen belirli bir kişi seçiniz.");
 
-            if (!dto.SaatlikIzinMi && (!dto.IzinTipId.HasValue || dto.IzinTipId.Value <= 0))
+            if (dto.YarimGunYillikIzinMi)
+            {
+                if (dto.IzinTipId != 2)
+                    return (false, "Yarım gün izin yalnızca yıllık izin (Yİ) tipi ile kaydedilebilir.");
+                if (!dto.SaatlikIzinMi)
+                    return (false, "Yarım gün izin saatlik kayıt olarak işlenmelidir.");
+            }
+
+            if (!dto.SaatlikIzinMi && !dto.YarimGunYillikIzinMi && (!dto.IzinTipId.HasValue || dto.IzinTipId.Value <= 0))
                 return (false, "Kayıt için lütfen belirli bir izin tipi seçiniz.");
 
             var basT = dto.BaslangicTarihi.Date;
             var bitT = dto.BitisTarihi.Date;
 
-            if (dto.SaatlikIzinMi)
+            if (dto.SaatlikIzinMi || dto.YarimGunYillikIzinMi)
             {
                 if (basT != bitT)
                     return (false, "Saatlik izinde başlangıç ve bitiş tarihi aynı gün olmalıdır.");

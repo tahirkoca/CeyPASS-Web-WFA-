@@ -152,8 +152,8 @@ ORDER BY ki.Baslangic DESC";
             _context.SaveChanges();
 
             x.KisiIzinId = entity.KisiIzinId;
-
-            return entity.KisiIzinId > 0;
+            // UseSqlOutputClause(false): kimlik EF'de 0 kalabilir; satır yine de yazılmış olabilir.
+            return true;
         }
 
         public bool Update(KisiIzin x)
@@ -267,7 +267,8 @@ SELECT
     ki.Baslangic                         AS BaslangicTarihi,
     ki.Bitis                             AS BitisTarihi,
     CASE 
-      WHEN ki.SaatlikIzinMi = 1 THEN N'-'
+      WHEN ki.SaatlikIzinMi = 1 THEN
+        REPLACE(CONVERT(varchar(20), CAST(ROUND(CAST(ki.SureDakika AS float) / 450.0, 2) AS decimal(10,2))), '.', ',')
       WHEN calc.GunNet = FLOOR(calc.GunNet)
            THEN CONVERT(varchar(20), CONVERT(int, calc.GunNet))
       ELSE REPLACE(CONVERT(varchar(20), CAST(ROUND(calc.GunNet, 2) AS decimal(10,2))), '.', ',')
@@ -403,7 +404,8 @@ SELECT
     ki.Baslangic                         AS IzinBaslangic,
     ki.Bitis                             AS IzinBitis,
     CASE 
-      WHEN ki.SaatlikIzinMi = 1 THEN N'-'
+      WHEN ki.SaatlikIzinMi = 1 THEN
+        REPLACE(CONVERT(varchar(20), CAST(ROUND(CAST(ki.SureDakika AS float) / 450.0, 2) AS decimal(10,2))), '.', ',')
       WHEN calc.GunNet = FLOOR(calc.GunNet)
            THEN CONVERT(varchar(20), CONVERT(int, calc.GunNet))
       ELSE REPLACE(CONVERT(varchar(20), CAST(ROUND(calc.GunNet, 2) AS decimal(10,2))), '.', ',')
