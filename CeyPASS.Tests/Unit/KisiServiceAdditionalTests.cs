@@ -136,5 +136,62 @@ namespace CeyPASS.Tests.Unit
 
             sonuc.Should().BeFalse();
         }
+
+        // ─── KisiTekrarAktifEt ────────────────────────────────────────────────
+
+        [Fact]
+        public void KisiTekrarAktifEt_GecmisYemekLimitiVar_UpsertLimitCagrilir()
+        {
+            _kisiRepoMock.Setup(r => r.GetDetay("TEST001")).Returns(new KisiDetay
+            {
+                PersonelId = "TEST001",
+                IstenCikisTarihi = DateTime.Today.AddDays(-10),
+                KartNo = "12345"
+            });
+            _kisiRepoMock.Setup(r => r.TekrarAktifEt("TEST001", true)).Returns(true);
+            _yemekhaneRepoMock.Setup(y => y.GetSonGunlukLimit("TEST001")).Returns(3);
+
+            var sonuc = _sut.KisiTekrarAktifEt("TEST001", true);
+
+            sonuc.Success.Should().BeTrue();
+            sonuc.YenidenAktifYemekLimiti.Should().Be(3);
+            sonuc.CihazUyarisiGoster.Should().BeTrue();
+            _yemekhaneRepoMock.Verify(y => y.UpsertLimit("TEST001", 3), Times.Once);
+        }
+
+        [Fact]
+        public void KisiTekrarAktifEt_YemekLimitiYok_UpsertLimitCagrilmaz()
+        {
+            _kisiRepoMock.Setup(r => r.GetDetay("TEST001")).Returns(new KisiDetay
+            {
+                PersonelId = "TEST001",
+                IstenCikisTarihi = DateTime.Today.AddDays(-1),
+                KartNo = null
+            });
+            _kisiRepoMock.Setup(r => r.TekrarAktifEt("TEST001", false)).Returns(true);
+            _yemekhaneRepoMock.Setup(y => y.GetSonGunlukLimit("TEST001")).Returns((int?)null);
+
+            var sonuc = _sut.KisiTekrarAktifEt("TEST001", false);
+
+            sonuc.Success.Should().BeTrue();
+            sonuc.YenidenAktifYemekLimiti.Should().BeNull();
+            sonuc.CihazUyarisiGoster.Should().BeFalse();
+            _yemekhaneRepoMock.Verify(y => y.UpsertLimit(It.IsAny<string>(), It.IsAny<int>()), Times.Never);
+        }
+
+        [Fact]
+        public void KisiTekrarAktifEt_ZatenAktif_FalseDoner()
+        {
+            _kisiRepoMock.Setup(r => r.GetDetay("TEST001")).Returns(new KisiDetay
+            {
+                PersonelId = "TEST001",
+                IstenCikisTarihi = null
+            });
+
+            var sonuc = _sut.KisiTekrarAktifEt("TEST001", true);
+
+            sonuc.Success.Should().BeFalse();
+            _kisiRepoMock.Verify(r => r.TekrarAktifEt(It.IsAny<string>(), It.IsAny<bool>()), Times.Never);
+        }
     }
 }

@@ -52,7 +52,8 @@ namespace CeyPASS.Web.Controllers
         }
 
         /// <param name="kartTipi">puantaj = Puantaj Yapılan Kartlar (PuantajYapilirMi=1), puantajsiz = Puantaj Yapılmayan Kartlar (PuantajYapilirMi=0)</param>
-        public IActionResult Index(string search = null, int? firmaId = null, int? isyeriId = null, string kartTipi = null, int page = 1, int pageSize = DefaultPageSize)
+        /// <param name="calismaDurumu">aktif = aktif çalışanlar, cikan = işten çıkanlar</param>
+        public IActionResult Index(string search = null, int? firmaId = null, int? isyeriId = null, string kartTipi = null, string calismaDurumu = "aktif", int page = 1, int pageSize = DefaultPageSize)
         {
             // Check authorization
             if (!_authorizationService.ViewAbility(PageName))
@@ -73,7 +74,10 @@ namespace CeyPASS.Web.Controllers
             }
 
             bool puantajYapilan = (kartTipi != "puantajsiz");
-            var puantajYapilirMi = puantajYapilan;
+            bool? puantajYapilirMi = puantajYapilan;
+            bool sadeceIstenCikanlar = string.Equals(calismaDurumu, "cikan", StringComparison.OrdinalIgnoreCase);
+            if (sadeceIstenCikanlar)
+                puantajYapilirMi = null;
 
             // Load personel list (paged + cache)
             var searchNorm = NormalizeSearch(search);
@@ -90,12 +94,12 @@ namespace CeyPASS.Web.Controllers
             var (queryIsyeriId, queryIsyeriIdIn) = FirmaIsyeriYetkiHelper.ResolveKisiQueryIsyeriFilter(
                 selectedFirmaId, isyeriId, yetkiler, isAdmin);
 
-            var cacheKey = $"personel_list_{selectedFirmaId}_v{ver}_{IsyeriFilterCacheSegment(queryIsyeriId, queryIsyeriIdIn)}_{(puantajYapilan ? "puantaj" : "puantajsiz")}_{searchNorm}_p{page}_s{pageSize}";
+            var cacheKey = $"personel_list_{selectedFirmaId}_v{ver}_{IsyeriFilterCacheSegment(queryIsyeriId, queryIsyeriIdIn)}_{(sadeceIstenCikanlar ? "cikan" : (puantajYapilan ? "puantaj" : "puantajsiz"))}_{searchNorm}_p{page}_s{pageSize}";
             if (!_cache.TryGetValue(cacheKey, out PersonelListCacheValue cached))
             {
                 int totalCount;
                 var items = _kisiQueryService.GetAktifKisilerByFirmaPaged(
-                    selectedFirmaId, search, puantajYapilirMi, queryIsyeriId, queryIsyeriIdIn, page, pageSize, out totalCount);
+                    selectedFirmaId, search, puantajYapilirMi, queryIsyeriId, queryIsyeriIdIn, sadeceIstenCikanlar, page, pageSize, out totalCount);
                 cached = new PersonelListCacheValue(items, totalCount);
                 _cache.Set(cacheKey, cached, TimeSpan.FromMinutes(2));
             }
@@ -113,6 +117,7 @@ namespace CeyPASS.Web.Controllers
             ViewBag.Search = search;
             ViewBag.SelectedFirmaId = selectedFirmaId;
             ViewBag.SelectedIsyeriId = isyeriId;
+            ViewBag.CalismaDurumu = sadeceIstenCikanlar ? "cikan" : "aktif";
             ViewBag.KartTipi = puantajYapilan ? "puantaj" : "puantajsiz";
             ViewBag.Firmalar = firmalar;
             ViewBag.Isyerleri = isyerleri;
@@ -211,7 +216,7 @@ namespace CeyPASS.Web.Controllers
         }
 
         [HttpGet]
-        public IActionResult Edit(string id, string kartTipi, int? firmaId, int page = 1, int pageSize = DefaultPageSize, string search = null, int? isyeriId = null)
+        public IActionResult Edit(string id, string kartTipi, int? firmaId, int page = 1, int pageSize = DefaultPageSize, string search = null, int? isyeriId = null, string calismaDurumu = "aktif")
         {
             if (!_authorizationService.Can(PageName, YetkiTipleri.Update))
             {
@@ -230,6 +235,7 @@ namespace CeyPASS.Web.Controllers
             ViewBag.PageSize = pageSize;
             ViewBag.Search = search;
             ViewBag.SelectedIsyeriId = isyeriId;
+            ViewBag.CalismaDurumu = calismaDurumu;
 
             var kisi = _kisiQueryService.GetKisiDetay(id);
             if (kisi == null)
@@ -394,7 +400,47 @@ namespace CeyPASS.Web.Controllers
                 TempData["Error"] = "Hata: " + ex.Message;
             }
 
-            return RedirectToAction("Index", new { kartTipi, firmaId, page, pageSize, search, isyeriId });
+            return RedirectToAction("Index", new { kartTipi, firmaId, page, pageSize, search, isyeriId, calismaDurumu = "aktif" });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult TekrarAktifEt(string id, bool puantajYapilirMi, string kartTipi, int? firmaId, int page = 1, int pageSize = DefaultPageSize, string search = null, int? isyeriId = null, string calismaDurumu = "cikan")
+        {
+            if (!_authorizationService.Can(PageName, YetkiTipleri.Update))
+            {
+                TempData["Error"] = "Personeli tekrar aktif etme yetkiniz yok.";
+                return RedirectToAction("Index", new { kartTipi, firmaId, page, pageSize, search, isyeriId, calismaDurumu });
+            }
+
+            if (string.IsNullOrWhiteSpace(id))
+                return NotFound();
+
+            try
+            {
+                var existing = _kisiQueryService.GetKisiDetay(id);
+                if (existing == null || (!_sessionContext.IsAdmin() && existing.FirmaId != _sessionContext.AktifFirmaId))
+                {
+                    TempData["Error"] = "Bu personeli tekrar aktif etme yetkiniz yok.";
+                    return RedirectToAction("Index", new { kartTipi, firmaId, page, pageSize, search, isyeriId, calismaDurumu });
+                }
+
+                var sonuc = _kisiService.KisiTekrarAktifEt(id, puantajYapilirMi);
+                if (!sonuc.Success)
+                {
+                    TempData["Error"] = "Personel tekrar aktif edilemedi.";
+                    return RedirectToAction("Index", new { kartTipi, firmaId, page, pageSize, search, isyeriId, calismaDurumu });
+                }
+
+                TempData["Success"] = PersonelMesajlari.TekrarAktifBasariMesaji(sonuc.YenidenAktifYemekLimiti, sonuc.CihazUyarisiGoster);
+                if (firmaId.HasValue) BumpPersonelCacheVersion(firmaId.Value);
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = "Hata: " + ex.Message;
+            }
+
+            return RedirectToAction("Index", new { kartTipi, firmaId, page, pageSize, search, isyeriId, calismaDurumu = "aktif" });
         }
 
         [HttpGet]

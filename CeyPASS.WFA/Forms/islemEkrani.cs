@@ -40,7 +40,7 @@ namespace CeyPASS.WFA.Forms
         }
         private TUserControl AutoOpenTUserControl<TUserControl>(Panel host) where TUserControl : UserControl
         {
-            host.Controls.Clear();
+            DetachHostControls(host);
             var uc = _sp.GetRequiredService<TUserControl>();
             uc.Dock = DockStyle.Fill;
             host.Controls.Add(uc);
@@ -65,10 +65,13 @@ namespace CeyPASS.WFA.Forms
         }
         private void OpenTUserControl<TUserControl>(Panel host) where TUserControl : UserControl
         {
-            host.Controls.Clear();
+            // DI scoped örnekleri Clear() ile Dispose edilmemeli; aksi halde sayfaya dönüşte bozuk kontrol kalır.
+            DetachHostControls(host);
             var uc = _sp.GetRequiredService<TUserControl>();
             uc.Dock = DockStyle.Fill;
             host.Controls.Add(uc);
+            if (uc is ucCalismaSekilleri vardiyaUc)
+                vardiyaUc.OnHostedAgain();
             try
             {
                 var fieldInfo = uc.GetType().GetField("PageNameUI",
@@ -89,6 +92,15 @@ namespace CeyPASS.WFA.Forms
             catch
             {
                 lblSayfaBasligi.Text = "İşlem Ekranı";
+            }
+        }
+
+        private static void DetachHostControls(Panel host)
+        {
+            while (host.Controls.Count > 0)
+            {
+                var c = host.Controls[0];
+                host.Controls.Remove(c);
             }
         }
         private void Dashboard_ReportRequested(object sender, ReportRequest req)

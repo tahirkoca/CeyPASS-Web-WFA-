@@ -21,6 +21,7 @@ export const personelService = {
     firmaId?: number | null;
     isyeriId?: number | null;
     puantajYapilirMi?: boolean;
+    sadeceIstenCikanlar?: boolean;
     page?: number;
     pageSize?: number;
   }): Promise<ApiResult<PagedResponse<any>>> {
@@ -59,6 +60,13 @@ export const personelService = {
 
   async istenCikar(request: { personelId: string; cikisTarihi?: string | null; firmaDisiKartNo?: string | null }): Promise<ApiResult<any>> {
     const response = await api.post("/Personel/isten-cikar", request, { timeout: 15000 });
+    await invalidate("/Personel");
+    await invalidate("/Personel/lookups");
+    return response.data;
+  },
+
+  async tekrarAktifEt(request: { personelId: string; puantajYapilirMi: boolean }): Promise<ApiResult<any>> {
+    const response = await api.post("/Personel/tekrar-aktif-et", request, { timeout: 15000 });
     await invalidate("/Personel");
     await invalidate("/Personel/lookups");
     return response.data;

@@ -101,5 +101,47 @@ namespace CeyPASS.Business.Services
 
             return (true, null);
         }
+
+        public KisiTekrarAktifSonuc KisiTekrarAktifEt(string personelId, bool puantajYapilirMi)
+        {
+            if (string.IsNullOrWhiteSpace(personelId))
+                return KisiTekrarAktifSonuc.Basarisiz();
+
+            try
+            {
+                var detay = _kisiRepo.GetDetay(personelId.Trim());
+                if (detay == null || !detay.IstenCikisTarihi.HasValue)
+                    return KisiTekrarAktifSonuc.Basarisiz();
+
+                var cihazUyarisiGoster = !string.IsNullOrWhiteSpace(detay.KartNo);
+
+                if (!_kisiRepo.TekrarAktifEt(personelId.Trim(), puantajYapilirMi))
+                    return KisiTekrarAktifSonuc.Basarisiz();
+
+                int? yenidenAktifYemekLimiti = null;
+                string warningMessage = null;
+                try
+                {
+                    var sonLimit = _yemekhaneRepo.GetSonGunlukLimit(personelId.Trim());
+                    if (sonLimit.HasValue && sonLimit.Value > 0)
+                    {
+                        _yemekhaneRepo.UpsertLimit(personelId.Trim(), sonLimit.Value);
+                        yenidenAktifYemekLimiti = sonLimit.Value;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger?.LogError(ex, "KisiTekrarAktifEt yemek limiti geri yükleme başarısız. PersonelId={PersonelId}", personelId);
+                    warningMessage = "Personel aktif edildi ancak yemek limiti otomatik aktifleştirilemedi.";
+                }
+
+                return KisiTekrarAktifSonuc.Basarili(yenidenAktifYemekLimiti, cihazUyarisiGoster, warningMessage);
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "KisiTekrarAktifEt başarısız. PersonelId={PersonelId}", personelId);
+                return KisiTekrarAktifSonuc.Basarisiz(ex.Message);
+            }
+        }
     }
 }

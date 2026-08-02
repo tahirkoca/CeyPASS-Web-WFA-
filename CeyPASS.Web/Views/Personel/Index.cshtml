@@ -5,13 +5,15 @@
     var selectedFirmaId = ViewBag.SelectedFirmaId as int? ?? 0;
     var selectedIsyeriId = ViewBag.SelectedIsyeriId as int?;
     var kartTipi = ViewBag.KartTipi as string ?? "puantaj";
+    var calismaDurumu = ViewBag.CalismaDurumu as string ?? "aktif";
+    var sadeceIstenCikanlar = calismaDurumu == "cikan";
     var firmalar = ViewBag.Firmalar as List<CeyPASS.Entities.Concrete.Firma>;
     var isyerleri = ViewBag.Isyerleri as List<CeyPASS.Entities.Concrete.LookupItem>;
     var isAdmin = ViewBag.IsAdmin as bool? ?? false;
     var canCreate = ViewBag.CanCreate as bool? ?? false;
     var canUpdate = ViewBag.CanUpdate as bool? ?? false;
     var canDelete = ViewBag.CanDelete as bool? ?? false;
-    var listeBaslik = kartTipi == "puantajsiz" ? "Puantaj Yapılmayan Kartlar" : "Puantaj Yapılan Kartlar";
+    var listeBaslik = sadeceIstenCikanlar ? "İşten Çıkanlar" : (kartTipi == "puantajsiz" ? "Puantaj Yapılmayan Kartlar" : "Puantaj Yapılan Kartlar");
     var currentPage = ViewBag.Page as int? ?? 1;
     var pageSize = ViewBag.PageSize as int? ?? 20;
     var totalCount = ViewBag.TotalCount as int? ?? Model.Count;
@@ -51,8 +53,23 @@
                     <form method="get" action="@Url.Action("Index")" class="row g-3">
                         <input type="hidden" name="page" value="1" />
                         <div class="col-md-3">
+                            <label for="calismaDurumu" class="form-label">Durum:</label>
+                            <select name="calismaDurumu" id="calismaDurumu" class="form-select" title="Aktif veya işten çıkan personeli listeleyin">
+                                @if (calismaDurumu == "cikan")
+                                {
+                                    <option value="aktif">Aktif Çalışanlar</option>
+                                    <option value="cikan" selected="selected">İşten Çıkanlar</option>
+                                }
+                                else
+                                {
+                                    <option value="aktif" selected="selected">Aktif Çalışanlar</option>
+                                    <option value="cikan">İşten Çıkanlar</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-3">
                             <label for="kartTipi" class="form-label">Kart tipi:</label>
-                            <select name="kartTipi" id="kartTipi" class="form-select" title="Görüntülenecek kart tipini seçin">
+                            <select name="kartTipi" id="kartTipi" class="form-select" title="Görüntülenecek kart tipini seçin" @(sadeceIstenCikanlar ? "disabled" : null)>
                                 @if (kartTipi == "puantaj")
                                 {
                                     <option value="puantaj" selected="selected">Puantaj Yapılan Kartlar</option>
@@ -64,6 +81,10 @@
                                     <option value="puantajsiz" selected="selected">Puantaj Yapılmayan Kartlar</option>
                                 }
                             </select>
+                            @if (sadeceIstenCikanlar)
+                            {
+                                <input type="hidden" name="kartTipi" value="@kartTipi" />
+                            }
                         </div>
                         @if (isAdmin && firmalar != null && firmalar.Any())
                         {
@@ -164,7 +185,7 @@
     </div>
 
     <!-- Actions -->
-    @if (canCreate)
+    @if (canCreate && !sadeceIstenCikanlar)
     {
         <div class="row mb-3">
             <div class="col-12">
@@ -215,11 +236,11 @@
                                                     </a>
                                                     @if (canUpdate)
                                                     {
-                                                        <a href="@Url.Action("Edit", new { id = personel.PersonelId, kartTipi, firmaId = selectedFirmaId, page = currentPage, pageSize, search, isyeriId = selectedIsyeriId })" class="btn btn-sm btn-warning" title="Düzenle">
-                                                            <i class="bi bi-pencil"></i>
+                                                        <a href="@Url.Action("Edit", new { id = personel.PersonelId, kartTipi, firmaId = selectedFirmaId, page = currentPage, pageSize, search, isyeriId = selectedIsyeriId, calismaDurumu })" class="btn btn-sm @(sadeceIstenCikanlar ? "btn-success" : "btn-warning")" title="@(sadeceIstenCikanlar ? "Aktif Et" : "Düzenle")">
+                                                            <i class="bi @(sadeceIstenCikanlar ? "bi-person-check" : "bi-pencil")"></i>
                                                         </a>
                                                     }
-                                                    @if (canDelete && kartTipi != "puantajsiz")
+                                                    @if (canDelete && kartTipi != "puantajsiz" && !sadeceIstenCikanlar)
                                                     {
                                                         <button type="button" class="btn btn-sm btn-danger btn-isten-cikar" title="İşten Çıkar"
                                                                 data-bs-toggle="modal" data-bs-target="#istenCikarModal"

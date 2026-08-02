@@ -22,12 +22,15 @@ namespace CeyPASS.DataAccess.Repositories
             return _context.Kisiler.Any(k => k.PersonelId == personelId);
         }
 
-        public List<KisiListItem> GetAktifByFirma(int firmId, string search = null, bool? puantajYapilirMi = true, int? isyeriId = null, IReadOnlyList<int> isyeriIdIn = null, bool? ziyaretciMi = null)
+        public List<KisiListItem> GetAktifByFirma(int firmId, string search = null, bool? puantajYapilirMi = true, int? isyeriId = null, IReadOnlyList<int> isyeriIdIn = null, bool? ziyaretciMi = null, bool sadeceIstenCikanlar = false)
         {
-            var q = _context.Kisiler
-                .Where(k => k.FirmaId == firmId && k.IstenCikisTarihi == null);
+            var q = _context.Kisiler.Where(k => k.FirmaId == firmId);
 
-            if (puantajYapilirMi.HasValue)
+            q = sadeceIstenCikanlar
+                ? q.Where(k => k.IstenCikisTarihi != null)
+                : q.Where(k => k.IstenCikisTarihi == null);
+
+            if (!sadeceIstenCikanlar && puantajYapilirMi.HasValue)
                 q = q.Where(k => k.PuantajYapilirMi == puantajYapilirMi.Value);
 
             q = ApplyIsyeriFilter(q, isyeriId, isyeriIdIn);
@@ -42,7 +45,8 @@ namespace CeyPASS.DataAccess.Repositories
                     (k.Ad ?? "").Contains(search) ||
                     (k.Soyad ?? "").Contains(search) ||
                     (k.PersonelId ?? "").Contains(search) ||
-                    (k.TcKimlikNo ?? "").Contains(search));
+                    (k.TcKimlikNo ?? "").Contains(search) ||
+                    (k.KartNo ?? "").Contains(search));
             }
 
             return q
@@ -51,20 +55,24 @@ namespace CeyPASS.DataAccess.Repositories
                 .Select(k => new KisiListItem
                 {
                     PersonelId = k.PersonelId,
-                    AdSoyad = ((k.Ad ?? "") + " " + (k.Soyad ?? "")).Trim()
+                    AdSoyad = ((k.Ad ?? "") + " " + (k.Soyad ?? "")).Trim(),
+                    IstenCikisTarihi = k.IstenCikisTarihi
                 })
                 .ToList();
         }
 
-        public List<KisiListItem> GetAktifByFirmaPaged(int firmId, string search, bool? puantajYapilirMi, int? isyeriId, IReadOnlyList<int> isyeriIdIn, int page, int pageSize, out int totalCount)
+        public List<KisiListItem> GetAktifByFirmaPaged(int firmId, string search, bool? puantajYapilirMi, int? isyeriId, IReadOnlyList<int> isyeriIdIn, bool sadeceIstenCikanlar, int page, int pageSize, out int totalCount)
         {
             if (page < 1) page = 1;
             if (pageSize < 1) pageSize = 20;
 
-            var q = _context.Kisiler
-                .Where(k => k.FirmaId == firmId && k.IstenCikisTarihi == null);
+            var q = _context.Kisiler.Where(k => k.FirmaId == firmId);
 
-            if (puantajYapilirMi.HasValue)
+            q = sadeceIstenCikanlar
+                ? q.Where(k => k.IstenCikisTarihi != null)
+                : q.Where(k => k.IstenCikisTarihi == null);
+
+            if (!sadeceIstenCikanlar && puantajYapilirMi.HasValue)
                 q = q.Where(k => k.PuantajYapilirMi == puantajYapilirMi.Value);
 
             q = ApplyIsyeriFilter(q, isyeriId, isyeriIdIn);
@@ -76,7 +84,8 @@ namespace CeyPASS.DataAccess.Repositories
                     (k.Ad ?? "").Contains(search) ||
                     (k.Soyad ?? "").Contains(search) ||
                     (k.PersonelId ?? "").Contains(search) ||
-                    (k.TcKimlikNo ?? "").Contains(search));
+                    (k.TcKimlikNo ?? "").Contains(search) ||
+                    (k.KartNo ?? "").Contains(search));
             }
 
             totalCount = q.Count();
@@ -89,7 +98,8 @@ namespace CeyPASS.DataAccess.Repositories
                 .Select(k => new KisiListItem
                 {
                     PersonelId = k.PersonelId,
-                    AdSoyad = ((k.Ad ?? "") + " " + (k.Soyad ?? "")).Trim()
+                    AdSoyad = ((k.Ad ?? "") + " " + (k.Soyad ?? "")).Trim(),
+                    IstenCikisTarihi = k.IstenCikisTarihi
                 })
                 .ToList();
         }
@@ -111,19 +121,27 @@ namespace CeyPASS.DataAccess.Repositories
 
         public KisiDetay GetDetay(string personelId)
         {
-            var k = _context.Kisiler.FirstOrDefault(x => x.PersonelId == personelId);
+            var k = _context.Kisiler.AsNoTracking().FirstOrDefault(x => x.PersonelId == personelId);
             if (k == null) return null;
 
-            var limit = _context.YemekhaneGirisLimitler
+            var limit = _context.YemekhaneGirisLimitler.AsNoTracking()
                 .FirstOrDefault(y => y.PersonelId == personelId && y.AktifMi == true);
 
-            bool yemekHakkiVar = (limit != null);
-            int? gunlukLimit = limit?.GunlukLimit;
+            if (limit == null && k.IstenCikisTarihi.HasValue)
+            {
+                limit = _context.YemekhaneGirisLimitler.AsNoTracking()
+                    .Where(y => y.PersonelId == personelId)
+                    .OrderByDescending(y => y.Id)
+                    .FirstOrDefault();
+            }
+
+            bool yemekHakkiVar = limit != null && limit.GunlukLimit.HasValue && limit.GunlukLimit.Value > 0;
+            int? gunlukLimit = yemekHakkiVar ? limit.GunlukLimit : null;
 
             string taseronKartNo = null;
             if (int.TryParse(personelId, out var pidInt))
             {
-                taseronKartNo = _context.TaseronKartlari
+                taseronKartNo = _context.TaseronKartlari.AsNoTracking()
                     .Where(t => t.PersonelId == pidInt && t.AktifMi)
                     .OrderByDescending(t => t.OlusturmaTarihi)
                     .Select(t => t.TaseronId)
@@ -140,7 +158,7 @@ namespace CeyPASS.DataAccess.Repositories
             string calismaStatusuText = null;
             if (calismaStatusuId.HasValue)
             {
-                calismaStatusuText = _context.CalismaStatusu
+                calismaStatusuText = _context.CalismaStatusu.AsNoTracking()
                     .Where(x => x.CalismaStatuId == calismaStatusuId.Value)
                     .Select(x => x.CalismaStatuAdi)
                     .FirstOrDefault();
@@ -190,6 +208,39 @@ UPDATE dbo.Kisiler
             _context.Database.ExecuteSqlRaw(sql,
                 new Microsoft.Data.SqlClient.SqlParameter("@p0", tarih.Date),
                 new Microsoft.Data.SqlClient.SqlParameter("@p1", personelId));
+
+            ClearChangeTracker();
+        }
+
+        public bool TekrarAktifEt(string personelId, bool puantajYapilirMi)
+        {
+            var sql = @"
+UPDATE dbo.Kisiler
+   SET IstenCikisTarihi = NULL,
+       PuantajYapilirMi = @p0
+ WHERE PersonelId = @p1
+   AND IstenCikisTarihi IS NOT NULL";
+
+            var affected = _context.Database.ExecuteSqlRaw(sql,
+                new Microsoft.Data.SqlClient.SqlParameter("@p0", puantajYapilirMi),
+                new Microsoft.Data.SqlClient.SqlParameter("@p1", personelId));
+
+            if (affected > 0)
+                ClearChangeTracker();
+
+            return affected > 0;
+        }
+
+        private void ClearChangeTracker()
+        {
+            try
+            {
+                _context.ChangeTracker.Clear();
+            }
+            catch
+            {
+                // non-fatal if clear not supported in older EF versions
+            }
         }
 
         public List<Kisi> GetKisilerForPuantaj(int firmaId, int isyeriId, int yil, int ay)

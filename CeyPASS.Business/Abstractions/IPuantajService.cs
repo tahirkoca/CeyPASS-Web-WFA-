@@ -10,6 +10,7 @@ namespace CeyPASS.Business.Abstractions
         List<PuantajGunSatirDTO> GetAy(int personelId, int yil, int ay);
         void Onayla(int personelId, DateTime tarih, int duzenlenmisFm, string aciklama, string calismaTipi, decimal saat, int kullaniciId);
         void TopluOnayla(int personelId, int yil, int ay, int kullaniciId);
+        void TopluOnaylaKadar(int personelId, int yil, int ay, DateTime hedefGun, int kullaniciId);
         void Reddet(int personelId, DateTime tarih, string aciklama, int kullaniciId);
         void Duzenle(int personelId, DateTime tarih, int duzenlenmisFm, string aciklama, int kullaniciId);
         List<PuantajTipDTO> GetPuantajTipleri();

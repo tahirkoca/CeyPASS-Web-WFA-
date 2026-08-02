@@ -169,6 +169,7 @@ namespace CeyPASS.WFA.UserControls.Ayarlar
             txtPort.ReadOnly = true;
             txtAciklama.ReadOnly = true;
             cmbCihazTipleri.Enabled = false;
+            chkSaatPenceresiAktifMi.Enabled = false;
 
             WinFormsAuthHelper.ApplyPageAuthorization(_auth, _session, PageName, this);
             FillInputsFromSelection();
@@ -200,6 +201,7 @@ namespace CeyPASS.WFA.UserControls.Ayarlar
             txtPort.ReadOnly = false;
             txtAciklama.ReadOnly = false;
             cmbCihazTipleri.Enabled = true;
+            chkSaatPenceresiAktifMi.Enabled = true;
 
             btnKaydet.Tag = YetkiTipleri.Create;
             WinFormsAuthHelper.ApplyPageAuthorization(_auth, _session, PageName, this);
@@ -237,6 +239,7 @@ namespace CeyPASS.WFA.UserControls.Ayarlar
             txtPort.ReadOnly = false;
             txtAciklama.ReadOnly = false;
             cmbCihazTipleri.Enabled = true;
+            chkSaatPenceresiAktifMi.Enabled = true;
 
             btnKaydet.Tag = YetkiTipleri.Update;
             WinFormsAuthHelper.ApplyPageAuthorization(_auth, _session, PageName, this);
@@ -255,6 +258,7 @@ namespace CeyPASS.WFA.UserControls.Ayarlar
             txtAciklama.Text = "";
             if (cmbCihazTipleri.Items.Count > 0)
                 cmbCihazTipleri.SelectedIndex = 0;
+            chkSaatPenceresiAktifMi.Checked = false;
         }
         private void FillInputs(Cihaz c)
         {
@@ -266,6 +270,7 @@ namespace CeyPASS.WFA.UserControls.Ayarlar
             txtAciklama.Text = c.Notlar ?? "";
             if (cmbCihazTipleri.DataSource != null)
                 cmbCihazTipleri.SelectedValue = c.CihazTipi;
+            chkSaatPenceresiAktifMi.Checked = c.SaatPenceresiAktifMi;
         }
         private void FillInputsFromSelection()
         {
@@ -297,7 +302,8 @@ namespace CeyPASS.WFA.UserControls.Ayarlar
                 Port = port,
                 Notlar = string.IsNullOrWhiteSpace(txtAciklama.Text) ? null : txtAciklama.Text.Trim(),
                 CihazTipi = Convert.ToInt32(cmbCihazTipleri.SelectedValue),
-                AktifMi = true
+                AktifMi = true,
+                SaatPenceresiAktifMi = chkSaatPenceresiAktifMi.Checked
             };
         }
         private void Save()

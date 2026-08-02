@@ -113,6 +113,7 @@ namespace CeyPASS.WFA
                 services.AddScoped<IAuthorizationRepository, AuthorizationRepositoryCore>();
                 services.AddScoped<IBolumRepository, BolumRepositoryCore>();
                 services.AddScoped<ICalismaSekliRepository, CalismaSekliRepositoryCore>();
+                services.AddScoped<IPersonelVardiyaYemekYetkiRepository, PersonelVardiyaYemekYetkiRepositoryCore>();
                 services.AddScoped<ICalismaStatuRepository, CalismaStatuRepositoryCore>();
                 services.AddScoped<ICanliIzlemeRepository, CanliIzlemeRepositoryCore>();
                 services.AddScoped<ICihazRepository, CihazRepositoryCore>();
@@ -144,6 +145,7 @@ namespace CeyPASS.WFA
                 // Business — Faz 4.2: Scoped (DbContext ile aynı scope)
                 services.AddScoped<IAuthorizationService, AuthorizationService>();
                 services.AddScoped<ICalismaSekliService, CalismaSekliService>();
+                services.AddScoped<IPersonelVardiyaYemekYetkiService, PersonelVardiyaYemekYetkiService>();
                 services.AddScoped<ICalismaStatuService, CalismaStatuService>();
                 services.AddScoped<ICanliIzlemeService, CanliIzlemeService>();
                 services.AddScoped<ICihazService, CihazService>();

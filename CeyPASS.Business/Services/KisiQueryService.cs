@@ -14,14 +14,14 @@ namespace CeyPASS.Business.Services
             _repo = repo;
         }
 
-        public List<KisiListItem> GetAktifKisilerByFirma(int firmId, string? search = null, bool? puantajYapilirMi = true, int? isyeriId = null, IReadOnlyList<int>? isyeriIdIn = null)
+        public List<KisiListItem> GetAktifKisilerByFirma(int firmId, string? search = null, bool? puantajYapilirMi = true, int? isyeriId = null, IReadOnlyList<int>? isyeriIdIn = null, bool sadeceIstenCikanlar = false)
         {
-            return _repo.GetAktifByFirma(firmId, search, puantajYapilirMi, isyeriId, isyeriIdIn);
+            return _repo.GetAktifByFirma(firmId, search, puantajYapilirMi, isyeriId, isyeriIdIn, ziyaretciMi: null, sadeceIstenCikanlar);
         }
 
-        public List<KisiListItem> GetAktifKisilerByFirmaPaged(int firmId, string? search, bool? puantajYapilirMi, int? isyeriId, IReadOnlyList<int>? isyeriIdIn, int page, int pageSize, out int totalCount)
+        public List<KisiListItem> GetAktifKisilerByFirmaPaged(int firmId, string? search, bool? puantajYapilirMi, int? isyeriId, IReadOnlyList<int>? isyeriIdIn, bool sadeceIstenCikanlar, int page, int pageSize, out int totalCount)
         {
-            return _repo.GetAktifByFirmaPaged(firmId, search, puantajYapilirMi, isyeriId, isyeriIdIn, page, pageSize, out totalCount);
+            return _repo.GetAktifByFirmaPaged(firmId, search, puantajYapilirMi, isyeriId, isyeriIdIn, sadeceIstenCikanlar, page, pageSize, out totalCount);
         }
 
         public KisiDetay GetKisiDetay(string personelId)

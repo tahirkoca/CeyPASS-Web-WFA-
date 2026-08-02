@@ -50,6 +50,7 @@ namespace CeyPASS.DataAccess
         public DbSet<Firmalar> Firmalar { get; set; }
         public DbSet<Isyerler> Isyerler { get; set; }
         public DbSet<Bolumler> Bolumler { get; set; }
+        public DbSet<PersonelVardiyaYemekYetkileri> PersonelVardiyaYemekYetkileri { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -79,6 +80,10 @@ namespace CeyPASS.DataAccess
             modelBuilder.Entity<Pozisyonlar>().HasKey(e => e.PozisyonId);
             modelBuilder.Entity<IzinTipleri>().HasKey(e => e.IzinTipId);
             modelBuilder.Entity<Cihazlar>().HasKey(e => e.CihazId);
+            modelBuilder.Entity<Cihazlar>().ToTable("Cihazlar", t => t.UseSqlOutputClause(false));
+            modelBuilder.Entity<Cihazlar>()
+                .Property(e => e.SaatPenceresiAktifMi)
+                .HasColumnName("SaatPenceresiAktifMi");
             modelBuilder.Entity<PuantajTipleri>().HasKey(e => e.Kod);
             modelBuilder.Entity<RaporTanimlari>().HasKey(e => e.Id);
             modelBuilder.Entity<ResmiTatiller>().HasKey(e => e.Tarih);
@@ -108,6 +113,13 @@ namespace CeyPASS.DataAccess
             modelBuilder.Entity<CokluSicilBaglantilari>().HasKey(e => new { e.TCKimlikNo, e.AnaPersonelId, e.HedefPersonelId });
             modelBuilder.Entity<SistemMailAlicilari>().HasKey(e => e.Id);
             modelBuilder.Entity<CeyPASS.Entities.Concrete.UserDeviceToken>().ToTable("MobilUygulamaTokenleri").HasKey(e => e.Id);
+            modelBuilder.Entity<PersonelVardiyaYemekYetkileri>(entity =>
+            {
+                entity.ToTable("PersonelVardiyaYemekYetkileri");
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.YemekBaslangicSaati).HasColumnType("time(7)");
+                entity.Property(e => e.YemekBitisSaati).HasColumnType("time(7)");
+            });
         }
 
         // Stored Procedure çağrıları için extension method'lar

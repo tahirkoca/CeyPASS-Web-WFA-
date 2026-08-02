@@ -639,6 +639,8 @@ export function PersonellerScreen(props: { user: any; abilities?: any; onOpenMen
   };
 
   const [kartTipi, setKartTipi] = useState<"puantaj" | "puantajsiz">("puantaj");
+  const [calismaDurumu, setCalismaDurumu] = useState<"aktif" | "cikan">("aktif");
+  const sadeceIstenCikanlar = calismaDurumu === "cikan";
   const [firmaId, setFirmaId] = useState<number | null>(null);
   const [isyeriId, setIsyeriId] = useState<number | null>(null);
   const [q, setQ] = useState("");
@@ -670,6 +672,8 @@ export function PersonellerScreen(props: { user: any; abilities?: any; onOpenMen
   const [istenDate, setIstenDate] = useState<string>(fmtIsoDate(new Date()));
   const [istenKartNo, setIstenKartNo] = useState("");
   const [istenPickerVisible, setIstenPickerVisible] = useState(false);
+  const [aktifEtVisible, setAktifEtVisible] = useState(false);
+  const [aktifEtPuantaj, setAktifEtPuantaj] = useState(true);
 
   const isyerleri: LookupItem[] = (lookups?.Isyerleri ?? lookups?.isyerleri ?? []) as any;
   const firmalar: FirmaItem[] = (lookups?.Firmalar ?? lookups?.firmalar ?? []) as any;
@@ -704,7 +708,8 @@ export function PersonellerScreen(props: { user: any; abilities?: any; onOpenMen
         search: q || undefined,
         firmaId: firmaId ?? undefined,
         isyeriId: isyeriId ?? undefined,
-        puantajYapilirMi,
+        puantajYapilirMi: sadeceIstenCikanlar ? undefined : puantajYapilirMi,
+        sadeceIstenCikanlar,
         page: nextPage,
         pageSize: nextPageSize,
       });
@@ -750,7 +755,7 @@ export function PersonellerScreen(props: { user: any; abilities?: any; onOpenMen
     loadLookups();
     loadList(1, pageSize);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [kartTipi, firmaId, isyeriId, pageSize]);
+  }, [kartTipi, calismaDurumu, firmaId, isyeriId, pageSize]);
 
   useEffect(() => {
     if (!pendingEditOpen) return;
@@ -802,6 +807,12 @@ export function PersonellerScreen(props: { user: any; abilities?: any; onOpenMen
   }
 
   const filterItems = useMemo(() => {
+    if (filterModal.kind === "calismaDurumu") {
+      return [
+        { key: "aktif", label: "Aktif Çalışanlar" },
+        { key: "cikan", label: "İşten Çıkanlar" },
+      ];
+    }
     if (filterModal.kind === "kartTipi") {
       return [
         { key: "puantaj", label: "Puantaj Yapılan Kartlar" },
@@ -826,7 +837,13 @@ export function PersonellerScreen(props: { user: any; abilities?: any; onOpenMen
   }, [filterModal.kind, firmalar, isyerleri]);
 
   function applyFilter(key: string) {
-    if (filterModal.kind === "kartTipi") {
+    if (filterModal.kind === "calismaDurumu") {
+      setCalismaDurumu((key as any) === "cikan" ? "cikan" : "aktif");
+      setDetail(null);
+      setDetailVisible(false);
+      setEditVisible(false);
+    }
+    else if (filterModal.kind === "kartTipi") {
       setKartTipi((key as any) || "puantaj");
       setDetail(null);
       setDetailVisible(false);
@@ -899,6 +916,35 @@ export function PersonellerScreen(props: { user: any; abilities?: any; onOpenMen
     }
   }
 
+  async function doTekrarAktifEt() {
+    const pid = s(pick(detail, "PersonelId", "personelId") ?? "");
+    if (!pid) return;
+    try {
+      setActing(true);
+      setError(null);
+      const r = await personelService.tekrarAktifEt({ personelId: pid, puantajYapilirMi: aktifEtPuantaj });
+      if (!r?.success) {
+        const msg = r?.message || "Personel tekrar aktif edilemedi.";
+        setError(msg);
+        showPopup("error", msg);
+      } else {
+        const data = r?.data ?? {};
+        const msg = s(data?.message ?? data?.Message ?? r?.message) || "Personel tekrar aktif edildi.";
+        showPopup("success", msg);
+        setAktifEtVisible(false);
+        setDetailVisible(false);
+        setCalismaDurumu("aktif");
+        await loadList(1, pageSize);
+      }
+    } catch (e: any) {
+      const msg = apiErrorMessage(e);
+      setError(msg);
+      showPopup("error", msg);
+    } finally {
+      setActing(false);
+    }
+  }
+
   async function doIstenCikar() {
     const pid = s(pick(detail, "PersonelId", "personelId") ?? "");
     if (!pid) return;
@@ -958,8 +1004,18 @@ export function PersonellerScreen(props: { user: any; abilities?: any; onOpenMen
               </>
             ) : null}
 
+            <Text className="text-[#64748b] font-semibold mb-2">Durum</Text>
+            <TouchableOpacity className="bg-[#f8fafc] border border-[#e2e8f0] rounded-2xl px-4 py-3 flex-row items-center justify-between mb-3" onPress={() => setFilterModal({ kind: "calismaDurumu", visible: true })}>
+              <Text className="text-[#1e293b] font-semibold" numberOfLines={1}>{calismaDurumu === "cikan" ? "İşten Çıkanlar" : "Aktif Çalışanlar"}</Text>
+              <MaterialCommunityIcons name="chevron-down" size={20} color="#64748b" />
+            </TouchableOpacity>
+
             <Text className="text-[#64748b] font-semibold mb-2">Kart tipi</Text>
-            <TouchableOpacity className="bg-[#f8fafc] border border-[#e2e8f0] rounded-2xl px-4 py-3 flex-row items-center justify-between mb-3" onPress={() => setFilterModal({ kind: "kartTipi", visible: true })}>
+            <TouchableOpacity
+              className={`bg-[#f8fafc] border border-[#e2e8f0] rounded-2xl px-4 py-3 flex-row items-center justify-between mb-3 ${sadeceIstenCikanlar ? "opacity-50" : ""}`}
+              onPress={() => !sadeceIstenCikanlar && setFilterModal({ kind: "kartTipi", visible: true })}
+              disabled={sadeceIstenCikanlar}
+            >
               <Text className="text-[#1e293b] font-semibold" numberOfLines={1}>{kartTipi === "puantajsiz" ? "Puantaj Yapılmayan Kartlar" : "Puantaj Yapılan Kartlar"}</Text>
               <MaterialCommunityIcons name="chevron-down" size={20} color="#64748b" />
             </TouchableOpacity>
@@ -977,7 +1033,7 @@ export function PersonellerScreen(props: { user: any; abilities?: any; onOpenMen
               <TouchableOpacity className="flex-1 bg-[#dc2626] rounded-2xl py-3 items-center mr-2" onPress={() => loadList(1, pageSize)} disabled={loading}>
                 <Text className="text-white font-extrabold">Ara</Text>
               </TouchableOpacity>
-              <TouchableOpacity className="bg-[#f1f5f9] rounded-2xl py-3 px-4 items-center" onPress={() => { setQ(""); setFirmaId(null); setIsyeriId(null); setKartTipi("puantaj"); setPageSize(20); loadList(1, 20); }}>
+              <TouchableOpacity className="bg-[#f1f5f9] rounded-2xl py-3 px-4 items-center" onPress={() => { setQ(""); setFirmaId(null); setIsyeriId(null); setKartTipi("puantaj"); setCalismaDurumu("aktif"); setPageSize(20); loadList(1, 20); }}>
                 <Text className="text-[#334155] font-extrabold">Temizle</Text>
               </TouchableOpacity>
             </View>
@@ -1136,7 +1192,20 @@ export function PersonellerScreen(props: { user: any; abilities?: any; onOpenMen
                   <Text className="text-[#334155] font-semibold mt-1">Taşeron Çalışan: {pick(detail, "TaseronCalisanMi", "taseronCalisanMi") ? "Evet" : "Hayır"}</Text>
                 </View>
                 <View className="mt-4 flex-row">
-                  {can.update ? (
+                  {sadeceIstenCikanlar && can.update ? (
+                    <TouchableOpacity
+                      onPress={() => {
+                        setAktifEtPuantaj(true);
+                        setDetailVisible(false);
+                        setTimeout(() => setAktifEtVisible(true), 200);
+                      }}
+                      className="flex-1 bg-[#16a34a] rounded-2xl py-4 items-center"
+                      disabled={acting}
+                    >
+                      <Text className="text-white font-extrabold">Aktif Et</Text>
+                    </TouchableOpacity>
+                  ) : null}
+                  {!sadeceIstenCikanlar && can.update ? (
                     <TouchableOpacity
                       onPress={() => {
                         // close detail first to avoid stacking issues (esp. iOS)
@@ -1149,7 +1218,7 @@ export function PersonellerScreen(props: { user: any; abilities?: any; onOpenMen
                       <Text className="text-[#1e293b] font-extrabold">Düzenle</Text>
                     </TouchableOpacity>
                   ) : null}
-                  {can.del && kartTipi !== "puantajsiz" ? (
+                  {!sadeceIstenCikanlar && can.del && kartTipi !== "puantajsiz" ? (
                     <TouchableOpacity
                       onPress={() => {
                         setDetailVisible(false);
@@ -1189,6 +1258,36 @@ export function PersonellerScreen(props: { user: any; abilities?: any; onOpenMen
         onClose={() => setEditVisible(false)}
         onSubmit={doEdit}
       />
+
+      <Modal transparent visible={aktifEtVisible} animationType="fade" onRequestClose={() => setAktifEtVisible(false)}>
+        <View className="flex-1 bg-black/60 items-center justify-center px-6">
+          <View className="w-full rounded-3xl bg-white p-5">
+            <View className="flex-row items-center justify-between mb-3">
+              <Text className="text-[15px] font-extrabold text-[#1e293b]">Tekrar Aktif Et</Text>
+              <TouchableOpacity onPress={() => setAktifEtVisible(false)} className="p-2">
+                <MaterialCommunityIcons name="close" size={20} color="#64748b" />
+              </TouchableOpacity>
+            </View>
+            <Text className="text-[#64748b] font-semibold mb-3">Puantaj yapılan bir kart mı?</Text>
+            <TouchableOpacity className="flex-row items-center mb-2" onPress={() => setAktifEtPuantaj(true)}>
+              <MaterialCommunityIcons name={aktifEtPuantaj ? "radiobox-marked" : "radiobox-blank"} size={22} color="#16a34a" />
+              <Text className="ml-2 text-[#1e293b] font-semibold">Evet</Text>
+            </TouchableOpacity>
+            <TouchableOpacity className="flex-row items-center mb-4" onPress={() => setAktifEtPuantaj(false)}>
+              <MaterialCommunityIcons name={!aktifEtPuantaj ? "radiobox-marked" : "radiobox-blank"} size={22} color="#16a34a" />
+              <Text className="ml-2 text-[#1e293b] font-semibold">Hayır</Text>
+            </TouchableOpacity>
+            <View className="flex-row">
+              <TouchableOpacity onPress={() => setAktifEtVisible(false)} className="flex-1 bg-[#f1f5f9] rounded-2xl py-3 items-center mr-2">
+                <Text className="text-[#334155] font-extrabold">Vazgeç</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={doTekrarAktifEt} disabled={acting} className="flex-1 bg-[#16a34a] rounded-2xl py-3 items-center">
+                <Text className="text-white font-extrabold">{acting ? "İşleniyor..." : "Aktif Et"}</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
 
       <Modal transparent visible={istenVisible} animationType="fade" onRequestClose={() => setIstenVisible(false)}>
         <View className="flex-1 bg-black/60 items-center justify-center px-6">

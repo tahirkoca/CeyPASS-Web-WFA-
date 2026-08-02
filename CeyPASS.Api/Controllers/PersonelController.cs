@@ -164,6 +164,7 @@ namespace CeyPASS.Api.Controllers
             [FromQuery] int? firmaId,
             [FromQuery] int? isyeriId,
             [FromQuery] bool? puantajYapilirMi,
+            [FromQuery] bool sadeceIstenCikanlar = false,
             [FromQuery] int page = 1,
             [FromQuery] int pageSize = 20)
         {
@@ -187,9 +188,9 @@ namespace CeyPASS.Api.Controllers
                 effectiveFirmaId, isyeriId, yetkiler, isAdmin);
 
             int totalCount;
-            bool effectivePuantaj = puantajYapilirMi ?? true;
+            bool? effectivePuantaj = sadeceIstenCikanlar ? null : (puantajYapilirMi ?? true);
             var items = _kisiQueryService.GetAktifKisilerByFirmaPaged(
-                effectiveFirmaId, search, effectivePuantaj, queryIsyeriId, queryIsyeriIdIn, page, pageSize, out totalCount);
+                effectiveFirmaId, search, effectivePuantaj, queryIsyeriId, queryIsyeriIdIn, sadeceIstenCikanlar, page, pageSize, out totalCount);
 
             var totalPages = pageSize <= 0 ? 1 : (int)Math.Ceiling(totalCount / (double)pageSize);
             if (totalPages < 1) totalPages = 1;
@@ -389,6 +390,56 @@ namespace CeyPASS.Api.Controllers
             catch (Exception ex)
             {
                 return StatusCode(500, ApiResult.Failure("İşten çıkarma hatası: " + ex.Message));
+            }
+        }
+
+        public sealed class PersonelTekrarAktifRequest
+        {
+            public string? PersonelId { get; set; }
+            public bool PuantajYapilirMi { get; set; }
+        }
+
+        public sealed class PersonelTekrarAktifResponse
+        {
+            public string Message { get; set; } = "";
+            public int? YenidenAktifYemekLimiti { get; set; }
+            public bool CihazUyarisiGoster { get; set; }
+            public string? CihazUyarisiMesaji { get; set; }
+        }
+
+        [HttpPost("tekrar-aktif-et")]
+        public ActionResult<ApiResult<PersonelTekrarAktifResponse>> TekrarAktifEt([FromBody] PersonelTekrarAktifRequest request)
+        {
+            if (!_authorizationService.Can(PageName, YetkiTipleri.Update))
+                return Forbid();
+
+            var pid = (request?.PersonelId ?? string.Empty).Trim();
+            if (string.IsNullOrWhiteSpace(pid))
+                return BadRequest(ApiResult<PersonelTekrarAktifResponse>.Failure("PersonelId zorunludur."));
+
+            try
+            {
+                var kisi = _kisiQueryService.GetKisiDetay(pid);
+                if (kisi == null) return NotFound(ApiResult<PersonelTekrarAktifResponse>.Failure("Personel bulunamadı."));
+                if (!_sessionContext.IsAdmin() && kisi.FirmaId != _sessionContext.AktifFirmaId)
+                    return Forbid();
+
+                var sonuc = _kisiService.KisiTekrarAktifEt(pid, request.PuantajYapilirMi);
+                if (!sonuc.Success)
+                    return BadRequest(ApiResult<PersonelTekrarAktifResponse>.Failure("Personel tekrar aktif edilemedi."));
+
+                var resp = new PersonelTekrarAktifResponse
+                {
+                    Message = PersonelMesajlari.TekrarAktifBasariMesaji(sonuc.YenidenAktifYemekLimiti, sonuc.CihazUyarisiGoster),
+                    YenidenAktifYemekLimiti = sonuc.YenidenAktifYemekLimiti,
+                    CihazUyarisiGoster = sonuc.CihazUyarisiGoster,
+                    CihazUyarisiMesaji = sonuc.CihazUyarisiGoster ? PersonelMesajlari.CihazKartAktiflesmeUyarisi : null
+                };
+                return Ok(ApiResult<PersonelTekrarAktifResponse>.Ok(resp, resp.Message));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ApiResult<PersonelTekrarAktifResponse>.Failure("Tekrar aktif etme hatası: " + ex.Message));
             }
         }
 

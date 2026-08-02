@@ -61,7 +61,8 @@ namespace CeyPASS.DataAccess.Repositories
                 BaglandiMi = e.BaglandiMi,
                 Latitude = e.Latitude,
                 Longitude = e.Longitude,
-                MesafeToleransMetre = e.MesafeToleransMetre
+                MesafeToleransMetre = e.MesafeToleransMetre,
+                SaatPenceresiAktifMi = e.SaatPenceresiAktifMi
             };
         }
 
@@ -79,7 +80,8 @@ namespace CeyPASS.DataAccess.Repositories
                 BaglandiMi = false,
                 Latitude = c.Latitude,
                 Longitude = c.Longitude,
-                MesafeToleransMetre = c.MesafeToleransMetre
+                MesafeToleransMetre = c.MesafeToleransMetre,
+                SaatPenceresiAktifMi = c.SaatPenceresiAktifMi
             };
 
             _context.Cihazlar.Add(entity);
@@ -105,6 +107,7 @@ namespace CeyPASS.DataAccess.Repositories
             entity.Latitude = c.Latitude;
             entity.Longitude = c.Longitude;
             entity.MesafeToleransMetre = c.MesafeToleransMetre;
+            entity.SaatPenceresiAktifMi = c.SaatPenceresiAktifMi;
 
             _context.SaveChanges();
         }

@@ -79,7 +79,7 @@ namespace CeyPASS.Tests.Web
                 It.IsAny<int>(), It.IsAny<int>(), out totalCount))
                 .Returns(new List<KisiIzinListRow>());
 
-            _kisiQueryMock.Setup(q => q.GetAktifKisilerByFirma(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<bool?>(), It.IsAny<int?>(), It.IsAny<IReadOnlyList<int>>())).Returns(new List<KisiListItem>());
+            _kisiQueryMock.Setup(q => q.GetAktifKisilerByFirma(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<bool?>(), It.IsAny<int?>(), It.IsAny<IReadOnlyList<int>>(), It.IsAny<bool>())).Returns(new List<KisiListItem>());
             _izinTipMock.Setup(t => t.GetAktif()).Returns(new List<IzinTip>());
 
             var sonuc = _sut.Index();
@@ -124,7 +124,7 @@ namespace CeyPASS.Tests.Web
             _puantajMock.Setup(p => p.GetKullaniciFirmaIsyeriYetkileri(It.IsAny<int>()))
                 .Returns(new List<FirmaIsyeriYetkiDTO>());
             _firmaMock.Setup(f => f.GetPuantajFirmalar()).Returns(new List<Firma>());
-            _kisiQueryMock.Setup(q => q.GetAktifKisilerByFirma(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<bool?>(), It.IsAny<int?>(), It.IsAny<IReadOnlyList<int>>())).Returns(new List<KisiListItem>());
+            _kisiQueryMock.Setup(q => q.GetAktifKisilerByFirma(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<bool?>(), It.IsAny<int?>(), It.IsAny<IReadOnlyList<int>>(), It.IsAny<bool>())).Returns(new List<KisiListItem>());
             _izinTipMock.Setup(t => t.GetAktif()).Returns(new List<IzinTip>());
 
             var izin = new KisiIzin { FirmaId = 1, Baslangic = DateTime.Today, Bitis = DateTime.Today };
@@ -197,7 +197,7 @@ namespace CeyPASS.Tests.Web
         [Fact]
         public void GetKisiler_FirmaIdVerilir_JsonDoner()
         {
-            _kisiQueryMock.Setup(q => q.GetAktifKisilerByFirma(2, It.IsAny<string>(), It.IsAny<bool?>(), It.IsAny<int?>(), It.IsAny<IReadOnlyList<int>>()))
+            _kisiQueryMock.Setup(q => q.GetAktifKisilerByFirma(2, It.IsAny<string>(), It.IsAny<bool?>(), It.IsAny<int?>(), It.IsAny<IReadOnlyList<int>>(), It.IsAny<bool>()))
                 .Returns(new List<KisiListItem> { new KisiListItem { PersonelId = "P1", AdSoyad = "Ali Veli" } });
 
             var sonuc = _sut.GetKisiler(2);

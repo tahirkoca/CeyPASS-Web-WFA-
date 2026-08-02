@@ -75,7 +75,7 @@ namespace CeyPASS.Tests.Web
             _sessionMock.Setup(s => s.AktifFirmaId).Returns(1);
 
             _lookupMock.Setup(l => l.GetIsyerleri(It.IsAny<int>())).Returns(new List<LookupItem>());
-            _kisiQueryMock.Setup(q => q.GetAktifKisilerByFirma(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<bool?>(), It.IsAny<int?>(), It.IsAny<IReadOnlyList<int>>()))
+            _kisiQueryMock.Setup(q => q.GetAktifKisilerByFirma(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<bool?>(), It.IsAny<int?>(), It.IsAny<IReadOnlyList<int>>(), It.IsAny<bool>()))
                 .Returns(new List<KisiListItem>());
 
             var sut = CreateSut();
@@ -95,7 +95,7 @@ namespace CeyPASS.Tests.Web
             _sessionMock.Setup(s => s.AktifFirmaId).Returns(1);
 
             _lookupMock.Setup(l => l.GetIsyerleri(It.IsAny<int>())).Returns(new List<LookupItem>());
-            _kisiQueryMock.Setup(q => q.GetAktifKisilerByFirma(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<bool?>(), It.IsAny<int?>(), It.IsAny<IReadOnlyList<int>>()))
+            _kisiQueryMock.Setup(q => q.GetAktifKisilerByFirma(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<bool?>(), It.IsAny<int?>(), It.IsAny<IReadOnlyList<int>>(), It.IsAny<bool>()))
                 .Returns(new List<KisiListItem>());
             _firmaMock.Setup(f => f.GetAll()).Returns(new List<Firma>
             {
@@ -121,7 +121,7 @@ namespace CeyPASS.Tests.Web
             _sessionMock.Setup(s => s.IsAdmin()).Returns(true);
 
             _lookupMock.Setup(l => l.GetIsyerleri(1)).Returns(new List<LookupItem> { new LookupItem { Id = 10, Ad = "Şube A" } });
-            _kisiQueryMock.Setup(q => q.GetAktifKisilerByFirma(1, null, true, 10, null))
+            _kisiQueryMock.Setup(q => q.GetAktifKisilerByFirma(1, null, true, 10, null, false))
                 .Returns(new List<KisiListItem> { new KisiListItem { PersonelId = "100", AdSoyad = "Test [100]" } });
             _firmaMock.Setup(f => f.GetAll()).Returns(new List<Firma> { new Firma { FirmaId = 1, FirmaAdi = "Firma A" } });
 
@@ -130,7 +130,7 @@ namespace CeyPASS.Tests.Web
             var sonuc = sut.Index(firmaId: 1, isyeriId: 10);
 
             sonuc.Should().BeOfType<ViewResult>();
-            _kisiQueryMock.Verify(q => q.GetAktifKisilerByFirma(1, null, true, 10, null), Times.Once);
+            _kisiQueryMock.Verify(q => q.GetAktifKisilerByFirma(1, null, true, 10, null, false), Times.Once);
             ((int?)sut.ViewBag.SelectedIsyeriId).Should().Be(10);
         }
 

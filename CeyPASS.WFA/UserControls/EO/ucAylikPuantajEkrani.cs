@@ -33,6 +33,7 @@ namespace CeyPASS.WFA.UserControls.EO
         private List<FirmaIsyeriYetkiDTO> _kullaniciYetkileri;
         private const string PageName = "AylikPuantaj";
         private const string PageNameUI = "Aylık Puantaj";
+        private Button btnBuguneKadarOnayla;
 
         public ucAylikPuantajEkrani(ISessionContext session, IPuantajService psvc, IFirmaService fsvc, IIsyeriService isvc, IKisiService ksvc, IAuthorizationService auth, IKullaniciFirmaIsyeriYetkiService yetkiSvc)
         {
@@ -58,6 +59,49 @@ namespace CeyPASS.WFA.UserControls.EO
                 this.Visible = false;
                 return;
             }
+
+            // WFA: "Bugüne kadar (dün dahil) toplu onayla" butonu
+            // Grid seçimi gerektirmeden, ekrandaki seçili kişi + seçili ay üzerinden çalışır.
+            CreateBuguneKadarOnaylaButton();
+        }
+
+        private void CreateBuguneKadarOnaylaButton()
+        {
+            if (btnBuguneKadarOnayla != null) return;
+
+            bool canApprove = _auth.Can(PageName, YetkiTipleri.Approve);
+            if (!canApprove) return;
+
+            // TLP içinde sağa yeni bir sütun ekleyip butonu oraya koyuyoruz.
+            // Designer'a müdahale etmeden aynı kontrol yapısında çalışır.
+            if (tlpFilters.ColumnCount < 9)
+            {
+                tlpFilters.ColumnCount = 9;
+                tlpFilters.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 13F));
+            }
+
+            btnBuguneKadarOnayla = new Button
+            {
+                Name = "btnBuguneKadarOnayla",
+                Dock = DockStyle.Fill,
+                FlatAppearance = { BorderSize = 0 },
+                FlatStyle = FlatStyle.Flat,
+                Font = new Font("Segoe UI", 9F, FontStyle.Bold),
+                ForeColor = Color.White,
+                BackColor = Color.FromArgb(111, 66, 193),
+                Image = Properties.Resources.icons8_check_mark_50,
+                Text = "Bugüne Kadar Onayla",
+                TextImageRelation = TextImageRelation.ImageBeforeText,
+                UseVisualStyleBackColor = false,
+                Margin = new Padding(3, 0, 3, 5),
+                Tag = YetkiTipleri.Approve,
+            };
+
+            btnBuguneKadarOnayla.Click += btnBuguneKadarOnayla_Click;
+            tlpFilters.Controls.Add(btnBuguneKadarOnayla, 8, 1);
+
+            // Authorization helper, Tag bazlı çalışır; dinamik eklenen buton için tekrar uygula.
+            WinFormsAuthHelper.ApplyPageAuthorization(_auth, _session, PageName, this);
         }
 
         private void ucAylikPuantajEkrani_Load(object sender, EventArgs e)
@@ -613,6 +657,103 @@ namespace CeyPASS.WFA.UserControls.EO
                 MessageBox.Show("Export sırasında hata oluştu:\n" + ex.Message, "Hata", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
+
+        private void btnBuguneKadarOnayla_Click(object sender, EventArgs e)
+        {
+            var btn = sender as Button;
+            try
+            {
+                if (btn != null) btn.Enabled = false;
+
+                if (!_auth.Can(PageName, YetkiTipleri.Approve))
+                {
+                    System.Media.SystemSounds.Beep.Play();
+                    return;
+                }
+
+                if (_seciliPersonelId <= 0)
+                {
+                    MessageBox.Show("Lütfen personel seçiniz.", "Uyarı",
+                        MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+
+                if (_seciliYil <= 0 || _seciliAy <= 0)
+                    return;
+
+                var today = DateTime.Today;
+                bool isSameMonth = _seciliYil == today.Year && _seciliAy == today.Month;
+                bool isPastMonth = _seciliYil < today.Year || (_seciliYil == today.Year && _seciliAy < today.Month);
+                bool isFutureMonth = _seciliYil > today.Year || (_seciliYil == today.Year && _seciliAy > today.Month);
+
+                if (isFutureMonth)
+                {
+                    MessageBox.Show("Seçili ay henüz gelmedi. Onaylama yapılamaz.", "Bilgi",
+                        MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    return;
+                }
+
+                DateTime ayBas = new DateTime(_seciliYil, _seciliAy, 1);
+                DateTime aySon = new DateTime(_seciliYil, _seciliAy, DateTime.DaysInMonth(_seciliYil, _seciliAy));
+
+                // Bu ay için: bugünden 1 gün önce (dün dahil)
+                // Geçmiş ay için: ay sonu (1-son gün)
+                DateTime hedefGun = isSameMonth ? today.AddDays(-1) : aySon;
+
+                if (hedefGun < ayBas)
+                {
+                    MessageBox.Show("Onaylanacak geçmiş gün yok.", "Bilgi",
+                        MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    return;
+                }
+
+                var gunler = _psvc.GetAy(_seciliPersonelId, _seciliYil, _seciliAy);
+
+                var eligibleRows = gunler.Where(g =>
+                        g.Tarih.Date <= hedefGun.Date &&
+                        g.OnayDurumu == OnayDurumu.Bekliyor &&
+                        _psvc.IsRowEditable(g.Tarih, _ekKayitGun))
+                    .ToList();
+
+                int eligibleCount = eligibleRows.Count;
+                if (eligibleCount <= 0)
+                {
+                    MessageBox.Show("Onaylanacak bekleyen puantaj kaydı yok.", "Bilgi",
+                        MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    return;
+                }
+
+                // Mesajda sabit "1-..." yazmayalım; gerçekten onay bekleyen ilk günü bulalım.
+                int startDay = eligibleRows.Min(g => g.Tarih.Day);
+
+                var tr = new CultureInfo("tr-TR");
+                string ayAdi = tr.DateTimeFormat.GetMonthName(_seciliAy);
+                string confirmMsg = isSameMonth
+                    ? $"{_seciliYil} {ayAdi} ayının {startDay}-{hedefGun:dd} günleri arası bekleyen puantaj kayıtları toplu onaylansın mı?"
+                    : $"{_seciliYil} {ayAdi} ayının {startDay}-{hedefGun:dd} günleri arası (bekleyen ve düzenlenebilir) puantaj kayıtları toplu onaylansın mı?";
+
+                var onay = MessageBox.Show(confirmMsg, "Onay",
+                    MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+
+                if (onay != DialogResult.Yes) return;
+
+                _psvc.TopluOnaylaKadar(_seciliPersonelId, _seciliYil, _seciliAy, hedefGun, (int)_session.AktifKullaniciId);
+
+                GridYukle();
+                LogHelper.Info(PageNameUI, "BuguneKadarOnay", $"Toplu onay tamamlandı. Pid={_seciliPersonelId}, Hedef={hedefGun:yyyy-MM-dd}, Eligible={eligibleCount}");
+            }
+            catch (Exception ex)
+            {
+                LogHelper.Error(PageNameUI, "BuguneKadarOnay", "Toplu onayda hata.", ex);
+                MessageBox.Show("Toplu onay sırasında hata:\n" + ex.Message, "Hata",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                if (btn != null) btn.Enabled = true;
+            }
+        }
+
         private void SetEkKayitAyarlaButtonVisibility()
         {
             bool canAccess = _session.RolId == 1 || _session.RolId == 2;

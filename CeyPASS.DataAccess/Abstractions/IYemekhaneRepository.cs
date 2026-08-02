@@ -6,5 +6,6 @@
         void UpsertLimit(string personelId, int gunlukLimit);
         void PasifEtByPersonel(string personelId);
         void MovePersonelId(string oldPersonelId, string newPersonelId);
+        int? GetSonGunlukLimit(string personelId);
     }
 }

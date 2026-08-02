@@ -1,5 +1,6 @@
 using CeyPASS.DataAccess.Abstractions;
 using Microsoft.EntityFrameworkCore;
+using System.Linq;
 
 namespace CeyPASS.DataAccess.Repositories
 {
@@ -34,13 +35,13 @@ VALUES (@p0, @p1, GETDATE(), 1)";
         public void UpsertLimit(string personelId, int gunlukLimit)
         {
             var sql = @"
-IF EXISTS (SELECT 1 FROM dbo.YemekhaneGirisLimitler WHERE PersonelId = @p0 AND AktifMi = 1)
+IF EXISTS (SELECT 1 FROM dbo.YemekhaneGirisLimitler WHERE PersonelId = @p0)
 BEGIN
     UPDATE dbo.YemekhaneGirisLimitler
        SET GunlukLimit = @p1,
            KayitTarihi = GETDATE(),
            AktifMi     = 1
-     WHERE PersonelId = @p0 AND AktifMi = 1;
+     WHERE PersonelId = @p0;
 END
 ELSE
 BEGIN
@@ -74,6 +75,20 @@ UPDATE dbo.YemekhaneGirisLimitler
             _context.Database.ExecuteSqlRaw(sql,
                 new Microsoft.Data.SqlClient.SqlParameter("@p0", oldPersonelId),
                 new Microsoft.Data.SqlClient.SqlParameter("@p1", newPersonelId));
+        }
+
+        public int? GetSonGunlukLimit(string personelId)
+        {
+            var limit = _context.YemekhaneGirisLimitler
+                .Where(y => y.PersonelId == personelId && y.GunlukLimit.HasValue && y.GunlukLimit.Value > 0)
+                .OrderByDescending(y => y.Id)
+                .Select(y => y.GunlukLimit)
+                .FirstOrDefault();
+
+            if (!limit.HasValue || limit.Value <= 0)
+                return null;
+
+            return limit.Value;
         }
     }
 }

@@ -38,13 +38,15 @@ namespace CeyPASS.WFA.UserControls
         private string _originalPersonelId = null;
         private const string PageName = "Personeller";
         private const string PageNameUI = "Personeller";
+        private static readonly Color SilButtonColor = Color.FromArgb(220, 53, 69);
+        private static readonly Color AktifEtButtonColor = Color.FromArgb(40, 167, 69);
 
         public ucPersonelTanimlama(ISessionContext session, IKisiService kisiSvc, IKisiQueryService kisiQuerySvc, IKisiEkraniLookUpService lookups, ICalismaSekliService calismaSekliSvc, IAuthorizationService authSvc, IFirmaService firmaSvc, IKullaniciFirmaIsyeriYetkiService yetkiSvc)
         {
             InitializeComponent();
             SendMessage(txtCepTel.Handle, EM_SETCUEBANNER, 0, "05.. - ... - .. - .. şeklinde giriniz");
             SendMessage(txtKimlikNo.Handle, EM_SETCUEBANNER, 0, "11 Haneli TC Kimlik Numarasını giriniz");
-            SendMessage(txtAra.Handle, EM_SETCUEBANNER, 0, "Personeli buradan arayabilirsiniz");
+            SendMessage(txtAra.Handle, EM_SETCUEBANNER, 0, "Ad, Sicil, TC veya Kart No ile arayabilirsiniz");
             dtpIstenCikis.Format = DateTimePickerFormat.Custom;
             dtpIstenCikis.CustomFormat = "'Aktif Çalışıyor...'";
             dtpIstenCikis.Enabled = false;
@@ -89,6 +91,7 @@ namespace CeyPASS.WFA.UserControls
             lstKisiler.SelectedIndexChanged += lstKisiler_SelectedIndexChanged;
             lstKisiler.DrawItem += lstKisiler_DrawItem;
             cmbFirmaFilter.SelectedIndexChanged += cmbFirmaFilter_SelectedIndexChanged;
+            cmbCalismaDurumu.SelectedIndexChanged += cmbCalismaDurumu_SelectedIndexChanged;
             cmbKartTipi.SelectedIndexChanged += cmbKartTipi_SelectedIndexChanged;
             cmbIsyeriFilter.SelectedIndexChanged += cmbIsyeriFilter_SelectedIndexChanged;
 
@@ -128,6 +131,8 @@ namespace CeyPASS.WFA.UserControls
             {
                 if (cmbKartTipi.Items.Count > 0 && cmbKartTipi.SelectedIndex < 0)
                     cmbKartTipi.SelectedIndex = 0; // Puantaj Yapılanlar
+                if (cmbCalismaDurumu.Items.Count > 0 && cmbCalismaDurumu.SelectedIndex < 0)
+                    cmbCalismaDurumu.SelectedIndex = 0;
                 _isAdmin = FirmaIsyeriYetkiHelper.IsAdmin(_session.RolId);
                 _kullaniciYetkileri = _yetkiSvc.GetYetkiler((int)_session.AktifKullaniciId);
                 FirmaFilteriniYukle();
@@ -137,6 +142,7 @@ namespace CeyPASS.WFA.UserControls
                 CombosunuYukle(firmaId);
                 VardiyaYukle(firmaId);
                 KisileriYukle(firmaId);
+                ApplyCalismaDurumuUi();
                 UpdateUIState();
                 WinFormsAuthHelper.ApplyPageAuthorization(_auth, _session, PageName, this);
 
@@ -206,6 +212,13 @@ namespace CeyPASS.WFA.UserControls
             VardiyaYukle(firmaId);
             KisileriYukle(firmaId, preserveSelection: false);
         }
+        private void cmbCalismaDurumu_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            _sonSecilen = null;
+            DetayFormunuTemizle();
+            ApplyCalismaDurumuUi();
+            KisileriYukle(GetSeciliFirmaId(), preserveSelection: false);
+        }
         private void cmbKartTipi_SelectedIndexChanged(object sender, EventArgs e)
         {
             _sonSecilen = null;
@@ -218,10 +231,58 @@ namespace CeyPASS.WFA.UserControls
             DetayFormunuTemizle();
             KisileriYukle(GetSeciliFirmaId(), preserveSelection: false);
         }
+        private bool GetSeciliIstenCikanMi() => cmbCalismaDurumu.SelectedIndex == 1;
         private bool GetPuantajYapilanSecili()
         {
             if (cmbKartTipi.SelectedIndex == 1) return false; // Puantaj Yapılmayan
             return true; // Puantaj Yapılanlar (0) veya varsayılan
+        }
+        private void ApplyCalismaDurumuUi()
+        {
+            bool cikanModu = GetSeciliIstenCikanMi();
+            cmbKartTipi.Enabled = !cikanModu;
+            lblKartTipi.Enabled = !cikanModu;
+            btnKisiEkle.Visible = !cikanModu;
+            btnKisiGuncelle.Visible = !cikanModu;
+            btnFotoEkle.Visible = !cikanModu;
+            btnFotoSil.Visible = !cikanModu;
+            btnKisiSil.Text = cikanModu ? "Aktif Et" : "Sil";
+            btnKisiSil.Tag = cikanModu ? YetkiTipleri.Update : YetkiTipleri.Delete;
+            btnKisiSil.BackColor = cikanModu ? AktifEtButtonColor : SilButtonColor;
+            btnKisiSil.Image = cikanModu
+                ? Properties.Resources.icons8_check_mark_50
+                : Properties.Resources.icons8_minus_50;
+            WinFormsAuthHelper.ApplyPageAuthorization(_auth, _session, PageName, this);
+        }
+        private void SetDetailControlsReadOnly(bool readOnly)
+        {
+            txtAdSoyad.ReadOnly = readOnly;
+            txtSicilNo.ReadOnly = readOnly;
+            txtPersonelKartNo.ReadOnly = readOnly;
+            txtKimlikNo.ReadOnly = readOnly;
+            txtCepTel.ReadOnly = readOnly;
+            txtEmail.ReadOnly = readOnly;
+            txtFirmaDisiKartNo.ReadOnly = readOnly;
+
+            dtpIseGiris.Enabled = !readOnly;
+            dtpDogumGunu.Enabled = !readOnly;
+            dtpIstenCikis.Enabled = !readOnly && _istenCikisModu;
+
+            cmbPozisyon.Enabled = !readOnly;
+            cmbDepartman.Enabled = !readOnly;
+            cmbIsyeri.Enabled = !readOnly;
+            cmbFirma.Enabled = !readOnly;
+            cmbBolum.Enabled = !readOnly;
+            cmbCalismaStatu.Enabled = !readOnly;
+            chkVardiyalar.Enabled = !readOnly;
+
+            chkFirmaPersoneliMi.Enabled = !readOnly;
+            chkPuantajYapilirMi.Enabled = !readOnly;
+            chkYemekHakkiVarMi.Enabled = !readOnly;
+            chkZiyaretciMi.Enabled = !readOnly;
+            chkAracKartiMi.Enabled = !readOnly;
+            chkTaseronCalisanMi.Enabled = !readOnly;
+            nudYemekAdedi.Enabled = !readOnly && chkYemekHakkiVarMi.Checked;
         }
         private void lstKisiler_DrawItem(object sender, DrawItemEventArgs e)
         {
@@ -299,10 +360,11 @@ namespace CeyPASS.WFA.UserControls
                 if (preserveSelection)
                     _sonSecilen ??= lstKisiler.SelectedItem as KisiListItem;
 
-                bool? puantajYapilirMi = GetPuantajYapilanSecili();
+                bool sadeceIstenCikanlar = GetSeciliIstenCikanMi();
+                bool? puantajYapilirMi = sadeceIstenCikanlar ? (bool?)null : GetPuantajYapilanSecili();
                 var (isyeriId, isyeriIdIn) = FirmaIsyeriYetkiHelper.ResolveKisiQueryIsyeriFilter(
                     firmaId, GetSeciliIsyeriFilterId(), _kullaniciYetkileri, _isAdmin);
-                var data = _kqsvc.GetAktifKisilerByFirma(firmaId, _aktifFiltre, puantajYapilirMi, isyeriId, isyeriIdIn) ?? new List<KisiListItem>();
+                var data = _kqsvc.GetAktifKisilerByFirma(firmaId, _aktifFiltre, puantajYapilirMi, isyeriId, isyeriIdIn, sadeceIstenCikanlar) ?? new List<KisiListItem>();
 
                 lstKisiler.SelectedIndexChanged -= lstKisiler_SelectedIndexChanged;
                 try
@@ -394,16 +456,26 @@ namespace CeyPASS.WFA.UserControls
 
         private string BosListeUyariMesaji(int? seciliIsyeriId)
         {
-            if (seciliIsyeriId.HasValue && seciliIsyeriId.Value > 0)
+            bool aramaVar = !string.IsNullOrWhiteSpace(_aktifFiltre);
+            bool isyeriVar = seciliIsyeriId.HasValue && seciliIsyeriId.Value > 0;
+            string isyeriAd = isyeriVar ? cmbIsyeriFilter?.Text?.Trim() : null;
+
+            if (aramaVar && isyeriVar)
             {
-                var ad = cmbIsyeriFilter?.Text?.Trim();
-                return string.IsNullOrEmpty(ad)
-                    ? "Seçili işyerde personel bulunamadı."
-                    : $"\"{ad}\" işyerinde personel bulunamadı.";
+                return string.IsNullOrEmpty(isyeriAd)
+                    ? "Seçili işyeri ve arama kriterine uygun personel bulunamadı."
+                    : $"\"{isyeriAd}\" işyerinde arama kriterine uygun personel bulunamadı.";
             }
 
-            if (!string.IsNullOrWhiteSpace(_aktifFiltre))
+            if (aramaVar)
                 return "Arama kriterine uygun personel bulunamadı.";
+
+            if (isyeriVar)
+            {
+                return string.IsNullOrEmpty(isyeriAd)
+                    ? "Seçili işyerde personel bulunamadı."
+                    : $"\"{isyeriAd}\" işyerinde personel bulunamadı.";
+            }
 
             return "Seçili filtreye uygun personel bulunamadı.";
         }
@@ -491,6 +563,7 @@ namespace CeyPASS.WFA.UserControls
                 _fotoDirty = false;
 
                 ApplyCheckboxRules();
+                SetDetailControlsReadOnly(GetSeciliIstenCikanMi());
                 WinFormsAuthHelper.ApplyPageAuthorization(_auth, _session, PageName, this);
                 LogHelper.Info(PageName, "KisiyiGetir", $"Kişi detay yüklendi: {kisiId}", null, cid);
             }
@@ -645,6 +718,7 @@ namespace CeyPASS.WFA.UserControls
             nudYemekAdedi.Value = 0;
 
             IslemButonlariniGoster(false);
+            SetDetailControlsReadOnly(false);
             ApplyCheckboxRules();
             WinFormsAuthHelper.ApplyPageAuthorization(_auth, _session, PageName, this);
         }
@@ -676,6 +750,67 @@ namespace CeyPASS.WFA.UserControls
             var cid = Guid.NewGuid().ToString("N");
             try
             {
+                if (GetSeciliIstenCikanMi())
+                {
+                    if (!_auth.Can(PageName, YetkiTipleri.Update))
+                    {
+                        System.Media.SystemSounds.Beep.Play();
+                        return;
+                    }
+
+                    string personelId = null;
+                    if (lstKisiler.SelectedItem is KisiListItem ki)
+                        personelId = ki.PersonelId;
+                    else if (lstKisiler.SelectedItem is DataRowView drv)
+                        personelId = Convert.ToString(drv["PersonelId"]);
+
+                    if (string.IsNullOrWhiteSpace(personelId))
+                    {
+                        MessageBox.Show("Lütfen listeden bir kişi seçiniz.", "Uyarı",
+                            MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        return;
+                    }
+
+                    var onay = MessageBox.Show(
+                        "Seçili personeli tekrar aktif etmek istiyor musunuz?",
+                        "Onay",
+                        MessageBoxButtons.YesNo,
+                        MessageBoxIcon.Question);
+                    if (onay != DialogResult.Yes)
+                        return;
+
+                    var puantajSorusu = MessageBox.Show(
+                        "Puantaj yapılan bir kart mı?",
+                        "Puantaj",
+                        MessageBoxButtons.YesNo,
+                        MessageBoxIcon.Question);
+                    bool puantajYapilirMi = puantajSorusu == DialogResult.Yes;
+
+                    var sonuc = _kisiSvc.KisiTekrarAktifEt(personelId.Trim(), puantajYapilirMi);
+                    if (!sonuc.Success)
+                    {
+                        var err = string.IsNullOrWhiteSpace(sonuc.ErrorMessage)
+                            ? "Personel tekrar aktif edilemedi."
+                            : ("Personel tekrar aktif edilemedi. " + sonuc.ErrorMessage.Trim());
+                        MessageBox.Show(err, "Hata",
+                            MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        return;
+                    }
+
+                    MessageBox.Show(
+                        PersonelMesajlari.TekrarAktifBasariMesaji(sonuc.YenidenAktifYemekLimiti, sonuc.CihazUyarisiGoster, sonuc.WarningMessage),
+                        "Bilgi",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Information);
+
+                    cmbCalismaDurumu.SelectedIndex = 0;
+                    ApplyCalismaDurumuUi();
+                    _sonSecilen = new KisiListItem { PersonelId = personelId.Trim() };
+                    KisileriYukle(GetSeciliFirmaId(), preserveSelection: true);
+                    LogHelper.Info(PageName, "TekrarAktifEt", $"Personel tekrar aktif edildi. KisiId={personelId}", null, cid);
+                    return;
+                }
+
                 if (!_auth.Can(PageName, YetkiTipleri.Delete))
                 {
                     System.Media.SystemSounds.Beep.Play();

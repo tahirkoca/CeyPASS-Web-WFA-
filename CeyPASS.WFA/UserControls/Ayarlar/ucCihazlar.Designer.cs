@@ -41,6 +41,8 @@ namespace CeyPASS.WFA.UserControls.Ayarlar
             this.txtAciklama = new System.Windows.Forms.TextBox();
             this.label6 = new System.Windows.Forms.Label();
             this.cmbCihazTipleri = new System.Windows.Forms.ComboBox();
+            this.lblSaatPenceresi = new System.Windows.Forms.Label();
+            this.chkSaatPenceresiAktifMi = new System.Windows.Forms.CheckBox();
             this.lblHeaderInfo = new System.Windows.Forms.Label();
             this.pnlFooter = new System.Windows.Forms.Panel();
             this.btnVazgec = new System.Windows.Forms.Button();
@@ -121,10 +123,12 @@ namespace CeyPASS.WFA.UserControls.Ayarlar
             this.tlpForm.Controls.Add(this.txtAciklama, 1, 5);
             this.tlpForm.Controls.Add(this.label6, 0, 6);
             this.tlpForm.Controls.Add(this.cmbCihazTipleri, 1, 6);
+            this.tlpForm.Controls.Add(this.lblSaatPenceresi, 0, 7);
+            this.tlpForm.Controls.Add(this.chkSaatPenceresiAktifMi, 1, 7);
             this.tlpForm.Dock = System.Windows.Forms.DockStyle.Top;
             this.tlpForm.Location = new System.Drawing.Point(20, 68);
             this.tlpForm.Name = "tlpForm";
-            this.tlpForm.RowCount = 7;
+            this.tlpForm.RowCount = 8;
             this.tlpForm.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 50F));
             this.tlpForm.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 50F));
             this.tlpForm.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 50F));
@@ -132,7 +136,8 @@ namespace CeyPASS.WFA.UserControls.Ayarlar
             this.tlpForm.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 50F));
             this.tlpForm.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 80F));
             this.tlpForm.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 50F));
-            this.tlpForm.Size = new System.Drawing.Size(845, 390);
+            this.tlpForm.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 50F));
+            this.tlpForm.Size = new System.Drawing.Size(845, 440);
             this.tlpForm.TabIndex = 0;
             // 
             // label8
@@ -293,6 +298,30 @@ namespace CeyPASS.WFA.UserControls.Ayarlar
             this.cmbCihazTipleri.Name = "cmbCihazTipleri";
             this.cmbCihazTipleri.Size = new System.Drawing.Size(670, 31);
             this.cmbCihazTipleri.TabIndex = 13;
+            // 
+            // lblSaatPenceresi
+            // 
+            this.lblSaatPenceresi.Anchor = System.Windows.Forms.AnchorStyles.Left;
+            this.lblSaatPenceresi.AutoSize = true;
+            this.lblSaatPenceresi.Font = new System.Drawing.Font("Segoe UI Semibold", 10F, System.Drawing.FontStyle.Bold);
+            this.lblSaatPenceresi.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
+            this.lblSaatPenceresi.Location = new System.Drawing.Point(3, 398);
+            this.lblSaatPenceresi.Name = "lblSaatPenceresi";
+            this.lblSaatPenceresi.Size = new System.Drawing.Size(140, 23);
+            this.lblSaatPenceresi.TabIndex = 14;
+            this.lblSaatPenceresi.Text = "Saat Penceresi:";
+            // 
+            // chkSaatPenceresiAktifMi
+            // 
+            this.chkSaatPenceresiAktifMi.Anchor = System.Windows.Forms.AnchorStyles.Left;
+            this.chkSaatPenceresiAktifMi.AutoSize = true;
+            this.chkSaatPenceresiAktifMi.Font = new System.Drawing.Font("Segoe UI", 10F);
+            this.chkSaatPenceresiAktifMi.Location = new System.Drawing.Point(172, 397);
+            this.chkSaatPenceresiAktifMi.Name = "chkSaatPenceresiAktifMi";
+            this.chkSaatPenceresiAktifMi.Size = new System.Drawing.Size(280, 27);
+            this.chkSaatPenceresiAktifMi.TabIndex = 15;
+            this.chkSaatPenceresiAktifMi.Text = "Yemek saat penceresi aktif";
+            this.chkSaatPenceresiAktifMi.UseVisualStyleBackColor = true;
             // 
             // lblHeaderInfo
             // 
@@ -506,6 +535,8 @@ namespace CeyPASS.WFA.UserControls.Ayarlar
         private System.Windows.Forms.TextBox txtAciklama;
         private System.Windows.Forms.Label label6;
         private System.Windows.Forms.ComboBox cmbCihazTipleri;
+        private System.Windows.Forms.Label lblSaatPenceresi;
+        private System.Windows.Forms.CheckBox chkSaatPenceresiAktifMi;
 
         // Butonlar (Orijinal tipleri korundu)
         private System.Windows.Forms.Button btnVazgec;

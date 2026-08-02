@@ -79,6 +79,24 @@ namespace CeyPASS.Business.Services
             }
         }
 
+        public void TopluOnaylaKadar(int personelId, int yil, int ay, DateTime hedefGun, int kullaniciId)
+        {
+            var gunler = GetAy(personelId, yil, ay);
+            int ekKayitGun = GetEkKayitGun();
+            var hedefTarih = hedefGun.Date;
+
+            foreach (var gun in gunler)
+            {
+                if (gun.Tarih.Date > hedefTarih) continue;
+
+                // Sadece Bekliyor durumunda ve düzenlenebilir (kilitlenmemiş) günleri onayla
+                if (gun.OnayDurumu == OnayDurumu.Bekliyor && IsRowEditable(gun.Tarih, ekKayitGun))
+                {
+                    Onayla(personelId, gun.Tarih, gun.DuzenlenenFMDakika, gun.Aciklama, gun.CalismaTipi, gun.Saat, kullaniciId);
+                }
+            }
+        }
+
         public void Reddet(int personelId, DateTime tarih, string aciklama, int kullaniciId) => _repo.OnayUpsert(personelId, tarih, (int)OnayDurumu.Reddedildi, 0, aciklama, kullaniciId);
         public void Duzenle(int personelId, DateTime tarih, int duzenlenmisFm, string aciklama, int kullaniciId) => _repo.OnayUpsert(personelId, tarih, (int)OnayDurumu.Düzeltildi, duzenlenmisFm, aciklama, kullaniciId);
         public List<PuantajTipDTO> GetPuantajTipleri() => _repo.GetPuantajTipleri();

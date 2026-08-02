@@ -12,5 +12,6 @@ namespace CeyPASS.Business.Abstractions
         List<Kisi> GetKisilerForPuantaj(int firmaId, int isyeriId, int yil, int ay);
         KisiAdSoyad GetAdSoyad(string personelId);
         (bool IsValid, string? Message) ValidateKisiKayit(KisiKayitValidasyonDTO dto);
+        KisiTekrarAktifSonuc KisiTekrarAktifEt(string personelId, bool puantajYapilirMi);
     }
 }

@@ -1117,6 +1117,9 @@ namespace CeyPASS.WFA.UserControls
             btnAra = new Button();
             txtAra = new TextBox();
             pnlTopFilter = new Panel();
+            tlpTopFilters = new TableLayoutPanel();
+            cmbCalismaDurumu = new ComboBox();
+            lblCalismaDurumu = new Label();
             cmbKartTipi = new ComboBox();
             lblKartTipi = new Label();
             cmbFirmaFilter = new ComboBox();
@@ -1145,6 +1148,7 @@ namespace CeyPASS.WFA.UserControls
             pnlLeft.SuspendLayout();
             pnlLeftHeader.SuspendLayout();
             pnlTopFilter.SuspendLayout();
+            tlpTopFilters.SuspendLayout();
             pnlActions.SuspendLayout();
             SuspendLayout();
             // 
@@ -1991,12 +1995,7 @@ namespace CeyPASS.WFA.UserControls
             // pnlTopFilter
             // 
             pnlTopFilter.BackColor = Color.White;
-            pnlTopFilter.Controls.Add(cmbKartTipi);
-            pnlTopFilter.Controls.Add(lblKartTipi);
-            pnlTopFilter.Controls.Add(cmbFirmaFilter);
-            pnlTopFilter.Controls.Add(labelFirma);
-            pnlTopFilter.Controls.Add(cmbIsyeriFilter);
-            pnlTopFilter.Controls.Add(lblIsyeriFilter);
+            pnlTopFilter.Controls.Add(tlpTopFilters);
             pnlTopFilter.Controls.Add(pnlActions);
             pnlTopFilter.Dock = DockStyle.Top;
             pnlTopFilter.Location = new Point(10, 12);
@@ -2006,67 +2005,126 @@ namespace CeyPASS.WFA.UserControls
             pnlTopFilter.Size = new Size(1465, 155);
             pnlTopFilter.TabIndex = 0;
             // 
+            // tlpTopFilters
+            // 
+            tlpTopFilters.ColumnCount = 4;
+            tlpTopFilters.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 85F));
+            tlpTopFilters.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
+            tlpTopFilters.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 95F));
+            tlpTopFilters.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
+            tlpTopFilters.Controls.Add(lblCalismaDurumu, 0, 0);
+            tlpTopFilters.Controls.Add(cmbCalismaDurumu, 1, 0);
+            tlpTopFilters.Controls.Add(lblKartTipi, 2, 0);
+            tlpTopFilters.Controls.Add(cmbKartTipi, 3, 0);
+            tlpTopFilters.Controls.Add(labelFirma, 0, 1);
+            tlpTopFilters.Controls.Add(cmbFirmaFilter, 1, 1);
+            tlpTopFilters.Controls.Add(lblIsyeriFilter, 2, 1);
+            tlpTopFilters.Controls.Add(cmbIsyeriFilter, 3, 1);
+            tlpTopFilters.Dock = DockStyle.Fill;
+            tlpTopFilters.Location = new Point(10, 12);
+            tlpTopFilters.Margin = new Padding(0);
+            tlpTopFilters.Name = "tlpTopFilters";
+            tlpTopFilters.RowCount = 2;
+            tlpTopFilters.RowStyles.Add(new RowStyle(SizeType.Percent, 50F));
+            tlpTopFilters.RowStyles.Add(new RowStyle(SizeType.Percent, 50F));
+            tlpTopFilters.Size = new Size(918, 131);
+            tlpTopFilters.TabIndex = 1;
+            // 
+            // cmbCalismaDurumu
+            // 
+            cmbCalismaDurumu.Dock = DockStyle.Fill;
+            cmbCalismaDurumu.DropDownStyle = ComboBoxStyle.DropDownList;
+            cmbCalismaDurumu.Font = new Font("Segoe UI", 11F);
+            cmbCalismaDurumu.FormattingEnabled = true;
+            cmbCalismaDurumu.Items.AddRange(new object[] { "Aktif Çalışanlar", "İşten Çıkanlar" });
+            cmbCalismaDurumu.Location = new Point(75, 4);
+            cmbCalismaDurumu.Margin = new Padding(3, 4, 14, 4);
+            cmbCalismaDurumu.Name = "cmbCalismaDurumu";
+            cmbCalismaDurumu.Size = new Size(376, 57);
+            cmbCalismaDurumu.TabIndex = 0;
+            // 
+            // lblCalismaDurumu
+            // 
+            lblCalismaDurumu.Dock = DockStyle.Fill;
+            lblCalismaDurumu.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+            lblCalismaDurumu.Location = new Point(3, 4);
+            lblCalismaDurumu.Margin = new Padding(3, 4, 4, 4);
+            lblCalismaDurumu.Name = "lblCalismaDurumu";
+            lblCalismaDurumu.Size = new Size(63, 57);
+            lblCalismaDurumu.TabIndex = 0;
+            lblCalismaDurumu.Text = "Durum:";
+            lblCalismaDurumu.TextAlign = ContentAlignment.MiddleRight;
+            // 
             // cmbKartTipi
             // 
+            cmbKartTipi.Dock = DockStyle.Fill;
             cmbKartTipi.DropDownStyle = ComboBoxStyle.DropDownList;
             cmbKartTipi.Font = new Font("Segoe UI", 11F);
             cmbKartTipi.FormattingEnabled = true;
             cmbKartTipi.Items.AddRange(new object[] { "Puantaj Yapılanlar", "Puantaj Yapılmayanlar" });
-            cmbKartTipi.Location = new Point(105, 32);
-            cmbKartTipi.Margin = new Padding(3, 4, 3, 4);
+            cmbKartTipi.Location = new Point(539, 4);
+            cmbKartTipi.Margin = new Padding(3, 4, 10, 4);
             cmbKartTipi.Name = "cmbKartTipi";
-            cmbKartTipi.Size = new Size(220, 33);
+            cmbKartTipi.Size = new Size(376, 57);
             cmbKartTipi.TabIndex = 1;
             // 
             // lblKartTipi
             // 
-            lblKartTipi.AutoSize = true;
+            lblKartTipi.Dock = DockStyle.Fill;
             lblKartTipi.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
-            lblKartTipi.Location = new Point(20, 38);
+            lblKartTipi.Location = new Point(457, 4);
+            lblKartTipi.Margin = new Padding(3, 4, 4, 4);
             lblKartTipi.Name = "lblKartTipi";
-            lblKartTipi.Size = new Size(82, 23);
+            lblKartTipi.Size = new Size(76, 57);
             lblKartTipi.TabIndex = 0;
             lblKartTipi.Text = "Kart tipi:";
+            lblKartTipi.TextAlign = ContentAlignment.MiddleRight;
             // 
             // cmbFirmaFilter
             // 
+            cmbFirmaFilter.Dock = DockStyle.Fill;
             cmbFirmaFilter.DropDownStyle = ComboBoxStyle.DropDownList;
             cmbFirmaFilter.Font = new Font("Segoe UI", 11F);
-            cmbFirmaFilter.Location = new Point(400, 32);
-            cmbFirmaFilter.Margin = new Padding(3, 4, 3, 4);
+            cmbFirmaFilter.Location = new Point(75, 69);
+            cmbFirmaFilter.Margin = new Padding(3, 4, 14, 4);
             cmbFirmaFilter.Name = "cmbFirmaFilter";
-            cmbFirmaFilter.Size = new Size(300, 33);
+            cmbFirmaFilter.Size = new Size(376, 33);
             cmbFirmaFilter.TabIndex = 3;
             // 
             // labelFirma
             // 
-            labelFirma.AutoSize = true;
+            labelFirma.Dock = DockStyle.Fill;
             labelFirma.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
-            labelFirma.Location = new Point(335, 38);
+            labelFirma.Location = new Point(3, 69);
+            labelFirma.Margin = new Padding(3, 4, 4, 4);
             labelFirma.Name = "labelFirma";
-            labelFirma.Size = new Size(61, 23);
+            labelFirma.Size = new Size(63, 58);
             labelFirma.TabIndex = 2;
             labelFirma.Text = "Firma:";
+            labelFirma.TextAlign = ContentAlignment.MiddleRight;
             // 
             // cmbIsyeriFilter
             // 
+            cmbIsyeriFilter.Dock = DockStyle.Fill;
             cmbIsyeriFilter.DropDownStyle = ComboBoxStyle.DropDownList;
             cmbIsyeriFilter.Font = new Font("Segoe UI", 11F);
-            cmbIsyeriFilter.Location = new Point(105, 92);
-            cmbIsyeriFilter.Margin = new Padding(3, 4, 3, 4);
+            cmbIsyeriFilter.Location = new Point(539, 69);
+            cmbIsyeriFilter.Margin = new Padding(3, 4, 10, 4);
             cmbIsyeriFilter.Name = "cmbIsyeriFilter";
-            cmbIsyeriFilter.Size = new Size(595, 33);
+            cmbIsyeriFilter.Size = new Size(376, 33);
             cmbIsyeriFilter.TabIndex = 5;
             // 
             // lblIsyeriFilter
             // 
-            lblIsyeriFilter.AutoSize = true;
+            lblIsyeriFilter.Dock = DockStyle.Fill;
             lblIsyeriFilter.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
-            lblIsyeriFilter.Location = new Point(20, 98);
+            lblIsyeriFilter.Location = new Point(457, 69);
+            lblIsyeriFilter.Margin = new Padding(3, 4, 4, 4);
             lblIsyeriFilter.Name = "lblIsyeriFilter";
-            lblIsyeriFilter.Size = new Size(57, 23);
+            lblIsyeriFilter.Size = new Size(76, 58);
             lblIsyeriFilter.TabIndex = 4;
             lblIsyeriFilter.Text = "İşyeri:";
+            lblIsyeriFilter.TextAlign = ContentAlignment.MiddleRight;
             // 
             // pnlActions
             // 
@@ -2169,7 +2227,8 @@ namespace CeyPASS.WFA.UserControls
             pnlLeftHeader.ResumeLayout(false);
             pnlLeftHeader.PerformLayout();
             pnlTopFilter.ResumeLayout(false);
-            pnlTopFilter.PerformLayout();
+            tlpTopFilters.ResumeLayout(false);
+            tlpTopFilters.PerformLayout();
             pnlActions.ResumeLayout(false);
             ResumeLayout(false);
 
@@ -2189,10 +2248,13 @@ namespace CeyPASS.WFA.UserControls
         private System.Windows.Forms.Button btnAra;
         private System.Windows.Forms.TextBox txtAra;
         private System.Windows.Forms.Panel pnlTopFilter;
+        private System.Windows.Forms.TableLayoutPanel tlpTopFilters;
         private System.Windows.Forms.FlowLayoutPanel pnlActions;
         private System.Windows.Forms.Button btnKisiGuncelle;
         private System.Windows.Forms.Button btnKisiSil;
         private System.Windows.Forms.Button btnKisiEkle;
+        private System.Windows.Forms.ComboBox cmbCalismaDurumu;
+        private System.Windows.Forms.Label lblCalismaDurumu;
         private System.Windows.Forms.ComboBox cmbKartTipi;
         private System.Windows.Forms.Label lblKartTipi;
         private System.Windows.Forms.ComboBox cmbFirmaFilter;
