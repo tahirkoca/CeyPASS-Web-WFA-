@@ -20,6 +20,7 @@ namespace CeyPASS.Tests.Web
         private readonly Mock<IKisiHareketService> _khMock = new();
         private readonly Mock<IKisiDetayService> _kdMock = new();
         private readonly Mock<IMisafirKartService> _mMock = new();
+        private readonly Mock<IAracKartiService> _aracMock = new();
 
         private CanliIzlemeController CreateSutWithRole(string rol)
         {
@@ -27,7 +28,8 @@ namespace CeyPASS.Tests.Web
                 _svcMock.Object,
                 _khMock.Object,
                 _kdMock.Object,
-                _mMock.Object);
+                _mMock.Object,
+                _aracMock.Object);
 
             // Serialize an AuthUserDTO into the session key "CanliIzlemeUser"
             var user = new AuthUserDTO { FirmaId = 1, Rol = rol, KullaniciId = 1 };

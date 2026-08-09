@@ -165,6 +165,7 @@ namespace CeyPASS.WFA
                 services.AddScoped<IKullaniciQueryService, KullaniciQueryService>();
                 services.AddScoped<IKullaniciService, KullaniciService>();
                 services.AddScoped<IMisafirKartService, MisafirKartService>();
+                services.AddScoped<IAracKartiService, AracKartiService>();
                 services.AddScoped<IPozisyonService, PozisyonService>();
                 services.AddScoped<IPuantajService, PuantajService>();
                 services.AddScoped<IRaporService, RaporService>();
@@ -184,10 +185,12 @@ namespace CeyPASS.WFA
                 services.AddScoped<puantajSatirDuzenlemeEkrani>();
                 services.AddScoped<sifremiUnuttumEkrani>();
                 services.AddScoped<reddetmeEkrani>();
+                services.AddTransient<frmKisiAra>();
                 services.AddScoped<ucCihazlar>();
                 services.AddScoped<ucResmiTatiller>();
                 services.AddScoped<KisiKartKontrolu>();
                 services.AddScoped<misafirKartAtama>();
+                services.AddScoped<aracKartiAtama>();
                 services.AddScoped<ucDashboard>();
                 services.AddScoped<ucAylikPuantajEkrani>();
                 services.AddScoped<ucKisiHareketler>();

@@ -18,7 +18,7 @@
                     <i class="bi bi-person me-1"></i>Kullanıcı: @user?.KullaniciAdi
                 </small>
             </div>
-            <div class="d-flex gap-2">
+            <div class="d-flex gap-2 flex-wrap justify-content-end">
                 @if (canMisafirKart)
                 {
                     <button class="btn btn-outline-primary" type="button" onclick="openMisafirKartYeni()" title="Seçili kişiye yeni bir misafir kartı ata">
@@ -26,6 +26,12 @@
                     </button>
                     <button class="btn btn-outline-secondary" type="button" onclick="openMisafirKartGuncelle()" title="Kişiye daha önce atanan kart bilgilerini güncelle">
                         <i class="bi bi-pencil-square me-1"></i>Atanan Kartı Güncelle
+                    </button>
+                    <button class="btn btn-outline-warning" type="button" onclick="openAracKartiYeni()" title="Araç kartı ver">
+                        <i class="bi bi-truck me-1"></i>Araç Kartı Ver
+                    </button>
+                    <button class="btn btn-outline-warning" type="button" onclick="openAracKartiGuncelle()" title="Verilen araç kartını güncelle">
+                        <i class="bi bi-truck-flatbed me-1"></i>Araç Kartını Güncelle
                     </button>
                 }
                 <form method="post" asp-controller="CanliIzleme" asp-action="Logout">
@@ -189,7 +195,7 @@
 
 <!-- Misafir Kart Modal -->
 <div class="modal fade" id="misafirModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog modal-xl">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="misafirModalTitle">Misafir Kart</h5>
@@ -529,6 +535,14 @@
         async function openMisafirKartGuncelle() {
             document.getElementById('misafirModalTitle').textContent = 'Misafir Kart Atama - Güncelleme';
             await loadModal('@Url.Action("MisafirKartGuncelle")');
+        }
+        async function openAracKartiYeni() {
+            document.getElementById('misafirModalTitle').textContent = 'Araç Kartı Ver';
+            await loadModal('@Url.Action("AracKartiYeni")');
+        }
+        async function openAracKartiGuncelle() {
+            document.getElementById('misafirModalTitle').textContent = 'Verilen Araç Kartını Güncelle';
+            await loadModal('@Url.Action("AracKartiGuncelle")');
         }
 
         async function loadModal(url) {

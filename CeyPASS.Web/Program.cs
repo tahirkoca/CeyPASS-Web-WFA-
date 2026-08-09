@@ -118,6 +118,7 @@ builder.Services.AddTransient<IKisiService, KisiService>();
 builder.Services.AddTransient<IKullaniciQueryService, KullaniciQueryService>();
 builder.Services.AddTransient<IKullaniciService, KullaniciService>();
 builder.Services.AddTransient<IMisafirKartService, MisafirKartService>();
+builder.Services.AddTransient<IAracKartiService, AracKartiService>();
 builder.Services.AddTransient<IPozisyonService, PozisyonService>();
 builder.Services.AddTransient<IPuantajService, PuantajService>();
 builder.Services.AddTransient<IRaporService, RaporService>();

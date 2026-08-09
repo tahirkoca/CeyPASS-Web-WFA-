@@ -11,5 +11,6 @@ namespace CeyPASS.Business.Abstractions
         int CreateAssignment(int firmaId, string personelId, string misafirAdSoyad, DateTime girisSaati, string aciklama, string tcKimlikNo, string ziyaretEdilenKisi);
         void UpdateAssignment(int atamaId, string misafirAdSoyad, DateTime girisSaati, DateTime? cikisSaati, string aciklama, string tcKimlikNo, string ziyaretEdilenKisi);
         PuantajsizKartAtama GetMisafirBilgisiByTc(string tcKimlikNo);
+        List<GecmisZiyaretciItem> SearchGecmisZiyaretciler(int firmaId, string adFilter);
     }
 }

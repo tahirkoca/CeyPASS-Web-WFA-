@@ -16,17 +16,19 @@ namespace CeyPASS.WFA.Forms
         private readonly IKisiHareketService _khsvc;
         private readonly IKisiDetayService _kdsvc;
         private readonly IMisafirKartService _msvc;
+        private readonly IAracKartiService _aracSvc;
 
-        public canliIzlemeGirisEkrani(girisEkrani girisFormu,ISessionContext session, ICanliIzlemeService svc,IKisiHareketService khsvc,IKisiDetayService kdsvc,IMisafirKartService msvc)
+        public canliIzlemeGirisEkrani(girisEkrani girisFormu, ISessionContext session, ICanliIzlemeService svc, IKisiHareketService khsvc, IKisiDetayService kdsvc, IMisafirKartService msvc, IAracKartiService aracSvc)
         {
             InitializeComponent();
             SendMessage(canliEkranSifre.Handle, EM_SETCUEBANNER, 0, "Şifrenizi giriniz");
             this.girisFormuRef = girisFormu;
-            _session= session;
+            _session = session;
             _svc = svc;
             _khsvc = khsvc;
             _kdsvc = kdsvc;
             _msvc = msvc;
+            _aracSvc = aracSvc;
         }
         private void canliIzlemeGirisEkrani_Load(object sender, EventArgs e)
         {
@@ -87,7 +89,7 @@ namespace CeyPASS.WFA.Forms
 
             girisFormuRef?.Hide();
             this.Hide();
-            new canliIzlemeVeriEkrani(_session, _svc, _khsvc, _kdsvc,_msvc).Show();
+            new canliIzlemeVeriEkrani(_session, _svc, _khsvc, _kdsvc, _msvc, _aracSvc).Show();
         }
     }
 }

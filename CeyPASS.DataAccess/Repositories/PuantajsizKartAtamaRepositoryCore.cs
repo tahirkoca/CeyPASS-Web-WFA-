@@ -16,7 +16,7 @@ namespace CeyPASS.DataAccess.Repositories
             _context = context;
         }
 
-        public List<PuantajsizKartAtama> GetTodayActive(DateTime now, int firmaId)
+        public List<PuantajsizKartAtama> GetTodayActive(DateTime now, int firmaId, bool? ziyaretciMi = null, bool? aracKartiMi = null)
         {
             var today = now.Date;
 
@@ -27,21 +27,30 @@ namespace CeyPASS.DataAccess.Repositories
                 where k.FirmaId == firmaId
                       && a.Baslangic.Date == today
                       && a.Bitis == null
-                orderby a.Baslangic descending
-                select new PuantajsizKartAtama
-                {
-                    AtamaId = a.AtamaId,
-                    KartId = a.KartId,
-                    MisafirAdSoyad = a.MisafirAdSoyad,
-                    TCKimlikNo = a.TCKimlikNo,
-                    ZiyaretEdilenKisi = a.ZiyaretEdilenKisi,
-                    KartAdi = (k.Ad != null || k.Soyad != null) ? ((k.Ad ?? "") + " " + (k.Soyad ?? "")).Trim() : "",
-                    Baslangic = a.Baslangic,
-                    Bitis = a.Bitis,
-                    Notlar = a.Notlar
-                };
+                select new { a, k };
 
-            return query.ToList();
+            if (ziyaretciMi.HasValue)
+                query = query.Where(x => x.k.ZiyaretciMi == ziyaretciMi.Value);
+
+            if (aracKartiMi.HasValue)
+                query = query.Where(x => x.k.AracKartiMi == aracKartiMi.Value);
+
+            return query
+                .OrderByDescending(x => x.a.Baslangic)
+                .Select(x => new PuantajsizKartAtama
+                {
+                    AtamaId = x.a.AtamaId,
+                    KartId = x.a.KartId,
+                    MisafirAdSoyad = x.a.MisafirAdSoyad,
+                    TCKimlikNo = x.a.TCKimlikNo,
+                    ZiyaretEdilenKisi = x.a.ZiyaretEdilenKisi,
+                    KartAdi = (x.k.Ad != null || x.k.Soyad != null) ? ((x.k.Ad ?? "") + " " + (x.k.Soyad ?? "")).Trim() : "",
+                    Baslangic = x.a.Baslangic,
+                    Bitis = x.a.Bitis,
+                    Notlar = x.a.Notlar,
+                    Plaka = x.a.Plaka
+                })
+                .ToList();
         }
 
         public bool CardBelongsToFirma(string personelId, int firmaId)
@@ -66,7 +75,8 @@ namespace CeyPASS.DataAccess.Repositories
                 ZiyaretEdilenKisi = a.ZiyaretEdilenKisi,
                 Baslangic = a.Baslangic,
                 Bitis = null,
-                Notlar = a.Notlar
+                Notlar = a.Notlar,
+                Plaka = a.Plaka
             };
 
             _context.PuantajsizKartAtamalari.Add(entity);
@@ -84,17 +94,7 @@ namespace CeyPASS.DataAccess.Repositories
             if (e == null)
                 return null;
 
-            return new PuantajsizKartAtama
-            {
-                AtamaId = e.AtamaId,
-                KartId = e.KartId,
-                MisafirAdSoyad = e.MisafirAdSoyad,
-                TCKimlikNo = e.TCKimlikNo,
-                ZiyaretEdilenKisi = e.ZiyaretEdilenKisi,
-                Baslangic = e.Baslangic,
-                Bitis = e.Bitis,
-                Notlar = e.Notlar
-            };
+            return Map(e);
         }
 
         public void Update(PuantajsizKartAtama a)
@@ -111,6 +111,7 @@ namespace CeyPASS.DataAccess.Repositories
             entity.Baslangic = a.Baslangic;
             entity.Bitis = a.Bitis;
             entity.Notlar = a.Notlar;
+            entity.Plaka = a.Plaka;
 
             _context.SaveChanges();
         }
@@ -131,17 +132,71 @@ namespace CeyPASS.DataAccess.Repositories
             if (e == null)
                 return null;
 
-            return new PuantajsizKartAtama
-            {
-                AtamaId = e.AtamaId,
-                KartId = e.KartId,
-                MisafirAdSoyad = e.MisafirAdSoyad,
-                TCKimlikNo = e.TCKimlikNo,
-                ZiyaretEdilenKisi = e.ZiyaretEdilenKisi,
-                Baslangic = e.Baslangic,
-                Bitis = e.Bitis,
-                Notlar = e.Notlar
-            };
+            return Map(e);
         }
+
+        public List<GecmisZiyaretciItem> GetGecmisZiyaretciler(int firmaId, string adFilter, bool? ziyaretciMi, bool? aracKartiMi)
+        {
+            var query =
+                from a in _context.PuantajsizKartAtamalari.AsNoTracking()
+                join k in _context.Kisiler.AsNoTracking()
+                    on a.KartId equals k.PersonelId
+                where k.FirmaId == firmaId
+                      && a.MisafirAdSoyad != null
+                      && a.MisafirAdSoyad != ""
+                select new { a, k };
+
+            if (ziyaretciMi.HasValue)
+                query = query.Where(x => x.k.ZiyaretciMi == ziyaretciMi.Value);
+
+            if (aracKartiMi.HasValue)
+                query = query.Where(x => x.k.AracKartiMi == aracKartiMi.Value);
+
+            if (!string.IsNullOrWhiteSpace(adFilter))
+            {
+                var filter = adFilter.Trim();
+                query = query.Where(x =>
+                    x.a.MisafirAdSoyad.Contains(filter)
+                    || (x.a.Plaka != null && x.a.Plaka.Contains(filter)));
+            }
+
+            var raw = query
+                .Select(x => new
+                {
+                    x.a.MisafirAdSoyad,
+                    x.a.TCKimlikNo,
+                    x.a.ZiyaretEdilenKisi,
+                    x.a.Plaka,
+                    x.a.Baslangic
+                })
+                .ToList();
+
+            return raw
+                .GroupBy(x => (x.MisafirAdSoyad ?? "").Trim(), StringComparer.OrdinalIgnoreCase)
+                .Select(g => g.OrderByDescending(x => x.Baslangic).First())
+                .OrderByDescending(x => x.Baslangic)
+                .Select(x => new GecmisZiyaretciItem
+                {
+                    AdSoyad = x.MisafirAdSoyad ?? "",
+                    TCKimlikNo = x.TCKimlikNo,
+                    ZiyaretEdilenKisi = x.ZiyaretEdilenKisi,
+                    Plaka = x.Plaka,
+                    SonZiyaret = x.Baslangic
+                })
+                .ToList();
+        }
+
+        private static PuantajsizKartAtama Map(PuantajsizKartAtamalari e) => new PuantajsizKartAtama
+        {
+            AtamaId = e.AtamaId,
+            KartId = e.KartId,
+            MisafirAdSoyad = e.MisafirAdSoyad,
+            TCKimlikNo = e.TCKimlikNo,
+            ZiyaretEdilenKisi = e.ZiyaretEdilenKisi,
+            Baslangic = e.Baslangic,
+            Bitis = e.Bitis,
+            Notlar = e.Notlar,
+            Plaka = e.Plaka
+        };
     }
 }

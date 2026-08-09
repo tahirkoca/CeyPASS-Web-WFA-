@@ -1114,8 +1114,7 @@ namespace CeyPASS.WFA.UserControls
             pnlLeft = new Panel();
             lstKisiler = new ListBox();
             pnlLeftHeader = new Panel();
-            btnAra = new Button();
-            txtAra = new TextBox();
+            btnKisiAra = new Button();
             pnlTopFilter = new Panel();
             tlpTopFilters = new TableLayoutPanel();
             cmbCalismaDurumu = new ComboBox();
@@ -1961,8 +1960,7 @@ namespace CeyPASS.WFA.UserControls
             // pnlLeftHeader
             // 
             pnlLeftHeader.BackColor = Color.WhiteSmoke;
-            pnlLeftHeader.Controls.Add(btnAra);
-            pnlLeftHeader.Controls.Add(txtAra);
+            pnlLeftHeader.Controls.Add(btnKisiAra);
             pnlLeftHeader.Dock = DockStyle.Top;
             pnlLeftHeader.Location = new Point(1, 1);
             pnlLeftHeader.Margin = new Padding(3, 4, 3, 4);
@@ -1970,27 +1968,26 @@ namespace CeyPASS.WFA.UserControls
             pnlLeftHeader.Size = new Size(298, 75);
             pnlLeftHeader.TabIndex = 0;
             // 
-            // btnAra
+            // btnKisiAra
             // 
-            btnAra.BackColor = Color.FromArgb(0, 123, 255);
-            btnAra.FlatStyle = FlatStyle.Flat;
-            btnAra.ForeColor = Color.White;
-            btnAra.Location = new Point(220, 16);
-            btnAra.Margin = new Padding(3, 4, 3, 4);
-            btnAra.Name = "btnAra";
-            btnAra.Size = new Size(70, 38);
-            btnAra.TabIndex = 1;
-            btnAra.Text = "Ara";
-            btnAra.UseVisualStyleBackColor = false;
-            // 
-            // txtAra
-            // 
-            txtAra.Font = new Font("Segoe UI", 10F);
-            txtAra.Location = new Point(10, 19);
-            txtAra.Margin = new Padding(3, 4, 3, 4);
-            txtAra.Name = "txtAra";
-            txtAra.Size = new Size(200, 30);
-            txtAra.TabIndex = 0;
+            btnKisiAra.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            btnKisiAra.BackColor = Color.FromArgb(0, 123, 255);
+            btnKisiAra.FlatAppearance.BorderSize = 0;
+            btnKisiAra.FlatStyle = FlatStyle.Flat;
+            btnKisiAra.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+            btnKisiAra.ForeColor = Color.White;
+            btnKisiAra.Image = global::CeyPASS.WFA.Properties.Resources.icons8_search_25;
+            btnKisiAra.ImageAlign = ContentAlignment.MiddleLeft;
+            btnKisiAra.Location = new Point(12, 14);
+            btnKisiAra.Margin = new Padding(3, 4, 3, 4);
+            btnKisiAra.Name = "btnKisiAra";
+            btnKisiAra.Padding = new Padding(10, 0, 12, 0);
+            btnKisiAra.Size = new Size(274, 48);
+            btnKisiAra.TabIndex = 0;
+            btnKisiAra.Text = "Personel Ara";
+            btnKisiAra.TextAlign = ContentAlignment.MiddleCenter;
+            btnKisiAra.TextImageRelation = TextImageRelation.ImageBeforeText;
+            btnKisiAra.UseVisualStyleBackColor = false;
             // 
             // pnlTopFilter
             // 
@@ -2245,8 +2242,7 @@ namespace CeyPASS.WFA.UserControls
         private System.Windows.Forms.Panel pnlLeft;
         private System.Windows.Forms.ListBox lstKisiler;
         private System.Windows.Forms.Panel pnlLeftHeader;
-        private System.Windows.Forms.Button btnAra;
-        private System.Windows.Forms.TextBox txtAra;
+        private System.Windows.Forms.Button btnKisiAra;
         private System.Windows.Forms.Panel pnlTopFilter;
         private System.Windows.Forms.TableLayoutPanel tlpTopFilters;
         private System.Windows.Forms.FlowLayoutPanel pnlActions;

@@ -17,11 +17,12 @@ namespace CeyPASS.WFA.Forms
         private readonly IKisiHareketService _khsvc;
         private readonly IKisiDetayService _kisiDetaySvc;
         private readonly IMisafirKartService _mSvc;
+        private readonly IAracKartiService _aracSvc;
         private System.Windows.Forms.Timer anlikVeriTrafigi;
         private List<KisiKartKontrolu> kartlar = new List<KisiKartKontrolu>();
         private int? seciliKisiIdManuel = null;
 
-        public canliIzlemeVeriEkrani(ISessionContext session, ICanliIzlemeService svc, IKisiHareketService khsvc, IKisiDetayService kisiDetaysvc, IMisafirKartService msvc)
+        public canliIzlemeVeriEkrani(ISessionContext session, ICanliIzlemeService svc, IKisiHareketService khsvc, IKisiDetayService kisiDetaysvc, IMisafirKartService msvc, IAracKartiService aracSvc)
         {
             InitializeComponent();
             _session = session;
@@ -29,6 +30,7 @@ namespace CeyPASS.WFA.Forms
             _khsvc = khsvc;
             _kisiDetaySvc = kisiDetaysvc;
             _mSvc = msvc;
+            _aracSvc = aracSvc;
         }
         private void canliIzlemeVeriEkrani_Load(object sender, EventArgs e)
         {
@@ -37,6 +39,8 @@ namespace CeyPASS.WFA.Forms
             {
                 kisiyeKartiAta.Visible = false;
                 atananKartiGuncelle.Visible = false;
+                aracKartiVer.Visible = false;
+                aracKartiGuncelle.Visible = false;
             }
             SonGecenKartlariHazirla();
             SonGecenVerileriYukle();
@@ -52,8 +56,21 @@ namespace CeyPASS.WFA.Forms
         {
             BackColor = AppTheme.ContentBackground;
             flpSonGecenler.BackColor = AppTheme.CardBackground;
-            if (kisiyeKartiAta != null) { kisiyeKartiAta.BackColor = AppTheme.Primary; kisiyeKartiAta.ForeColor = Color.White; }
-            if (atananKartiGuncelle != null) { atananKartiGuncelle.BackColor = AppTheme.Primary; atananKartiGuncelle.ForeColor = Color.White; }
+            StyleKartButton(kisiyeKartiAta, AppTheme.Primary);
+            StyleKartButton(atananKartiGuncelle, AppTheme.Primary);
+            StyleKartButton(aracKartiVer, AppTheme.VehicleAction);
+            StyleKartButton(aracKartiGuncelle, AppTheme.VehicleAction);
+        }
+
+        private static void StyleKartButton(Button btn, Color backColor)
+        {
+            if (btn == null) return;
+            btn.FlatStyle = FlatStyle.Flat;
+            btn.FlatAppearance.BorderSize = 0;
+            btn.UseVisualStyleBackColor = false;
+            btn.BackColor = backColor;
+            btn.ForeColor = Color.White;
+            btn.Font = new Font(AppTheme.FontFamily, 10F, FontStyle.Regular);
         }
         private void canliIzlemeVeriEkrani_FormClosing(object sender, FormClosingEventArgs e)
         {
@@ -217,13 +234,25 @@ namespace CeyPASS.WFA.Forms
         {
             var uc = new misafirKartAtama(_session, _mSvc);
             uc.InitYeni((int)_session.AktifFirmaId);
-            ShowUserControlInDialog(uc, "Misafir Kart Atama - Yeni", 720, 600, this);
+            ShowUserControlInDialog(uc, "Misafir Kart Atama - Yeni", 1080, 600, this);
         }
         private void atananKartiGuncelle_Click(object sender, EventArgs e)
         {
             var uc = new misafirKartAtama(_session, _mSvc);
             uc.InitGuncelleme((int)_session.AktifFirmaId, DateTime.Now);
             ShowUserControlInDialog(uc, "Misafir Kart Atama - Güncelleme", 720, 600, this);
+        }
+        private void aracKartiVer_Click(object sender, EventArgs e)
+        {
+            var uc = new aracKartiAtama(_session, _aracSvc);
+            uc.InitYeni((int)_session.AktifFirmaId);
+            ShowUserControlInDialog(uc, "Araç Kartı Ver", 1080, 600, this);
+        }
+        private void aracKartiGuncelle_Click(object sender, EventArgs e)
+        {
+            var uc = new aracKartiAtama(_session, _aracSvc);
+            uc.InitGuncelleme((int)_session.AktifFirmaId, DateTime.Now);
+            ShowUserControlInDialog(uc, "Verilen Araç Kartını Güncelle", 720, 600, this);
         }
         private void KisiDetaylariniGetir(int kisiId)
         {

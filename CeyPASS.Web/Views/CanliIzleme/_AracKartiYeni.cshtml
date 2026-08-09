@@ -1,18 +1,18 @@
-@model CeyPASS.Web.Models.CanliIzleme.MisafirKartYeniModel
+@model CeyPASS.Web.Models.CanliIzleme.AracKartiYeniModel
 @{
     var cards = ViewBag.Cards as List<CeyPASS.Entities.Concrete.KisiListItem> ?? new List<CeyPASS.Entities.Concrete.KisiListItem>();
 }
 
-<form id="misafirYeniForm" method="post" asp-controller="CanliIzleme" asp-action="MisafirKartYeni">
+<form id="aracYeniForm" method="post" asp-controller="CanliIzleme" asp-action="AracKartiYeni">
     @Html.AntiForgeryToken()
 
     <div class="row g-3">
         <div class="col-md-4">
             <label class="form-label fw-semibold">Geçmiş Ziyaretçiler</label>
-            <input type="text" class="form-control mb-2" id="gecmisAraMisafir" placeholder="İsim ara..." autocomplete="off" />
-            <select id="gecmisListeMisafir" class="form-select" size="12" style="min-height: 280px;">
+            <input type="text" class="form-control mb-2" id="gecmisAraArac" placeholder="İsim veya plaka ara..." autocomplete="off" />
+            <select id="gecmisListeArac" class="form-select" size="12" style="min-height: 280px;">
             </select>
-            <div class="form-text">Listeden seçince Ad Soyad, T.C. ve Kime Geldiği dolar.</div>
+            <div class="form-text">Listeden seçince Ad Soyad, T.C., Plaka ve Kime Geldiği dolar.</div>
         </div>
         <div class="col-md-8">
             <div class="row g-3">
@@ -28,16 +28,20 @@
                 </div>
                 <div class="col-md-6">
                     <label class="form-label">Giriş Saati</label>
-                    <input type="datetime-local" class="form-control" name="GirisSaati" id="GirisSaati"
+                    <input type="datetime-local" class="form-control" name="GirisSaati" id="GirisSaatiArac"
                            value="@Model.GirisSaati.ToString("yyyy-MM-ddTHH:mm")" required />
                 </div>
                 <div class="col-md-6">
                     <label class="form-label">T.C. Kimlik No</label>
-                    <input class="form-control" name="TCKimlikNo" id="TCKimlikNo" maxlength="11" />
+                    <input class="form-control" name="TCKimlikNo" id="TCKimlikNoArac" maxlength="11" />
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Araç Plakası</label>
+                    <input class="form-control" name="Plaka" id="PlakaArac" maxlength="20" />
                 </div>
                 <div class="col-md-6">
                     <label class="form-label">Kime Geldiği</label>
-                    <input class="form-control" name="ZiyaretEdilenKisi" id="ZiyaretEdilenKisi" />
+                    <input class="form-control" name="ZiyaretEdilenKisi" id="ZiyaretEdilenKisiArac" />
                 </div>
                 <div class="col-12">
                     <p class="form-text text-muted small mb-0">
@@ -46,8 +50,8 @@
                     </p>
                 </div>
                 <div class="col-md-12">
-                    <label class="form-label">Misafir Ad Soyad</label>
-                    <input class="form-control" name="MisafirAdSoyad" id="MisafirAdSoyad" required />
+                    <label class="form-label">Ad Soyad</label>
+                    <input class="form-control" name="AdSoyad" id="AdSoyadArac" required />
                 </div>
                 <div class="col-md-12">
                     <label class="form-label">Açıklama</label>
@@ -55,7 +59,7 @@
                 </div>
                 <div class="col-12 d-flex justify-content-end gap-2">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
-                    <button type="submit" class="btn btn-primary">Kaydet</button>
+                    <button type="submit" class="btn btn-warning text-white">Kaydet</button>
                 </div>
             </div>
         </div>
@@ -64,13 +68,14 @@
 
 <script>
     (function () {
-        const form = document.getElementById('misafirYeniForm');
-        const tcInput = document.getElementById('TCKimlikNo');
-        const misafirInput = document.getElementById('MisafirAdSoyad');
-        const kimeGeldigiInput = document.getElementById('ZiyaretEdilenKisi');
-        const girisInput = document.getElementById('GirisSaati');
-        const gecmisAra = document.getElementById('gecmisAraMisafir');
-        const gecmisListe = document.getElementById('gecmisListeMisafir');
+        const form = document.getElementById('aracYeniForm');
+        const tcInput = document.getElementById('TCKimlikNoArac');
+        const adInput = document.getElementById('AdSoyadArac');
+        const kimeGeldigiInput = document.getElementById('ZiyaretEdilenKisiArac');
+        const plakaInput = document.getElementById('PlakaArac');
+        const girisInput = document.getElementById('GirisSaatiArac');
+        const gecmisAra = document.getElementById('gecmisAraArac');
+        const gecmisListe = document.getElementById('gecmisListeArac');
         const gecmisUrl = '@Url.Action("SearchGecmisZiyaretciler", "CanliIzleme")';
         let gecmisItems = [];
 
@@ -83,7 +88,7 @@
         async function loadGecmis() {
             const ad = (gecmisAra?.value || '').trim();
             try {
-                const res = await fetch(gecmisUrl + '?tip=misafir&ad=' + encodeURIComponent(ad));
+                const res = await fetch(gecmisUrl + '?tip=arac&ad=' + encodeURIComponent(ad));
                 if (!res.ok) return;
                 const data = await res.json();
                 if (!data.ok) return;
@@ -92,7 +97,7 @@
                 gecmisItems.forEach((it, idx) => {
                     const opt = document.createElement('option');
                     opt.value = String(idx);
-                    opt.textContent = it.adSoyad || '—';
+                    opt.textContent = it.plaka ? ((it.adSoyad || '') + ' (' + it.plaka + ')') : (it.adSoyad || '—');
                     gecmisListe.appendChild(opt);
                 });
             } catch (e) { }
@@ -103,8 +108,9 @@
             gecmisListe.addEventListener('change', function () {
                 const it = gecmisItems[parseInt(gecmisListe.value, 10)];
                 if (!it) return;
-                misafirInput.value = it.adSoyad || '';
+                adInput.value = it.adSoyad || '';
                 tcInput.value = it.tcKimlikNo || '';
+                if (plakaInput) plakaInput.value = it.plaka || '';
                 kimeGeldigiInput.value = it.ziyaretEdilenKisi || '';
                 if (girisInput) girisInput.value = toLocalInputValue(new Date());
             });
@@ -114,16 +120,15 @@
         async function tryFillByTc() {
             const tc = tcInput.value.trim();
             if (!tc) return;
-
             try {
-                const url = '@Url.Action("GetMisafirByTc", "CanliIzleme")' + '?tc=' + encodeURIComponent(tc);
+                const url = '@Url.Action("GetAracByTc", "CanliIzleme")' + '?tc=' + encodeURIComponent(tc);
                 const res = await fetch(url, { method: 'GET' });
                 if (!res.ok) return;
                 const data = await res.json();
                 if (!data.ok) return;
-
-                if (data.misafirAdSoyad && !misafirInput.value.trim()) misafirInput.value = data.misafirAdSoyad;
+                if (data.adSoyad && !adInput.value.trim()) adInput.value = data.adSoyad;
                 if (data.ziyaretEdilenKisi && !kimeGeldigiInput.value.trim()) kimeGeldigiInput.value = data.ziyaretEdilenKisi;
+                if (data.plaka && plakaInput && !plakaInput.value.trim()) plakaInput.value = data.plaka;
             } catch (e) { }
         }
 
@@ -147,8 +152,7 @@
                 return;
             }
             toastr.success(data.message || 'Tamamlandı.');
-            const modalEl = document.getElementById('misafirModal');
-            bootstrap.Modal.getInstance(modalEl)?.hide();
+            bootstrap.Modal.getInstance(document.getElementById('misafirModal'))?.hide();
         });
     })();
 </script>

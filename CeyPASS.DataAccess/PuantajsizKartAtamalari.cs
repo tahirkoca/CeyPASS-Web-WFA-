@@ -23,5 +23,6 @@ namespace CeyPASS.DataAccess
         public System.DateTime Baslangic { get; set; }
         public Nullable<System.DateTime> Bitis { get; set; }
         public string Notlar { get; set; }
+        public string Plaka { get; set; }
     }
 }

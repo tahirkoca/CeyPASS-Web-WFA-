@@ -1,0 +1,112 @@
+@model CeyPASS.Web.Models.CanliIzleme.AracKartiGuncelleModel
+@{
+    var items = ViewBag.Assignments as List<CeyPASS.Entities.Concrete.PuantajsizKartAtama> ?? new List<CeyPASS.Entities.Concrete.PuantajsizKartAtama>();
+}
+
+@if (!items.Any())
+{
+    <div class="alert alert-info mb-0">Bugün aktif araç kartı ataması bulunamadı.</div>
+}
+else
+{
+    <form id="aracGuncelleForm" method="post" asp-controller="CanliIzleme" asp-action="AracKartiGuncelle">
+        @Html.AntiForgeryToken()
+
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label class="form-label">Atama</label>
+                <select id="atamaSelectArac" class="form-select" required>
+                    @foreach (var a in items)
+                    {
+                        <option value="@a.AtamaId"
+                                data-ad="@a.MisafirAdSoyad"
+                                data-tc="@(a.TCKimlikNo ?? "")"
+                                data-plaka="@(a.Plaka ?? "")"
+                                data-ziyaret="@(a.ZiyaretEdilenKisi ?? "")"
+                                data-aciklama="@a.Notlar"
+                                data-giris="@a.Baslangic.ToString("yyyy-MM-ddTHH:mm")">
+                            @a.KartAdi - @a.MisafirAdSoyad
+                        </option>
+                    }
+                </select>
+                <input type="hidden" name="AtamaId" id="AtamaIdArac" value="@items.First().AtamaId" />
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Çıkış Saati</label>
+                <input type="datetime-local" class="form-control" name="CikisSaati"
+                       value="@((Model.CikisSaati ?? System.DateTime.Now).ToString("yyyy-MM-ddTHH:mm"))" />
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Giriş Saati</label>
+                <input type="datetime-local" class="form-control" name="GirisSaati" id="GirisSaatiAracG" required
+                       value="@(items.Any() ? items.First().Baslangic.ToString("yyyy-MM-ddTHH:mm") : "")" />
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Ad Soyad</label>
+                <input class="form-control" name="AdSoyad" id="AdSoyadAracG" required />
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">T.C. Kimlik No</label>
+                <input class="form-control" name="TCKimlikNo" id="TCKimlikNoAracG" maxlength="11" />
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Araç Plakası</label>
+                <input class="form-control" name="Plaka" id="PlakaAracG" maxlength="20" />
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Kime Geldiği</label>
+                <input class="form-control" name="ZiyaretEdilenKisi" id="ZiyaretEdilenKisiAracG" />
+            </div>
+            <div class="col-md-12">
+                <label class="form-label">Açıklama</label>
+                <textarea class="form-control" name="Aciklama" id="AciklamaAracG" rows="3"></textarea>
+            </div>
+            <div class="col-12 d-flex justify-content-end gap-2">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                <button type="submit" class="btn btn-warning text-white">Güncelle</button>
+            </div>
+        </div>
+    </form>
+
+    <script>
+        (function () {
+            const form = document.getElementById('aracGuncelleForm');
+            const select = document.getElementById('atamaSelectArac');
+            const atamaId = document.getElementById('AtamaIdArac');
+            const giris = document.getElementById('GirisSaatiAracG');
+            const ad = document.getElementById('AdSoyadAracG');
+            const tcInput = document.getElementById('TCKimlikNoAracG');
+            const plakaInput = document.getElementById('PlakaAracG');
+            const ziyaretInput = document.getElementById('ZiyaretEdilenKisiAracG');
+            const aciklama = document.getElementById('AciklamaAracG');
+
+            function applyFromOption() {
+                const opt = select.options[select.selectedIndex];
+                if (!opt) return;
+                atamaId.value = opt.value;
+                ad.value = opt.getAttribute('data-ad') || '';
+                if (tcInput) tcInput.value = opt.getAttribute('data-tc') || '';
+                if (plakaInput) plakaInput.value = opt.getAttribute('data-plaka') || '';
+                if (ziyaretInput) ziyaretInput.value = opt.getAttribute('data-ziyaret') || '';
+                aciklama.value = opt.getAttribute('data-aciklama') || '';
+                giris.value = opt.getAttribute('data-giris') || '';
+            }
+
+            select.addEventListener('change', applyFromOption);
+            applyFromOption();
+
+            form.addEventListener('submit', async function (e) {
+                e.preventDefault();
+                const fd = new FormData(form);
+                const res = await fetch(form.action, { method: 'POST', body: fd });
+                const data = await res.json();
+                if (!data.ok) {
+                    toastr.error(data.message || 'İşlem başarısız.');
+                    return;
+                }
+                toastr.success(data.message || 'Tamamlandı.');
+                bootstrap.Modal.getInstance(document.getElementById('misafirModal'))?.hide();
+            });
+        })();
+    </script>
+}

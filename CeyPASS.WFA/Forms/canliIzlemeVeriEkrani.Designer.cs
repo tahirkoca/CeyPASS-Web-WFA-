@@ -39,6 +39,9 @@ namespace CeyPASS.WFA.Forms
             this.lblSeciliAdSoyad = new System.Windows.Forms.Label();
             this.pbSeciliFoto = new System.Windows.Forms.PictureBox();
             this.tableLayoutPanel4 = new System.Windows.Forms.TableLayoutPanel();
+            this.flpKartButonlari = new System.Windows.Forms.FlowLayoutPanel();
+            this.aracKartiGuncelle = new System.Windows.Forms.Button();
+            this.aracKartiVer = new System.Windows.Forms.Button();
             this.atananKartiGuncelle = new System.Windows.Forms.Button();
             this.kisiyeKartiAta = new System.Windows.Forms.Button();
             this.tableLayoutPanel1.SuspendLayout();
@@ -47,6 +50,7 @@ namespace CeyPASS.WFA.Forms
             this.tableLayoutPanel3.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pbSeciliFoto)).BeginInit();
             this.tableLayoutPanel4.SuspendLayout();
+            this.flpKartButonlari.SuspendLayout();
             this.SuspendLayout();
             // 
             // tableLayoutPanel1
@@ -175,39 +179,70 @@ namespace CeyPASS.WFA.Forms
             // 
             // tableLayoutPanel4
             // 
-            this.tableLayoutPanel4.ColumnCount = 10;
-            this.tableLayoutPanel4.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 10F));
-            this.tableLayoutPanel4.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 10F));
-            this.tableLayoutPanel4.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 10F));
-            this.tableLayoutPanel4.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 10F));
-            this.tableLayoutPanel4.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 10F));
-            this.tableLayoutPanel4.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 10F));
-            this.tableLayoutPanel4.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 7.747318F));
-            this.tableLayoutPanel4.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 14.60071F));
-            this.tableLayoutPanel4.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 2.324195F));
-            this.tableLayoutPanel4.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 15.25626F));
-            this.tableLayoutPanel4.Controls.Add(this.atananKartiGuncelle, 7, 0);
-            this.tableLayoutPanel4.Controls.Add(this.kisiyeKartiAta, 9, 0);
+            this.tableLayoutPanel4.ColumnCount = 1;
+            this.tableLayoutPanel4.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
+            this.tableLayoutPanel4.Controls.Add(this.flpKartButonlari, 0, 0);
             this.tableLayoutPanel4.Dock = System.Windows.Forms.DockStyle.Fill;
             this.tableLayoutPanel4.Location = new System.Drawing.Point(3, 908);
             this.tableLayoutPanel4.Name = "tableLayoutPanel4";
             this.tableLayoutPanel4.RowCount = 1;
             this.tableLayoutPanel4.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-            this.tableLayoutPanel4.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 20F));
             this.tableLayoutPanel4.Size = new System.Drawing.Size(1776, 47);
             this.tableLayoutPanel4.TabIndex = 3;
             // 
+            // flpKartButonlari
+            // 
+            this.flpKartButonlari.AutoSize = true;
+            this.flpKartButonlari.Controls.Add(this.aracKartiGuncelle);
+            this.flpKartButonlari.Controls.Add(this.aracKartiVer);
+            this.flpKartButonlari.Controls.Add(this.atananKartiGuncelle);
+            this.flpKartButonlari.Controls.Add(this.kisiyeKartiAta);
+            this.flpKartButonlari.Dock = System.Windows.Forms.DockStyle.Right;
+            this.flpKartButonlari.FlowDirection = System.Windows.Forms.FlowDirection.LeftToRight;
+            this.flpKartButonlari.Location = new System.Drawing.Point(756, 0);
+            this.flpKartButonlari.Name = "flpKartButonlari";
+            this.flpKartButonlari.Padding = new System.Windows.Forms.Padding(0, 4, 12, 4);
+            this.flpKartButonlari.Size = new System.Drawing.Size(1020, 47);
+            this.flpKartButonlari.TabIndex = 0;
+            this.flpKartButonlari.WrapContents = false;
+            // 
+            // aracKartiGuncelle
+            // 
+            this.aracKartiGuncelle.FlatAppearance.BorderSize = 0;
+            this.aracKartiGuncelle.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.aracKartiGuncelle.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(162)));
+            this.aracKartiGuncelle.Location = new System.Drawing.Point(0, 4);
+            this.aracKartiGuncelle.Margin = new System.Windows.Forms.Padding(0);
+            this.aracKartiGuncelle.Name = "aracKartiGuncelle";
+            this.aracKartiGuncelle.Size = new System.Drawing.Size(280, 40);
+            this.aracKartiGuncelle.TabIndex = 50;
+            this.aracKartiGuncelle.Text = "Verilen Araç Kartını Güncelle";
+            this.aracKartiGuncelle.UseVisualStyleBackColor = false;
+            this.aracKartiGuncelle.Click += new System.EventHandler(this.aracKartiGuncelle_Click);
+            // 
+            // aracKartiVer
+            // 
+            this.aracKartiVer.FlatAppearance.BorderSize = 0;
+            this.aracKartiVer.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.aracKartiVer.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(162)));
+            this.aracKartiVer.Location = new System.Drawing.Point(288, 4);
+            this.aracKartiVer.Margin = new System.Windows.Forms.Padding(8, 0, 0, 0);
+            this.aracKartiVer.Name = "aracKartiVer";
+            this.aracKartiVer.Size = new System.Drawing.Size(200, 40);
+            this.aracKartiVer.TabIndex = 49;
+            this.aracKartiVer.Text = "Araç Kartı Ver";
+            this.aracKartiVer.UseVisualStyleBackColor = false;
+            this.aracKartiVer.Click += new System.EventHandler(this.aracKartiVer_Click);
+            // 
             // atananKartiGuncelle
             // 
-            this.atananKartiGuncelle.BackColor = System.Drawing.Color.LightGray;
-            this.atananKartiGuncelle.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.atananKartiGuncelle.FlatAppearance.BorderColor = System.Drawing.Color.Black;
+            this.atananKartiGuncelle.FlatAppearance.BorderSize = 0;
+            this.atananKartiGuncelle.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.atananKartiGuncelle.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(162)));
-            this.atananKartiGuncelle.ForeColor = System.Drawing.Color.Black;
-            this.atananKartiGuncelle.Location = new System.Drawing.Point(1199, 0);
-            this.atananKartiGuncelle.Margin = new System.Windows.Forms.Padding(0);
+            this.atananKartiGuncelle.Location = new System.Drawing.Point(496, 4);
+            this.atananKartiGuncelle.Margin = new System.Windows.Forms.Padding(20, 0, 0, 0);
             this.atananKartiGuncelle.Name = "atananKartiGuncelle";
-            this.atananKartiGuncelle.Size = new System.Drawing.Size(259, 47);
+            this.atananKartiGuncelle.Size = new System.Drawing.Size(280, 40);
             this.atananKartiGuncelle.TabIndex = 48;
             this.atananKartiGuncelle.Text = "Misafire Verilen Kartı Güncelle";
             this.atananKartiGuncelle.UseVisualStyleBackColor = false;
@@ -215,15 +250,13 @@ namespace CeyPASS.WFA.Forms
             // 
             // kisiyeKartiAta
             // 
-            this.kisiyeKartiAta.BackColor = System.Drawing.Color.LightGray;
-            this.kisiyeKartiAta.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.kisiyeKartiAta.FlatAppearance.BorderColor = System.Drawing.Color.Black;
-            this.kisiyeKartiAta.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(162)));
-            this.kisiyeKartiAta.ForeColor = System.Drawing.Color.Black;
-            this.kisiyeKartiAta.Location = new System.Drawing.Point(1499, 0);
-            this.kisiyeKartiAta.Margin = new System.Windows.Forms.Padding(0);
+            this.kisiyeKartiAta.FlatAppearance.BorderSize = 0;
+            this.kisiyeKartiAta.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.kisiyeKartiAta.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(162)));
+            this.kisiyeKartiAta.Location = new System.Drawing.Point(784, 4);
+            this.kisiyeKartiAta.Margin = new System.Windows.Forms.Padding(8, 0, 0, 0);
             this.kisiyeKartiAta.Name = "kisiyeKartiAta";
-            this.kisiyeKartiAta.Size = new System.Drawing.Size(277, 47);
+            this.kisiyeKartiAta.Size = new System.Drawing.Size(220, 40);
             this.kisiyeKartiAta.TabIndex = 40;
             this.kisiyeKartiAta.Text = "Misafire Kart Ver";
             this.kisiyeKartiAta.UseVisualStyleBackColor = false;
@@ -246,6 +279,8 @@ namespace CeyPASS.WFA.Forms
             this.tableLayoutPanel3.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.pbSeciliFoto)).EndInit();
             this.tableLayoutPanel4.ResumeLayout(false);
+            this.tableLayoutPanel4.PerformLayout();
+            this.flpKartButonlari.ResumeLayout(false);
             this.ResumeLayout(false);
 
         }
@@ -262,7 +297,10 @@ namespace CeyPASS.WFA.Forms
         private System.Windows.Forms.Label lblSeciliDepartman;
         private System.Windows.Forms.Label lblSeciliAdSoyad;
         private System.Windows.Forms.TableLayoutPanel tableLayoutPanel4;
+        private System.Windows.Forms.FlowLayoutPanel flpKartButonlari;
         private System.Windows.Forms.Button kisiyeKartiAta;
         private System.Windows.Forms.Button atananKartiGuncelle;
+        private System.Windows.Forms.Button aracKartiVer;
+        private System.Windows.Forms.Button aracKartiGuncelle;
     }
 }

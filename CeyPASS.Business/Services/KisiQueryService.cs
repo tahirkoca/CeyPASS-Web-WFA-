@@ -24,6 +24,11 @@ namespace CeyPASS.Business.Services
             return _repo.GetAktifByFirmaPaged(firmId, search, puantajYapilirMi, isyeriId, isyeriIdIn, sadeceIstenCikanlar, page, pageSize, out totalCount);
         }
 
+        public List<KisiSearchResultItem> SearchKisilerPaged(KisiSearchFilter filter, int page, int pageSize, out int totalCount)
+        {
+            return _repo.SearchByFirmaPaged(filter, page, pageSize, out totalCount);
+        }
+
         public KisiDetay GetKisiDetay(string personelId)
         {
             return _repo.GetDetay(personelId);

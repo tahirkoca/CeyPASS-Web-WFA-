@@ -223,6 +223,7 @@ void RegisterCeyPassServices(IServiceCollection services)
     services.AddTransient<IKullaniciQueryService, KullaniciQueryService>();
     services.AddTransient<IKullaniciService, KullaniciService>();
     services.AddTransient<IMisafirKartService, MisafirKartService>();
+    services.AddTransient<IAracKartiService, AracKartiService>();
     services.AddTransient<IPozisyonService, PozisyonService>();
     services.AddTransient<IPuantajService, PuantajService>();
     services.AddTransient<IRaporService, RaporService>();

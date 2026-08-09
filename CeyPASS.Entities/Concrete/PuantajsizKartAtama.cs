@@ -13,5 +13,6 @@ namespace CeyPASS.Entities.Concrete
         public DateTime Baslangic { get; set; }
         public DateTime? Bitis { get; set; }
         public string Notlar { get; set; }
+        public string Plaka { get; set; }
     }
 }

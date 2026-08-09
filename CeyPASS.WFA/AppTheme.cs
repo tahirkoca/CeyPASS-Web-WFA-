@@ -13,6 +13,7 @@ public static class AppTheme
     public static Color Primary => Color.FromArgb(0, 120, 212);      // Microsoft Fluent mavi
     public static Color PrimaryHover => Color.FromArgb(0, 99, 197);
     public static Color PrimaryPressed => Color.FromArgb(0, 78, 162);
+    public static Color VehicleAction => Color.FromArgb(253, 126, 20);
 
     // Giriş ekranı (Cey marka kırmızısı)
     public static Color LoginButton => Color.FromArgb(200, 50, 50);

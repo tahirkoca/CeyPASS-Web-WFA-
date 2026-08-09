@@ -16,8 +16,24 @@ import { CustomInput } from "./CustomInput";
 import { CustomButton } from "./CustomButton";
 import { canliIzlemeAuth, canliIzlemeData, type FirmaOption } from "../services/canliIzlemeApi";
 import { LoginBackground } from "../services/preload";
+import { CanliIzlemeKartModal } from "./CanliIzlemeKartModal";
 
 type Props = { onClose: () => void };
+
+type KartModalState = {
+  visible: boolean;
+  kind: "misafir" | "arac";
+  mode: "yeni" | "guncelle";
+} | null;
+
+function canShowKartButtons(authUser: any): boolean {
+  const rol = (authUser?.rol ?? authUser?.Rol ?? "").toString();
+  const isYemekhane = rol.toUpperCase() === "YEMEKHANE";
+  const isDanisma =
+    rol.toLocaleUpperCase("tr-TR").includes("DANIŞMA") ||
+    rol.toUpperCase().includes("DANISMA");
+  return !(isYemekhane && !isDanisma);
+}
 
 export function CanliIzlemeScreen({ onClose }: Props) {
   const [step, setStep] = useState<"login" | "live">("login");
@@ -46,6 +62,8 @@ export function CanliIzlemeScreen({ onClose }: Props) {
   const [selectedLoading, setSelectedLoading] = useState(false);
   const [selectedError, setSelectedError] = useState<string | null>(null);
   const [selectedDetail, setSelectedDetail] = useState<any | null>(null);
+  const [kartModal, setKartModal] = useState<KartModalState>(null);
+  const [kartToast, setKartToast] = useState<string | null>(null);
 
   const selectedFirmaName = useMemo(
     () => firmalar.find((f) => f.id === firmaId)?.ad ?? "Firma Seçin",
@@ -398,6 +416,37 @@ export function CanliIzlemeScreen({ onClose }: Props) {
             </TouchableOpacity>
           </View>
 
+          {canShowKartButtons(authUser) ? (
+            <View className="flex-row flex-wrap justify-between mb-4">
+              {(
+                [
+                  { kind: "misafir" as const, mode: "yeni" as const, label: "Misafir Kart Ver", bg: "#dbeafe", fg: "#1d4ed8" },
+                  { kind: "misafir" as const, mode: "guncelle" as const, label: "Misafir Güncelle", bg: "#e2e8f0", fg: "#334155" },
+                  { kind: "arac" as const, mode: "yeni" as const, label: "Araç Kartı Ver", bg: "#ffedd5", fg: "#c2410c" },
+                  { kind: "arac" as const, mode: "guncelle" as const, label: "Araç Güncelle", bg: "#ffedd5", fg: "#9a3412" },
+                ] as const
+              ).map((b) => (
+                <TouchableOpacity
+                  key={`${b.kind}-${b.mode}`}
+                  style={{ width: "48%", backgroundColor: b.bg }}
+                  className="mb-2 rounded-xl px-3 py-3"
+                  activeOpacity={0.85}
+                  onPress={() => setKartModal({ visible: true, kind: b.kind, mode: b.mode })}
+                >
+                  <Text style={{ color: b.fg }} className="font-extrabold text-[11px] text-center">
+                    {b.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          ) : null}
+
+          {kartToast ? (
+            <View className="mb-3 rounded-xl bg-[#ecfdf5] px-4 py-3 border border-[#a7f3d0]">
+              <Text className="text-[#047857] font-semibold text-[12px]">{kartToast}</Text>
+            </View>
+          ) : null}
+
           <View className="flex-row items-center justify-between mb-3">
             <Text className="text-[15px] font-extrabold text-[#1e293b]">Son Geçişler</Text>
             {refreshing ? <ActivityIndicator color="#dc2626" /> : null}
@@ -543,6 +592,20 @@ export function CanliIzlemeScreen({ onClose }: Props) {
           </View>
         </View>
       </Modal>
+
+      {token && kartModal ? (
+        <CanliIzlemeKartModal
+          visible={kartModal.visible}
+          token={token}
+          kind={kartModal.kind}
+          mode={kartModal.mode}
+          onClose={() => setKartModal(null)}
+          onSaved={(msg) => {
+            setKartToast(msg);
+            setTimeout(() => setKartToast(null), 3000);
+          }}
+        />
+      ) : null}
     </View>
   );
 }

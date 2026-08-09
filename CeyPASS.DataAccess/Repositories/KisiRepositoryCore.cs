@@ -22,7 +22,7 @@ namespace CeyPASS.DataAccess.Repositories
             return _context.Kisiler.Any(k => k.PersonelId == personelId);
         }
 
-        public List<KisiListItem> GetAktifByFirma(int firmId, string search = null, bool? puantajYapilirMi = true, int? isyeriId = null, IReadOnlyList<int> isyeriIdIn = null, bool? ziyaretciMi = null, bool sadeceIstenCikanlar = false)
+        public List<KisiListItem> GetAktifByFirma(int firmId, string search = null, bool? puantajYapilirMi = true, int? isyeriId = null, IReadOnlyList<int> isyeriIdIn = null, bool? ziyaretciMi = null, bool? aracKartiMi = null, bool sadeceIstenCikanlar = false)
         {
             var q = _context.Kisiler.Where(k => k.FirmaId == firmId);
 
@@ -37,6 +37,14 @@ namespace CeyPASS.DataAccess.Repositories
 
             if (ziyaretciMi.HasValue)
                 q = q.Where(k => k.ZiyaretciMi == ziyaretciMi.Value);
+
+            if (aracKartiMi.HasValue)
+            {
+                q = q.Where(k => k.AracKartiMi == aracKartiMi.Value);
+                // Atanacak araç kartları: Ad = 'ARAÇ' havuz kayıtları
+                if (aracKartiMi.Value)
+                    q = q.Where(k => k.Ad == "ARAÇ");
+            }
 
             if (!string.IsNullOrWhiteSpace(search))
             {
@@ -102,6 +110,118 @@ namespace CeyPASS.DataAccess.Repositories
                     IstenCikisTarihi = k.IstenCikisTarihi
                 })
                 .ToList();
+        }
+
+        public List<KisiSearchResultItem> SearchByFirmaPaged(KisiSearchFilter filter, int page, int pageSize, out int totalCount)
+        {
+            if (filter == null)
+                throw new ArgumentNullException(nameof(filter));
+            if (page < 1) page = 1;
+            if (pageSize < 1) pageSize = 20;
+
+            var baseQ = BuildSearchQuery(filter);
+
+            var q =
+                from k in baseQ
+                join i in _context.Isyerler.AsNoTracking()
+                    on new { k.IsyeriId, k.FirmaId } equals new { IsyeriId = i.IsyeriId, FirmaId = i.FirmaId } into ij
+                from i in ij.DefaultIfEmpty()
+                join d in _context.Departmanlar.AsNoTracking() on k.DepartmanId equals d.DepartmanId into dj
+                from d in dj.DefaultIfEmpty()
+                join p in _context.Pozisyonlar.AsNoTracking() on k.PozisyonId equals p.PozisyonId into pj
+                from p in pj.DefaultIfEmpty()
+                select new
+                {
+                    k.PersonelId,
+                    k.Ad,
+                    k.Soyad,
+                    k.KartNo,
+                    k.TcKimlikNo,
+                    IsyeriAdi = i != null ? i.IsyeriAdi : null,
+                    DepartmanAdi = d != null ? d.DepartmanAdi : null,
+                    PozisyonAdi = p != null ? p.PozisyonAdi : null
+                };
+
+            totalCount = q.Count();
+
+            return q
+                .OrderBy(x => x.Ad)
+                .ThenBy(x => x.Soyad)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .Select(x => new KisiSearchResultItem
+                {
+                    PersonelId = x.PersonelId,
+                    AdSoyad = ((x.Ad ?? "") + " " + (x.Soyad ?? "")).Trim(),
+                    KartNo = x.KartNo ?? "",
+                    TcKimlikNo = x.TcKimlikNo ?? "",
+                    IsyeriAdi = x.IsyeriAdi ?? "",
+                    DepartmanAdi = x.DepartmanAdi ?? "",
+                    PozisyonAdi = x.PozisyonAdi ?? ""
+                })
+                .ToList();
+        }
+
+        private IQueryable<Kisiler> BuildSearchQuery(KisiSearchFilter filter)
+        {
+            var q = _context.Kisiler.AsNoTracking()
+                .Where(k => k.FirmaId == filter.FirmaId);
+
+            q = filter.SadeceIstenCikanlar
+                ? q.Where(k => k.IstenCikisTarihi != null)
+                : q.Where(k => k.IstenCikisTarihi == null);
+
+            if (!filter.SadeceIstenCikanlar && filter.PuantajYapilirMi.HasValue)
+                q = q.Where(k => k.PuantajYapilirMi == filter.PuantajYapilirMi.Value);
+
+            q = ApplyIsyeriFilter(q, filter.IsyeriId, filter.IsyeriIdIn);
+
+            if (!string.IsNullOrWhiteSpace(filter.AdSoyadKart))
+            {
+                var tokens = filter.AdSoyadKart.Trim()
+                    .Split((char[])null, StringSplitOptions.RemoveEmptyEntries);
+                foreach (var token in tokens)
+                {
+                    var tok = token;
+                    q = q.Where(k =>
+                        (k.Ad ?? "").Contains(tok) ||
+                        (k.Soyad ?? "").Contains(tok) ||
+                        (k.KartNo ?? "").Contains(tok) ||
+                        ((k.Ad ?? "") + " " + (k.Soyad ?? "")).Contains(tok));
+                }
+            }
+
+            if (!string.IsNullOrWhiteSpace(filter.Sicil))
+            {
+                var t = filter.Sicil.Trim();
+                q = q.Where(k => (k.PersonelId ?? "").Contains(t));
+            }
+
+            if (!string.IsNullOrWhiteSpace(filter.TcKimlikNo))
+            {
+                var t = filter.TcKimlikNo.Trim();
+                q = q.Where(k => (k.TcKimlikNo ?? "").Contains(t));
+            }
+
+            if (!string.IsNullOrWhiteSpace(filter.Email))
+            {
+                var t = filter.Email.Trim();
+                q = q.Where(k => (k.Email ?? "").Contains(t));
+            }
+
+            if (filter.DepartmanId.HasValue && filter.DepartmanId.Value > 0)
+                q = q.Where(k => k.DepartmanId == filter.DepartmanId.Value);
+
+            if (filter.PozisyonId.HasValue && filter.PozisyonId.Value > 0)
+                q = q.Where(k => k.PozisyonId == filter.PozisyonId.Value);
+
+            if (filter.CalismaStatuId.HasValue && filter.CalismaStatuId.Value > 0)
+            {
+                var cs = filter.CalismaStatuId.Value.ToString();
+                q = q.Where(k => k.CalismaStatusu == cs);
+            }
+
+            return q;
         }
 
         private static IQueryable<Kisiler> ApplyIsyeriFilter(IQueryable<Kisiler> q, int? isyeriId, IReadOnlyList<int> isyeriIdIn)

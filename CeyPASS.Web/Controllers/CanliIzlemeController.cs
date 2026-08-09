@@ -18,17 +18,20 @@ namespace CeyPASS.Web.Controllers
         private readonly IKisiHareketService _khsvc;
         private readonly IKisiDetayService _kdsvc;
         private readonly IMisafirKartService _msvc;
+        private readonly IAracKartiService _aracSvc;
 
         public CanliIzlemeController(
             ICanliIzlemeService svc,
             IKisiHareketService khsvc,
             IKisiDetayService kdsvc,
-            IMisafirKartService msvc)
+            IMisafirKartService msvc,
+            IAracKartiService aracSvc)
         {
             _svc = svc;
             _khsvc = khsvc;
             _kdsvc = kdsvc;
             _msvc = msvc;
+            _aracSvc = aracSvc;
         }
 
         [HttpGet]
@@ -243,6 +246,115 @@ namespace CeyPASS.Web.Controllers
             try
             {
                 _msvc.UpdateAssignment(model.AtamaId, model.MisafirAdSoyad, model.GirisSaati, model.CikisSaati, model.Aciklama, model.TCKimlikNo, model.ZiyaretEdilenKisi);
+                return Json(new { ok = true, message = "Kayıt güncellendi." });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { ok = false, message = ex.Message });
+            }
+        }
+
+        [HttpGet]
+        public IActionResult SearchGecmisZiyaretciler(string ad, string tip)
+        {
+            var user = GetUser();
+            if (user == null) return Unauthorized();
+            if (IsYemekhaneRole(user?.Rol) && !IsDanismaRole(user?.Rol)) return Forbid();
+
+            var isArac = string.Equals(tip, "arac", StringComparison.OrdinalIgnoreCase);
+            var items = isArac
+                ? _aracSvc.SearchGecmisZiyaretciler(user.FirmaId, ad)
+                : _msvc.SearchGecmisZiyaretciler(user.FirmaId, ad);
+
+            return Json(new
+            {
+                ok = true,
+                items = (items ?? new List<GecmisZiyaretciItem>()).Select(x => new
+                {
+                    adSoyad = x.AdSoyad,
+                    tcKimlikNo = x.TCKimlikNo,
+                    ziyaretEdilenKisi = x.ZiyaretEdilenKisi,
+                    plaka = x.Plaka
+                })
+            });
+        }
+
+        [HttpGet]
+        public IActionResult AracKartiYeni()
+        {
+            var user = GetUser();
+            if (user == null) return Unauthorized();
+            if (IsYemekhaneRole(user?.Rol) && !IsDanismaRole(user?.Rol)) return Forbid();
+
+            ViewBag.Cards = _aracSvc.GetCardsForNew(user.FirmaId);
+            return PartialView("_AracKartiYeni", new AracKartiYeniModel { GirisSaati = DateTime.Now });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult AracKartiYeni(AracKartiYeniModel model)
+        {
+            var user = GetUser();
+            if (user == null) return Unauthorized();
+            if (IsYemekhaneRole(user?.Rol) && !IsDanismaRole(user?.Rol)) return Forbid();
+
+            try
+            {
+                _aracSvc.CreateAssignment(user.FirmaId, model.KartId, model.AdSoyad, model.GirisSaati, model.Aciklama, model.TCKimlikNo, model.ZiyaretEdilenKisi, model.Plaka);
+                return Json(new { ok = true, message = "Kayıt başarıyla oluşturuldu." });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { ok = false, message = ex.Message });
+            }
+        }
+
+        [HttpGet]
+        public IActionResult GetAracByTc(string tc)
+        {
+            var user = GetUser();
+            if (user == null) return Unauthorized();
+            if (IsYemekhaneRole(user?.Rol) && !IsDanismaRole(user?.Rol)) return Forbid();
+
+            if (string.IsNullOrWhiteSpace(tc))
+                return Json(new { ok = false, message = "T.C. kimlik numarası boş olamaz." });
+
+            var rec = _aracSvc.GetBilgisiByTc(tc);
+            if (rec == null)
+                return Json(new { ok = false });
+
+            return Json(new
+            {
+                ok = true,
+                adSoyad = rec.MisafirAdSoyad,
+                ziyaretEdilenKisi = rec.ZiyaretEdilenKisi,
+                plaka = rec.Plaka,
+                aciklama = rec.Notlar
+            });
+        }
+
+        [HttpGet]
+        public IActionResult AracKartiGuncelle()
+        {
+            var user = GetUser();
+            if (user == null) return Unauthorized();
+            if (IsYemekhaneRole(user?.Rol) && !IsDanismaRole(user?.Rol)) return Forbid();
+
+            ViewBag.Assignments = _aracSvc.GetTodayActiveAssignments(DateTime.Now, user.FirmaId);
+            return PartialView("_AracKartiGuncelle", new AracKartiGuncelleModel { CikisSaati = DateTime.Now });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult AracKartiGuncelle(AracKartiGuncelleModel model)
+        {
+            var user = GetUser();
+            if (user == null) return Unauthorized();
+            if (IsYemekhaneRole(user?.Rol) && !IsDanismaRole(user?.Rol)) return Forbid();
+
+            try
+            {
+                _aracSvc.UpdateAssignment(model.AtamaId, model.AdSoyad, model.GirisSaati, model.CikisSaati, model.Aciklama, model.TCKimlikNo, model.ZiyaretEdilenKisi, model.Plaka);
                 return Json(new { ok = true, message = "Kayıt güncellendi." });
             }
             catch (Exception ex)
