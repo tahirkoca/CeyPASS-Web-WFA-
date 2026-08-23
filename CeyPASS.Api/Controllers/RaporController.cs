@@ -25,6 +25,7 @@ namespace CeyPASS.Api.Controllers
         private readonly IKullaniciQueryService _kullaniciQueryService;
         private readonly IKullaniciFirmaIsyeriYetkiService _yetkiSvc;
         private readonly IKisiEkraniLookUpService _lookupService;
+        private readonly ICihazService _cihazService;
         private const string PageName = "Raporlar";
 
         public RaporController(
@@ -33,7 +34,8 @@ namespace CeyPASS.Api.Controllers
             ISessionContext sessionContext,
             IKullaniciQueryService kullaniciQueryService,
             IKullaniciFirmaIsyeriYetkiService yetkiSvc,
-            IKisiEkraniLookUpService lookupService)
+            IKisiEkraniLookUpService lookupService,
+            ICihazService cihazService)
         {
             _raporService = raporService;
             _authorizationService = authorizationService;
@@ -41,6 +43,7 @@ namespace CeyPASS.Api.Controllers
             _kullaniciQueryService = kullaniciQueryService;
             _yetkiSvc = yetkiSvc;
             _lookupService = lookupService;
+            _cihazService = cihazService;
         }
 
         public sealed class PagedResponse<T>
@@ -63,6 +66,7 @@ namespace CeyPASS.Api.Controllers
             public string ProcedureAdi { get; set; } = string.Empty;
             public int? FirmaId { get; set; }
             public List<int>? IsyeriIds { get; set; }
+            public List<int>? CihazIds { get; set; }
             public DateTime TarihBaslangic { get; set; }
             public DateTime TarihBitis { get; set; }
             public int Page { get; set; } = 1;
@@ -75,6 +79,37 @@ namespace CeyPASS.Api.Controllers
             if (!_authorizationService.ViewAbility(PageName)) return Forbid();
             var raporlar = _raporService.GetirRaporlar();
             return Ok(ApiResult<List<CeyPASS.Entities.Concrete.RaporTanimi>>.Ok(raporlar));
+        }
+
+        [HttpGet("parametreler")]
+        public ActionResult<ApiResult<List<string>>> GetParametreler([FromQuery] string procedureAdi)
+        {
+            if (!_authorizationService.ViewAbility(PageName)) return Forbid();
+            if (string.IsNullOrWhiteSpace(procedureAdi))
+                return Ok(ApiResult<List<string>>.Ok(new List<string>()));
+            var names = _raporService.GetProcedureParameterNames(procedureAdi)?.ToList() ?? new List<string>();
+            return Ok(ApiResult<List<string>>.Ok(names));
+        }
+
+        [HttpGet("cihazlar")]
+        public ActionResult<ApiResult<List<LookupItem>>> GetCihazlar()
+        {
+            if (!_authorizationService.ViewAbility(PageName)) return Forbid();
+
+            int firmaId = _sessionContext.AktifFirmaId ?? 0;
+            if (firmaId == 0) return BadRequest(ApiResult.Failure("Firma bilgisi bulunamadı."));
+
+            bool isAdmin = _sessionContext.IsAdmin();
+            List<FirmaIsyeriYetkiDTO>? yetkiler = null;
+            if (_sessionContext.AktifKullaniciId.HasValue)
+                yetkiler = _yetkiSvc.GetYetkiler(_sessionContext.AktifKullaniciId.Value);
+
+            if (!FirmaIsyeriYetkiHelper.IsFirmaAuthorized(firmaId, yetkiler, isAdmin))
+                return Forbid();
+
+            var list = _cihazService.GetListe(true, firmaId) ?? new List<CihazListDTO>();
+            var items = list.Select(c => new LookupItem { Id = c.CihazId, Ad = c.CihazAdi }).ToList();
+            return Ok(ApiResult<List<LookupItem>>.Ok(items));
         }
 
         [HttpGet("isyerleri")]
@@ -125,25 +160,41 @@ namespace CeyPASS.Api.Controllers
             if (!FirmaIsyeriYetkiHelper.IsFirmaAuthorized(firmaId, yetkiler, isAdmin))
                 return Forbid();
 
-            var (isyeriIdCsv, status) = BuildRaporIsyeriIdListCsv(
-                firmaId,
-                request.IsyeriIds,
-                yetkiler,
-                isAdmin);
+            var spParams = _raporService.GetProcedureParameterNames(request.ProcedureAdi);
+            var kind = RaporParametreHelper.GetMultiSelect(spParams);
 
-            if (status == FirmaIsyeriYetkiHelper.RaporIsyeriListStatus.UnauthorizedSelection)
-                return BadRequest(ApiResult.Failure("Seçilen işyerlerden bazıları için yetkiniz yok."));
-            if (status == FirmaIsyeriYetkiHelper.RaporIsyeriListStatus.NoAccess)
-                return Forbid();
+            string isyeriIdCsv = "";
+            string cihazIdCsv = "";
+            if (kind == RaporParametreHelper.MultiSelectKind.Isyeri)
+            {
+                var (csv, status) = BuildRaporIsyeriIdListCsv(
+                    firmaId,
+                    request.IsyeriIds,
+                    yetkiler,
+                    isAdmin);
+
+                if (status == FirmaIsyeriYetkiHelper.RaporIsyeriListStatus.UnauthorizedSelection)
+                    return BadRequest(ApiResult.Failure("Seçilen işyerlerden bazıları için yetkiniz yok."));
+                if (status == FirmaIsyeriYetkiHelper.RaporIsyeriListStatus.NoAccess)
+                    return Forbid();
+                isyeriIdCsv = csv ?? "";
+            }
+            else if (kind == RaporParametreHelper.MultiSelectKind.Cihaz)
+            {
+                cihazIdCsv = request.CihazIds != null && request.CihazIds.Count > 0
+                    ? string.Join(",", request.CihazIds.Where(id => id > 0).Distinct())
+                    : "";
+            }
 
             string firmaIdCsv = firmaId > 0 ? firmaId.ToString() : "";
 
             var parametreler = new Dictionary<string, object>
             {
-                { "@FirmaIdList", firmaIdCsv },
-                { "@IsyeriIdList", isyeriIdCsv ?? "" },
-                { "@TarihBaslangic", RaporTarihHelper.ToReportRangeStart(request.TarihBaslangic) },
-                { "@TarihBitis", RaporTarihHelper.ToReportRangeEnd(request.TarihBitis) },
+                { RaporParametreHelper.FirmaIdList, firmaIdCsv },
+                { RaporParametreHelper.IsyeriIdList, isyeriIdCsv },
+                { RaporParametreHelper.CihazIdList, cihazIdCsv },
+                { RaporParametreHelper.TarihBaslangic, RaporTarihHelper.ToReportRangeStart(request.TarihBaslangic) },
+                { RaporParametreHelper.TarihBitis, RaporTarihHelper.ToReportRangeEnd(request.TarihBitis) },
             };
 
             DataTable dt = _raporService.CalistirRapor(request.ProcedureAdi, parametreler);
@@ -227,6 +278,11 @@ namespace CeyPASS.Api.Controllers
 
                     request.Params["@IsyeriIdList"] = isyeriIdCsv ?? "";
                 }
+
+                if (!request.Params.ContainsKey("@CihazIdList") && request.CihazIds != null && request.CihazIds.Count > 0)
+                    request.Params["@CihazIdList"] = string.Join(",", request.CihazIds.Where(id => id > 0).Distinct());
+                else if (!request.Params.ContainsKey("@CihazIdList"))
+                    request.Params["@CihazIdList"] = "";
 
                 if (!request.Params.ContainsKey("@TarihBaslangic") || !request.Params.ContainsKey("@TarihBitis"))
                     return BadRequest(ApiResult.Failure("Tarih parametreleri eksik."));
@@ -323,6 +379,7 @@ namespace CeyPASS.Api.Controllers
         public string ExportTitle { get; set; } = "Rapor";
         public string Format { get; set; } = "pdf";
         public List<int>? IsyeriIds { get; set; }
+        public List<int>? CihazIds { get; set; }
         public Dictionary<string, object> Params { get; set; } = new();
     }
 }

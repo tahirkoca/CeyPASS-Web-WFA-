@@ -25,6 +25,7 @@ namespace CeyPASS.Tests.Unit
             Id = id,
             CalismaSekliId = 34,
             IsyeriId = 1,
+            CihazId = 7,
             YemekBaslangicSaati = new TimeSpan(11, 30, 0),
             YemekBitisSaati = new TimeSpan(12, 30, 0),
             AktifMi = true
@@ -44,10 +45,23 @@ namespace CeyPASS.Tests.Unit
         }
 
         [Fact]
-        public void Add_AyniIsyeriVar_Red()
+        public void Add_CihazSecilmedi_Red()
         {
             var item = ValidItem();
-            _repo.Setup(r => r.ExistsForIsyeri(34, 1, null)).Returns(true);
+            item.CihazId = 0;
+
+            var (ok, error) = _sut.Add(item);
+
+            ok.Should().BeFalse();
+            error.Should().Contain("Cihaz");
+            _repo.Verify(r => r.Insert(It.IsAny<PersonelVardiyaYemekYetki>()), Times.Never);
+        }
+
+        [Fact]
+        public void Add_AyniCihazVar_Red()
+        {
+            var item = ValidItem();
+            _repo.Setup(r => r.ExistsForCihaz(34, 7, null)).Returns(true);
 
             var (ok, error) = _sut.Add(item);
 
@@ -60,7 +74,7 @@ namespace CeyPASS.Tests.Unit
         public void Add_Gecerli_InsertCagirilir()
         {
             var item = ValidItem();
-            _repo.Setup(r => r.ExistsForIsyeri(34, 1, null)).Returns(false);
+            _repo.Setup(r => r.ExistsForCihaz(34, 7, null)).Returns(false);
             _repo.Setup(r => r.Insert(item)).Returns(10);
 
             var (ok, error) = _sut.Add(item);
@@ -71,10 +85,10 @@ namespace CeyPASS.Tests.Unit
         }
 
         [Fact]
-        public void Update_DuplicateIsyeriExcludeSelf_Ok()
+        public void Update_DuplicateCihazExcludeSelf_Ok()
         {
             var item = ValidItem(5);
-            _repo.Setup(r => r.ExistsForIsyeri(34, 1, 5)).Returns(false);
+            _repo.Setup(r => r.ExistsForCihaz(34, 7, 5)).Returns(false);
             _repo.Setup(r => r.Update(item)).Returns(true);
 
             var (ok, error) = _sut.Update(item);

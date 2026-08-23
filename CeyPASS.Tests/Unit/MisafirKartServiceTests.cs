@@ -79,11 +79,27 @@ namespace CeyPASS.Tests.Unit
         }
 
         [Fact]
+        public void CreateAssignment_TcBos_Exception()
+        {
+            Action act = () => _sut.CreateAssignment(1, "KART001", "Ali Veli", DateTime.Now, null, null, null);
+
+            act.Should().Throw<ArgumentException>().WithMessage("*T.C. Kimlik No*");
+        }
+
+        [Fact]
+        public void CreateAssignment_TcMaskeli_Exception()
+        {
+            Action act = () => _sut.CreateAssignment(1, "KART001", "Ali Veli", DateTime.Now, null, "1**********", null);
+
+            act.Should().Throw<ArgumentException>().WithMessage("*11 haneli*");
+        }
+
+        [Fact]
         public void CreateAssignment_KartBaskaBirmaya_Exception()
         {
             _atamaRepoMock.Setup(a => a.CardBelongsToFirma("KART001", 1)).Returns(false);
 
-            Action act = () => _sut.CreateAssignment(1, "KART001", "Ali Veli", DateTime.Now, null, null, null);
+            Action act = () => _sut.CreateAssignment(1, "KART001", "Ali Veli", DateTime.Now, null, "12345678901", null);
 
             act.Should().Throw<InvalidOperationException>().WithMessage("*firmaya ait değil*");
         }
@@ -94,7 +110,7 @@ namespace CeyPASS.Tests.Unit
             _atamaRepoMock.Setup(a => a.CardBelongsToFirma("KART001", 1)).Returns(true);
             _atamaRepoMock.Setup(a => a.ExistsActiveForCard("KART001")).Returns(true);
 
-            Action act = () => _sut.CreateAssignment(1, "KART001", "Ali Veli", DateTime.Now, null, null, null);
+            Action act = () => _sut.CreateAssignment(1, "KART001", "Ali Veli", DateTime.Now, null, "12345678901", null);
 
             act.Should().Throw<InvalidOperationException>().WithMessage("*aktif bir atama*");
         }
@@ -106,11 +122,11 @@ namespace CeyPASS.Tests.Unit
             _atamaRepoMock.Setup(a => a.ExistsActiveForCard("KART001")).Returns(false);
             _atamaRepoMock.Setup(a => a.Insert(It.IsAny<PuantajsizKartAtama>())).Returns(42);
 
-            var id = _sut.CreateAssignment(1, "KART001", "  Ali Veli  ", DateTime.Now, null, null, null);
+            var id = _sut.CreateAssignment(1, "KART001", "  Ali Veli  ", DateTime.Now, null, "12345678901", null);
 
             id.Should().Be(42);
             _atamaRepoMock.Verify(a => a.Insert(It.Is<PuantajsizKartAtama>(
-                x => x.MisafirAdSoyad == "Ali Veli" && x.TCKimlikNo == null
+                x => x.MisafirAdSoyad == "Ali Veli" && x.TCKimlikNo == "12345678901"
             )), Times.Once);
         }
 

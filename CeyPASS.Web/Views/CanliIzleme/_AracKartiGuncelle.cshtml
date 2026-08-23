@@ -46,11 +46,11 @@ else
                 <input class="form-control" name="AdSoyad" id="AdSoyadAracG" required />
             </div>
             <div class="col-md-6">
-                <label class="form-label">T.C. Kimlik No</label>
+                <label class="form-label">T.C. Kimlik No *</label>
                 <input class="form-control" name="TCKimlikNo" id="TCKimlikNoAracG" maxlength="11" />
             </div>
             <div class="col-md-6">
-                <label class="form-label">Araç Plakası</label>
+                <label class="form-label">Araç Plakası *</label>
                 <input class="form-control" name="Plaka" id="PlakaAracG" maxlength="20" />
             </div>
             <div class="col-md-6">
@@ -79,17 +79,36 @@ else
             const plakaInput = document.getElementById('PlakaAracG');
             const ziyaretInput = document.getElementById('ZiyaretEdilenKisiAracG');
             const aciklama = document.getElementById('AciklamaAracG');
+            const Tc = window.TcKimlik;
+            let tamTc = null;
+            let suppressTcChange = false;
+
+            function showMaskedTc(fullTc) {
+                tamTc = (fullTc || '').trim() || null;
+                suppressTcChange = true;
+                if (tcInput) tcInput.value = tamTc ? Tc.mask(tamTc) : '';
+                suppressTcChange = false;
+            }
 
             function applyFromOption() {
                 const opt = select.options[select.selectedIndex];
                 if (!opt) return;
                 atamaId.value = opt.value;
                 ad.value = opt.getAttribute('data-ad') || '';
-                if (tcInput) tcInput.value = opt.getAttribute('data-tc') || '';
+                showMaskedTc(opt.getAttribute('data-tc') || '');
                 if (plakaInput) plakaInput.value = opt.getAttribute('data-plaka') || '';
                 if (ziyaretInput) ziyaretInput.value = opt.getAttribute('data-ziyaret') || '';
                 aciklama.value = opt.getAttribute('data-aciklama') || '';
                 giris.value = opt.getAttribute('data-giris') || '';
+            }
+
+            if (tcInput) {
+                tcInput.addEventListener('input', function () {
+                    if (suppressTcChange) return;
+                    var shown = (tcInput.value || '').trim();
+                    if (tamTc && Tc && shown === Tc.mask(tamTc)) return;
+                    tamTc = null;
+                });
             }
 
             select.addEventListener('change', applyFromOption);
@@ -97,6 +116,16 @@ else
 
             form.addEventListener('submit', async function (e) {
                 e.preventDefault();
+                try {
+                    if (tcInput) tcInput.value = Tc.resolveForSave(tcInput.value, tamTc);
+                } catch (err) {
+                    toastr.error(err.message || 'T.C. Kimlik No geçersiz.');
+                    return;
+                }
+                if (plakaInput && !(plakaInput.value || '').trim()) {
+                    toastr.error('Plaka giriniz.');
+                    return;
+                }
                 const fd = new FormData(form);
                 const res = await fetch(form.action, { method: 'POST', body: fd });
                 const data = await res.json();

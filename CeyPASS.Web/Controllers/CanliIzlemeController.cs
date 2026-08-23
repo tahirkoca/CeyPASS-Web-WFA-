@@ -274,7 +274,8 @@ namespace CeyPASS.Web.Controllers
                     adSoyad = x.AdSoyad,
                     tcKimlikNo = x.TCKimlikNo,
                     ziyaretEdilenKisi = x.ZiyaretEdilenKisi,
-                    plaka = x.Plaka
+                    plaka = x.Plaka,
+                    gosterim = x.Gosterim
                 })
             });
         }

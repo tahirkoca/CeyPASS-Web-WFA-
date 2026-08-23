@@ -61,6 +61,7 @@ namespace CeyPASS.WFA.UserControls.Canlı_İzleme
             _suppressSearch = true;
             lstGecmis.BeginUpdate();
             lstGecmis.DataSource = null;
+            lstGecmis.DisplayMember = nameof(GecmisZiyaretciItem.Gosterim);
             lstGecmis.DataSource = items;
             lstGecmis.EndUpdate();
             _suppressSearch = false;

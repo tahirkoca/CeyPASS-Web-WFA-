@@ -20,6 +20,7 @@ namespace CeyPASS.WFA.UserControls.VMY
         private readonly IKullaniciFirmaIsyeriYetkiService _yetkiSvc;
         private readonly IPersonelVardiyaYemekYetkiService _yemekYetkiSvc;
         private readonly IKisiEkraniLookUpService _lookupSvc;
+        private readonly ICihazService _cihazSvc;
         private ScreenMode _mode = ScreenMode.List;
         private bool _wired = false;
         private bool _saatPenceresiAktif;
@@ -34,6 +35,7 @@ namespace CeyPASS.WFA.UserControls.VMY
         private Label lblYemekTalimat;
         private DataGridView dgvYemekPencereleri;
         private ComboBox cmbYemekIsyeri;
+        private ComboBox cmbYemekCihaz;
         private DateTimePicker dtpYemekBas;
         private DateTimePicker dtpYemekBit;
         private CheckBox chkYemekAktif;
@@ -53,7 +55,8 @@ namespace CeyPASS.WFA.UserControls.VMY
             IAuthorizationService auth,
             IKullaniciFirmaIsyeriYetkiService yetkiSvc,
             IPersonelVardiyaYemekYetkiService yemekYetkiSvc,
-            IKisiEkraniLookUpService lookupSvc)
+            IKisiEkraniLookUpService lookupSvc,
+            ICihazService cihazSvc)
         {
             InitializeComponent();
             _session = session;
@@ -62,6 +65,7 @@ namespace CeyPASS.WFA.UserControls.VMY
             _yetkiSvc = yetkiSvc;
             _yemekYetkiSvc = yemekYetkiSvc;
             _lookupSvc = lookupSvc;
+            _cihazSvc = cihazSvc;
             authHelp = new AuthorizationHelper(_session, _auth);
             var cid = Guid.NewGuid().ToString("N");
             AppTheme.ApplyToControl(this);
@@ -153,7 +157,7 @@ namespace CeyPASS.WFA.UserControls.VMY
             var pnlYemekEditor = new Panel
             {
                 Dock = DockStyle.Bottom,
-                Height = 180,
+                Height = 200,
                 Padding = new Padding(0, 8, 0, 0)
             };
 
@@ -175,6 +179,15 @@ namespace CeyPASS.WFA.UserControls.VMY
             {
                 DropDownStyle = ComboBoxStyle.DropDownList,
                 Location = new Point(0, 24),
+                Width = 280,
+                Font = new Font("Segoe UI", 10F)
+            };
+
+            var lblCihaz = new Label { Text = "Cihaz", Location = new Point(300, 4), AutoSize = true };
+            cmbYemekCihaz = new ComboBox
+            {
+                DropDownStyle = ComboBoxStyle.DropDownList,
+                Location = new Point(300, 24),
                 Width = 280,
                 Font = new Font("Segoe UI", 10F)
             };
@@ -253,6 +266,8 @@ namespace CeyPASS.WFA.UserControls.VMY
 
             pnlYemekEditor.Controls.Add(lblIsyeri);
             pnlYemekEditor.Controls.Add(cmbYemekIsyeri);
+            pnlYemekEditor.Controls.Add(lblCihaz);
+            pnlYemekEditor.Controls.Add(cmbYemekCihaz);
             pnlYemekEditor.Controls.Add(lblBas);
             pnlYemekEditor.Controls.Add(dtpYemekBas);
             pnlYemekEditor.Controls.Add(lblBit);
@@ -366,6 +381,7 @@ namespace CeyPASS.WFA.UserControls.VMY
                 return;
 
             LoadYemekIsyerleri();
+            LoadYemekCihazlar();
             ClearYemekEditor();
             LoadYemekPencereleri();
             UpdateYemekCrudEnabled();
@@ -422,6 +438,7 @@ namespace CeyPASS.WFA.UserControls.VMY
             }
 
             LoadYemekIsyerleri();
+            LoadYemekCihazlar();
             ClearYemekEditor();
             LoadYemekPencereleri();
             UpdateYemekCrudEnabled();
@@ -486,6 +503,18 @@ namespace CeyPASS.WFA.UserControls.VMY
             SafeSelectFirst(cmbYemekIsyeri);
         }
 
+        private void LoadYemekCihazlar()
+        {
+            int firmaId = _session.AktifFirmaId ?? 0;
+            var list = _cihazSvc.GetListe(sadeceAktif: true, firmaId) ?? new List<CihazListDTO>();
+
+            cmbYemekCihaz.DataSource = null;
+            cmbYemekCihaz.DisplayMember = nameof(CihazListDTO.CihazAdi);
+            cmbYemekCihaz.ValueMember = nameof(CihazListDTO.CihazId);
+            cmbYemekCihaz.DataSource = list;
+            SafeSelectFirst(cmbYemekCihaz);
+        }
+
         private void LoadYemekPencereleri()
         {
             if (!_saatPenceresiAktif)
@@ -503,10 +532,14 @@ namespace CeyPASS.WFA.UserControls.VMY
             {
                 Id = x.Id,
                 Isyeri = x.IsyeriAdi ?? x.IsyeriId.ToString(),
+                Cihaz = string.IsNullOrWhiteSpace(x.CihazAdi)
+                    ? (x.CihazId > 0 ? x.CihazId.ToString() : "")
+                    : x.CihazAdi,
                 Baslangic = x.YemekBaslangicSaati.ToString(@"hh\:mm"),
                 Bitis = x.YemekBitisSaati.ToString(@"hh\:mm"),
                 Aktif = x.AktifMi ? "Evet" : "Hayır",
                 IsyeriId = x.IsyeriId,
+                CihazId = x.CihazId,
                 YemekBaslangicSaati = x.YemekBaslangicSaati,
                 YemekBitisSaati = x.YemekBitisSaati,
                 AktifMi = x.AktifMi
@@ -531,6 +564,7 @@ namespace CeyPASS.WFA.UserControls.VMY
             }
 
             H(nameof(YemekPencereGridRow.Isyeri), "İşyeri");
+            H(nameof(YemekPencereGridRow.Cihaz), "Cihaz");
             H(nameof(YemekPencereGridRow.Baslangic), "Yemek Başlangıç");
             H(nameof(YemekPencereGridRow.Bitis), "Yemek Bitiş");
             H(nameof(YemekPencereGridRow.Aktif), "Aktif");
@@ -544,6 +578,9 @@ namespace CeyPASS.WFA.UserControls.VMY
             [DisplayName("İşyeri")]
             public string Isyeri { get; set; }
 
+            [DisplayName("Cihaz")]
+            public string Cihaz { get; set; }
+
             [DisplayName("Yemek Başlangıç")]
             public string Baslangic { get; set; }
 
@@ -555,6 +592,9 @@ namespace CeyPASS.WFA.UserControls.VMY
 
             [Browsable(false)]
             public int IsyeriId { get; set; }
+
+            [Browsable(false)]
+            public int CihazId { get; set; }
 
             [Browsable(false)]
             public TimeSpan YemekBaslangicSaati { get; set; }
@@ -573,6 +613,7 @@ namespace CeyPASS.WFA.UserControls.VMY
 
             bool canEdit = _mode == ScreenMode.List && chkVardiyalar.SelectedItem is CalismaSekli;
             cmbYemekIsyeri.Enabled = canEdit;
+            cmbYemekCihaz.Enabled = canEdit;
             dtpYemekBas.Enabled = canEdit;
             dtpYemekBit.Enabled = canEdit;
             chkYemekAktif.Enabled = canEdit;
@@ -587,6 +628,7 @@ namespace CeyPASS.WFA.UserControls.VMY
         {
             _seciliYemekYetkiId = null;
             SafeSelectFirst(cmbYemekIsyeri);
+            SafeSelectFirst(cmbYemekCihaz);
             SetTS(dtpYemekBas, new TimeSpan(11, 30, 0));
             SetTS(dtpYemekBit, new TimeSpan(12, 30, 0));
             chkYemekAktif.Checked = true;
@@ -601,21 +643,28 @@ namespace CeyPASS.WFA.UserControls.VMY
             if (vardiya == null)
                 return null;
 
-            int isyeriId = 0;
-            if (cmbYemekIsyeri.SelectedValue is int iv)
-                isyeriId = iv;
-            else if (cmbYemekIsyeri.SelectedValue != null)
-                int.TryParse(cmbYemekIsyeri.SelectedValue.ToString(), out isyeriId);
+            int isyeriId = ReadComboInt(cmbYemekIsyeri);
+            int cihazId = ReadComboInt(cmbYemekCihaz);
 
             return new PersonelVardiyaYemekYetki
             {
                 Id = _seciliYemekYetkiId ?? 0,
                 CalismaSekliId = vardiya.Id,
                 IsyeriId = isyeriId,
+                CihazId = cihazId,
                 YemekBaslangicSaati = TS(dtpYemekBas),
                 YemekBitisSaati = TS(dtpYemekBit),
                 AktifMi = chkYemekAktif.Checked
             };
+        }
+
+        private static int ReadComboInt(ComboBox cmb)
+        {
+            if (cmb?.SelectedValue is int iv)
+                return iv;
+            if (cmb?.SelectedValue != null && int.TryParse(cmb.SelectedValue.ToString(), out int parsed))
+                return parsed;
+            return 0;
         }
 
         private void DgvYemekPencereleri_SelectionChanged(object sender, EventArgs e)
@@ -625,6 +674,7 @@ namespace CeyPASS.WFA.UserControls.VMY
 
             _seciliYemekYetkiId = item.Id;
             cmbYemekIsyeri.SelectedValue = item.IsyeriId;
+            cmbYemekCihaz.SelectedValue = item.CihazId;
             SetTS(dtpYemekBas, item.YemekBaslangicSaati);
             SetTS(dtpYemekBit, item.YemekBitisSaati);
             chkYemekAktif.Checked = item.AktifMi;

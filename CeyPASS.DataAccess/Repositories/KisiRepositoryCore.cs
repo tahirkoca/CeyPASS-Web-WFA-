@@ -22,6 +22,41 @@ namespace CeyPASS.DataAccess.Repositories
             return _context.Kisiler.Any(k => k.PersonelId == personelId);
         }
 
+        public KisiAdSoyad FindByPersonelId(string personelId)
+        {
+            if (string.IsNullOrWhiteSpace(personelId)) return null;
+            var val = personelId.Trim();
+            var k = _context.Kisiler.AsNoTracking().FirstOrDefault(x => x.PersonelId == val);
+            return MapAdSoyad(k);
+        }
+
+        public KisiAdSoyad FindByTcKimlikNo(string tcKimlikNo)
+        {
+            if (string.IsNullOrWhiteSpace(tcKimlikNo)) return null;
+            var val = tcKimlikNo.Trim();
+            var k = _context.Kisiler.AsNoTracking().FirstOrDefault(x => x.TcKimlikNo == val);
+            return MapAdSoyad(k);
+        }
+
+        public KisiAdSoyad FindByKartNo(string kartNo)
+        {
+            if (string.IsNullOrWhiteSpace(kartNo)) return null;
+            var val = kartNo.Trim();
+            var k = _context.Kisiler.AsNoTracking().FirstOrDefault(x => x.KartNo == val);
+            return MapAdSoyad(k);
+        }
+
+        private static KisiAdSoyad MapAdSoyad(Kisiler k)
+        {
+            if (k == null) return null;
+            return new KisiAdSoyad
+            {
+                PersonelId = k.PersonelId ?? "",
+                Ad = k.Ad ?? "",
+                Soyad = k.Soyad ?? ""
+            };
+        }
+
         public List<KisiListItem> GetAktifByFirma(int firmId, string search = null, bool? puantajYapilirMi = true, int? isyeriId = null, IReadOnlyList<int> isyeriIdIn = null, bool? ziyaretciMi = null, bool? aracKartiMi = null, bool sadeceIstenCikanlar = false)
         {
             var q = _context.Kisiler.Where(k => k.FirmaId == firmId);
@@ -601,6 +636,7 @@ UPDATE dbo.Kisiler
 
             return new KisiAdSoyad
             {
+                PersonelId = k.PersonelId ?? "",
                 Ad = k.Ad ?? "",
                 Soyad = k.Soyad ?? ""
             };

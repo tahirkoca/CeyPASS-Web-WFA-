@@ -7,6 +7,9 @@ namespace CeyPASS.DataAccess.Abstractions
     public interface IKisiRepository
     {
         bool Exists(string personelId);
+        KisiAdSoyad FindByPersonelId(string personelId);
+        KisiAdSoyad FindByTcKimlikNo(string tcKimlikNo);
+        KisiAdSoyad FindByKartNo(string kartNo);
         List<KisiListItem> GetAktifByFirma(int firmId, string search = null, bool? puantajYapilirMi = true, int? isyeriId = null, IReadOnlyList<int> isyeriIdIn = null, bool? ziyaretciMi = null, bool? aracKartiMi = null, bool sadeceIstenCikanlar = false);
         List<KisiListItem> GetAktifByFirmaPaged(int firmId, string search, bool? puantajYapilirMi, int? isyeriId, IReadOnlyList<int> isyeriIdIn, bool sadeceIstenCikanlar, int page, int pageSize, out int totalCount);
         List<KisiSearchResultItem> SearchByFirmaPaged(KisiSearchFilter filter, int page, int pageSize, out int totalCount);

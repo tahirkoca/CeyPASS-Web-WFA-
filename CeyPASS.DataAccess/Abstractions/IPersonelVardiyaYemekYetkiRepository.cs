@@ -7,7 +7,7 @@ namespace CeyPASS.DataAccess.Abstractions
     {
         bool FirmaHasSaatPenceresiAktif(int firmaId);
         List<PersonelVardiyaYemekYetki> GetByCalismaSekliId(int calismaSekliId);
-        bool ExistsForIsyeri(int calismaSekliId, int isyeriId, int? excludeId = null);
+        bool ExistsForCihaz(int calismaSekliId, int cihazId, int? excludeId = null);
         int Insert(PersonelVardiyaYemekYetki item);
         bool Update(PersonelVardiyaYemekYetki item);
         bool Delete(int id);

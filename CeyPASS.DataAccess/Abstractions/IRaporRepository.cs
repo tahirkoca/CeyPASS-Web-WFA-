@@ -6,7 +6,8 @@ namespace CeyPASS.DataAccess.Abstractions
 {
     public interface IRaporRepository
     {
-        List<RaporTanimi> RaporlariGetir();       
-        DataTable RaporuCalistir(string procedureAdi, Dictionary<string, object> parametreler);      
+        List<RaporTanimi> RaporlariGetir();
+        IReadOnlyList<string> GetProcedureParameterNames(string procedureAdi);
+        DataTable RaporuCalistir(string procedureAdi, Dictionary<string, object> parametreler);
     }
 }

@@ -19,7 +19,19 @@ function pick<T = any>(obj: any, a: string, b?: string): T | undefined {
   return undefined;
 }
 
-function fmtIsoDate(d: Date) {
+function hasRaporParam(names: string[], param: string) {
+  const want = (param.startsWith("@") ? param : `@${param}`).toLowerCase();
+  return names.some((n) => {
+    const x = (n.startsWith("@") ? n : `@${n}`).toLowerCase();
+    return x === want;
+  });
+}
+
+function raporMultiKind(names: string[]): "none" | "isyeri" | "cihaz" {
+  if (hasRaporParam(names, "@CihazIdList")) return "cihaz";
+  if (hasRaporParam(names, "@IsyeriIdList")) return "isyeri";
+  return "none";
+}
   const pad = (n: number) => String(n).padStart(2, "0");
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
@@ -122,7 +134,10 @@ export function RaporlarScreen(props: { user: any; abilities: any; onOpenMenu: (
   const [pageSizeModal, setPageSizeModal] = useState(false);
   const [isyeriModal, setIsyeriModal] = useState(false);
   const [isyeriList, setIsyeriList] = useState<{ id: number; ad: string }[]>([]);
+  const [cihazList, setCihazList] = useState<{ id: number; ad: string }[]>([]);
   const [selectedIsyeriIds, setSelectedIsyeriIds] = useState<number[]>([]);
+  const [selectedCihazIds, setSelectedCihazIds] = useState<number[]>([]);
+  const [parametreler, setParametreler] = useState<string[]>([]);
   const [datePickerOpen, setDatePickerOpen] = useState<null | "bas" | "bit">(null);
   const [pickerTemp, setPickerTemp] = useState<Date>(new Date());
 
@@ -158,13 +173,24 @@ export function RaporlarScreen(props: { user: any; abilities: any; onOpenMenu: (
       setLoading(true);
       setError(null);
       try {
-        const [r, iy] = await Promise.all([raporService.list(), raporService.isyerleri()]);
+        const [r, iy, cz] = await Promise.all([raporService.list(), raporService.isyerleri(), raporService.cihazlar()]);
         if (!r?.success) throw new Error(r?.message ?? "Raporlar alınamadı.");
         const list = r.data ?? (r as any).Data ?? [];
         setRaporlar(Array.isArray(list) ? list : []);
         if (iy?.success) {
           const raw = iy.data ?? (iy as any).Data ?? [];
           setIsyeriList(
+            (Array.isArray(raw) ? raw : [])
+              .map((x: any) => ({
+                id: Number(pick<any>(x, "id", "Id") ?? 0),
+                ad: String(pick<any>(x, "ad", "Ad") ?? ""),
+              }))
+              .filter((x) => x.id > 0 && x.ad)
+          );
+        }
+        if (cz?.success) {
+          const raw = cz.data ?? (cz as any).Data ?? [];
+          setCihazList(
             (Array.isArray(raw) ? raw : [])
               .map((x: any) => ({
                 id: Number(pick<any>(x, "id", "Id") ?? 0),
@@ -180,6 +206,24 @@ export function RaporlarScreen(props: { user: any; abilities: any; onOpenMenu: (
       }
     })();
   }, []);
+
+  useEffect(() => {
+    if (!procedureAdi) {
+      setParametreler([]);
+      return;
+    }
+    (async () => {
+      try {
+        const res = await raporService.parametreler(procedureAdi);
+        const raw = res?.data ?? (res as any)?.Data ?? [];
+        setParametreler(Array.isArray(raw) ? raw.map((x: any) => String(x)) : []);
+        setSelectedIsyeriIds([]);
+        setSelectedCihazIds([]);
+      } catch {
+        setParametreler([]);
+      }
+    })();
+  }, [procedureAdi]);
 
   const raporItems = useMemo(() => {
     const active = (raporlar ?? []).filter((x) => !!(pick<any>(x, "aktifMi", "AktifMi")));
@@ -197,6 +241,8 @@ export function RaporlarScreen(props: { user: any; abilities: any; onOpenMenu: (
 
   const pageSizeItems = useMemo(() => [50, 100, 200, 500].map((n) => ({ key: String(n), label: String(n) })), []);
 
+  const multiKind = useMemo(() => raporMultiKind(parametreler), [parametreler]);
+
   const isyeriLabel = useMemo(() => {
     if (!selectedIsyeriIds.length) return "Tümü (yetkili işyerler)";
     const names = selectedIsyeriIds
@@ -204,6 +250,14 @@ export function RaporlarScreen(props: { user: any; abilities: any; onOpenMenu: (
       .join(", ");
     return names || "Seçili işyerler";
   }, [selectedIsyeriIds, isyeriList]);
+
+  const cihazLabel = useMemo(() => {
+    if (!selectedCihazIds.length) return "Tümü (aktif cihazlar)";
+    const names = selectedCihazIds
+      .map((id) => cihazList.find((x) => x.id === id)?.ad ?? `#${id}`)
+      .join(", ");
+    return names || "Seçili cihazlar";
+  }, [selectedCihazIds, cihazList]);
 
   const runReport = async (forcePage?: number) => {
     if (!procedureAdi) {
@@ -216,7 +270,8 @@ export function RaporlarScreen(props: { user: any; abilities: any; onOpenMenu: (
     try {
       const r = await raporService.run({
         procedureAdi,
-        isyeriIds: selectedIsyeriIds.length ? selectedIsyeriIds : undefined,
+        isyeriIds: multiKind === "isyeri" && selectedIsyeriIds.length ? selectedIsyeriIds : undefined,
+        cihazIds: multiKind === "cihaz" && selectedCihazIds.length ? selectedCihazIds : undefined,
         tarihBaslangic: fmtIsoDate(tBas),
         tarihBitis: fmtIsoDate(tBit),
         page: p,
@@ -276,7 +331,8 @@ export function RaporlarScreen(props: { user: any; abilities: any; onOpenMenu: (
         procedureName: procedureAdi,
         exportTitle: title,
         format,
-        isyeriIds: selectedIsyeriIds.length ? selectedIsyeriIds : undefined,
+        isyeriIds: multiKind === "isyeri" && selectedIsyeriIds.length ? selectedIsyeriIds : undefined,
+        cihazIds: multiKind === "cihaz" && selectedCihazIds.length ? selectedCihazIds : undefined,
         params,
       });
 
@@ -447,10 +503,18 @@ export function RaporlarScreen(props: { user: any; abilities: any; onOpenMenu: (
               <RowLabel label="Bitiş Tarihi" value={fmtDateTR(tBit)} />
             </TouchableOpacity>
             <View className="h-3" />
-            {isyeriList.length > 0 ? (
+            {multiKind === "isyeri" && isyeriList.length > 0 ? (
               <>
                 <TouchableOpacity onPress={() => setIsyeriModal(true)} className="px-3 py-3 rounded-xl border border-[#e2e8f0] bg-white">
                   <RowLabel label="İşyerleri" value={isyeriLabel} />
+                </TouchableOpacity>
+                <View className="h-3" />
+              </>
+            ) : null}
+            {multiKind === "cihaz" && cihazList.length > 0 ? (
+              <>
+                <TouchableOpacity onPress={() => setIsyeriModal(true)} className="px-3 py-3 rounded-xl border border-[#e2e8f0] bg-white">
+                  <RowLabel label="Cihazlar" value={cihazLabel} />
                 </TouchableOpacity>
                 <View className="h-3" />
               </>
@@ -679,29 +743,35 @@ export function RaporlarScreen(props: { user: any; abilities: any; onOpenMenu: (
             <TouchableOpacity activeOpacity={1} onPress={() => {}}>
               <View className="bg-white rounded-2xl overflow-hidden">
                 <View className="px-4 py-3 border-b border-[#f1f5f9]">
-                  <Text className="text-[#0f172a] font-extrabold text-[16px]">İşyerleri</Text>
-                  <Text className="text-[#64748b] font-semibold text-[12px] mt-1">Hiç seçilmezse yetkili tüm işyerleri dahil edilir.</Text>
+                  <Text className="text-[#0f172a] font-extrabold text-[16px]">{multiKind === "cihaz" ? "Cihazlar" : "İşyerleri"}</Text>
+                  <Text className="text-[#64748b] font-semibold text-[12px] mt-1">
+                    {multiKind === "cihaz"
+                      ? "Hiç seçilmezse aktif tüm cihazlar dahil edilir."
+                      : "Hiç seçilmezse yetkili tüm işyerleri dahil edilir."}
+                  </Text>
                 </View>
                 <ScrollView style={{ maxHeight: 420 }}>
                   <TouchableOpacity
                     className="px-4 py-3 border-b border-[#f1f5f9] flex-row items-center justify-between"
-                    onPress={() => setSelectedIsyeriIds([])}
+                    onPress={() => (multiKind === "cihaz" ? setSelectedCihazIds([]) : setSelectedIsyeriIds([]))}
                   >
                     <Text className="text-[#0f172a] font-semibold">Tümü</Text>
                     <MaterialCommunityIcons
-                      name={selectedIsyeriIds.length === 0 ? "checkbox-marked" : "checkbox-blank-outline"}
+                      name={(multiKind === "cihaz" ? selectedCihazIds : selectedIsyeriIds).length === 0 ? "checkbox-marked" : "checkbox-blank-outline"}
                       size={22}
-                      color={selectedIsyeriIds.length === 0 ? "#dc2626" : "#94a3b8"}
+                      color={(multiKind === "cihaz" ? selectedCihazIds : selectedIsyeriIds).length === 0 ? "#dc2626" : "#94a3b8"}
                     />
                   </TouchableOpacity>
-                  {isyeriList.map((iy) => {
-                    const checked = selectedIsyeriIds.includes(iy.id);
+                  {(multiKind === "cihaz" ? cihazList : isyeriList).map((iy) => {
+                    const selected = multiKind === "cihaz" ? selectedCihazIds : selectedIsyeriIds;
+                    const checked = selected.includes(iy.id);
                     return (
                       <TouchableOpacity
-                        key={`iy_${iy.id}`}
+                        key={`${multiKind}_${iy.id}`}
                         className="px-4 py-3 border-b border-[#f1f5f9] flex-row items-center justify-between"
                         onPress={() => {
-                          setSelectedIsyeriIds((prev) =>
+                          const setter = multiKind === "cihaz" ? setSelectedCihazIds : setSelectedIsyeriIds;
+                          setter((prev) =>
                             prev.includes(iy.id) ? prev.filter((x) => x !== iy.id) : [...prev, iy.id]
                           );
                         }}

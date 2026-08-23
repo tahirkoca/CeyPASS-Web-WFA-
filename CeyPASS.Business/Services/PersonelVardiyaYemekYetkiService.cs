@@ -57,11 +57,14 @@ namespace CeyPASS.Business.Services
             if (item.IsyeriId <= 0)
                 return "İşyeri seçiniz.";
 
+            if (item.CihazId <= 0)
+                return "Cihaz seçiniz.";
+
             if (item.YemekBitisSaati <= item.YemekBaslangicSaati)
                 return "Yemek bitiş saati, başlangıç saatinden büyük olmalıdır.";
 
-            if (_repo.ExistsForIsyeri(item.CalismaSekliId, item.IsyeriId, excludeId))
-                return "Bu vardiya için seçili işyerinde zaten bir yemek saat penceresi tanımlı.";
+            if (_repo.ExistsForCihaz(item.CalismaSekliId, item.CihazId, excludeId))
+                return "Bu vardiya için seçili cihazda zaten bir yemek saat penceresi tanımlı.";
 
             return null;
         }

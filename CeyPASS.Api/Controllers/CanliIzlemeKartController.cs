@@ -104,7 +104,8 @@ namespace CeyPASS.Api.Controllers
             tcKimlikNo = x.TCKimlikNo,
             ziyaretEdilenKisi = x.ZiyaretEdilenKisi,
             plaka = x.Plaka,
-            sonZiyaret = x.SonZiyaret
+            sonZiyaret = x.SonZiyaret,
+            gosterim = x.Gosterim
         };
 
         // ─── Misafir ─────────────────────────────────────────────────────────

@@ -32,11 +32,11 @@
                            value="@Model.GirisSaati.ToString("yyyy-MM-ddTHH:mm")" required />
                 </div>
                 <div class="col-md-6">
-                    <label class="form-label">T.C. Kimlik No</label>
+                    <label class="form-label">T.C. Kimlik No *</label>
                     <input class="form-control" name="TCKimlikNo" id="TCKimlikNoArac" maxlength="11" />
                 </div>
                 <div class="col-md-6">
-                    <label class="form-label">Araç Plakası</label>
+                    <label class="form-label">Araç Plakası *</label>
                     <input class="form-control" name="Plaka" id="PlakaArac" maxlength="20" />
                 </div>
                 <div class="col-md-6">
@@ -45,7 +45,7 @@
                 </div>
                 <div class="col-12">
                     <p class="form-text text-muted small mb-0">
-                        T.C. zorunlu değildir. T.C. girip alandan çıkınca veya Enter'a basınca boş alanlar otomatik doldurulur.
+                        T.C. Kimlik No (11 hane) ve plaka zorunludur. T.C. girip alandan çıkınca veya Enter'a basınca boş alanlar otomatik doldurulur.
                         Geçmiş listeden seçim alanları doğrudan yazar.
                     </p>
                 </div>
@@ -78,6 +78,16 @@
         const gecmisListe = document.getElementById('gecmisListeArac');
         const gecmisUrl = '@Url.Action("SearchGecmisZiyaretciler", "CanliIzleme")';
         let gecmisItems = [];
+        let tamTc = null;
+        let suppressTcChange = false;
+        const Tc = window.TcKimlik;
+
+        function showMaskedTc(fullTc) {
+            tamTc = (fullTc || '').trim() || null;
+            suppressTcChange = true;
+            tcInput.value = tamTc ? Tc.mask(tamTc) : '';
+            suppressTcChange = false;
+        }
 
         function toLocalInputValue(d) {
             const pad = n => String(n).padStart(2, '0');
@@ -97,7 +107,7 @@
                 gecmisItems.forEach((it, idx) => {
                     const opt = document.createElement('option');
                     opt.value = String(idx);
-                    opt.textContent = it.plaka ? ((it.adSoyad || '') + ' (' + it.plaka + ')') : (it.adSoyad || '—');
+                    opt.textContent = it.gosterim || (it.plaka ? ((it.adSoyad || '') + ' (' + it.plaka + ')') : (it.adSoyad || it.plaka || '—'));
                     gecmisListe.appendChild(opt);
                 });
             } catch (e) { }
@@ -109,7 +119,7 @@
                 const it = gecmisItems[parseInt(gecmisListe.value, 10)];
                 if (!it) return;
                 adInput.value = it.adSoyad || '';
-                tcInput.value = it.tcKimlikNo || '';
+                showMaskedTc(it.tcKimlikNo);
                 if (plakaInput) plakaInput.value = it.plaka || '';
                 kimeGeldigiInput.value = it.ziyaretEdilenKisi || '';
                 if (girisInput) girisInput.value = toLocalInputValue(new Date());
@@ -119,7 +129,7 @@
 
         async function tryFillByTc() {
             const tc = tcInput.value.trim();
-            if (!tc) return;
+            if (!tc || (Tc && Tc.looksMasked(tc))) return;
             try {
                 const url = '@Url.Action("GetAracByTc", "CanliIzleme")' + '?tc=' + encodeURIComponent(tc);
                 const res = await fetch(url, { method: 'GET' });
@@ -133,6 +143,12 @@
         }
 
         if (tcInput) {
+            tcInput.addEventListener('input', function () {
+                if (suppressTcChange) return;
+                var shown = (tcInput.value || '').trim();
+                if (tamTc && Tc && shown === Tc.mask(tamTc)) return;
+                tamTc = null;
+            });
             tcInput.addEventListener('blur', tryFillByTc);
             tcInput.addEventListener('keydown', function (e) {
                 if (e.key === 'Enter') {
@@ -144,6 +160,16 @@
 
         form.addEventListener('submit', async function (e) {
             e.preventDefault();
+            try {
+                tcInput.value = Tc.resolveForSave(tcInput.value, tamTc);
+            } catch (err) {
+                toastr.error(err.message || 'T.C. Kimlik No geçersiz.');
+                return;
+            }
+            if (plakaInput && !(plakaInput.value || '').trim()) {
+                toastr.error('Plaka giriniz.');
+                return;
+            }
             const fd = new FormData(form);
             const res = await fetch(form.action, { method: 'POST', body: fd });
             const data = await res.json();

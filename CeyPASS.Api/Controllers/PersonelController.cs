@@ -254,7 +254,12 @@ namespace CeyPASS.Api.Controllers
                 PuantajYapilir = request.PuantajYapilabilir,
                 YemekHakkiVar = request.YemekHakkiVar,
                 YemekAdedi = request.GunlukYemekAdedi > 0 ? request.GunlukYemekAdedi : request.GunlukYemekLimiti,
-                FirmaDisiKartNo = (request.FirmaDisiKartNo ?? string.Empty).Trim()
+                FirmaDisiKartNo = (request.FirmaDisiKartNo ?? string.Empty).Trim(),
+                TcKimlikNo = kisi.TcKimlikNo,
+                KartNo = kisi.KartNo,
+                TaseronCalisanMi = request.TaseronCalisanMi,
+                ZiyaretciMi = request.ZiyaretciMi,
+                AracKartiMi = request.AracKartiMi
             };
             var validation = _kisiService.ValidateKisiKayit(validationDto);
             if (!validation.IsValid)

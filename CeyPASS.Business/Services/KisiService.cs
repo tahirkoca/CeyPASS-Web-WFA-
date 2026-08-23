@@ -4,6 +4,7 @@ using CeyPASS.Entities.Concrete;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace CeyPASS.Business.Services
 {
@@ -79,11 +80,21 @@ namespace CeyPASS.Business.Services
 
         public (bool IsValid, string? Message) ValidateKisiKayit(KisiKayitValidasyonDTO dto)
         {
+            if (dto == null)
+                return (false, "Kayıt bilgisi eksik.");
+
             bool firma = dto.FirmaPersoneli;
             bool puantaj = dto.PuantajYapilir;
             bool yemek = dto.YemekHakkiVar;
+            bool taseron = dto.TaseronCalisanMi;
+            bool ziyaretci = dto.ZiyaretciMi;
+            bool arac = dto.AracKartiMi;
 
-            if (string.IsNullOrWhiteSpace(dto.PersonelId))
+            var personelId = (dto.PersonelId ?? "").Trim();
+            var tc = (dto.TcKimlikNo ?? "").Trim();
+            var kartNo = (dto.KartNo ?? "").Trim();
+
+            if (string.IsNullOrWhiteSpace(personelId))
                 return (false, "PersonelId (Sicil No) giriniz.");
 
             bool puantajsizKartGerekli = (firma && !puantaj) || (!firma && !puantaj && yemek);
@@ -99,7 +110,58 @@ namespace CeyPASS.Business.Services
             if (!firma && puantaj)
                 return (false, "Bu check kombinasyonu (Firma personeli değil + Puantaj yapılabilir) için kural tanımlı değil.");
 
+            bool firmaVeyaTaseron = firma || taseron;
+            if (firmaVeyaTaseron)
+            {
+                if (string.IsNullOrWhiteSpace(tc))
+                    return (false, "T.C. Kimlik No giriniz.");
+            }
+
+            if (ziyaretci && string.IsNullOrWhiteSpace(kartNo))
+                return (false, "Kart No giriniz.");
+
+            if (arac && string.IsNullOrWhiteSpace(kartNo))
+                return (false, "Kart No giriniz.");
+
+            if (!string.IsNullOrWhiteSpace(tc) && !IsValidTcKimlikNo(tc))
+                return (false, "T.C. Kimlik No 11 haneli olmalıdır.");
+
+            var sicilHit = _kisiRepo.FindByPersonelId(personelId);
+            if (sicilHit != null)
+                return (false, FormatCakisma("Sicil No", sicilHit));
+
+            bool checkTc = firmaVeyaTaseron;
+            bool checkKart = ziyaretci || arac || (firmaVeyaTaseron && !string.IsNullOrWhiteSpace(kartNo));
+
+            if (checkTc)
+            {
+                var tcHit = _kisiRepo.FindByTcKimlikNo(tc);
+                if (tcHit != null)
+                    return (false, FormatCakisma("T.C. Kimlik No", tcHit));
+            }
+
+            if (checkKart)
+            {
+                var kartHit = _kisiRepo.FindByKartNo(kartNo);
+                if (kartHit != null)
+                    return (false, FormatCakisma("Kart No", kartHit));
+            }
+
             return (true, null);
+        }
+
+        private static bool IsValidTcKimlikNo(string tc)
+        {
+            return tc.Length == 11 && tc.All(char.IsDigit);
+        }
+
+        private static string FormatCakisma(string alan, KisiAdSoyad hit)
+        {
+            var adSoyad = ((hit.Ad ?? "") + " " + (hit.Soyad ?? "")).Trim();
+            var sicil = hit.PersonelId ?? "";
+            if (string.IsNullOrWhiteSpace(adSoyad))
+                return $"Bu {alan} zaten kayıtlı: {sicil}";
+            return $"Bu {alan} zaten kayıtlı: {sicil} - {adSoyad}";
         }
 
         public KisiTekrarAktifSonuc KisiTekrarAktifEt(string personelId, bool puantajYapilirMi)

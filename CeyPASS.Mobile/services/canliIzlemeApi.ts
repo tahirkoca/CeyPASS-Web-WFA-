@@ -35,6 +35,7 @@ export type GecmisZiyaretci = {
   ziyaretEdilenKisi?: string | null;
   plaka?: string | null;
   sonZiyaret?: string;
+  gosterim?: string | null;
 };
 
 export type KartCreateBody = {

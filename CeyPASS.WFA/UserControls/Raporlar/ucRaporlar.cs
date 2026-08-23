@@ -22,14 +22,17 @@ namespace CeyPASS.WFA.UserControls.Raporlar
         private readonly IKullaniciQueryService _kqsvc;
         private readonly IKullaniciFirmaIsyeriYetkiService _yetkiSvc;
         private readonly IKisiEkraniLookUpService _lookupSvc;
+        private readonly ICihazService _cihazSvc;
         private readonly IAuthorizationService _auth;
         AuthorizationHelper authHelp;
         private DataTable _report;
-        private int? _loadedIsyeriFirmaId;
+        private int? _loadedMultiFirmaId;
+        private RaporParametreHelper.MultiSelectKind _loadedMultiKind;
+        private IReadOnlyList<string> _aktifParametreler = Array.Empty<string>();
         private const string PageName = "Raporlar";
         private const string PageNameUI = "Raporlar";
 
-        public ucRaporlar(ISessionContext session, IRaporService rsvc, IAuthorizationService auth, IKullaniciQueryService kqsvc, IKullaniciFirmaIsyeriYetkiService yetkiSvc, IKisiEkraniLookUpService lookupSvc)
+        public ucRaporlar(ISessionContext session, IRaporService rsvc, IAuthorizationService auth, IKullaniciQueryService kqsvc, IKullaniciFirmaIsyeriYetkiService yetkiSvc, IKisiEkraniLookUpService lookupSvc, ICihazService cihazSvc)
         {
             var cid = Guid.NewGuid().ToString("N");
             InitializeComponent();
@@ -40,6 +43,7 @@ namespace CeyPASS.WFA.UserControls.Raporlar
             _kqsvc = kqsvc;
             _yetkiSvc = yetkiSvc;
             _lookupSvc = lookupSvc;
+            _cihazSvc = cihazSvc;
             authHelp = new AuthorizationHelper(_session, _auth);
             if (!_auth.ViewAbility(PageName))
             {
@@ -57,14 +61,14 @@ namespace CeyPASS.WFA.UserControls.Raporlar
         private void ucRaporlar_VisibleChanged(object sender, EventArgs e)
         {
             if (Visible)
-                EnsureIsyeriSecimiGuncel();
+                EnsureMultiSelectGuncel();
         }
 
-        /// <summary>Ana sayfada firma değişince veya rapor ekranına dönünce işyeri listesini yeniler.</summary>
+        /// <summary>Ana sayfada firma değişince veya rapor ekranına dönünce çoklu seçim listesini yeniler.</summary>
         public void RefreshForActiveFirma()
         {
-            _loadedIsyeriFirmaId = null;
-            EnsureIsyeriSecimiGuncel();
+            _loadedMultiFirmaId = null;
+            EnsureMultiSelectGuncel();
         }
 
         private void ucRaporlar_Load(object sender, EventArgs e)
@@ -78,7 +82,9 @@ namespace CeyPASS.WFA.UserControls.Raporlar
 
             RaporlariYukle();
             StilVerDataGridView(dgRaporlar);
-            EnsureIsyeriSecimiGuncel();
+            cmbRaporTurleri.SelectedIndexChanged += CmbRaporTurleri_SelectedIndexChanged;
+            ApplyRaporParametreUi();
+            EnsureMultiSelectGuncel();
 
             WinFormsAuthHelper.ApplyPageAuthorization(_auth, _session, PageName, this);
             LogHelper.Info(PageName, "Load", "Sayfa hazır", null, cid);
@@ -93,6 +99,21 @@ namespace CeyPASS.WFA.UserControls.Raporlar
 
             WinFormsAuthHelper.ApplyPageAuthorization(_auth, _session, PageName, this);
             LogHelper.Info(PageName, "RaporlariYukle", "Tamamlandı", $"{{\"adet\":{(raporlar?.Count ?? 0)}}}", cid);
+        }
+
+        private void CmbRaporTurleri_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            ApplyRaporParametreUi();
+        }
+
+        private void ApplyRaporParametreUi()
+        {
+            string procedureAdi = cmbRaporTurleri.SelectedValue as string;
+            _aktifParametreler = string.IsNullOrEmpty(procedureAdi)
+                ? Array.Empty<string>()
+                : _rsvc.GetProcedureParameterNames(procedureAdi);
+            _loadedMultiFirmaId = null;
+            EnsureMultiSelectGuncel();
         }
         public static void StilVerDataGridView(DataGridView dgv)
         {
@@ -141,17 +162,29 @@ namespace CeyPASS.WFA.UserControls.Raporlar
                 return;
             }
 
-            if (!TryBuildRaporIsyeriIdListCsv(firmaId, yetkiler, isAdmin, out string isyeriIdCsv))
-                return;
+            var kind = RaporParametreHelper.GetMultiSelect(_aktifParametreler);
+            string isyeriIdCsv = "";
+            string cihazIdCsv = "";
+
+            if (kind == RaporParametreHelper.MultiSelectKind.Isyeri)
+            {
+                if (!TryBuildRaporIsyeriIdListCsv(firmaId, yetkiler, isAdmin, out isyeriIdCsv))
+                    return;
+            }
+            else if (kind == RaporParametreHelper.MultiSelectKind.Cihaz)
+            {
+                cihazIdCsv = string.Join(",", GetSeciliRaporCihazIds());
+            }
 
             string firmaIdCsv = firmaId > 0 ? firmaId.ToString() : "";
 
             var parametreler = new Dictionary<string, object>
             {
-                { "@FirmaIdList",   firmaIdCsv },
-                { "@IsyeriIdList",  isyeriIdCsv },
-                { "@TarihBaslangic", RaporTarihHelper.ToReportRangeStart(dtpGirisTarihi.Value) },
-                { "@TarihBitis",     RaporTarihHelper.ToReportRangeEnd(dtpCikisTarihi.Value) }
+                { RaporParametreHelper.FirmaIdList, firmaIdCsv },
+                { RaporParametreHelper.IsyeriIdList, isyeriIdCsv },
+                { RaporParametreHelper.CihazIdList, cihazIdCsv },
+                { RaporParametreHelper.TarihBaslangic, RaporTarihHelper.ToReportRangeStart(dtpGirisTarihi.Value) },
+                { RaporParametreHelper.TarihBitis, RaporTarihHelper.ToReportRangeEnd(dtpCikisTarihi.Value) }
             };
 
             if (dtpGirisTarihi.Value.Date > dtpCikisTarihi.Value.Date)
@@ -278,16 +311,49 @@ namespace CeyPASS.WFA.UserControls.Raporlar
             }
             return result;
         }
-        private void EnsureIsyeriSecimiGuncel()
+        private void EnsureMultiSelectGuncel()
         {
             if (!_session.AktifFirmaId.HasValue)
                 return;
 
             int firmaId = _session.AktifFirmaId.Value;
-            if (_loadedIsyeriFirmaId == firmaId)
+            var kind = RaporParametreHelper.GetMultiSelect(_aktifParametreler);
+            if (_loadedMultiFirmaId == firmaId && _loadedMultiKind == kind)
                 return;
 
-            IsyeriSeciminiYukle(firmaId);
+            if (kind == RaporParametreHelper.MultiSelectKind.Cihaz)
+                CihazSeciminiYukle(firmaId);
+            else if (kind == RaporParametreHelper.MultiSelectKind.Isyeri)
+                IsyeriSeciminiYukle(firmaId);
+            else
+            {
+                chkRaporIsyerleri.Items.Clear();
+                pnlIsyeriFilters.Visible = false;
+                _loadedMultiFirmaId = firmaId;
+                _loadedMultiKind = kind;
+            }
+        }
+
+        private void CihazSeciminiYukle(int firmaId)
+        {
+            try
+            {
+                var list = _cihazSvc.GetListe(true, firmaId) ?? new List<CihazListDTO>();
+                chkRaporIsyerleri.BeginUpdate();
+                chkRaporIsyerleri.Items.Clear();
+                foreach (var c in list)
+                    chkRaporIsyerleri.Items.Add(c, false);
+                chkRaporIsyerleri.DisplayMember = nameof(CihazListDTO.CihazAdi);
+                lblIsyerleri.Text = "Cihazlar (işaretlenmezse firmanın tüm aktif cihazları)";
+                pnlIsyeriFilters.Visible = chkRaporIsyerleri.Items.Count > 0;
+                chkRaporIsyerleri.EndUpdate();
+                _loadedMultiFirmaId = firmaId;
+                _loadedMultiKind = RaporParametreHelper.MultiSelectKind.Cihaz;
+            }
+            catch (Exception ex)
+            {
+                LogHelper.Error(PageName, "CihazSeciminiYukle", "Cihaz listesi yüklenirken hata", ex);
+            }
         }
 
         private void IsyeriSeciminiYukle(int firmaId)
@@ -304,9 +370,12 @@ namespace CeyPASS.WFA.UserControls.Raporlar
                 foreach (var iy in list.Where(x => x.Id > 0))
                     chkRaporIsyerleri.Items.Add(iy, false);
 
+                chkRaporIsyerleri.DisplayMember = nameof(LookupItem.Ad);
+                lblIsyerleri.Text = "İşyerleri (işaretlenmezse yetkili tüm işyerler)";
                 pnlIsyeriFilters.Visible = chkRaporIsyerleri.Items.Count > 0;
                 chkRaporIsyerleri.EndUpdate();
-                _loadedIsyeriFirmaId = firmaId;
+                _loadedMultiFirmaId = firmaId;
+                _loadedMultiKind = RaporParametreHelper.MultiSelectKind.Isyeri;
             }
             catch (Exception ex)
             {
@@ -317,8 +386,18 @@ namespace CeyPASS.WFA.UserControls.Raporlar
         private List<int> GetSeciliRaporIsyeriIds()
         {
             return chkRaporIsyerleri.CheckedItems
-                .Cast<LookupItem>()
+                .OfType<LookupItem>()
                 .Select(x => x.Id)
+                .Where(id => id > 0)
+                .Distinct()
+                .ToList();
+        }
+
+        private List<int> GetSeciliRaporCihazIds()
+        {
+            return chkRaporIsyerleri.CheckedItems
+                .OfType<CihazListDTO>()
+                .Select(x => x.CihazId)
                 .Where(id => id > 0)
                 .Distinct()
                 .ToList();
@@ -354,8 +433,8 @@ namespace CeyPASS.WFA.UserControls.Raporlar
             if (req.FirmaId > 0)
                 _session.AktifFirmaId = req.FirmaId;
 
-            _loadedIsyeriFirmaId = null;
-            EnsureIsyeriSecimiGuncel();
+            _loadedMultiFirmaId = null;
+            EnsureMultiSelectGuncel();
 
             dtpGirisTarihi.Value = req.Baslangic;
             dtpCikisTarihi.Value = req.Bitis;

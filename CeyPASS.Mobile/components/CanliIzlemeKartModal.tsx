@@ -16,6 +16,7 @@ import {
   type KartAtamaItem,
   type KartListItem,
 } from "../services/canliIzlemeApi";
+import { gosterim, looksMasked, mask, resolveForSave } from "../utils/tcKimlik";
 
 type Kind = "misafir" | "arac";
 type Mode = "yeni" | "guncelle";
@@ -57,6 +58,7 @@ export function CanliIzlemeKartModal({ visible, token, kind, mode, onClose, onSa
   const [atamaId, setAtamaId] = useState<number | null>(null);
   const [adSoyad, setAdSoyad] = useState("");
   const [tc, setTc] = useState("");
+  const [tamTc, setTamTc] = useState<string | null>(null);
   const [plaka, setPlaka] = useState("");
   const [kimeGeldigi, setKimeGeldigi] = useState("");
   const [aciklama, setAciklama] = useState("");
@@ -94,6 +96,7 @@ export function CanliIzlemeKartModal({ visible, token, kind, mode, onClose, onSa
     setGecmisFilter("");
     setAdSoyad("");
     setTc("");
+    setTamTc(null);
     setPlaka("");
     setKimeGeldigi("");
     setAciklama("");
@@ -135,10 +138,25 @@ export function CanliIzlemeKartModal({ visible, token, kind, mode, onClose, onSa
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gecmisFilter]);
 
+  const showMaskedTc = (full?: string | null) => {
+    const t = (full ?? "").trim();
+    setTamTc(t || null);
+    setTc(t ? mask(t) : "");
+  };
+
+  const onTcChange = (v: string) => {
+    if (tamTc && v === mask(tamTc)) {
+      setTc(v);
+      return;
+    }
+    setTamTc(null);
+    setTc(v);
+  };
+
   const applyAtama = (a: KartAtamaItem) => {
     setAtamaId(a.atamaId);
     setAdSoyad(a.adSoyad || "");
-    setTc(a.tcKimlikNo || "");
+    showMaskedTc(a.tcKimlikNo);
     setPlaka(a.plaka || "");
     setKimeGeldigi(a.ziyaretEdilenKisi || "");
     setAciklama(a.notlar || "");
@@ -147,7 +165,7 @@ export function CanliIzlemeKartModal({ visible, token, kind, mode, onClose, onSa
 
   const tryFillByTc = async () => {
     const t = tc.trim();
-    if (!t || mode !== "yeni") return;
+    if (!t || looksMasked(t) || mode !== "yeni") return;
     try {
       const res = await canliIzlemeKart.byTc(token, kind, t);
       if (!res.success || !res.data) return;
@@ -161,7 +179,7 @@ export function CanliIzlemeKartModal({ visible, token, kind, mode, onClose, onSa
 
   const selectGecmis = (item: GecmisZiyaretci) => {
     setAdSoyad(item.adSoyad || "");
-    setTc(item.tcKimlikNo || "");
+    showMaskedTc(item.tcKimlikNo);
     setPlaka(item.plaka || "");
     setKimeGeldigi(item.ziyaretEdilenKisi || "");
     setGirisSaati(toIsoLocal(new Date()));
@@ -171,6 +189,17 @@ export function CanliIzlemeKartModal({ visible, token, kind, mode, onClose, onSa
     setError(null);
     if (!adSoyad.trim()) {
       setError("Ad soyad zorunludur.");
+      return;
+    }
+    let tcToSave: string;
+    try {
+      tcToSave = resolveForSave(tc, tamTc);
+    } catch (e: any) {
+      setError(e?.message ?? "T.C. Kimlik No geçersiz.");
+      return;
+    }
+    if (kind === "arac" && !plaka.trim()) {
+      setError("Plaka giriniz.");
       return;
     }
     setSaving(true);
@@ -185,9 +214,9 @@ export function CanliIzlemeKartModal({ visible, token, kind, mode, onClose, onSa
           adSoyad: adSoyad.trim(),
           girisSaati,
           aciklama,
-          tcKimlikNo: tc.trim() || undefined,
+          tcKimlikNo: tcToSave,
           ziyaretEdilenKisi: kimeGeldigi.trim() || undefined,
-          plaka: kind === "arac" ? plaka.trim() || undefined : undefined,
+          plaka: kind === "arac" ? plaka.trim() : undefined,
         });
         if (!res.success) {
           setError(res.message ?? "Kayıt başarısız.");
@@ -205,9 +234,9 @@ export function CanliIzlemeKartModal({ visible, token, kind, mode, onClose, onSa
           girisSaati,
           cikisSaati,
           aciklama,
-          tcKimlikNo: tc.trim() || undefined,
+          tcKimlikNo: tcToSave,
           ziyaretEdilenKisi: kimeGeldigi.trim() || undefined,
-          plaka: kind === "arac" ? plaka.trim() || undefined : undefined,
+          plaka: kind === "arac" ? plaka.trim() : undefined,
         });
         if (!res.success) {
           setError(res.message ?? "Güncelleme başarısız.");
@@ -229,12 +258,14 @@ export function CanliIzlemeKartModal({ visible, token, kind, mode, onClose, onSa
     onChangeText,
     placeholder,
     onBlur,
+    maxLength,
   }: {
     label: string;
     value: string;
     onChangeText: (v: string) => void;
     placeholder?: string;
     onBlur?: () => void;
+    maxLength?: number;
   }) => (
     <View className="mb-3">
       <Text className="text-[12px] font-semibold text-[#64748b] mb-1">{label}</Text>
@@ -244,6 +275,7 @@ export function CanliIzlemeKartModal({ visible, token, kind, mode, onClose, onSa
         onBlur={onBlur}
         placeholder={placeholder}
         placeholderTextColor="#94a3b8"
+        maxLength={maxLength}
         className="border-[1.5px] border-[#e2e8f0] rounded-xl px-3 py-3 bg-[#f8fafc] text-[#1e293b] font-semibold"
       />
     </View>
@@ -303,7 +335,7 @@ export function CanliIzlemeKartModal({ visible, token, kind, mode, onClose, onSa
                           activeOpacity={0.8}
                         >
                           <Text className="text-[#1e293b] font-semibold">
-                            {item.plaka ? `${item.adSoyad} (${item.plaka})` : item.adSoyad}
+                            {gosterim(item)}
                           </Text>
                         </TouchableOpacity>
                       )}
@@ -347,14 +379,15 @@ export function CanliIzlemeKartModal({ visible, token, kind, mode, onClose, onSa
               )}
 
               <Field
-                label="T.C. Kimlik No"
+                label="T.C. Kimlik No *"
                 value={tc}
-                onChangeText={setTc}
-                placeholder="Opsiyonel"
+                onChangeText={onTcChange}
+                placeholder="11 hane"
                 onBlur={tryFillByTc}
+                maxLength={11}
               />
               {kind === "arac" ? (
-                <Field label="Araç Plakası" value={plaka} onChangeText={setPlaka} placeholder="Opsiyonel" />
+                <Field label="Araç Plakası *" value={plaka} onChangeText={setPlaka} placeholder="Plaka giriniz" maxLength={20} />
               ) : null}
               <Field label="Ad Soyad" value={adSoyad} onChangeText={setAdSoyad} />
               <Field label="Kime Geldiği" value={kimeGeldigi} onChangeText={setKimeGeldigi} />

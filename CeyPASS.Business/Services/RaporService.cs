@@ -6,7 +6,7 @@ using CeyPASS.Entities.Concrete;
 
 namespace CeyPASS.Business.Services
 {
-    public class RaporService:IRaporService
+    public class RaporService : IRaporService
     {
         private readonly IRaporRepository _repo;
 
@@ -14,14 +14,20 @@ namespace CeyPASS.Business.Services
         {
             _repo = repo;
         }
+
         public List<RaporTanimi> GetirRaporlar()
         {
             return _repo.RaporlariGetir();
         }
+
+        public IReadOnlyList<string> GetProcedureParameterNames(string procedureAdi)
+        {
+            return _repo.GetProcedureParameterNames(procedureAdi);
+        }
+
         public DataTable CalistirRapor(string procedureAdi, Dictionary<string, object> parametreler)
         {
             return _repo.RaporuCalistir(procedureAdi, parametreler);
         }
     }
-
 }

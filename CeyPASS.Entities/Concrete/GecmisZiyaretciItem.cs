@@ -10,11 +10,20 @@ namespace CeyPASS.Entities.Concrete
         public string Plaka { get; set; }
         public DateTime SonZiyaret { get; set; }
 
-        public override string ToString()
+        public string Gosterim
         {
-            if (string.IsNullOrWhiteSpace(Plaka))
-                return AdSoyad;
-            return $"{AdSoyad} ({Plaka.Trim()})";
+            get
+            {
+                var ad = (AdSoyad ?? "").Trim();
+                var plaka = (Plaka ?? "").Trim();
+                if (string.IsNullOrEmpty(plaka))
+                    return ad;
+                if (string.IsNullOrEmpty(ad))
+                    return plaka;
+                return $"{ad} ({plaka})";
+            }
         }
+
+        public override string ToString() => Gosterim;
     }
 }

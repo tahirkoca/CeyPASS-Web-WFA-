@@ -30,14 +30,19 @@ namespace CeyPASS.DataAccess.Repositories
                 join i in _context.Isyerler.AsNoTracking()
                     on y.IsyeriId equals i.IsyeriId into ij
                 from i in ij.DefaultIfEmpty()
+                join c in _context.Cihazlar.AsNoTracking()
+                    on y.CihazId equals c.CihazId into cj
+                from c in cj.DefaultIfEmpty()
                 where y.CalismaSekliId == calismaSekliId
-                orderby i.IsyeriAdi, y.YemekBaslangicSaati
+                orderby i.IsyeriAdi, c.CihazAdi, y.YemekBaslangicSaati
                 select new PersonelVardiyaYemekYetki
                 {
                     Id = y.Id,
                     CalismaSekliId = y.CalismaSekliId,
                     IsyeriId = y.IsyeriId,
                     IsyeriAdi = i != null ? i.IsyeriAdi : null,
+                    CihazId = y.CihazId,
+                    CihazAdi = c != null ? c.CihazAdi : null,
                     YemekBaslangicSaati = y.YemekBaslangicSaati,
                     YemekBitisSaati = y.YemekBitisSaati,
                     AktifMi = y.AktifMi
@@ -46,10 +51,10 @@ namespace CeyPASS.DataAccess.Repositories
             return q.ToList();
         }
 
-        public bool ExistsForIsyeri(int calismaSekliId, int isyeriId, int? excludeId = null)
+        public bool ExistsForCihaz(int calismaSekliId, int cihazId, int? excludeId = null)
         {
             var q = _context.PersonelVardiyaYemekYetkileri.AsNoTracking()
-                .Where(x => x.CalismaSekliId == calismaSekliId && x.IsyeriId == isyeriId);
+                .Where(x => x.CalismaSekliId == calismaSekliId && x.CihazId == cihazId);
 
             if (excludeId.HasValue)
                 q = q.Where(x => x.Id != excludeId.Value);
@@ -63,6 +68,7 @@ namespace CeyPASS.DataAccess.Repositories
             {
                 CalismaSekliId = item.CalismaSekliId,
                 IsyeriId = item.IsyeriId,
+                CihazId = item.CihazId,
                 YemekBaslangicSaati = item.YemekBaslangicSaati,
                 YemekBitisSaati = item.YemekBitisSaati,
                 AktifMi = item.AktifMi
@@ -83,6 +89,7 @@ namespace CeyPASS.DataAccess.Repositories
 
             entity.CalismaSekliId = item.CalismaSekliId;
             entity.IsyeriId = item.IsyeriId;
+            entity.CihazId = item.CihazId;
             entity.YemekBaslangicSaati = item.YemekBaslangicSaati;
             entity.YemekBitisSaati = item.YemekBitisSaati;
             entity.AktifMi = item.AktifMi;

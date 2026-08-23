@@ -22,6 +22,7 @@ namespace CeyPASS.Tests.Web
         private readonly Mock<IKullaniciQueryService> _kullaniciMock = new();
         private readonly Mock<IKullaniciFirmaIsyeriYetkiService> _yetkiMock = new();
         private readonly Mock<IKisiEkraniLookUpService> _lookupMock = new();
+        private readonly Mock<ICihazService> _cihazMock = new();
         private readonly Mock<ISessionContext> _sessionMock = new();
         private readonly Mock<IAuthorizationService> _authMock = new();
         private readonly IMemoryCache _cache;
@@ -40,6 +41,7 @@ namespace CeyPASS.Tests.Web
                 _kullaniciMock.Object,
                 _yetkiMock.Object,
                 _lookupMock.Object,
+                _cihazMock.Object,
                 _sessionMock.Object,
                 _authMock.Object,
                 _cache);
@@ -102,6 +104,8 @@ namespace CeyPASS.Tests.Web
                 .Returns("10,0");
             _lookupMock.Setup(l => l.GetIsyerleri(1)).Returns(new List<LookupItem> { new() { Id = 10, Ad = "Merkez" } });
             _raporMock.Setup(r => r.GetirRaporlar()).Returns(new List<RaporTanimi> { new() { ProcedureAdi = "sp_test", RaporAdi = "Test" } });
+            _raporMock.Setup(r => r.GetProcedureParameterNames("sp_test"))
+                .Returns(new[] { "@FirmaIdList", "@IsyeriIdList", "@TarihBaslangic", "@TarihBitis" });
 
             Dictionary<string, object>? captured = null;
             _raporMock.Setup(r => r.CalistirRapor("sp_test", It.IsAny<Dictionary<string, object>>()))
@@ -135,6 +139,8 @@ namespace CeyPASS.Tests.Web
                 .Returns("10,20,0");
             _lookupMock.Setup(l => l.GetIsyerleri(1)).Returns(new List<LookupItem>());
             _raporMock.Setup(r => r.GetirRaporlar()).Returns(new List<RaporTanimi> { new() { ProcedureAdi = "sp_test", RaporAdi = "Test" } });
+            _raporMock.Setup(r => r.GetProcedureParameterNames("sp_test"))
+                .Returns(new[] { "@FirmaIdList", "@IsyeriIdList", "@TarihBaslangic", "@TarihBitis" });
 
             Dictionary<string, object>? captured = null;
             _raporMock.Setup(r => r.CalistirRapor("sp_test", It.IsAny<Dictionary<string, object>>()))

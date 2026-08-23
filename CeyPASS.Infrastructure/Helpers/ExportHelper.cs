@@ -4,7 +4,6 @@ using OfficeOpenXml;
 using PdfSharp.Fonts;
 using System;
 using System.Data;
-using System.Globalization;
 using System.IO;
 using System.Runtime.InteropServices;
 using Colors = MigraDoc.DocumentObjectModel.Colors;
@@ -31,32 +30,46 @@ namespace CeyPASS.Infrastructure.Helpers
                 {
                     var worksheet = package.Workbook.Worksheets.Add("Rapor");
                     worksheet.Cells["A1"].LoadFromDataTable(dt, true);
-                    int totalRows = dt.Rows.Count + 1;
-                    int totalCols = dt.Columns.Count;
-                    for (int col = 7; col <= totalCols; col++)
+
+                    if (dt != null && dt.Rows.Count > 0)
                     {
-                        var headerCell = worksheet.Cells[1, col + 1];
-                        string headerText = headerCell.Text ?? "";
-                        bool gunMu = headerText.Contains("(Gün)");
-                        for (int row = 3; row <= totalRows; row++)
+                        int lastRow = dt.Rows.Count + 1;
+                        for (int c = 0; c < dt.Columns.Count; c++)
                         {
-                            var cell = worksheet.Cells[row, col + 1];
-                            string cellText = cell.Text?.Replace(",", ".");
-                            if (double.TryParse(cellText, NumberStyles.Any, CultureInfo.InvariantCulture, out double numericValue))
+                            var t = Nullable.GetUnderlyingType(dt.Columns[c].DataType) ?? dt.Columns[c].DataType;
+                            string fmt = null;
+
+                            if (t == typeof(DateTime) || t == typeof(DateTimeOffset))
                             {
-                                if (gunMu)
+                                bool hasTime = false;
+                                foreach (DataRow r in dt.Rows)
                                 {
-                                    cell.Value = (int)numericValue;
-                                    cell.Style.Numberformat.Format = "0";
+                                    if (r[c] == DBNull.Value || r[c] == null)
+                                        continue;
+                                    var dto = r[c] is DateTimeOffset off ? off.DateTime : Convert.ToDateTime(r[c]);
+                                    if (dto.TimeOfDay != TimeSpan.Zero)
+                                    {
+                                        hasTime = true;
+                                        break;
+                                    }
                                 }
-                                else
-                                {
-                                    cell.Value = numericValue;
-                                    cell.Style.Numberformat.Format = "#,##0.00";
-                                }
+                                fmt = hasTime ? "dd.MM.yyyy HH:mm:ss" : "dd.MM.yyyy";
                             }
+                            else if (t == typeof(byte) || t == typeof(sbyte) || t == typeof(short) || t == typeof(ushort)
+                                  || t == typeof(int) || t == typeof(uint) || t == typeof(long) || t == typeof(ulong))
+                            {
+                                fmt = "0";
+                            }
+                            else if (t == typeof(decimal) || t == typeof(double) || t == typeof(float))
+                            {
+                                fmt = "#,##0.##";
+                            }
+
+                            if (fmt != null)
+                                worksheet.Cells[2, c + 1, lastRow, c + 1].Style.Numberformat.Format = fmt;
                         }
                     }
+
                     package.SaveAs(new FileInfo(filePath));
                 }
                 LogHelper.Info("Raporlar", "Excel", "Tamamlandı", null, cid);

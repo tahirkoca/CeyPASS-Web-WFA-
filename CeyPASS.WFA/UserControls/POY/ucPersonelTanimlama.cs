@@ -1039,7 +1039,12 @@ namespace CeyPASS.WFA.UserControls
                     PuantajYapilir = p,
                     YemekHakkiVar = y,
                     YemekAdedi = (int)nudYemekAdedi.Value,
-                    FirmaDisiKartNo = txtFirmaDisiKartNo.Text.Trim()
+                    FirmaDisiKartNo = txtFirmaDisiKartNo.Text.Trim(),
+                    TcKimlikNo = txtKimlikNo.Text.Trim(),
+                    KartNo = txtPersonelKartNo.Text.Trim(),
+                    TaseronCalisanMi = chkTaseronCalisanMi.Checked,
+                    ZiyaretciMi = chkZiyaretciMi.Checked,
+                    AracKartiMi = chkAracKartiMi.Checked
                 };
 
                 var validasyonSonuc = _kisiSvc.ValidateKisiKayit(validasyonDto);

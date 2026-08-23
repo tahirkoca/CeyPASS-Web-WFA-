@@ -171,7 +171,12 @@ namespace CeyPASS.Web.Controllers
                 PuantajYapilir = puantajYapilabilir,
                 YemekHakkiVar = yemekHakkiVar,
                 YemekAdedi = gunlukYemekLimiti,
-                FirmaDisiKartNo = puantajsizKartNo
+                FirmaDisiKartNo = puantajsizKartNo,
+                TcKimlikNo = kisi.TcKimlikNo,
+                KartNo = kisi.KartNo,
+                TaseronCalisanMi = taseronCalisanMi,
+                ZiyaretciMi = ziyaretciMi,
+                AracKartiMi = aracKartiMi
             };
 
             var validation = _kisiService.ValidateKisiKayit(validationDto);

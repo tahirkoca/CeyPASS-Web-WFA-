@@ -169,7 +169,7 @@ namespace CeyPASS.WFA.UserControls.Canlı_İzleme
             this.lblTCKimlikNo.Name = "lblTCKimlikNo";
             this.lblTCKimlikNo.Size = new System.Drawing.Size(109, 20);
             this.lblTCKimlikNo.TabIndex = 4;
-            this.lblTCKimlikNo.Text = "T.C. Kimlik No";
+            this.lblTCKimlikNo.Text = "T.C. Kimlik No *";
             // 
             // txtTCKimlikNo
             // 
@@ -192,7 +192,7 @@ namespace CeyPASS.WFA.UserControls.Canlı_İzleme
             this.lblPlaka.Name = "lblPlaka";
             this.lblPlaka.Size = new System.Drawing.Size(95, 20);
             this.lblPlaka.TabIndex = 6;
-            this.lblPlaka.Text = "Araç Plakası";
+            this.lblPlaka.Text = "Araç Plakası *";
             // 
             // txtPlaka
             // 
@@ -238,7 +238,7 @@ namespace CeyPASS.WFA.UserControls.Canlı_İzleme
             this.lblTcBilgi.Name = "lblTcBilgi";
             this.lblTcBilgi.Size = new System.Drawing.Size(420, 19);
             this.lblTcBilgi.TabIndex = 10;
-            this.lblTcBilgi.Text = "T.C. zorunlu değildir; elle ya da barkodla giriş yapabilirsiniz. T.C. girip alandan çıkınca veya Enter'a basınca boş alanlar otomatik doldurulur, dolu alanlar değiştirilmez.";
+            this.lblTcBilgi.Text = "T.C. Kimlik No (11 hane) ve plaka zorunludur; T.C.'yi elle ya da barkodla girebilirsiniz. T.C. girip alandan çıkınca veya Enter'a basınca boş alanlar otomatik doldurulur, dolu alanlar değiştirilmez.";
             this.lblTcBilgi.UseMnemonic = false;
             // 
             // label4

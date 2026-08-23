@@ -8,5 +8,10 @@
         public bool YemekHakkiVar { get; set; }
         public int YemekAdedi { get; set; }
         public string FirmaDisiKartNo { get; set; }
+        public string TcKimlikNo { get; set; }
+        public string KartNo { get; set; }
+        public bool TaseronCalisanMi { get; set; }
+        public bool ZiyaretciMi { get; set; }
+        public bool AracKartiMi { get; set; }
     }
 }

@@ -142,21 +142,34 @@ namespace CeyPASS.DataAccess.Repositories
                 join k in _context.Kisiler.AsNoTracking()
                     on a.KartId equals k.PersonelId
                 where k.FirmaId == firmaId
-                      && a.MisafirAdSoyad != null
-                      && a.MisafirAdSoyad != ""
                 select new { a, k };
 
             if (ziyaretciMi.HasValue)
                 query = query.Where(x => x.k.ZiyaretciMi == ziyaretciMi.Value);
 
-            if (aracKartiMi.HasValue)
-                query = query.Where(x => x.k.AracKartiMi == aracKartiMi.Value);
+            bool aracListe = aracKartiMi == true;
+            if (aracListe)
+            {
+                query = query.Where(x =>
+                    x.k.AracKartiMi == true || x.k.ZiyaretciMi == true);
+
+                query = query.Where(x =>
+                    (x.a.MisafirAdSoyad != null && x.a.MisafirAdSoyad != "")
+                    || (x.a.Plaka != null && x.a.Plaka != ""));
+            }
+            else
+            {
+                if (aracKartiMi.HasValue)
+                    query = query.Where(x => x.k.AracKartiMi == aracKartiMi.Value);
+
+                query = query.Where(x => x.a.MisafirAdSoyad != null && x.a.MisafirAdSoyad != "");
+            }
 
             if (!string.IsNullOrWhiteSpace(adFilter))
             {
                 var filter = adFilter.Trim();
                 query = query.Where(x =>
-                    x.a.MisafirAdSoyad.Contains(filter)
+                    (x.a.MisafirAdSoyad != null && x.a.MisafirAdSoyad.Contains(filter))
                     || (x.a.Plaka != null && x.a.Plaka.Contains(filter)));
             }
 
@@ -172,7 +185,9 @@ namespace CeyPASS.DataAccess.Repositories
                 .ToList();
 
             return raw
-                .GroupBy(x => (x.MisafirAdSoyad ?? "").Trim(), StringComparer.OrdinalIgnoreCase)
+                .GroupBy(x =>
+                    (x.MisafirAdSoyad ?? "").Trim() + "|" + (x.Plaka ?? "").Trim(),
+                    StringComparer.OrdinalIgnoreCase)
                 .Select(g => g.OrderByDescending(x => x.Baslangic).First())
                 .OrderByDescending(x => x.Baslangic)
                 .Select(x => new GecmisZiyaretciItem

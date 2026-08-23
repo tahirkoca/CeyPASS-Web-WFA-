@@ -1,5 +1,6 @@
 using CeyPASS.Business.Abstractions;
 using CeyPASS.Entities.Concrete;
+using CeyPASS.Entities.Helpers;
 using System;
 using System.Windows.Forms;
 
@@ -12,6 +13,8 @@ namespace CeyPASS.WFA.UserControls.Canlı_İzleme
         private readonly ISessionContext _session;
         private readonly IMisafirKartService _msvc;
         private bool _isSaving;
+        private string _tamTc;
+        private bool _suppressTcChange;
 
         public misafirKartAtama(ISessionContext session, IMisafirKartService msvc)
         {
@@ -22,16 +25,37 @@ namespace CeyPASS.WFA.UserControls.Canlı_İzleme
             cmbPuantajsizKartlar.SelectedIndexChanged += cmbPuantajsizKartlar_SelectedIndexChanged;
             txtTCKimlikNo.Leave += TxtTCKimlikNo_Leave;
             txtTCKimlikNo.KeyDown += TxtTCKimlikNo_KeyDown;
+            txtTCKimlikNo.TextChanged += TxtTCKimlikNo_TextChanged;
             gecmisZiyaretciPanel.Visible = false;
             gecmisZiyaretciPanel.ZiyaretciSecildi += GecmisZiyaretciPanel_ZiyaretciSecildi;
         }
+
+        private void TxtTCKimlikNo_TextChanged(object sender, EventArgs e)
+        {
+            if (_suppressTcChange) return;
+            var shown = txtTCKimlikNo.Text?.Trim() ?? "";
+            if (!string.IsNullOrEmpty(_tamTc) && shown == TcKimlikHelper.Mask(_tamTc))
+                return;
+            _tamTc = null;
+        }
+
+        private void ShowMaskedTc(string fullTc)
+        {
+            _tamTc = string.IsNullOrWhiteSpace(fullTc) ? null : fullTc.Trim();
+            _suppressTcChange = true;
+            txtTCKimlikNo.Text = string.IsNullOrEmpty(_tamTc) ? "" : TcKimlikHelper.Mask(_tamTc);
+            _suppressTcChange = false;
+        }
+
+        private string ResolveTcForSave() =>
+            TcKimlikHelper.ResolveForSave(txtTCKimlikNo.Text, _tamTc);
 
         private void GecmisZiyaretciPanel_ZiyaretciSecildi(GecmisZiyaretciItem item)
         {
             if (item == null) return;
 
             txtMisafirAdSoyad.Text = item.AdSoyad ?? "";
-            txtTCKimlikNo.Text = item.TCKimlikNo ?? "";
+            ShowMaskedTc(item.TCKimlikNo);
             txtZiyaretEdilenKisi.Text = item.ZiyaretEdilenKisi ?? "";
             dtpGirisSaati.Value = DateTime.Now;
         }
@@ -53,7 +77,7 @@ namespace CeyPASS.WFA.UserControls.Canlı_İzleme
         private void TryFillFromTc()
         {
             var tc = txtTCKimlikNo?.Text?.Trim();
-            if (string.IsNullOrEmpty(tc)) return;
+            if (string.IsNullOrEmpty(tc) || TcKimlikHelper.LooksMasked(tc)) return;
 
             try
             {
@@ -67,7 +91,6 @@ namespace CeyPASS.WFA.UserControls.Canlı_İzleme
             }
             catch
             {
-                // Otomatik doldurma başarısız olsa da sessiz geç; kullanıcı elle girebilir.
             }
         }
 
@@ -80,16 +103,16 @@ namespace CeyPASS.WFA.UserControls.Canlı_İzleme
 
             try
             {
+                var tc = ResolveTcForSave();
+                var kimeGeldigi = string.IsNullOrWhiteSpace(txtZiyaretEdilenKisi.Text) ? null : txtZiyaretEdilenKisi.Text.Trim();
+
                 if (_mode == EMode.Yeni)
                 {
                     if (cmbPuantajsizKartlar.SelectedValue == null)
                         throw new InvalidOperationException("Kart seçiniz.");
 
                     string kartId = Convert.ToString(cmbPuantajsizKartlar.SelectedValue);
-
-                    var tc = string.IsNullOrWhiteSpace(txtTCKimlikNo.Text) ? null : txtTCKimlikNo.Text.Trim();
-                    var kimeGeldigi = string.IsNullOrWhiteSpace(txtZiyaretEdilenKisi.Text) ? null : txtZiyaretEdilenKisi.Text.Trim();
-                    int yeniId = _msvc.CreateAssignment(
+                    _msvc.CreateAssignment(
                         firmaId: (int)_session.AktifFirmaId,
                         personelId: kartId,
                         misafirAdSoyad: txtMisafirAdSoyad.Text,
@@ -109,8 +132,6 @@ namespace CeyPASS.WFA.UserControls.Canlı_İzleme
                     if (a == null)
                         throw new InvalidOperationException("Güncellenecek atamayı seçiniz.");
 
-                    var tc = string.IsNullOrWhiteSpace(txtTCKimlikNo.Text) ? null : txtTCKimlikNo.Text.Trim();
-                    var kimeGeldigi = string.IsNullOrWhiteSpace(txtZiyaretEdilenKisi.Text) ? null : txtZiyaretEdilenKisi.Text.Trim();
                     _msvc.UpdateAssignment(
                         atamaId: a.AtamaId,
                         misafirAdSoyad: txtMisafirAdSoyad.Text,
@@ -149,7 +170,7 @@ namespace CeyPASS.WFA.UserControls.Canlı_İzleme
 
             txtMisafirAdSoyad.Text = a.MisafirAdSoyad ?? "";
             txtZiyaretEdilenKisi.Text = a.ZiyaretEdilenKisi ?? "";
-            txtTCKimlikNo.Text = a.TCKimlikNo ?? "";
+            ShowMaskedTc(a.TCKimlikNo);
             txtAciklama.Text = a.Notlar ?? "";
             dtpGirisSaati.Value = a.Baslangic;
             dtpCikisSaati.Value = DateTime.Now;
@@ -170,7 +191,7 @@ namespace CeyPASS.WFA.UserControls.Canlı_İzleme
             if (cards != null && cards.Count > 0)
                 cmbPuantajsizKartlar.SelectedIndex = 0;
 
-            txtTCKimlikNo.Clear();
+            ShowMaskedTc(null);
             txtZiyaretEdilenKisi.Clear();
             dtpCikisSaati.Enabled = false;
             dtpGirisSaati.Value = DateTime.Now;

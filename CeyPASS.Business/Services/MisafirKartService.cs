@@ -1,6 +1,7 @@
 using CeyPASS.Business.Abstractions;
 using CeyPASS.DataAccess.Abstractions;
 using CeyPASS.Entities.Concrete;
+using CeyPASS.Entities.Helpers;
 using System;
 using System.Collections.Generic;
 
@@ -40,14 +41,13 @@ namespace CeyPASS.Business.Services
             if (string.IsNullOrWhiteSpace(misafirAdSoyad))
                 throw new ArgumentException("Misafir adı soyadı boş olamaz.", nameof(misafirAdSoyad));
 
+            var tc = TcKimlikHelper.RequireValid(tcKimlikNo);
+
             if (!_atamaRepo.CardBelongsToFirma(personelId, firmaId))
                 throw new InvalidOperationException("Seçilen kart bu firmaya ait değil.");
 
             if (_atamaRepo.ExistsActiveForCard(personelId))
                 throw new InvalidOperationException("Bu karta ait aktif bir atama zaten var. Önce çıkış veriniz.");
-
-            var tc = string.IsNullOrWhiteSpace(tcKimlikNo) ? null : tcKimlikNo.Trim();
-            // TC'yi sadece boş değilse kaydediyoruz, 11 karakter kontrolü gerekirse eklenebilir.
 
             var id = _atamaRepo.Insert(new PuantajsizKartAtama
             {
@@ -75,7 +75,7 @@ namespace CeyPASS.Business.Services
             rec.Baslangic = girisSaati;
             rec.Bitis = cikisSaati;
             rec.Notlar = string.IsNullOrWhiteSpace(aciklama) ? "" : aciklama.Trim();
-            rec.TCKimlikNo = string.IsNullOrWhiteSpace(tcKimlikNo) ? null : tcKimlikNo.Trim();
+            rec.TCKimlikNo = TcKimlikHelper.RequireValid(tcKimlikNo);
             rec.ZiyaretEdilenKisi = string.IsNullOrWhiteSpace(ziyaretEdilenKisi) ? null : ziyaretEdilenKisi.Trim();
 
             _atamaRepo.Update(rec);
@@ -87,6 +87,8 @@ namespace CeyPASS.Business.Services
                 return null;
 
             var tc = tcKimlikNo.Trim();
+            if (TcKimlikHelper.LooksMasked(tc) || !TcKimlikHelper.IsValid(tc))
+                return null;
             return _atamaRepo.GetSonAtamaByTcKimlikNo(tc);
         }
 

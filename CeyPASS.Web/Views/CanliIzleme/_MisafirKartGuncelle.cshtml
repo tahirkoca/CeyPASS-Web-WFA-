@@ -45,7 +45,7 @@ else
                 <input class="form-control" name="MisafirAdSoyad" id="MisafirAdSoyad" required />
             </div>
             <div class="col-md-6">
-                <label class="form-label">T.C. Kimlik No</label>
+                <label class="form-label">T.C. Kimlik No *</label>
                 <input class="form-control" name="TCKimlikNo" id="TCKimlikNo" maxlength="11" />
             </div>
             <div class="col-md-6">
@@ -73,17 +73,36 @@ else
             const tcInput = document.getElementById('TCKimlikNo');
             const ziyaretInput = document.getElementById('ZiyaretEdilenKisi');
             const aciklama = document.getElementById('Aciklama');
+            const Tc = window.TcKimlik;
+            let tamTc = null;
+            let suppressTcChange = false;
+
+            function showMaskedTc(fullTc) {
+                tamTc = (fullTc || '').trim() || null;
+                suppressTcChange = true;
+                if (tcInput) tcInput.value = tamTc ? Tc.mask(tamTc) : '';
+                suppressTcChange = false;
+            }
 
             function applyFromOption() {
                 const opt = select.options[select.selectedIndex];
                 if (!opt) return;
                 atamaId.value = opt.value;
                 misafir.value = opt.getAttribute('data-misafir') || opt.dataset?.misafir || '';
-                if (tcInput) tcInput.value = opt.getAttribute('data-tc') || opt.dataset?.tc || '';
+                showMaskedTc(opt.getAttribute('data-tc') || opt.dataset?.tc || '');
                 if (ziyaretInput) ziyaretInput.value = opt.getAttribute('data-ziyaret') || opt.dataset?.ziyaret || '';
                 aciklama.value = opt.getAttribute('data-aciklama') || opt.dataset?.aciklama || '';
                 var girisVal = opt.getAttribute('data-giris') || opt.dataset?.giris || '';
                 giris.value = girisVal;
+            }
+
+            if (tcInput) {
+                tcInput.addEventListener('input', function () {
+                    if (suppressTcChange) return;
+                    var shown = (tcInput.value || '').trim();
+                    if (tamTc && Tc && shown === Tc.mask(tamTc)) return;
+                    tamTc = null;
+                });
             }
 
             select.addEventListener('change', applyFromOption);
@@ -91,6 +110,12 @@ else
 
             form.addEventListener('submit', async function (e) {
                 e.preventDefault();
+                try {
+                    if (tcInput) tcInput.value = Tc.resolveForSave(tcInput.value, tamTc);
+                } catch (err) {
+                    toastr.error(err.message || 'T.C. Kimlik No geçersiz.');
+                    return;
+                }
                 const fd = new FormData(form);
                 const res = await fetch(form.action, { method: 'POST', body: fd });
                 const data = await res.json();
