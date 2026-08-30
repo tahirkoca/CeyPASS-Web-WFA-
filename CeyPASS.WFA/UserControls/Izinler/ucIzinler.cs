@@ -39,12 +39,14 @@ namespace CeyPASS.WFA.UserControls.Izinler
         private bool _suppressIzinCheckboxSync = false;
         private const string PageName = "Izinler";
         private const string PageNameUI = "İzinler";
+        private readonly WinFormsFieldErrors _fieldErrors;
         private const int TUMU_INT = 0;
         private const string TUMU_STR = "ALL";
 
         public ucIzinler(ISessionContext session, IAuthorizationService auth, IKisiQueryService ksvc, IIzinTipService isvc, IFirmaService fsvc, IKisiIzinService kisvc, IKullaniciFirmaIsyeriYetkiService yetkiSvc)
         {
             InitializeComponent();
+            _fieldErrors = new WinFormsFieldErrors(this);
             txtAciklama.HandleCreated += (s, e) =>
             {
                 try
@@ -671,13 +673,23 @@ namespace CeyPASS.WFA.UserControls.Izinler
                     id = Convert.ToInt32(dgIzinlerTablosu.CurrentRow.Cells[col.Index].Value);
                 }
 
-                if (MessageBox.Show("Seçili izin silinsin mi?", "Onay",
-                    MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+                if (UiConfirm.Confirm(this, "Seçili izin silinsin mi?", "Onay", "Sil", "Vazgeç"))
                 {
                     if (_kisvc.PasifYap(id))
                     {
                         LogHelper.Info(PageName, "Delete", "İzin pasife çekildi", detayJson: $"{{\"IzinId\":{id}}}");
                         ListeyiYenile();
+                        var undoId = id;
+                        UiUndo.Offer("İzin silindi.", () =>
+                        {
+                            if (_kisvc.AktifYap(undoId))
+                            {
+                                ListeyiYenile();
+                                UiStatus.Set("Geri alındı.");
+                            }
+                            else
+                                MessageBox.Show("Geri alma başarısız.");
+                        });
                     }
                     else
                     {
@@ -854,11 +866,9 @@ namespace CeyPASS.WFA.UserControls.Izinler
 
                 if (string.IsNullOrWhiteSpace(personelId))
                 {
-                    MessageBox.Show(
-                        "Kayıt için «Kişi» listesinden «— TÜMÜ —» dışında bir personel seçiniz.",
-                        "Uyarı",
-                        MessageBoxButtons.OK,
-                        MessageBoxIcon.Warning);
+                    _fieldErrors.Clear();
+                    _fieldErrors.Set(cmbKisilerSecimi,
+                        "Kayıt için «Kişi» listesinden «— TÜMÜ —» dışında bir personel seçiniz.");
                     cmbKisilerSecimi.Focus();
                     return;
                 }
@@ -869,7 +879,8 @@ namespace CeyPASS.WFA.UserControls.Izinler
                 else if (cmbIzinlerSecimi.SelectedValue == null ||
                     !int.TryParse(cmbIzinlerSecimi.SelectedValue.ToString(), out izinTipId))
                 {
-                    MessageBox.Show("Lütfen bir izin tipi seçiniz.");
+                    _fieldErrors.Clear();
+                    _fieldErrors.Set(cmbIzinlerSecimi, "Lütfen bir izin tipi seçiniz.");
                     return;
                 }
 

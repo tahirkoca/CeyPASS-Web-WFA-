@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="tr"><head><meta charset="utf-8"/><title>Personel</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:"Segoe UI",system-ui,sans-serif}
+body{background:#f1f5f9;color:#1e293b;height:100vh;display:flex;overflow:hidden}
+.sidebar{width:240px;background:#1e293b;color:#e2e8f0;padding:16px 0;flex-shrink:0}
+.brand{padding:12px 20px 20px;font-weight:700;font-size:1.1rem;border-bottom:1px solid #334155}
+.nav{padding:12px 0;font-size:.9rem}
+.nav div{padding:10px 20px;color:#94a3b8}
+.nav .active{background:#334155;color:#fff;border-left:3px solid #6366f1}
+.main{flex:1;display:flex;flex-direction:column;min-width:0}
+.topbar{height:52px;background:#fff;border-bottom:1px solid #e2e8f0;display:flex;align-items:center;padding:0 20px;gap:12px}
+.content{padding:20px;overflow:auto;flex:1}
+.card{background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:16px;margin-bottom:16px;box-shadow:0 1px 2px rgb(0 0 0/.05)}
+h1{font-size:1.35rem;margin-bottom:14px}
+label{font-size:.8rem;color:#64748b;display:block;margin-bottom:4px}
+.row{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:12px}
+.field{min-width:140px}
+select,input{padding:8px 10px;border:1px solid #cbd5e1;border-radius:6px;font-size:.85rem;min-width:130px;background:#fff}
+.btn{padding:8px 14px;border-radius:6px;border:none;font-size:.85rem;cursor:pointer}
+.btn-primary{background:#6366f1;color:#fff}
+.btn-success{background:#10b981;color:#fff}
+.btn-danger{background:#ef4444;color:#fff}
+.btn-warn{background:#f59e0b;color:#fff}
+table{width:100%;border-collapse:collapse;font-size:.82rem}
+th,td{border:1px solid #e2e8f0;padding:8px;text-align:left}
+th{background:#f8fafc}
+.grid-actions button{margin:0 2px;padding:4px 8px;font-size:.75rem}
+.toolbar{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+.badge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:.72rem}
+.b-yellow{background:#fef3c7;color:#92400e}.b-green{background:#d1fae5;color:#065f46}.b-red{background:#fee2e2;color:#991b1b}
+</style></head><body><div class="sidebar"><div class="brand">WPF</div><div class="nav"><div class="active">Personel Tanımlama</div></div></div><div class="main"><div class="content"><div class="card"><table><tr><th>Sicil</th><th>Ad</th></tr><tr><td>1001</td><td>Ornek</td></tr></table></div></div></div></body></html>

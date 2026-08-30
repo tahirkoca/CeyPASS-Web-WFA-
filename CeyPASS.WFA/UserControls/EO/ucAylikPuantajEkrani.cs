@@ -193,16 +193,33 @@ namespace CeyPASS.WFA.UserControls.EO
             cmbAySecimi.Items.Clear();
             DateTime baslangic = new DateTime(2025, 1, 1);
             DateTime bugun = DateTime.Now;
+            string current = bugun.ToString("MMMM yyyy", new CultureInfo("tr-TR"));
 
             while (baslangic <= bugun)
             {
                 string ayYil = baslangic.ToString("MMMM yyyy", new CultureInfo("tr-TR"));
                 cmbAySecimi.Items.Add(ayYil);
-
                 baslangic = baslangic.AddMonths(1);
             }
 
-            cmbAySecimi.SelectedItem = bugun.ToString("MMMM yyyy", new CultureInfo("tr-TR"));
+            var prefs = PageFilterPrefsStore.Load(PageName);
+            if (prefs?.DateA is DateTime da)
+            {
+                string preferred = da.ToString("MMMM yyyy", new CultureInfo("tr-TR"));
+                if (cmbAySecimi.Items.Contains(preferred))
+                    current = preferred;
+            }
+
+            cmbAySecimi.SelectedItem = current;
+            if (cmbAySecimi.SelectedItem != null)
+            {
+                var secilen = DateTime.ParseExact(
+                    cmbAySecimi.SelectedItem.ToString(),
+                    "MMMM yyyy",
+                    new CultureInfo("tr-TR"));
+                _seciliYil = secilen.Year;
+                _seciliAy = secilen.Month;
+            }
         }
         private void FirmalariYukle()
         {
@@ -214,8 +231,17 @@ namespace CeyPASS.WFA.UserControls.EO
             cmbFirmaSecimi.DataSource = firmalar;
             cmbFirmaSecimi.DropDownStyle = ComboBoxStyle.DropDownList;
 
+            var prefs = PageFilterPrefsStore.Load(PageName);
+            var preferredId = prefs?.FirmaId;
             if (firmalar != null && firmalar.Count > 0)
-                cmbFirmaSecimi.SelectedIndex = 0;
+            {
+                if (preferredId.HasValue && firmalar.Any(f => f.FirmaId == preferredId.Value))
+                    cmbFirmaSecimi.SelectedValue = preferredId.Value;
+                else if (_session.AktifFirmaId.HasValue && firmalar.Any(f => f.FirmaId == _session.AktifFirmaId.Value))
+                    cmbFirmaSecimi.SelectedValue = _session.AktifFirmaId.Value;
+                else
+                    cmbFirmaSecimi.SelectedIndex = 0;
+            }
 
             IsyerleriniYukle();
         }
@@ -232,10 +258,36 @@ namespace CeyPASS.WFA.UserControls.EO
             cmbIsyeriSecimi.ValueMember = "IsyeriId";
             cmbIsyeriSecimi.DataSource = isyerleri;
 
+            var prefs = PageFilterPrefsStore.Load(PageName);
+            var preferredIsyeri = prefs?.IsyeriId;
             if (isyerleri.Count > 0)
-                cmbIsyeriSecimi.SelectedIndex = 0;
+            {
+                if (preferredIsyeri.HasValue && isyerleri.Any(x => x.IsyeriId == preferredIsyeri.Value))
+                    cmbIsyeriSecimi.SelectedValue = preferredIsyeri.Value;
+                else
+                    cmbIsyeriSecimi.SelectedIndex = 0;
+            }
 
             PersonelleriYukle();
+        }
+
+        private void PersistFilters()
+        {
+            int? firmaId = null;
+            int? isyeriId = null;
+            if (cmbFirmaSecimi.SelectedValue != null)
+                firmaId = Convert.ToInt32(cmbFirmaSecimi.SelectedValue);
+            if (cmbIsyeriSecimi.SelectedValue != null)
+                isyeriId = Convert.ToInt32(cmbIsyeriSecimi.SelectedValue);
+
+            PageFilterPrefsStore.Save(PageName, new PageFilterPrefs
+            {
+                FirmaId = firmaId,
+                IsyeriId = isyeriId,
+                DateA = (_seciliYil > 0 && _seciliAy > 0)
+                    ? new DateTime(_seciliYil, _seciliAy, 1)
+                    : (DateTime?)null
+            });
         }
         private void PersonelleriYukle()
         {
@@ -268,8 +320,16 @@ namespace CeyPASS.WFA.UserControls.EO
         private void OlaylariBagla()
         {
             cmbAySecimi.SelectedIndexChanged += cmbAySecimi_SelectedIndexChanged;
-            cmbFirmaSecimi.SelectedValueChanged += (s, e) => IsyerleriniYukle();
-            cmbIsyeriSecimi.SelectedValueChanged += (s, e) => PersonelleriYukle();
+            cmbFirmaSecimi.SelectedValueChanged += (s, e) =>
+            {
+                IsyerleriniYukle();
+                PersistFilters();
+            };
+            cmbIsyeriSecimi.SelectedValueChanged += (s, e) =>
+            {
+                PersonelleriYukle();
+                PersistFilters();
+            };
             cmbAdSoyad.SelectedValueChanged += cmbAdSoyad_SelectedValueChanged;
         }
         private void GridYukle()
@@ -283,13 +343,17 @@ namespace CeyPASS.WFA.UserControls.EO
                 return;
             }
 
-            var liste = _psvc.GetAy(personelId, _seciliYil, _seciliAy);
-            var grid = (DataGridView)Controls.Find("dgPuantaj", true)[0];
-            grid.DataSource = new BindingList<PuantajGunSatirDTO>(liste);
+            using (CeypassBusyPanel.BusyScope(this, "Puantaj yükleniyor", "Lütfen bekleyin…"))
+            {
+                var liste = _psvc.GetAy(personelId, _seciliYil, _seciliAy);
+                var grid = (DataGridView)Controls.Find("dgPuantaj", true)[0];
+                grid.DataSource = new BindingList<PuantajGunSatirDTO>(liste);
 
-            int ekGun = 0;
-            int.TryParse(txtEkKayitGunu.Text, out ekGun);
-            ApplyLocksAndGreyRows(_ekKayitGun);
+                int ekGun = 0;
+                int.TryParse(txtEkKayitGunu.Text, out ekGun);
+                ApplyLocksAndGreyRows(_ekKayitGun);
+            }
+            PersistFilters();
         }
         private void Grid_CellContentClick(object sender, DataGridViewCellEventArgs e)
         {
@@ -336,9 +400,8 @@ namespace CeyPASS.WFA.UserControls.EO
             {
                 if (string.Equals(satir.CalismaTipi, "EKSİK VERİ", StringComparison.OrdinalIgnoreCase))
                 {
-                    var c = MessageBox.Show("Bu satır 'EKSİK VERİ'. Yine de onaylansın mı?",
-                                            "Onay", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-                    if (c != DialogResult.Yes) return;
+                    if (!UiConfirm.Confirm(this, "Bu satır 'EKSİK VERİ'. Yine de onaylansın mı?", "Onay", "Onayla", "Vazgeç"))
+                        return;
                 }
 
                 int fmToSave = satir.DuzenlenenFMDakika > 0
@@ -444,6 +507,7 @@ namespace CeyPASS.WFA.UserControls.EO
             FirmalariYukle();
 
             ApplyLocksAndGreyRows(_ekKayitGun);
+            PersistFilters();
         }
         private void btnCokluSicileAktar_Click(object sender, EventArgs e)
         {
@@ -457,12 +521,12 @@ namespace CeyPASS.WFA.UserControls.EO
             int yil = _seciliYil;
             int ay = _seciliAy;
 
-            var onay = MessageBox.Show(
+            var onay = UiConfirm.Confirm(this,
                 $"Seçili kişinin bağlı tüm sicillerine {yil}-{ay:D2} ayının SON GÜNÜNE 'NG 7,5' yazılacak.\n" +
                 "Ayrıca ana personelin ayın SON GÜNÜNDEKİ kayıtları kaldırılacaktır. Onaylıyor musunuz?",
-                "Onay", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+                "Onay", "Onayla", "Vazgeç");
 
-            if (onay != DialogResult.Yes) return;
+            if (!onay) return;
 
             try
             {
@@ -732,10 +796,8 @@ namespace CeyPASS.WFA.UserControls.EO
                     ? $"{_seciliYil} {ayAdi} ayının {startDay}-{hedefGun:dd} günleri arası bekleyen puantaj kayıtları toplu onaylansın mı?"
                     : $"{_seciliYil} {ayAdi} ayının {startDay}-{hedefGun:dd} günleri arası (bekleyen ve düzenlenebilir) puantaj kayıtları toplu onaylansın mı?";
 
-                var onay = MessageBox.Show(confirmMsg, "Onay",
-                    MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-
-                if (onay != DialogResult.Yes) return;
+                if (!UiConfirm.Confirm(this, confirmMsg, "Onay", "Onayla", "Vazgeç"))
+                    return;
 
                 _psvc.TopluOnaylaKadar(_seciliPersonelId, _seciliYil, _seciliAy, hedefGun, (int)_session.AktifKullaniciId);
 

@@ -7,6 +7,7 @@ import { PageHeader } from "../PageHeader";
 import { useHeaderQuickMenu } from "../HeaderQuickMenu";
 import { useNotificationsContext } from "../NotificationsProvider";
 import { izinService, KisiIzinListRow, IzinUpsertRequest } from "../../services/izinApi";
+import { useUiPrefs } from "../../services/uiPrefs";
 
 function pick<T = any>(obj: any, a: string, b?: string): T | undefined {
   if (!obj) return undefined;
@@ -99,6 +100,7 @@ function RowLabel({ label, value }: { label: string; value: string }) {
 }
 
 export function IzinlerScreen(props: { user: any; abilities: any; onOpenMenu: () => void }) {
+  const { listRowPadClass } = useUiPrefs();
   const actions = props.abilities?.actions?.Izinler ?? props.abilities?.Actions?.Izinler ?? {};
   const canCreate = !!(actions?.Create ?? actions?.create);
   const canUpdate = !!(actions?.Update ?? actions?.update);
@@ -115,7 +117,6 @@ export function IzinlerScreen(props: { user: any; abilities: any; onOpenMenu: ()
         rightIcon2="bell-outline"
         onRightPress2={() => quickMenu.open("notif")}
         rightBadge2={notif.unreadCount}
-        rightA11yLabel2="Bildirimler ve hesap"
       />
       {quickMenu.modal}
     </>
@@ -153,9 +154,17 @@ export function IzinlerScreen(props: { user: any; abilities: any; onOpenMenu: ()
   const [popupVisible, setPopupVisible] = useState(false);
   const [popupType, setPopupType] = useState<"success" | "error">("success");
   const [popupMessage, setPopupMessage] = useState("");
-  const showPopup = (type: "success" | "error", message: string) => {
+  const [popupUndo, setPopupUndo] = useState<(() => Promise<void>) | null>(null);
+  const [undoLoading, setUndoLoading] = useState(false);
+  const closePopup = () => {
+    setPopupVisible(false);
+    setPopupUndo(null);
+    setUndoLoading(false);
+  };
+  const showPopup = (type: "success" | "error", message: string, undo?: () => Promise<void>) => {
     setPopupType(type);
     setPopupMessage(message);
+    setPopupUndo(undo ?? null);
     setPopupVisible(true);
   };
 
@@ -164,6 +173,7 @@ export function IzinlerScreen(props: { user: any; abilities: any; onOpenMenu: ()
   const [formId, setFormId] = useState<number | null>(null);
   const [fPersonelId, setFPersonelId] = useState<string>("");
   const [fIzinId, setFIzinId] = useState<number>(0);
+  const [formFieldErrors, setFormFieldErrors] = useState<{ personel?: string; izinTip?: string; saat?: string }>({});
   const [fSaatlik, setFSaatlik] = useState(false);
   const [fBasTarih, setFBasTarih] = useState<Date>(() => normalizeDateOnly(new Date()));
   const [fBitTarih, setFBitTarih] = useState<Date>(() => normalizeDateOnly(new Date()));
@@ -306,6 +316,7 @@ export function IzinlerScreen(props: { user: any; abilities: any; onOpenMenu: ()
     setFBasSaat("");
     setFBitSaat("");
     setFAciklama("");
+    setFormFieldErrors({});
     setFormVisible(true);
   }
 
@@ -329,6 +340,7 @@ export function IzinlerScreen(props: { user: any; abilities: any; onOpenMenu: ()
     setFBasSaat("");
     setFBitSaat("");
     setFAciklama((pick<any>(row, "aciklama", "Aciklama") ?? "").toString());
+    setFormFieldErrors({});
     setFormVisible(true);
   };
 
@@ -343,22 +355,16 @@ export function IzinlerScreen(props: { user: any; abilities: any; onOpenMenu: ()
 
   const submitForm = async () => {
     if (formSaving) return;
+    const nextErr: { personel?: string; izinTip?: string; saat?: string } = {};
     if (!selectedFirmaId) {
       showPopup("error", "Firma seçiniz.");
       return;
     }
-    if (!fPersonelId) {
-      showPopup("error", "Personel seçiniz.");
-      return;
-    }
-    if (!fIzinId) {
-      showPopup("error", "İzin tipi seçiniz.");
-      return;
-    }
-    if (fSaatlik && (!fBasSaat || !fBitSaat)) {
-      showPopup("error", "Saatlik izin için başlangıç ve bitiş saati giriniz.");
-      return;
-    }
+    if (!fPersonelId) nextErr.personel = "Personel seçiniz.";
+    if (!fIzinId) nextErr.izinTip = "İzin tipi seçiniz.";
+    if (fSaatlik && (!fBasSaat || !fBitSaat)) nextErr.saat = "Saatlik izin için başlangıç ve bitiş saati giriniz.";
+    setFormFieldErrors(nextErr);
+    if (nextErr.personel || nextErr.izinTip || nextErr.saat) return;
 
     const payload: IzinUpsertRequest = {
       firmaId: selectedFirmaId,
@@ -405,7 +411,21 @@ export function IzinlerScreen(props: { user: any; abilities: any; onOpenMenu: ()
       const r = await izinService.pasifYap(deleteTargetId);
       if (!r?.success) throw new Error(r?.message ?? "İşlem başarısız.");
       setDeleteConfirmVisible(false);
-      showPopup("success", r?.message ?? "Silindi.");
+      const undoId = deleteTargetId;
+      showPopup("success", r?.message ?? "Silindi.", async () => {
+        setUndoLoading(true);
+        try {
+          const ur = await izinService.aktifYap(undoId);
+          if (!ur?.success) throw new Error(ur?.message ?? "Geri alma başarısız.");
+          closePopup();
+          showPopup("success", "Geri alındı.");
+          setTimeout(() => loadList().catch(() => {}), 250);
+        } catch (err: any) {
+          showPopup("error", err?.message ?? "Geri alma başarısız.");
+        } finally {
+          setUndoLoading(false);
+        }
+      });
       setTimeout(() => loadList().catch(() => {}), 250);
     } catch (e: any) {
       showPopup("error", e?.message ?? "Hata");
@@ -445,7 +465,7 @@ export function IzinlerScreen(props: { user: any; abilities: any; onOpenMenu: ()
 
   return (
     <View className="flex-1 bg-[#f8fafc]">
-      <StatusPopup visible={popupVisible} type={popupType} message={popupMessage} onClose={() => setPopupVisible(false)} useModal={false} autoCloseMs={1500} />
+      <StatusPopup visible={popupVisible} type={popupType} message={popupMessage} onClose={closePopup} useModal={false} autoCloseMs={popupUndo ? 7000 : 1500} onUndo={popupUndo ? () => popupUndo() : undefined} undoLoading={undoLoading} />
       {header}
 
       <ScrollView className="flex-1 px-4" contentContainerStyle={{ paddingBottom: 24 }}>
@@ -543,7 +563,7 @@ export function IzinlerScreen(props: { user: any; abilities: any; onOpenMenu: ()
               const isSaatlik = saatlik.trim().toLowerCase() === "evet";
 
               return (
-                <View key={`${String(pick<any>(row, "kisiIzinId", "KisiIzinId") ?? idx)}_${idx}`} className="px-4 py-3 border-b border-[#f1f5f9]">
+                <View key={`${String(pick<any>(row, "kisiIzinId", "KisiIzinId") ?? idx)}_${idx}`} className={`px-4 ${listRowPadClass} border-b border-[#f1f5f9]`}>
                   <Text className="text-[#0f172a] font-extrabold" numberOfLines={1}>
                     {ad} • {sicil}
                   </Text>
@@ -563,7 +583,7 @@ export function IzinlerScreen(props: { user: any; abilities: any; onOpenMenu: ()
                       ) : null}
                       {canDelete ? (
                         <TouchableOpacity className="flex-1 bg-[#fee2e2] rounded-xl py-2 items-center" onPress={() => askDelete(row)}>
-                          <Text className="text-[#dc2626] font-extrabold">Pasif Yap</Text>
+                          <Text className="text-[#dc2626] font-extrabold">Pasife al</Text>
                         </TouchableOpacity>
                       ) : null}
                     </View>
@@ -723,14 +743,16 @@ export function IzinlerScreen(props: { user: any; abilities: any; onOpenMenu: ()
                   <TouchableOpacity
                     disabled={formMode === "edit"}
                     onPress={() => setFormPersonelModal(true)}
-                    className={`px-3 py-3 rounded-xl border border-[#e2e8f0] ${formMode === "edit" ? "bg-[#f1f5f9]" : "bg-white"}`}
+                    className={`px-3 py-3 rounded-xl border ${formMode === "edit" ? "bg-[#f1f5f9]" : "bg-white"} ${formFieldErrors.personel ? "border-[#dc2626]" : "border-[#e2e8f0]"}`}
                   >
                     <RowLabel label="Personel" value={fPersonelLabel} />
                   </TouchableOpacity>
+                  {formFieldErrors.personel ? <Text className="text-[#dc2626] font-semibold text-[12px] mt-1">{formFieldErrors.personel}</Text> : null}
                   <View className="h-3" />
-                  <TouchableOpacity onPress={() => setFormIzinTipModal(true)} className="px-3 py-3 rounded-xl border border-[#e2e8f0] bg-white">
+                  <TouchableOpacity onPress={() => setFormIzinTipModal(true)} className={`px-3 py-3 rounded-xl border bg-white ${formFieldErrors.izinTip ? "border-[#dc2626]" : "border-[#e2e8f0]"}`}>
                     <RowLabel label="İzin Tipi" value={fIzinTipLabel} />
                   </TouchableOpacity>
+                  {formFieldErrors.izinTip ? <Text className="text-[#dc2626] font-semibold text-[12px] mt-1">{formFieldErrors.izinTip}</Text> : null}
                   <View className="h-3" />
                   <TouchableOpacity
                     onPress={() => {
@@ -767,17 +789,24 @@ export function IzinlerScreen(props: { user: any; abilities: any; onOpenMenu: ()
                       <View className="h-3" />
                       <TextInput
                         value={fBasSaat}
-                        onChangeText={setFBasSaat}
+                        onChangeText={(t) => {
+                          setFBasSaat(t);
+                          if (formFieldErrors.saat) setFormFieldErrors((e) => ({ ...e, saat: undefined }));
+                        }}
                         placeholder="Başlangıç Saati (HH:mm)"
-                        className="px-3 py-3 rounded-xl bg-white border border-[#e2e8f0] text-[#0f172a]"
+                        className={`px-3 py-3 rounded-xl bg-white border text-[#0f172a] ${formFieldErrors.saat ? "border-[#dc2626]" : "border-[#e2e8f0]"}`}
                       />
                       <View className="h-3" />
                       <TextInput
                         value={fBitSaat}
-                        onChangeText={setFBitSaat}
+                        onChangeText={(t) => {
+                          setFBitSaat(t);
+                          if (formFieldErrors.saat) setFormFieldErrors((e) => ({ ...e, saat: undefined }));
+                        }}
                         placeholder="Bitiş Saati (HH:mm)"
-                        className="px-3 py-3 rounded-xl bg-white border border-[#e2e8f0] text-[#0f172a]"
+                        className={`px-3 py-3 rounded-xl bg-white border text-[#0f172a] ${formFieldErrors.saat ? "border-[#dc2626]" : "border-[#e2e8f0]"}`}
                       />
+                      {formFieldErrors.saat ? <Text className="text-[#dc2626] font-semibold text-[12px] mt-1">{formFieldErrors.saat}</Text> : null}
                     </>
                   ) : null}
 
@@ -800,7 +829,7 @@ export function IzinlerScreen(props: { user: any; abilities: any; onOpenMenu: ()
                     <Text className="text-white font-extrabold">{formSaving ? "Kaydediliyor..." : "Kaydet"}</Text>
                   </TouchableOpacity>
                   <TouchableOpacity disabled={formSaving} onPress={() => setFormVisible(false)} className="flex-1 bg-[#f1f5f9] rounded-xl py-3 items-center">
-                    <Text className={`font-extrabold ${formSaving ? "text-[#94a3b8]" : "text-[#334155]"}`}>İptal</Text>
+                    <Text className={`font-extrabold ${formSaving ? "text-[#94a3b8]" : "text-[#334155]"}`}>Vazgeç</Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -876,10 +905,10 @@ export function IzinlerScreen(props: { user: any; abilities: any; onOpenMenu: ()
                     onPress={doDelete}
                     className={`rounded-xl py-3 items-center ${deleteSaving ? "bg-[#fecaca]" : "bg-[#dc2626]"}`}
                   >
-                    <Text className="text-white font-extrabold">{deleteSaving ? "İşleniyor..." : "Pasif Yap"}</Text>
+                    <Text className="text-white font-extrabold">{deleteSaving ? "İşleniyor..." : "Pasife al"}</Text>
                   </TouchableOpacity>
                   <TouchableOpacity disabled={deleteSaving} onPress={() => setDeleteConfirmVisible(false)} className="mt-2 bg-[#f1f5f9] rounded-xl py-3 items-center">
-                    <Text className={`font-extrabold ${deleteSaving ? "text-[#94a3b8]" : "text-[#334155]"}`}>İptal</Text>
+                    <Text className={`font-extrabold ${deleteSaving ? "text-[#94a3b8]" : "text-[#334155]"}`}>Vazgeç</Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -910,7 +939,10 @@ export function IzinlerScreen(props: { user: any; abilities: any; onOpenMenu: ()
           title="Personel Seç"
           items={personelItems.filter((x) => x.key !== "ALL")}
           onClose={() => setFormPersonelModal(false)}
-          onPick={(key) => setFPersonelId(key)}
+          onPick={(key) => {
+            setFPersonelId(key);
+            setFormFieldErrors((e) => ({ ...e, personel: undefined }));
+          }}
         />
       ) : null}
 
@@ -923,6 +955,7 @@ export function IzinlerScreen(props: { user: any; abilities: any; onOpenMenu: ()
           onPick={(key) => {
             const id = Number(key);
             setFIzinId(Number.isFinite(id) ? id : 0);
+            setFormFieldErrors((e) => ({ ...e, izinTip: undefined }));
           }}
         />
       ) : null}

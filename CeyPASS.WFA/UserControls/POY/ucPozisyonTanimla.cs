@@ -19,10 +19,12 @@ namespace CeyPASS.WFA.UserControls
         private bool _wired;
         private const string PageName = "Pozisyonlar";
         private const string PageNameUI = "Pozisyonlar";
+        private readonly WinFormsFieldErrors _fieldErrors;
 
         public ucPozisyonTanimla(ISessionContext session, IPozisyonService psvc, IAuthorizationService auth)
         {
             InitializeComponent();
+            _fieldErrors = new WinFormsFieldErrors(this);
             _session = session;
             _auth = auth;
             _psvc = psvc;
@@ -209,10 +211,9 @@ namespace CeyPASS.WFA.UserControls
             if (_mode == ScreenMode.Edit && !_auth.Can(PageName, YetkiTipleri.Update))
             { System.Media.SystemSounds.Beep.Play(); return; }
 
-            if (string.IsNullOrWhiteSpace(ad))
+            _fieldErrors.Clear();
+            if (!_fieldErrors.Require(txtPozisyonAdi, ad, "Pozisyon adı boş olamaz."))
             {
-                MessageBox.Show("Pozisyon adı boş olamaz.", "Uyarı",
-                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 txtPozisyonAdi.Focus();
                 return;
             }
@@ -261,8 +262,7 @@ namespace CeyPASS.WFA.UserControls
             var it = chkPozisyonlar.SelectedItem as LookupItem;
             if (it == null) return;
 
-            if (MessageBox.Show($"“{it.Ad}” silinsin mi?",
-                "Onay", MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes)
+            if (!UiConfirm.Confirm(this, $"“{it.Ad}” silinsin mi?", "Onay", "Sil", "Vazgeç"))
             {
                 LogHelper.Info(PageName, "Sil", "Kullanıcı iptal etti",
                                $"{{\"id\":{it.Id}}}", cid);

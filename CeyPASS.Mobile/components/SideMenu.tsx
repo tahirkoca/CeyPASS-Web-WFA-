@@ -113,6 +113,7 @@ export function SideMenu(props: {
   onClose: () => void;
   onSelect: (key: string) => void;
   onLogout: () => void;
+  onOpenTips?: () => void;
 }) {
   const hasSicilNo = !!(props.user?.sicilNo ?? props.user?.SicilNo);
   const sections = buildMenu(props.abilities, props.user, hasSicilNo);
@@ -203,6 +204,23 @@ export function SideMenu(props: {
           <TouchableOpacity activeOpacity={1} onPress={() => {}}>
             <View className="w-[300px] bg-white h-full pt-12 border-r border-[#f1f5f9]">
               <ScrollView className="flex-1 px-3 py-3">
+                {props.onOpenTips ? (
+                  <View className="mb-4">
+                    <Text className="px-2 py-2 text-[#64748b] font-extrabold text-[11px] uppercase">
+                      Hızlı erişim
+                    </Text>
+                    <TouchableOpacity
+                      onPress={() => {
+                        props.onClose();
+                        props.onOpenTips?.();
+                      }}
+                      className="flex-row items-center px-3 py-3 rounded-xl mb-1"
+                    >
+                      <MaterialCommunityIcons name="help-circle-outline" size={20} color="#64748b" />
+                      <Text className="ml-3 font-semibold text-[#1e293b]">İpuçları</Text>
+                    </TouchableOpacity>
+                  </View>
+                ) : null}
                 {sections.map((sec) => (
                   <View key={sec.title} className="mb-4">
                     <Text className="px-2 py-2 text-[#64748b] font-extrabold text-[11px] uppercase">

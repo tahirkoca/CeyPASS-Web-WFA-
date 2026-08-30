@@ -18,10 +18,12 @@ namespace CeyPASS.WFA.UserControls
         AuthorizationHelper authHelp;
         private const string PageName = "Firmalar";
         private const string PageNameUI = "Firmalar";
+        private readonly WinFormsFieldErrors _fieldErrors;
 
         public ucFirmaTanimlama(ISessionContext session,IFirmaService fsvc,IAuthorizationService auth)
         {
             InitializeComponent();
+            _fieldErrors = new WinFormsFieldErrors(this);
             _session = session;
             _fsvc = fsvc;
             _auth = auth;
@@ -231,7 +233,8 @@ namespace CeyPASS.WFA.UserControls
                 if (!int.TryParse(txtFirmaId.Text, out id))
                 {
                     LogHelper.Warn(PageName, "Validate", "Geçersiz FirmaId");
-                    MessageBox.Show("Geçerli bir Firma Id girin.");
+                    _fieldErrors.Clear();
+                    _fieldErrors.Set(txtFirmaId, "Geçerli bir Firma Id girin.");
                     txtFirmaId.Focus();
                     return;
                 }
@@ -239,10 +242,10 @@ namespace CeyPASS.WFA.UserControls
                 string ad = txtFirmaAdi.Text?.Trim();
                 string mail = txtITMail.Text?.Trim();
 
-                if (string.IsNullOrWhiteSpace(ad))
+                _fieldErrors.Clear();
+                if (!_fieldErrors.Require(txtFirmaAdi, ad, "Firma adı boş olamaz."))
                 {
                     LogHelper.Warn(PageName, "Validate", "Firma adı boş");
-                    MessageBox.Show("Firma adı boş olamaz.");
                     return;
                 }
 
@@ -297,8 +300,7 @@ namespace CeyPASS.WFA.UserControls
                 return;
             }
 
-            if (MessageBox.Show($"“{it.Ad}” firmasını silmek istiyor musunuz?",
-                "Onay", MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes) 
+            if (!UiConfirm.Confirm(this, $"“{it.Ad}” firmasını silmek istiyor musunuz?", "Onay", "Sil", "Vazgeç"))
             {
                 LogHelper.Info(PageName, "Delete", "Kullanıcı silmeyi iptal etti",
                        detayJson: $"{{\"FirmaId\":{it.Id}}}");

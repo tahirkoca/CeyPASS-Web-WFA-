@@ -1,0 +1,57 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <SolidColorBrush x:Key="Brush.PageBg" Color="#F1F4F8"/>
+    <SolidColorBrush x:Key="Brush.HeaderBg" Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="Brush.Card" Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="Brush.Border" Color="#E8EDF3"/>
+    <SolidColorBrush x:Key="Brush.TextPrimary" Color="#0F172A"/>
+    <SolidColorBrush x:Key="Brush.TextMuted" Color="#64748B"/>
+    <SolidColorBrush x:Key="Brush.TextSecondary" Color="#475569"/>
+    <SolidColorBrush x:Key="Brush.ChromeBg" Color="#F1F5F9"/>
+    <SolidColorBrush x:Key="Brush.ChromeBorder" Color="#E2E8F0"/>
+    <SolidColorBrush x:Key="Brush.ChromeHover" Color="#E2E8F0"/>
+    <SolidColorBrush x:Key="Brush.ChromeIcon" Color="#64748B"/>
+    <SolidColorBrush x:Key="Brush.ChromeSep" Color="#E2E8F0"/>
+    <SolidColorBrush x:Key="Brush.SecondaryBg" Color="#F1F5F9"/>
+    <SolidColorBrush x:Key="Brush.SecondaryBorder" Color="#E2E8F0"/>
+    <SolidColorBrush x:Key="Brush.SecondaryFg" Color="#334155"/>
+    <SolidColorBrush x:Key="Brush.SecondaryHover" Color="#E2E8F0"/>
+    <SolidColorBrush x:Key="Brush.AddBg" Color="#EFF6FF"/>
+    <SolidColorBrush x:Key="Brush.AddBorder" Color="#BFDBFE"/>
+    <SolidColorBrush x:Key="Brush.AddFg" Color="#1D4ED8"/>
+    <SolidColorBrush x:Key="Brush.AddHover" Color="#DBEAFE"/>
+    <SolidColorBrush x:Key="Brush.EditBg" Color="#FFFBEB"/>
+    <SolidColorBrush x:Key="Brush.EditBorder" Color="#FDE68A"/>
+    <SolidColorBrush x:Key="Brush.EditFg" Color="#B45309"/>
+    <SolidColorBrush x:Key="Brush.EditHover" Color="#FEF3C7"/>
+    <SolidColorBrush x:Key="Brush.GridAltRow" Color="#F8FAFC"/>
+    <SolidColorBrush x:Key="Brush.FieldBorder" Color="#D0D7E2"/>
+    <SolidColorBrush x:Key="Brush.FieldBg" Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="Brush.FieldFg" Color="#0F172A"/>
+    <SolidColorBrush x:Key="Brush.ListItemHover" Color="#F1F5F9"/>
+    <SolidColorBrush x:Key="Brush.ListItemSelected" Color="#DBEAFE"/>
+    <SolidColorBrush x:Key="Brush.ListItemSelectedFg" Color="#0F172A"/>
+    <SolidColorBrush x:Key="Brush.DashHeaderGec" Color="#FFF5F5"/>
+    <SolidColorBrush x:Key="Brush.DashHeaderGecBorder" Color="#FECACA"/>
+    <SolidColorBrush x:Key="Brush.DashHeaderDogum" Color="#F0F9FF"/>
+    <SolidColorBrush x:Key="Brush.DashHeaderDogumBorder" Color="#BAE6FD"/>
+    <SolidColorBrush x:Key="Brush.DashHeaderBaslayan" Color="#ECFDF5"/>
+    <SolidColorBrush x:Key="Brush.DashHeaderBaslayanBorder" Color="#A7F3D0"/>
+    <SolidColorBrush x:Key="Brush.DashHeaderAyrilan" Color="#F5F3FF"/>
+    <SolidColorBrush x:Key="Brush.DashHeaderAyrilanBorder" Color="#DDD6FE"/>
+    <SolidColorBrush x:Key="Brush.StatusOkBg" Color="#D1FAE5"/>
+    <SolidColorBrush x:Key="Brush.StatusOkFg" Color="#059669"/>
+    <SolidColorBrush x:Key="Brush.StatusBadBg" Color="#FEE2E2"/>
+    <SolidColorBrush x:Key="Brush.StatusBadFg" Color="#DC2626"/>
+    <SolidColorBrush x:Key="Brush.GridFmtMuted" Color="#E6E6E6"/>
+    <SolidColorBrush x:Key="Brush.GridFmtBlue" Color="#BBDEFB"/>
+    <SolidColorBrush x:Key="Brush.GridFmtGreen" Color="#C8E6C9"/>
+    <SolidColorBrush x:Key="Brush.GridFmtRed" Color="#FFCDD2"/>
+    <SolidColorBrush x:Key="Brush.GridFmtYellow" Color="#FFF9C4"/>
+    <SolidColorBrush x:Key="Brush.GridFmtFg" Color="#0F172A"/>
+    <SolidColorBrush x:Key="Brush.DialogSoft" Color="#EFF6FF"/>
+    <Color x:Key="Color.DialogSoftSuccess">#ECFDF5</Color>
+    <Color x:Key="Color.DialogSoftWarning">#FFF7ED</Color>
+    <Color x:Key="Color.DialogSoftError">#FEF2F2</Color>
+    <Color x:Key="Color.DialogSoftInfo">#EFF6FF</Color>
+</ResourceDictionary>

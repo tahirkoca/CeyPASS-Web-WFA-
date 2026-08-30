@@ -7,6 +7,7 @@ import { useHeaderQuickMenu } from './HeaderQuickMenu';
 import { StatusPopup } from './StatusPopup';
 import { notificationService } from '../services/notificationApi';
 import { useNotificationsContext } from './NotificationsProvider';
+import { useShellActions } from './ShellActions';
 
 interface DashboardProps {
   user: any;
@@ -32,6 +33,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, onOpenMenu
   const [notifItems, setNotifItems] = useState<any[]>([]);
   const quickMenu = useHeaderQuickMenu();
   const notif = useNotificationsContext();
+  const shell = useShellActions();
   const [popupVisible, setPopupVisible] = useState(false);
   const [popupType, setPopupType] = useState<'success' | 'error'>('success');
   const [popupMessage, setPopupMessage] = useState('');
@@ -167,9 +169,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, onOpenMenu
         subtitle={subtitle}
         onOpenMenu={onOpenMenu}
         rightIcon="bell-outline"
-        rightA11yLabel="Bildirimler ve hesap"
         rightBadge={notif.unreadCount}
         onRightPress={() => quickMenu.open("notif")}
+        rightIcon2={shell?.openTips ? "help-circle-outline" : undefined}
+        onRightPress2={shell?.openTips}
       />
       {quickMenu.modal}
       <StatusPopup visible={popupVisible} type={popupType} message={popupMessage} onClose={() => setPopupVisible(false)} useModal={false} autoCloseMs={1500} />

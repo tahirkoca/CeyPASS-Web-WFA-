@@ -7,6 +7,9 @@ import { StatusPopup } from "../StatusPopup";
 import { PageHeader } from "../PageHeader";
 import { useHeaderQuickMenu } from "../HeaderQuickMenu";
 import { useNotificationsContext } from "../NotificationsProvider";
+import { BusyOverlay } from "../BusyOverlay";
+import { pageFilterPrefs, parsePrefDate } from "../../services/pageFilterPrefs";
+import { useUiPrefs } from "../../services/uiPrefs";
 
 function pick<T = any>(obj: any, a: string, b?: string): T | undefined {
   if (!obj) return undefined;
@@ -292,6 +295,7 @@ function RowLabel({ label, value }: { label: string; value: string }) {
 }
 
 export function KisiHareketleriScreen(props: { user: any; abilities: any; onOpenMenu: () => void }) {
+  const { listRowPadClass } = useUiPrefs();
   const actions = props.abilities?.actions?.KisiHareketler ?? props.abilities?.Actions?.KisiHareketler ?? {};
   const canCreate = !!(actions?.Create ?? actions?.create);
   const canUpdate = !!(actions?.Update ?? actions?.update);
@@ -317,7 +321,6 @@ export function KisiHareketleriScreen(props: { user: any; abilities: any; onOpen
         rightIcon2="bell-outline"
         onRightPress2={() => quickMenu.open("notif")}
         rightBadge2={notif.unreadCount}
-        rightA11yLabel2="Bildirimler ve hesap"
       />
       {quickMenu.modal}
     </>
@@ -326,6 +329,7 @@ export function KisiHareketleriScreen(props: { user: any; abilities: any; onOpen
   const isAdmin = !!(props.abilities?.isAdmin ?? props.abilities?.IsAdmin ?? (rolId === 1 || rolId === 2));
 
   const [loading, setLoading] = useState(true);
+  const [filtersHydrated, setFiltersHydrated] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const [firmalar, setFirmalar] = useState<any[]>([]);
@@ -373,9 +377,17 @@ export function KisiHareketleriScreen(props: { user: any; abilities: any; onOpen
   const [popupVisible, setPopupVisible] = useState(false);
   const [popupType, setPopupType] = useState<"success" | "error">("success");
   const [popupMessage, setPopupMessage] = useState("");
-  const showPopup = (type: "success" | "error", message: string) => {
+  const [popupUndo, setPopupUndo] = useState<(() => Promise<void>) | null>(null);
+  const [undoLoading, setUndoLoading] = useState(false);
+  const closePopup = () => {
+    setPopupVisible(false);
+    setPopupUndo(null);
+    setUndoLoading(false);
+  };
+  const showPopup = (type: "success" | "error", message: string, undo?: () => Promise<void>) => {
     setPopupType(type);
     setPopupMessage(message);
+    setPopupUndo(undo ?? null);
     setPopupVisible(true);
   };
 
@@ -402,6 +414,8 @@ export function KisiHareketleriScreen(props: { user: any; abilities: any; onOpen
   const [pasifTargetId, setPasifTargetId] = useState<number | null>(null);
   const [pasifTargetLabel, setPasifTargetLabel] = useState<string>("");
   const [pasifSaving, setPasifSaving] = useState(false);
+  const [pasifConfirmMode, setPasifConfirmMode] = useState<"pasif" | "aktif">("pasif");
+  const [eklePersonelError, setEklePersonelError] = useState("");
 
   const firmaSelectItems = useMemo(
     () =>
@@ -535,27 +549,62 @@ export function KisiHareketleriScreen(props: { user: any; abilities: any; onOpen
     if (firstLoadRef.current) return;
     firstLoadRef.current = true;
     (async () => {
-      setLoading(true);
-      setError(null);
       try {
-        await loadLookups(null, kartTipi);
-        await loadList();
-      } catch (e: any) {
-        setError(e?.message ?? "Beklenmeyen hata");
+        const prefs = await pageFilterPrefs.load("KisiHareketler");
+        if (prefs) {
+          if (typeof prefs.firmaId === "number" && prefs.firmaId > 0) setFirmaId(prefs.firmaId);
+          if (typeof prefs.isyeriId === "number" && prefs.isyeriId > 0) setIsyeriId(prefs.isyeriId);
+          const da = parsePrefDate(prefs.dateA ?? null);
+          const db = parsePrefDate(prefs.dateB ?? null);
+          if (da) {
+            const d = new Date(da);
+            d.setHours(0, 0, 0, 0);
+            setBaslangic(d);
+          }
+          if (db) {
+            const d = new Date(db);
+            d.setHours(23, 59, 59, 0);
+            setBitis(d);
+          }
+          if (prefs.boolA === true) setSadeceAktif(true);
+          else if (prefs.boolA === false) setSadeceAktif(false);
+          if (prefs.boolB === true) setSadecePasif(true);
+          else if (prefs.boolB === false) setSadecePasif(false);
+          if (prefs.extra) {
+            let extra = String(prefs.extra);
+            const yemek = extra.endsWith("|Y");
+            if (yemek) extra = extra.slice(0, -2);
+            setSadeceYemekhane(yemek);
+            if (extra === "puantaj" || extra === "puantajsiz") setKartTipi(extra);
+          }
+        }
       } finally {
-        setLoading(false);
+        setFiltersHydrated(true);
       }
     })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
-    if (!firstLoadRef.current) return;
+    if (!filtersHydrated) return;
+    const kart = kartTipi + (sadeceYemekhane ? "|Y" : "");
+    void pageFilterPrefs.save("KisiHareketler", {
+      firmaId,
+      isyeriId,
+      dateA: baslangic,
+      dateB: bitis,
+      boolA: sadeceAktif,
+      boolB: sadecePasif,
+      extra: kart,
+    });
+  }, [filtersHydrated, firmaId, isyeriId, baslangic, bitis, sadeceAktif, sadecePasif, sadeceYemekhane, kartTipi]);
+
+  useEffect(() => {
+    if (!filtersHydrated) return;
     (async () => {
       setLoading(true);
       setError(null);
       try {
-        await loadLookups(firmaId, kartTipi);
+        await loadLookups(firmaId, kartTipi, isyeriId);
         await loadList();
       } catch (e: any) {
         setError(e?.message ?? "Beklenmeyen hata");
@@ -567,7 +616,7 @@ export function KisiHareketleriScreen(props: { user: any; abilities: any; onOpen
       }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [firmaId, kartTipi, isyeriId, personelIds.join(","), sadeceAktif, sadecePasif, sadeceYemekhane, baslangic.getTime(), bitis.getTime(), page, pageSize]);
+  }, [filtersHydrated, firmaId, kartTipi, isyeriId, personelIds.join(","), sadeceAktif, sadecePasif, sadeceYemekhane, baslangic.getTime(), bitis.getTime(), page, pageSize]);
 
   const firmaLabel = useMemo(() => {
     const fid = firmaId ?? Number(pick<any>(aktifFirma, "firmaId", "FirmaId"));
@@ -606,9 +655,10 @@ export function KisiHareketleriScreen(props: { user: any; abilities: any; onOpen
   const handleEkle = async () => {
     if (ekleSaving) return;
     if (!eklePersonelId) {
-      showPopup("error", "Lütfen personel seçin.");
+      setEklePersonelError("Personel seçiniz.");
       return;
     }
+    setEklePersonelError("");
     try {
       setEkleSaving(true);
       const r = await kisiHareketService.ekle({ personelId: eklePersonelId, tip: ekleTip, tarih: toLocalIsoNoZ(ekleTarih) });
@@ -683,6 +733,19 @@ export function KisiHareketleriScreen(props: { user: any; abilities: any; onOpen
 
     const ad = (pick<any>(row, "adSoyad", "AdSoyad") ?? "-").toString();
     const sicil = (pick<any>(row, "sicilNo", "SicilNo") ?? "-").toString();
+    setPasifConfirmMode("pasif");
+    setPasifTargetId(id);
+    setPasifTargetLabel(`${ad} • ${sicil}`);
+    setPasifConfirmVisible(true);
+  };
+
+  const handleAktif = async (row: KisiHareketRow) => {
+    const id = Number(pick<any>(row, "id", "Id"));
+    if (!Number.isFinite(id) || id <= 0) return;
+
+    const ad = (pick<any>(row, "adSoyad", "AdSoyad") ?? "-").toString();
+    const sicil = (pick<any>(row, "sicilNo", "SicilNo") ?? "-").toString();
+    setPasifConfirmMode("aktif");
     setPasifTargetId(id);
     setPasifTargetLabel(`${ad} • ${sicil}`);
     setPasifConfirmVisible(true);
@@ -692,10 +755,32 @@ export function KisiHareketleriScreen(props: { user: any; abilities: any; onOpen
     if (!pasifTargetId || pasifSaving) return;
     try {
       setPasifSaving(true);
-      const r = await kisiHareketService.pasifYap(pasifTargetId);
+      const r =
+        pasifConfirmMode === "aktif"
+          ? await kisiHareketService.aktifYap(pasifTargetId)
+          : await kisiHareketService.pasifYap(pasifTargetId);
       if (!r?.success) throw new Error(r?.message ?? "İşlem başarısız.");
       setPasifConfirmVisible(false);
-      showPopup("success", r?.message ?? "Pasif yapıldı.");
+      const msg = r?.message ?? (pasifConfirmMode === "aktif" ? "Aktif edildi." : "Pasif yapıldı.");
+      if (pasifConfirmMode !== "aktif" && pasifTargetId) {
+        const undoId = pasifTargetId;
+        showPopup("success", msg, async () => {
+          setUndoLoading(true);
+          try {
+            const ur = await kisiHareketService.aktifYap(undoId);
+            if (!ur?.success) throw new Error(ur?.message ?? "Geri alma başarısız.");
+            closePopup();
+            showPopup("success", "Geri alındı.");
+            setTimeout(() => loadList().catch(() => {}), 250);
+          } catch (err: any) {
+            showPopup("error", err?.message ?? "Geri alma başarısız.");
+          } finally {
+            setUndoLoading(false);
+          }
+        });
+      } else {
+        showPopup("success", msg);
+      }
       setTimeout(() => loadList().catch(() => {}), 250);
     } catch (e: any) {
       showPopup("error", e?.message ?? "Hata");
@@ -708,6 +793,7 @@ export function KisiHareketleriScreen(props: { user: any; abilities: any; onOpen
     return (
       <View className="flex-1 bg-[#f8fafc]">
         {header}
+        <BusyOverlay visible title="Yükleniyor..." message="Kişi hareketleri hazırlanıyor" />
         <View className="flex-1 items-center justify-center">
           <ActivityIndicator size="large" color="#dc2626" />
           <Text className="mt-3 text-[#64748b] font-semibold">Yükleniyor...</Text>
@@ -722,10 +808,13 @@ export function KisiHareketleriScreen(props: { user: any; abilities: any; onOpen
         visible={popupVisible}
         type={popupType}
         message={popupMessage}
-        onClose={() => setPopupVisible(false)}
+        onClose={closePopup}
         useModal={false}
-        autoCloseMs={1500}
+        autoCloseMs={popupUndo ? 7000 : 1500}
+        onUndo={popupUndo ? () => popupUndo() : undefined}
+        undoLoading={undoLoading}
       />
+      <BusyOverlay visible={loading && items.length > 0} title="Yükleniyor..." message="Liste güncelleniyor" />
       {header}
 
       <ScrollView className="flex-1 px-4" contentContainerStyle={{ paddingBottom: 24 }}>
@@ -854,7 +943,7 @@ export function KisiHareketleriScreen(props: { user: any; abilities: any; onOpen
               const aktif = !!(pick<any>(row, "aktifMi", "AktifMi"));
               const tip = tipLabel(pick<any>(row, "tip", "Tip"));
               return (
-                <View key={`${String(pick<any>(row, "id", "Id") ?? idx)}_${idx}`} className={`px-4 py-3 border-b border-[#f1f5f9] ${!aktif ? "bg-[#f1f5f9]" : "bg-white"}`}>
+                <View key={`${String(pick<any>(row, "id", "Id") ?? idx)}_${idx}`} className={`px-4 ${listRowPadClass} border-b border-[#f1f5f9] ${!aktif ? "bg-[#f1f5f9]" : "bg-white"}`}>
                   <Text className="text-[#0f172a] font-extrabold" numberOfLines={1}>
                     {(pick<any>(row, "adSoyad", "AdSoyad") ?? "-").toString()} • {(pick<any>(row, "sicilNo", "SicilNo") ?? "-").toString()}
                   </Text>
@@ -867,14 +956,19 @@ export function KisiHareketleriScreen(props: { user: any; abilities: any; onOpen
 
                   {(canUpdate || canDelete) ? (
                     <View className="flex-row gap-2 mt-3">
-                      {canUpdate ? (
+                      {canUpdate && aktif ? (
                         <TouchableOpacity className="flex-1 bg-[#e0f2fe] rounded-xl py-2 items-center" onPress={() => openEdit(row)}>
                           <Text className="text-[#0284c7] font-extrabold">Güncelle</Text>
                         </TouchableOpacity>
                       ) : null}
-                      {canDelete ? (
+                      {canDelete && aktif ? (
                         <TouchableOpacity className="flex-1 bg-[#fee2e2] rounded-xl py-2 items-center" onPress={() => handlePasif(row)}>
-                          <Text className="text-[#dc2626] font-extrabold">Pasif Yap</Text>
+                          <Text className="text-[#dc2626] font-extrabold">Pasife al</Text>
+                        </TouchableOpacity>
+                      ) : null}
+                      {canDelete && !aktif ? (
+                        <TouchableOpacity className="flex-1 bg-[#dcfce7] rounded-xl py-2 items-center" onPress={() => handleAktif(row)}>
+                          <Text className="text-[#16a34a] font-extrabold">Aktif et</Text>
                         </TouchableOpacity>
                       ) : null}
                     </View>
@@ -1078,7 +1172,7 @@ export function KisiHareketleriScreen(props: { user: any; abilities: any; onOpen
                     setEkleVisible(false);
                     setPendingEklePersonelPick(true);
                   }}
-                  className="px-3 py-3 rounded-xl border border-[#e2e8f0] bg-white"
+                  className={`px-3 py-3 rounded-xl border bg-white ${eklePersonelError ? "border-[#dc2626]" : "border-[#e2e8f0]"}`}
                 >
                   <RowLabel
                     label="Personel"
@@ -1089,6 +1183,7 @@ export function KisiHareketleriScreen(props: { user: any; abilities: any; onOpen
                     }
                   />
                 </TouchableOpacity>
+                {eklePersonelError ? <Text className="text-[#dc2626] font-semibold text-[12px] mt-1">{eklePersonelError}</Text> : null}
                 <View className="h-3" />
                 <TouchableOpacity
                   onPress={() => {
@@ -1140,6 +1235,7 @@ export function KisiHareketleriScreen(props: { user: any; abilities: any; onOpen
           selectedId={eklePersonelId}
           onPick={(id) => {
             setEklePersonelId(id);
+            setEklePersonelError("");
           }}
         />
       ) : null}
@@ -1233,7 +1329,7 @@ export function KisiHareketleriScreen(props: { user: any; abilities: any; onOpen
         />
       ) : null}
 
-      {/* Pasif yap confirm */}
+      {/* Pasif / Aktif confirm */}
       {pasifConfirmVisible ? (
         <Modal visible={pasifConfirmVisible} transparent animationType="fade" onRequestClose={() => setPasifConfirmVisible(false)}>
           <TouchableOpacity className="flex-1 bg-black/50 justify-center px-6" activeOpacity={1} onPress={() => setPasifConfirmVisible(false)}>
@@ -1246,19 +1342,37 @@ export function KisiHareketleriScreen(props: { user: any; abilities: any; onOpen
                   </TouchableOpacity>
                 </View>
                 <View className="p-4">
-                  <Text className="text-[#0f172a] font-extrabold">Bu hareket pasif yapılsın mı?</Text>
+                  <Text className="text-[#0f172a] font-extrabold">
+                    {pasifConfirmMode === "aktif"
+                      ? "Bu hareket tekrar aktif edilsin mi?"
+                      : "Bu hareket pasif yapılsın mı?"}
+                  </Text>
                   <Text className="text-[#64748b] font-semibold mt-1">{pasifTargetLabel}</Text>
 
                   <View className="h-4" />
                   <TouchableOpacity
                     disabled={pasifSaving}
                     onPress={doPasifConfirm}
-                    className={`rounded-xl py-3 items-center ${pasifSaving ? "bg-[#fecaca]" : "bg-[#dc2626]"}`}
+                    className={`rounded-xl py-3 items-center ${
+                      pasifSaving
+                        ? pasifConfirmMode === "aktif"
+                          ? "bg-[#bbf7d0]"
+                          : "bg-[#fecaca]"
+                        : pasifConfirmMode === "aktif"
+                          ? "bg-[#16a34a]"
+                          : "bg-[#dc2626]"
+                    }`}
                   >
-                    <Text className="text-white font-extrabold">{pasifSaving ? "İşleniyor..." : "Pasif Yap"}</Text>
+                    <Text className="text-white font-extrabold">
+                      {pasifSaving
+                        ? "İşleniyor..."
+                        : pasifConfirmMode === "aktif"
+                          ? "Aktif et"
+                          : "Pasife al"}
+                    </Text>
                   </TouchableOpacity>
                   <TouchableOpacity disabled={pasifSaving} onPress={() => setPasifConfirmVisible(false)} className="mt-2 bg-[#f1f5f9] rounded-xl py-3 items-center">
-                    <Text className={`font-extrabold ${pasifSaving ? "text-[#94a3b8]" : "text-[#334155]"}`}>İptal</Text>
+                    <Text className={`font-extrabold ${pasifSaving ? "text-[#94a3b8]" : "text-[#334155]"}`}>Vazgeç</Text>
                   </TouchableOpacity>
                 </View>
               </View>

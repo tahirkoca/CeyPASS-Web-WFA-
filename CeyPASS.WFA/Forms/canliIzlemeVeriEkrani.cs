@@ -1,5 +1,6 @@
 using CeyPASS.Business.Abstractions;
 using CeyPASS.Entities.Concrete;
+using CeyPASS.Infrastructure.Helpers;
 using CeyPASS.WFA.UserControls.Canlı_İzleme;
 using System;
 using System.Collections.Generic;
@@ -35,7 +36,7 @@ namespace CeyPASS.WFA.Forms
         private void canliIzlemeVeriEkrani_Load(object sender, EventArgs e)
         {
             ApplyTheme();
-            if (IsYemekhaneRole() && !IsDanismaRole())
+            if (CanliIzlemeRoleHelper.HideKartAtama(_session?.RolAdi))
             {
                 kisiyeKartiAta.Visible = false;
                 atananKartiGuncelle.Visible = false;
@@ -92,10 +93,14 @@ namespace CeyPASS.WFA.Forms
         {
             try
             {
-                bool yemekhane = string.Equals(_session?.RolAdi, "YEMEKHANE", StringComparison.OrdinalIgnoreCase);
-                var lastPasses = yemekhane
-                    ? _svc.GetLastPassesYemekhane((int)_session.AktifFirmaId, 4)
-                    : _svc.GetLastPasses((int)_session.AktifFirmaId, 4);
+                var rol = _session?.RolAdi;
+                List<LastPassDTO> lastPasses;
+                if (CanliIzlemeRoleHelper.IsArac(rol))
+                    lastPasses = _svc.GetLastPassesArac((int)_session.AktifFirmaId, 4);
+                else if (CanliIzlemeRoleHelper.IsYemekhane(rol))
+                    lastPasses = _svc.GetLastPassesYemekhane((int)_session.AktifFirmaId, 4);
+                else
+                    lastPasses = _svc.GetLastPasses((int)_session.AktifFirmaId, 4);
 
                 for (int i = 0; i < lastPasses.Count && i < kartlar.Count; i++)
                 {
@@ -144,9 +149,14 @@ namespace CeyPASS.WFA.Forms
                 seciliKisiId = Convert.ToInt32(dgSonHareketler.CurrentRow.Cells["KisiId"].Value);
             }
 
-            var list = (IsYemekhaneRole() && !IsDanismaRole())
-    ? _khsvc.GetLastMovesByFirmaYemekhane(15, _session.AktifFirmaId.Value)
-    : _khsvc.GetLastMovesByFirma(15, _session.AktifFirmaId.Value);
+            var rol = _session?.RolAdi;
+            List<KisiHareketDTO> list;
+            if (CanliIzlemeRoleHelper.IsArac(rol) && !CanliIzlemeRoleHelper.IsDanisma(rol))
+                list = _khsvc.GetLastMovesByFirmaArac(15, _session.AktifFirmaId.Value);
+            else if (CanliIzlemeRoleHelper.IsYemekhane(rol) && !CanliIzlemeRoleHelper.IsDanisma(rol))
+                list = _khsvc.GetLastMovesByFirmaYemekhane(15, _session.AktifFirmaId.Value);
+            else
+                list = _khsvc.GetLastMovesByFirma(15, _session.AktifFirmaId.Value);
 
 
             var table = new DataTable();
@@ -304,13 +314,6 @@ namespace CeyPASS.WFA.Forms
                 host.Controls.Add(uc);
                 host.ShowDialog(owner);
             }
-        }
-        private bool IsYemekhaneRole() => string.Equals(_session?.RolAdi, "YEMEKHANE", StringComparison.OrdinalIgnoreCase);
-        private bool IsDanismaRole()
-        {
-            var r = _session?.RolAdi ?? "";
-            return r.IndexOf("DANIŞMA", StringComparison.OrdinalIgnoreCase) >= 0
-                || r.IndexOf("DANISMA", StringComparison.OrdinalIgnoreCase) >= 0;
         }
     }
 }

@@ -92,7 +92,7 @@
                                                     {
                                                         <form method="post" action="@Url.Action("Delete", new { id = cihaz.CihazId })" style="display: inline;">
                                                             @Html.AntiForgeryToken()
-                                                            <button type="button" class="btn btn-sm btn-danger btn-sil-onay" data-msg="Bu cihazı pasif yapmak istediğinizden emin misiniz?" data-btn-text="Pasif Yap" title="Pasif Yap">
+                                                            <button type="button" class="btn btn-sm btn-danger btn-sil-onay" data-msg="Bu cihazı pasif yapmak istediğinizden emin misiniz?" data-btn-text="Pasife al" data-undo-url="@Url.Action("AktifYap", new { id = cihaz.CihazId })" title="Pasife al">
                                                                 <i class="bi bi-trash"></i>
                                                             </button>
                                                         </form>
@@ -138,8 +138,8 @@
             </div>
             <div class="modal-body" id="silOnayModalBody"></div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
-                <button type="button" class="btn btn-danger" id="silOnayModalSilBtn"><i class="bi bi-trash me-1"></i>Pasif Yap</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Vazgeç</button>
+                <button type="button" class="btn btn-danger" id="silOnayModalSilBtn"><i class="bi bi-trash me-1"></i>Pasife al</button>
             </div>
         </div>
     </div>

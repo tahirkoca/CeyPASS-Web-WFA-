@@ -227,13 +227,15 @@ namespace CeyPASS.WFA.UserControls.Dashboard
 
             Rename(g, "Ad", "Ad");
             Rename(g, "Soyad", "Soyad");
+            Rename(g, "FirmaAdi", "Firma");
+            Rename(g, "IsyeriAdi", "İşyeri");
             Rename(g, "FazlaDakika", "Geç Kalınan Dakika");
 
             if (g.Columns["FazlaDakika"] != null)
                 g.Columns["FazlaDakika"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
 
-            Order(g, "Ad", "Soyad", "FazlaDakika");
-            SetMinWidth(g, ("Ad", 140), ("Soyad", 160), ("FazlaDakika", 120));
+            Order(g, "Ad", "Soyad", "FirmaAdi", "IsyeriAdi", "FazlaDakika");
+            SetMinWidth(g, ("Ad", 120), ("Soyad", 130), ("FirmaAdi", 120), ("IsyeriAdi", 120), ("FazlaDakika", 110));
 
             g.CellFormatting -= LateGrid_CellFormatting;
             g.CellFormatting += LateGrid_CellFormatting;
@@ -259,13 +261,15 @@ namespace CeyPASS.WFA.UserControls.Dashboard
 
             Rename(g, "Ad", "Ad");
             Rename(g, "Soyad", "Soyad");
+            Rename(g, "FirmaAdi", "Firma");
+            Rename(g, "IsyeriAdi", "İşyeri");
             Rename(g, "BuYilDogumGunu", "Doğum Tarihi");
 
             if (g.Columns["BuYilDogumGunu"] != null)
                 g.Columns["BuYilDogumGunu"].DefaultCellStyle.Format = "dd MMMM";
 
-            Order(g, "Ad", "Soyad", "BuYilDogumGunu");
-            SetMinWidth(g, ("Ad", 120), ("Soyad", 140), ("BuYilDogumGunu", 120));
+            Order(g, "Ad", "Soyad", "FirmaAdi", "IsyeriAdi", "BuYilDogumGunu");
+            SetMinWidth(g, ("Ad", 110), ("Soyad", 120), ("FirmaAdi", 110), ("IsyeriAdi", 110), ("BuYilDogumGunu", 110));
         }
         private void ConfigureNewHiresGrid(DataGridView g)
         {
@@ -275,13 +279,15 @@ namespace CeyPASS.WFA.UserControls.Dashboard
 
             Rename(g, "Ad", "Ad");
             Rename(g, "Soyad", "Soyad");
+            Rename(g, "FirmaAdi", "Firma");
+            Rename(g, "IsyeriAdi", "İşyeri");
             Rename(g, "BaslamaTarihi", "Başlama Tarihi");
 
             if (g.Columns["BaslamaTarihi"] != null)
                 g.Columns["BaslamaTarihi"].DefaultCellStyle.Format = "dd.MM.yyyy";
 
-            Order(g, "BaslamaTarihi", "Ad", "Soyad");
-            SetMinWidth(g, ("BaslamaTarihi", 120), ("Ad", 140), ("Soyad", 160));
+            Order(g, "BaslamaTarihi", "Ad", "Soyad", "FirmaAdi", "IsyeriAdi");
+            SetMinWidth(g, ("BaslamaTarihi", 110), ("Ad", 120), ("Soyad", 130), ("FirmaAdi", 110), ("IsyeriAdi", 110));
         }
         private void ConfigureResignationsGrid(DataGridView g)
         {
@@ -291,13 +297,15 @@ namespace CeyPASS.WFA.UserControls.Dashboard
 
             Rename(g, "Ad", "Ad");
             Rename(g, "Soyad", "Soyad");
+            Rename(g, "FirmaAdi", "Firma");
+            Rename(g, "IsyeriAdi", "İşyeri");
             Rename(g, "AyrilmaTarihi", "Ayrılma Tarihi");
 
             if (g.Columns["AyrilmaTarihi"] != null)
                 g.Columns["AyrilmaTarihi"].DefaultCellStyle.Format = "dd.MM.yyyy";
 
-            Order(g, "AyrilmaTarihi", "Ad", "Soyad");
-            SetMinWidth(g, ("AyrilmaTarihi", 120), ("Ad", 140), ("Soyad", 160));
+            Order(g, "AyrilmaTarihi", "Ad", "Soyad", "FirmaAdi", "IsyeriAdi");
+            SetMinWidth(g, ("AyrilmaTarihi", 110), ("Ad", 120), ("Soyad", 130), ("FirmaAdi", 110), ("IsyeriAdi", 110));
         }
         public static void ApplyModernGridTheme(DataGridView g)
         {

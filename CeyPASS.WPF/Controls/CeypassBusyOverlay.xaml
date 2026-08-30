@@ -1,0 +1,29 @@
+<UserControl x:Class="CeyPASS.WPF.Controls.CeypassBusyOverlay"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Visibility="Collapsed"
+             IsHitTestVisible="True"
+             Panel.ZIndex="50">
+    <Border Background="#660F172A">
+        <Border Background="{DynamicResource Brush.Card}" CornerRadius="14"
+                Padding="36,28" HorizontalAlignment="Center" VerticalAlignment="Center"
+                BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1"
+                MinWidth="240">
+            <Border.Effect>
+                <DropShadowEffect BlurRadius="24" ShadowDepth="3" Opacity="0.25" Color="#0F172A"/>
+            </Border.Effect>
+            <StackPanel Width="260">
+                <TextBlock x:Name="TxtTitle" Text="Yükleniyor..."
+                           FontSize="15" FontWeight="SemiBold"
+                           HorizontalAlignment="Center"
+                           Foreground="{DynamicResource Brush.TextPrimary}"/>
+                <ProgressBar IsIndeterminate="True" Height="5" Margin="0,16,0,0"
+                             BorderThickness="0"/>
+                <TextBlock x:Name="TxtMessage" Text="Lütfen bekleyin"
+                           FontSize="12.5" Margin="0,12,0,0"
+                           HorizontalAlignment="Center"
+                           Foreground="{DynamicResource Brush.TextMuted}"/>
+            </StackPanel>
+        </Border>
+    </Border>
+</UserControl>

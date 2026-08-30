@@ -334,10 +334,10 @@
                         </div>
                         <div class="modal-footer border-0 pt-0">
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                                <i class="bi bi-x-lg me-1"></i>İptal
+                                <i class="bi bi-x-lg me-1"></i>Vazgeç
                             </button>
                             <button type="submit" class="btn btn-danger">
-                                <i class="bi bi-trash me-1"></i>Tamam
+                                <i class="bi bi-trash me-1"></i>Sil
                             </button>
                         </div>
                     </form>
@@ -371,6 +371,16 @@
                     var info = btn.getAttribute('data-izin-info') || '';
                     idEl.value = id || '';
                     if (infoEl) infoEl.textContent = info ? 'İzin: ' + info : '';
+                    if (id) {
+                        var undoTpl = '@Url.Action("AktifYap", new { id = 0 })';
+                        form.setAttribute('data-undo-url', undoTpl.replace('/0', '/' + id));
+                    }
+                });
+                form.addEventListener('submit', function () {
+                    var undoUrl = form.getAttribute('data-undo-url');
+                    if (undoUrl && window.CeyPASS && CeyPASS.undo) {
+                        CeyPASS.undo.queue({ url: undoUrl, fields: {} });
+                    }
                 });
             })();
         </script>

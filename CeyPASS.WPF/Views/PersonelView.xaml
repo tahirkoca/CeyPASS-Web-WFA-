@@ -1,0 +1,421 @@
+<UserControl x:Class="CeyPASS.WPF.Views.PersonelView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:CeyPASS.WPF.Views"
+             xmlns:wpf="clr-namespace:CeyPASS.WPF"
+             xmlns:controls="clr-namespace:CeyPASS.WPF.Controls"
+             Background="Transparent">
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+        <local:InverseBoolConverter x:Key="InvBool"/>
+        <local:InverseBoolToVisConverter x:Key="InvBoolToVis"/>
+    </UserControl.Resources>
+
+    <Border Background="{DynamicResource Brush.PageBg}">
+        <Grid Margin="14,12">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- Filtre çubuğu -->
+            <Border Grid.Row="0" Style="{StaticResource Card}" Padding="14,12" Margin="0,0,0,10">
+                <WrapPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <StackPanel Orientation="Horizontal" Margin="0,0,16,0" VerticalAlignment="Center">
+                        <TextBlock Text="Firma" Style="{StaticResource FieldLabel}" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                        <ComboBox Width="180" Style="{StaticResource FieldCombo}"
+                                  ItemsSource="{Binding Firmalar}"
+                                  DisplayMemberPath="FirmaAdi"
+                                  SelectedItem="{Binding SelectedFirma, UpdateSourceTrigger=PropertyChanged}"
+                                  IsEnabled="{Binding ListEnabled}"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,16,0" VerticalAlignment="Center">
+                        <TextBlock Text="İşyeri" Style="{StaticResource FieldLabel}" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                        <ComboBox Width="160" Style="{StaticResource FieldCombo}"
+                                  ItemsSource="{Binding Isyerler}"
+                                  DisplayMemberPath="Ad"
+                                  SelectedItem="{Binding SelectedIsyeriFilter, UpdateSourceTrigger=PropertyChanged}"
+                                  IsEnabled="{Binding ListEnabled}"/>
+                    </StackPanel>
+                    <CheckBox Content="İşten Çıkanlar"
+                              IsChecked="{Binding IstenCikanlar, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                              VerticalAlignment="Center" Margin="0,0,14,0"
+                              IsEnabled="{Binding ListEnabled}"/>
+                    <CheckBox Content="Puantaj Yapılanlar"
+                              IsChecked="{Binding PuantajYapilan, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                              VerticalAlignment="Center" Margin="0,0,14,0"
+                              IsEnabled="{Binding PuantajFilterEnabled}"/>
+                    <Button Content="Yenile" Style="{StaticResource SecondaryBtn}" Padding="12,6"
+                            Command="{Binding RefreshCommand}" IsEnabled="{Binding ListEnabled}"/>
+                </WrapPanel>
+            </Border>
+
+            <!-- Ana içerik -->
+            <Grid Grid.Row="1">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="300" MinWidth="240"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Sol liste -->
+                <Border Grid.Column="0" Style="{StaticResource Card}" Margin="0,0,10,0">
+                    <DockPanel>
+                        <Border DockPanel.Dock="Top" Padding="16,14" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="0,0,0,1">
+                            <DockPanel>
+                                <Button DockPanel.Dock="Right" Content="Kişi Ara" Style="{StaticResource SecondaryBtn}"
+                                        Padding="10,5" Command="{Binding SearchPersonCommand}"
+                                        IsEnabled="{Binding ListEnabled}"/>
+                                <TextBlock Text="Personel Listesi" FontSize="15" FontWeight="Bold"
+                                           Foreground="{DynamicResource Brush.TextPrimary}" VerticalAlignment="Center"/>
+                            </DockPanel>
+                        </Border>
+                        <Grid>
+                            <ListBox ItemsSource="{Binding Kisiler}"
+                                     SelectedItem="{Binding SelectedKisi, UpdateSourceTrigger=PropertyChanged}"
+                                     DisplayMemberPath="AdSoyad"
+                                     IsEnabled="{Binding ListEnabled}"
+                                     BorderThickness="0" Background="Transparent" Padding="8"
+                                     ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                     ItemContainerStyle="{StaticResource CeypassListBoxItem}"/>
+                            <controls:CeypassEmptyState ItemsSource="{Binding Kisiler}"
+                                                        Title="Personel yok"
+                                                        Message="{Binding Status, FallbackValue=Firma seçin veya Yenile’ye basın.}"/>
+                        </Grid>
+                    </DockPanel>
+                </Border>
+
+                <!-- Sağ form -->
+                <Border Grid.Column="1" Style="{StaticResource Card}">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <Border Grid.Row="0" Padding="18,14" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="0,0,0,1">
+                            <DockPanel>
+                                <controls:CeypassHelpTip DockPanel.Dock="Right" Topic="Personeller"
+                                                         VerticalAlignment="Center" Margin="8,0,0,0"/>
+                                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                                    <Button x:Name="BtnEkle" Content="Ekle" Style="{StaticResource AddBtn}" Margin="0,0,8,0"
+                                            Command="{Binding AddCommand}" IsEnabled="{Binding CanAdd}"/>
+                                    <Button x:Name="BtnGuncelle" Content="Güncelle" Style="{StaticResource EditBtn}" Margin="0,0,8,0"
+                                            Command="{Binding EditCommand}" IsEnabled="{Binding CanEdit}"/>
+                                    <Button x:Name="BtnIstenCikar" Content="İşten Çıkar" Style="{StaticResource DangerBtn}" Margin="0,0,8,0"
+                                            Command="{Binding DeleteOrActivateCommand}" IsEnabled="{Binding CanDelete}"
+                                            Visibility="{Binding IstenCikanlar, Converter={StaticResource InvBoolToVis}}"/>
+                                    <Button x:Name="BtnAktifEt" Content="Aktif Et" Style="{StaticResource SuccessBtn}" Margin="0,0,8,0"
+                                            Command="{Binding DeleteOrActivateCommand}" IsEnabled="{Binding CanDelete}"
+                                            Visibility="{Binding IstenCikanlar, Converter={StaticResource BoolToVis}}"/>
+                                    <Button Content="Vazgeç" Style="{StaticResource SecondaryBtn}" Margin="0,0,8,0"
+                                            Command="{Binding CancelCommand}"
+                                            Visibility="{Binding ShowSaveCancel, Converter={StaticResource BoolToVis}}"/>
+                                    <Button Content="Kaydet" Style="{StaticResource PrimaryBtn}"
+                                            Command="{Binding SaveCommand}"
+                                            Visibility="{Binding ShowSaveCancel, Converter={StaticResource BoolToVis}}"/>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <TextBlock Text="Personel Bilgileri" FontSize="15" FontWeight="Bold"
+                                               Foreground="{DynamicResource Brush.TextPrimary}" VerticalAlignment="Center"/>
+                                    <Border Margin="12,0,0,0" CornerRadius="8" Padding="10,4" VerticalAlignment="Center">
+                                        <Border.Style>
+                                            <Style TargetType="Border">
+                                                <Setter Property="Background" Value="{DynamicResource Brush.StatusOkBg}"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding HasIstenCikis}" Value="True">
+                                                        <Setter Property="Background" Value="{DynamicResource Brush.StatusBadBg}"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Border.Style>
+                                        <TextBlock Text="{Binding CalismaDurumuText}" FontSize="12" FontWeight="SemiBold">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Foreground" Value="{DynamicResource Brush.StatusOkFg}"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding HasIstenCikis}" Value="True">
+                                                            <Setter Property="Foreground" Value="{DynamicResource Brush.StatusBadFg}"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                    </Border>
+                                </StackPanel>
+                            </DockPanel>
+                        </Border>
+
+                        <TabControl Grid.Row="1" Margin="12,8,12,0" Background="Transparent" BorderThickness="0">
+                            <!-- Tab 1 -->
+                            <TabItem Header="Personel Bilgileri">
+                                <Grid Margin="10,12">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <StackPanel Grid.Column="0" Margin="0,0,8,0">
+                                        <TextBlock Text="{Binding Error}" Foreground="#DC2626" TextWrapping="Wrap"
+                                                   Margin="0,0,0,10" FontSize="13"/>
+
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="12"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto"/><RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/><RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/><RowDefinition Height="Auto"/>
+                                            </Grid.RowDefinitions>
+
+                                            <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,0,12">
+                                                <TextBlock Text="Ad Soyad" Style="{StaticResource FieldLabel}"/>
+                                                <TextBox Text="{Binding AdSoyad, UpdateSourceTrigger=PropertyChanged}"
+                                                         Style="{StaticResource FieldBox}" IsReadOnly="{Binding FieldsReadOnly}"
+                                                         wpf:FieldValidation.Error="{Binding Errors[AdSoyad]}"/>
+                                            </StackPanel>
+                                            <StackPanel Grid.Row="0" Grid.Column="2" Margin="0,0,0,12">
+                                                <TextBlock Text="Sicil No" Style="{StaticResource FieldLabel}"/>
+                                                <TextBox Text="{Binding SicilNo, UpdateSourceTrigger=PropertyChanged}"
+                                                         Style="{StaticResource FieldBox}" IsReadOnly="{Binding FieldsReadOnly}"
+                                                         wpf:FieldValidation.Error="{Binding Errors[SicilNo]}"/>
+                                            </StackPanel>
+
+                                            <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,0,0,12">
+                                                <TextBlock Text="Kart No" Style="{StaticResource FieldLabel}"/>
+                                                <TextBox Text="{Binding KartNo, UpdateSourceTrigger=PropertyChanged}"
+                                                         Style="{StaticResource FieldBox}" IsReadOnly="{Binding FieldsReadOnly}"/>
+                                            </StackPanel>
+                                            <StackPanel Grid.Row="1" Grid.Column="2" Margin="0,0,0,12">
+                                                <TextBlock Text="TC Kimlik No" Style="{StaticResource FieldLabel}"/>
+                                                <TextBox Text="{Binding TcKimlikNo, UpdateSourceTrigger=PropertyChanged}"
+                                                         Style="{StaticResource FieldBox}" IsReadOnly="{Binding FieldsReadOnly}"/>
+                                            </StackPanel>
+
+                                            <StackPanel Grid.Row="2" Grid.Column="0" Margin="0,0,0,12">
+                                                <TextBlock Text="Firma Dışı Kart No" Style="{StaticResource FieldLabel}"/>
+                                                <TextBox Text="{Binding FirmaDisiKartNo, UpdateSourceTrigger=PropertyChanged}"
+                                                         Style="{StaticResource FieldBox}" IsEnabled="{Binding FirmaDisiEnabled}"/>
+                                            </StackPanel>
+                                            <StackPanel Grid.Row="2" Grid.Column="2" Margin="0,0,0,12">
+                                                <TextBlock Text="İşe Giriş" Style="{StaticResource FieldLabel}"/>
+                                                <DatePicker SelectedDate="{Binding IseGiris, UpdateSourceTrigger=PropertyChanged}"
+                                                            Style="{StaticResource FieldDatePicker}"
+                                                            IsEnabled="{Binding FieldsReadOnly, Converter={StaticResource InvBool}}"/>
+                                            </StackPanel>
+
+                                            <StackPanel Grid.Row="3" Grid.Column="0" Margin="0,0,0,12">
+                                                <TextBlock Text="İşten Çıkış" Style="{StaticResource FieldLabel}"/>
+                                                <DockPanel>
+                                                    <CheckBox DockPanel.Dock="Right" Content="Var" VerticalAlignment="Center"
+                                                              Margin="8,0,0,0"
+                                                              IsChecked="{Binding HasIstenCikis, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                              IsEnabled="{Binding FieldsReadOnly, Converter={StaticResource InvBool}}"/>
+                                                    <TextBox Text="{Binding AktifCalisiyorPlaceholder, Mode=OneWay}" IsReadOnly="True"
+                                                             Style="{StaticResource FieldBox}" Margin="0"
+                                                             Foreground="#059669" FontWeight="SemiBold"
+                                                             Visibility="{Binding ShowAktifCalisiyorText, Converter={StaticResource BoolToVis}}"/>
+                                                    <DatePicker SelectedDate="{Binding IstenCikis, UpdateSourceTrigger=PropertyChanged}"
+                                                                Visibility="{Binding ShowIstenCikisDatePicker, Converter={StaticResource BoolToVis}}">
+                                                        <DatePicker.Style>
+                                                            <Style TargetType="DatePicker" BasedOn="{StaticResource FieldDatePicker}">
+                                                                <Setter Property="IsEnabled" Value="False"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding IstenCikisEnabled}" Value="True">
+                                                                        <Setter Property="IsEnabled" Value="True"/>
+                                                                    </DataTrigger>
+                                                                    <MultiDataTrigger>
+                                                                        <MultiDataTrigger.Conditions>
+                                                                            <Condition Binding="{Binding FieldsReadOnly}" Value="False"/>
+                                                                            <Condition Binding="{Binding HasIstenCikis}" Value="True"/>
+                                                                        </MultiDataTrigger.Conditions>
+                                                                        <Setter Property="IsEnabled" Value="True"/>
+                                                                    </MultiDataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </DatePicker.Style>
+                                                    </DatePicker>
+                                                </DockPanel>
+                                            </StackPanel>
+                                            <StackPanel Grid.Row="3" Grid.Column="2" Margin="0,0,0,12">
+                                                <TextBlock Text="Departman" Style="{StaticResource FieldLabel}"/>
+                                                <ComboBox Style="{StaticResource FieldCombo}" ItemsSource="{Binding Departmanlar}"
+                                                          DisplayMemberPath="Ad" SelectedItem="{Binding SelectedDepartman}"
+                                                          IsEnabled="{Binding FieldsReadOnly, Converter={StaticResource InvBool}}"/>
+                                            </StackPanel>
+
+                                            <StackPanel Grid.Row="4" Grid.Column="0" Margin="0,0,0,12">
+                                                <TextBlock Text="Bölüm" Style="{StaticResource FieldLabel}"/>
+                                                <ComboBox Style="{StaticResource FieldCombo}" ItemsSource="{Binding Bolumler}"
+                                                          DisplayMemberPath="Ad" SelectedItem="{Binding SelectedBolum}"
+                                                          IsEnabled="{Binding FieldsReadOnly, Converter={StaticResource InvBool}}"/>
+                                            </StackPanel>
+                                            <StackPanel Grid.Row="4" Grid.Column="2" Margin="0,0,0,12">
+                                                <TextBlock Text="Pozisyon" Style="{StaticResource FieldLabel}"/>
+                                                <ComboBox Style="{StaticResource FieldCombo}" ItemsSource="{Binding Pozisyonlar}"
+                                                          DisplayMemberPath="Ad" SelectedItem="{Binding SelectedPozisyon}"
+                                                          IsEnabled="{Binding FieldsReadOnly, Converter={StaticResource InvBool}}"/>
+                                            </StackPanel>
+
+                                            <StackPanel Grid.Row="5" Grid.Column="0" Grid.ColumnSpan="3" Margin="0,0,0,12">
+                                                <TextBlock Text="Firma" Style="{StaticResource FieldLabel}"/>
+                                                <ComboBox Style="{StaticResource FieldCombo}" MaxWidth="360" HorizontalAlignment="Left"
+                                                          ItemsSource="{Binding FirmalarForm}" DisplayMemberPath="Ad"
+                                                          SelectedItem="{Binding SelectedFirmaDetail}"
+                                                          IsEnabled="{Binding FieldsReadOnly, Converter={StaticResource InvBool}}"/>
+                                            </StackPanel>
+                                        </Grid>
+                                    </StackPanel>
+
+                                    <Border Grid.Column="1" Width="180" Margin="8,0,0,0"
+                                            VerticalAlignment="Top" Background="{DynamicResource Brush.Card}"
+                                            CornerRadius="12" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1" Padding="10">
+                                        <StackPanel>
+                                            <Border Height="160" Background="{DynamicResource Brush.Card}" CornerRadius="8"
+                                                    BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1" Margin="0,0,0,10">
+                                                <Image Source="{Binding FotoImage}" Stretch="Uniform" Margin="4"/>
+                                            </Border>
+                                            <Button Content="Foto Ekle" Style="{StaticResource SecondaryBtn}"
+                                                    Margin="0,0,0,6" Command="{Binding AddPhotoCommand}"
+                                                    IsEnabled="{Binding CanPhoto}"/>
+                                            <Button Content="Foto Sil" Style="{StaticResource DangerBtn}"
+                                                    Command="{Binding RemovePhotoCommand}"
+                                                    IsEnabled="{Binding CanPhoto}"/>
+                                            <StackPanel Margin="0,10,0,0">
+                                                <CheckBox Content="Firma Personeli"
+                                                          IsChecked="{Binding FirmaPersoneli, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                          Margin="0,0,0,6"
+                                                          IsEnabled="{Binding FieldsReadOnly, Converter={StaticResource InvBool}}"/>
+                                                <CheckBox Content="Puantaj Yapılır"
+                                                          IsChecked="{Binding PuantajYapilir, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                          Margin="0,0,0,6"
+                                                          IsEnabled="{Binding FieldsReadOnly, Converter={StaticResource InvBool}}"/>
+                                                <CheckBox Content="Yemek Hakkı"
+                                                          IsChecked="{Binding YemekHakki, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                          Margin="0,0,0,6"
+                                                          IsEnabled="{Binding FieldsReadOnly, Converter={StaticResource InvBool}}"/>
+                                                <CheckBox Content="Ziyaretçi"
+                                                          IsChecked="{Binding Ziyaretci, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                          Margin="0,0,0,6"
+                                                          IsEnabled="{Binding FieldsReadOnly, Converter={StaticResource InvBool}}"/>
+                                                <CheckBox Content="Araç Kartı"
+                                                          IsChecked="{Binding AracKarti, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                          Margin="0,0,0,6"
+                                                          IsEnabled="{Binding FieldsReadOnly, Converter={StaticResource InvBool}}"/>
+                                                <CheckBox Content="Taşeron"
+                                                          IsChecked="{Binding Taseron, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                          Margin="0,0,0,6"
+                                                          IsEnabled="{Binding FieldsReadOnly, Converter={StaticResource InvBool}}"/>
+                                            </StackPanel>
+                                        </StackPanel>
+                                    </Border>
+                                </Grid>
+                            </TabItem>
+
+                            <!-- Tab 2 -->
+                            <TabItem Header="Ek Bilgiler">
+                                <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="10,12">
+                                    <StackPanel>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="12"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto"/><RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/><RowDefinition Height="Auto"/>
+                                            </Grid.RowDefinitions>
+
+                                            <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,0,12">
+                                                <TextBlock Text="E-posta" Style="{StaticResource FieldLabel}"/>
+                                                <TextBox Text="{Binding Email, UpdateSourceTrigger=PropertyChanged}"
+                                                         Style="{StaticResource FieldBox}" IsReadOnly="{Binding FieldsReadOnly}"/>
+                                            </StackPanel>
+                                            <StackPanel Grid.Row="0" Grid.Column="2" Margin="0,0,0,12">
+                                                <TextBlock Text="Cep Tel" Style="{StaticResource FieldLabel}"/>
+                                                <TextBox Text="{Binding CepTel, UpdateSourceTrigger=PropertyChanged}"
+                                                         Style="{StaticResource FieldBox}" IsReadOnly="{Binding FieldsReadOnly}"/>
+                                            </StackPanel>
+
+                                            <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,0,0,12">
+                                                <TextBlock Text="Doğum Tarihi" Style="{StaticResource FieldLabel}"/>
+                                                <DockPanel>
+                                                    <CheckBox DockPanel.Dock="Right" Content="Var" VerticalAlignment="Center"
+                                                              Margin="8,0,0,0"
+                                                              IsChecked="{Binding HasDogum, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                              IsEnabled="{Binding FieldsReadOnly, Converter={StaticResource InvBool}}"/>
+                                                    <DatePicker SelectedDate="{Binding DogumTarihi, UpdateSourceTrigger=PropertyChanged}">
+                                                        <DatePicker.Style>
+                                                            <Style TargetType="DatePicker" BasedOn="{StaticResource FieldDatePicker}">
+                                                                <Setter Property="IsEnabled" Value="False"/>
+                                                                <Style.Triggers>
+                                                                    <MultiDataTrigger>
+                                                                        <MultiDataTrigger.Conditions>
+                                                                            <Condition Binding="{Binding FieldsReadOnly}" Value="False"/>
+                                                                            <Condition Binding="{Binding HasDogum}" Value="True"/>
+                                                                        </MultiDataTrigger.Conditions>
+                                                                        <Setter Property="IsEnabled" Value="True"/>
+                                                                    </MultiDataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </DatePicker.Style>
+                                                    </DatePicker>
+                                                </DockPanel>
+                                            </StackPanel>
+                                            <StackPanel Grid.Row="1" Grid.Column="2" Margin="0,0,0,12">
+                                                <TextBlock Text="İşyeri" Style="{StaticResource FieldLabel}"/>
+                                                <ComboBox Style="{StaticResource FieldCombo}" ItemsSource="{Binding IsyerleriForm}"
+                                                          DisplayMemberPath="Ad" SelectedItem="{Binding SelectedIsyeri}"
+                                                          IsEnabled="{Binding FieldsReadOnly, Converter={StaticResource InvBool}}"/>
+                                            </StackPanel>
+
+                                            <StackPanel Grid.Row="2" Grid.Column="0" Margin="0,0,0,12">
+                                                <TextBlock Text="Çalışma Statü" Style="{StaticResource FieldLabel}"/>
+                                                <ComboBox Style="{StaticResource FieldCombo}" ItemsSource="{Binding CalismaStatuleri}"
+                                                          DisplayMemberPath="Ad" SelectedItem="{Binding SelectedCalismaStatu}"
+                                                          IsEnabled="{Binding FieldsReadOnly, Converter={StaticResource InvBool}}"/>
+                                            </StackPanel>
+                                            <StackPanel Grid.Row="2" Grid.Column="2" Margin="0,0,0,12">
+                                                <TextBlock Text="Yemek Adedi" Style="{StaticResource FieldLabel}"/>
+                                                <TextBox Text="{Binding YemekAdedi, UpdateSourceTrigger=PropertyChanged}"
+                                                         Style="{StaticResource FieldBox}" MaxWidth="120" HorizontalAlignment="Left"
+                                                         IsEnabled="{Binding YemekAdediEnabled}"/>
+                                            </StackPanel>
+                                        </Grid>
+
+                                        <TextBlock Text="Vardiyalar" Style="{StaticResource FieldLabel}" Margin="0,8,0,6"/>
+                                        <Border BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1" CornerRadius="8" Padding="8"
+                                                Background="{DynamicResource Brush.FieldBg}" MaxHeight="180"
+                                                IsEnabled="{Binding VardiyaEditable}">
+                                            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                                <ItemsControl ItemsSource="{Binding Vardiyalar}">
+                                                    <ItemsControl.ItemTemplate>
+                                                        <DataTemplate>
+                                                            <CheckBox Content="{Binding Ad}"
+                                                                      IsChecked="{Binding Secili, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                                      Margin="4,3"/>
+                                                        </DataTemplate>
+                                                    </ItemsControl.ItemTemplate>
+                                                </ItemsControl>
+                                            </ScrollViewer>
+                                        </Border>
+                                    </StackPanel>
+                                </ScrollViewer>
+                            </TabItem>
+                        </TabControl>
+
+                        <Border Grid.Row="2" Padding="18,12" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="0,1,0,0">
+                            <TextBlock Text="{Binding Status}" Foreground="{DynamicResource Brush.TextMuted}" FontSize="12.5"
+                                       VerticalAlignment="Center"/>
+                        </Border>
+                    </Grid>
+                </Border>
+            </Grid>
+        </Grid>
+    </Border>
+</UserControl>

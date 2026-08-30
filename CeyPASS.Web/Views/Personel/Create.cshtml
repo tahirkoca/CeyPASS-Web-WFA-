@@ -32,7 +32,7 @@
         </div>
     }
 
-    <form asp-action="Create" method="post" enctype="multipart/form-data">
+    <form asp-action="Create" method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
         @Html.AntiForgeryToken()
         
         <div class="row">
@@ -46,18 +46,21 @@
                         <div class="mb-3">
                             <label asp-for="PersonelId" class="form-label">Sicil No <span class="text-danger">*</span></label>
                             <input asp-for="PersonelId" class="form-control" required />
+                            <div class="invalid-feedback">Sicil no zorunludur.</div>
                             <span asp-validation-for="PersonelId" class="text-danger"></span>
                         </div>
 
                         <div class="mb-3">
                             <label asp-for="Ad" class="form-label">Ad <span class="text-danger">*</span></label>
                             <input asp-for="Ad" class="form-control" required />
+                            <div class="invalid-feedback">Ad zorunludur.</div>
                             <span asp-validation-for="Ad" class="text-danger"></span>
                         </div>
 
                         <div class="mb-3">
                             <label asp-for="Soyad" class="form-label">Soyad <span class="text-danger">*</span></label>
                             <input asp-for="Soyad" class="form-control" required />
+                            <div class="invalid-feedback">Soyad zorunludur.</div>
                             <span asp-validation-for="Soyad" class="text-danger"></span>
                         </div>
 

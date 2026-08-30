@@ -84,5 +84,11 @@ export const kisiHareketService = {
     await invalidate("/KisiHareket");
     return response.data;
   },
+
+  async aktifYap(id: number): Promise<ApiResult<any>> {
+    const response = await api.post(`/KisiHareket/${encodeURIComponent(String(id))}/aktif`, {}, { timeout: 15000 });
+    await invalidate("/KisiHareket");
+    return response.data;
+  },
 };
 

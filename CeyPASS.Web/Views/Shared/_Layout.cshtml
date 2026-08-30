@@ -411,7 +411,7 @@
                     </a>
                 </div>
             </div>
-            <button type="button" class="sidebar-toggle-btn" id="sidebarToggleBtn" title="Menüyü daralt / genişlet" aria-label="Menüyü daralt veya genişlet">
+            <button type="button" class="sidebar-toggle-btn" id="sidebarToggleBtn" title="Menüyü daralt / genişlet">
                 <i class="bi bi-chevron-left" id="sidebarToggleIcon"></i>
             </button>
         </aside>
@@ -431,6 +431,9 @@
                     </nav>
                 </div>
                 <div class="header-actions d-flex align-items-center gap-1">
+                    <button type="button" class="header-btn" id="shortcutsToggleBtn" title="Kısayollar (Ctrl+/ veya F1)">
+                        <i class="bi bi-keyboard"></i>
+                    </button>
                     @await Component.InvokeAsync("FirmaSelect")
                     <!-- Bildirimler dropdown -->
                     <div class="dropdown">
@@ -488,15 +491,44 @@
                 @RenderBody()
             </main>
 
-            <!-- Footer -->
-            <footer class="footer">
-                &copy; @DateTime.Now.Year CeyPASS - Personel Devam Kontrol Sistemi
+            <!-- Footer / status bar -->
+            <footer class="footer ceypass-status-bar" id="ceypassStatusBar">
+                <div class="ceypass-status-left">
+                    <span id="ceypassStatusMsg">Hazır</span>
+                    <span id="ceypassStatusCount" class="ceypass-status-count" hidden></span>
+                </div>
+                <div class="ceypass-status-right">
+                    &copy; @DateTime.Now.Year CeyPASS - Personel Devam Kontrol Sistemi
+                </div>
             </footer>
+        </div>
+    </div>
+
+    <!-- Shortcuts modal -->
+    <div class="modal fade" id="shortcutsModal" tabindex="-1" aria-labelledby="shortcutsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="shortcutsModalLabel"><i class="bi bi-keyboard me-2"></i>Klavye kısayolları</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+                </div>
+                <div class="modal-body" id="shortcutsModalList">
+                    <!-- Filled by CeyPASS.shortcuts.show(); pages may add data-page-shortcuts on body -->
+                </div>
+            </div>
         </div>
     </div>
 
     <!-- Sidebar Overlay for Mobile -->
     <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- Busy overlay (also ensured by site.js if missing) -->
+    <div id="ceypassBusyOverlay" class="ceypass-busy-overlay">
+        <div class="ceypass-busy-panel">
+            <div class="ceypass-busy-spinner"></div>
+            <div class="ceypass-busy-title" id="ceypassBusyTitle">Yükleniyor...</div>
+        </div>
+    </div>
 
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>

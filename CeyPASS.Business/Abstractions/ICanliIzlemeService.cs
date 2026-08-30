@@ -10,6 +10,7 @@ namespace CeyPASS.Business.Abstractions
         AuthUserDTO Login(int firmaId, string user, string pass);
         List<LastPassDTO> GetLastPasses(int firmaId, int take);
         List<LastPassDTO> GetLastPassesYemekhane(int firmaId, int take);
+        List<LastPassDTO> GetLastPassesArac(int firmaId, int take);
         List<string> GetKullaniciAdlariByFirma(int firmaId);
     }
 }

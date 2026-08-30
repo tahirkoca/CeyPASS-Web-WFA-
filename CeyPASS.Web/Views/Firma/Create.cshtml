@@ -11,7 +11,7 @@
         </div>
     </div>
 
-    <form method="post" asp-controller="Firma" asp-action="Create">
+    <form method="post" asp-controller="Firma" asp-action="Create" class="needs-validation" novalidate>
         @Html.AntiForgeryToken()
         @Html.HiddenFor(m => m.ReturnUrl)
         <div class="row">
@@ -31,6 +31,7 @@
                         <div class="mb-3">
                             <label asp-for="FirmaAdi" class="form-label">Firma Adı</label>
                             <input asp-for="FirmaAdi" class="form-control" required />
+                            <div class="invalid-feedback">Firma adı zorunludur.</div>
                             <span asp-validation-for="FirmaAdi" class="text-danger"></span>
                         </div>
 

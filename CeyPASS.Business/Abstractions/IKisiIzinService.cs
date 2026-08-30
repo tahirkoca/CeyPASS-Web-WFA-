@@ -11,6 +11,7 @@ namespace CeyPASS.Business.Abstractions
         bool Guncelle(KisiIzin izin);
         KisiIzin GetById(int kisiIzinId);
         bool PasifYap(int kisiIzinId);
+        bool AktifYap(int kisiIzinId);
         DataTable GetTumIzinler(int? firmaId, string personelId, int? izinTipId, DateTime bas, DateTime bit);
         List<KisiIzinListRow> GetTumIzinlerPaged(int? firmaId, string personelId, int? izinTipId, DateTime bas, DateTime bit, int page, int pageSize, out int totalCount);
         (bool IsValid, string? Message) ValidateKayit(IzinKayitValidasyonDTO dto);

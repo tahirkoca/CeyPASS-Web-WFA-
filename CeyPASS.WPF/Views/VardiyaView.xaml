@@ -1,0 +1,144 @@
+<UserControl x:Class="CeyPASS.WPF.Views.VardiyaView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:CeyPASS.WPF.Controls"
+             xmlns:wpf="clr-namespace:CeyPASS.WPF"
+             Background="Transparent">
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+
+        <Style x:Key="HintText" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="11.5"/>
+            <Setter Property="Foreground" Value="#94A3B8"/>
+            <Setter Property="Margin" Value="0,4,0,14"/>
+        </Style>
+    </UserControl.Resources>
+
+    <Border Background="{DynamicResource Brush.PageBg}">
+        <Grid Margin="14,12">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="300" MinWidth="240"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <Border Grid.Column="0" Style="{StaticResource Card}" Margin="0,0,10,0">
+                <DockPanel>
+                    <Border DockPanel.Dock="Top" Padding="16,14" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="0,0,0,1">
+                        <DockPanel>
+                            <Button DockPanel.Dock="Right" Content="Yenile" Style="{StaticResource SecondaryBtn}"
+                                    Padding="10,5" Command="{Binding RefreshCommand}"
+                                    IsEnabled="{Binding ListEnabled}"/>
+                            <TextBlock Text="Vardiya Listesi" FontSize="15" FontWeight="Bold"
+                                       Foreground="{DynamicResource Brush.TextPrimary}" VerticalAlignment="Center"/>
+                        </DockPanel>
+                    </Border>
+                    <Grid>
+                        <ListBox ItemsSource="{Binding Items}"
+                                 SelectedItem="{Binding SelectedItem, UpdateSourceTrigger=PropertyChanged}"
+                                 DisplayMemberPath="Ad"
+                                 IsEnabled="{Binding ListEnabled}"
+                                 BorderThickness="0"
+                                 Background="Transparent"
+                                 Padding="8"
+                                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                 ItemContainerStyle="{StaticResource CeypassListBoxItem}"/>
+                        <controls:CeypassEmptyState ItemsSource="{Binding Items}"
+                                                    Title="Vardiya yok"
+                                                    Message="Ekle ile yeni vardiya oluşturun veya Yenile’ye basın."/>
+                    </Grid>
+                </DockPanel>
+            </Border>
+
+            <Border Grid.Column="1" Style="{StaticResource Card}">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <Border Grid.Row="0" Padding="18,14" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="0,0,0,1">
+                        <DockPanel>
+                                                        <controls:CeypassHelpTip DockPanel.Dock="Right" Topic="Vardiyalar"
+                                                     VerticalAlignment="Center" Margin="8,0,0,0"/>
+<StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                                <Button x:Name="BtnEkle" Content="Ekle" Style="{StaticResource AddBtn}" Margin="0,0,8,0"
+                                        Command="{Binding AddCommand}" IsEnabled="{Binding CanAdd}"/>
+                                <Button x:Name="BtnGuncelle" Content="Güncelle" Style="{StaticResource EditBtn}" Margin="0,0,8,0"
+                                        Command="{Binding EditCommand}" IsEnabled="{Binding CanEdit}"/>
+                                <Button x:Name="BtnSil" Content="Sil" Style="{StaticResource DangerBtn}" Margin="0,0,8,0"
+                                        Command="{Binding DeleteCommand}" IsEnabled="{Binding CanDelete}"/>
+                                <Button Content="Yemekhane Saatleri Detayı" Style="{StaticResource SecondaryBtn}"
+                                        Margin="8,0,0,0" Padding="12,8"
+                                        Command="{Binding YemekSaatleriCommand}"
+                                        IsEnabled="{Binding CanOpenYemekSaatleri}"/>
+                            </StackPanel>
+                            <TextBlock Text="Vardiya Bilgileri" FontSize="15" FontWeight="Bold"
+                                       Foreground="{DynamicResource Brush.TextPrimary}" VerticalAlignment="Center"/>
+                        </DockPanel>
+                    </Border>
+
+                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="22,18">
+                        <StackPanel>
+                            <TextBlock Text="{Binding Error}" Foreground="#DC2626" TextWrapping="Wrap"
+                                       Margin="0,0,0,12" FontSize="13"/>
+
+                            <TextBlock Text="Vardiya Adı" Style="{StaticResource FieldLabel}"/>
+                            <TextBox Text="{Binding Ad, UpdateSourceTrigger=PropertyChanged}"
+                                     Style="{StaticResource FieldBox}"
+                                     IsReadOnly="{Binding FieldsReadOnly}"
+                                     wpf:FieldValidation.Error="{Binding Errors[Ad]}"
+                                     Margin="0,0,0,16"/>
+
+                            <TextBlock Text="Vardiya Başlangıç Saati" Style="{StaticResource FieldLabel}"/>
+                            <TextBox Text="{Binding BaslangicText, UpdateSourceTrigger=LostFocus}"
+                                     Style="{StaticResource FieldBox}" Width="120" HorizontalAlignment="Left"
+                                     IsReadOnly="{Binding FieldsReadOnly}"
+                                     wpf:FieldValidation.Error="{Binding Errors[Baslangic]}"/>
+                            <TextBlock Text="HH:mm" Style="{StaticResource HintText}"/>
+
+                            <TextBlock Text="Vardiya Bitiş Saati" Style="{StaticResource FieldLabel}"/>
+                            <TextBox Text="{Binding BitisText, UpdateSourceTrigger=LostFocus}"
+                                     Style="{StaticResource FieldBox}" Width="120" HorizontalAlignment="Left"
+                                     IsReadOnly="{Binding FieldsReadOnly}"/>
+                            <TextBlock Text="HH:mm" Style="{StaticResource HintText}"/>
+
+                            <TextBlock Text="Vardiya Başlangıç Tolerans Saati" Style="{StaticResource FieldLabel}"/>
+                            <TextBox Text="{Binding BaslangicToleransText, UpdateSourceTrigger=LostFocus}"
+                                     Style="{StaticResource FieldBox}" Width="120" HorizontalAlignment="Left"
+                                     IsReadOnly="{Binding FieldsReadOnly}"/>
+                            <TextBlock Text="HH:mm" Style="{StaticResource HintText}"/>
+
+                            <TextBlock Text="Vardiya Bitiş Tolerans Saati" Style="{StaticResource FieldLabel}"/>
+                            <TextBox Text="{Binding BitisToleransText, UpdateSourceTrigger=LostFocus}"
+                                     Style="{StaticResource FieldBox}" Width="120" HorizontalAlignment="Left"
+                                     IsReadOnly="{Binding FieldsReadOnly}"/>
+                            <TextBlock Text="HH:mm" Style="{StaticResource HintText}"/>
+
+                            <TextBlock Text="Yemek Aktifleme Saati" Style="{StaticResource FieldLabel}"/>
+                            <TextBox Text="{Binding YemekAktiflestirmeText, UpdateSourceTrigger=LostFocus}"
+                                     Style="{StaticResource FieldBox}" Width="120" HorizontalAlignment="Left"
+                                     IsReadOnly="{Binding FieldsReadOnly}"/>
+                            <TextBlock Text="HH:mm — işyeri bazlı aralıklar için «Yemekhane Saatleri Detayı»" Style="{StaticResource HintText}"/>
+
+                            <Border Background="{DynamicResource Brush.EditBg}" CornerRadius="8" Padding="12,8" Margin="0,4,0,0">
+                                <TextBlock TextWrapping="Wrap" FontSize="12.5" Foreground="{DynamicResource Brush.TextMuted}"
+                                           Text="Not: İşyeri bazlı yemekhane saat aralığı eklemek için sol listeden vardiyayı seçin, «Yemekhane Saatleri Detayı» butonuna tıklayın; açılan pencerede işyeri, cihaz ve yemek başlangıç/bitiş saatlerini girip Ekle’ye basın."/>
+                            </Border>
+                        </StackPanel>
+                    </ScrollViewer>
+
+                    <Border Grid.Row="2" Padding="18,14" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="0,1,0,0"
+                            Visibility="{Binding ShowSaveCancel, Converter={StaticResource BoolToVis}}">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                            <Button Content="Vazgeç" Style="{StaticResource SecondaryBtn}" Margin="0,0,8,0"
+                                    Command="{Binding CancelCommand}"/>
+                            <Button Content="Kaydet" Style="{StaticResource PrimaryBtn}"
+                                    Command="{Binding SaveCommand}"/>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </Border>
+        </Grid>
+    </Border>
+</UserControl>

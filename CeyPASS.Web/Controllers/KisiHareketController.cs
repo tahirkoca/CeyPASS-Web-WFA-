@@ -240,6 +240,37 @@ namespace CeyPASS.Web.Controllers
             return RedirectToAction("Index");
         }
 
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult AktifYap(int id)
+        {
+            if (!_authorizationService.Can(PageName, YetkiTipleri.Delete))
+            {
+                TempData["Error"] = "Hareket aktifleştirme yetkiniz yok.";
+                return RedirectToAction("Index");
+            }
+
+            try
+            {
+                bool success = _kisiHareketService.AktifYap(id);
+                if (success)
+                {
+                    TempData["Success"] = "Hareket tekrar aktif edildi.";
+                    BumpVer((int)_sessionContext.AktifFirmaId);
+                }
+                else
+                {
+                    TempData["Error"] = "Hareket aktifleştirilemedi.";
+                }
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = "Hata: " + ex.Message;
+            }
+
+            return RedirectToAction("Index");
+        }
+
         [HttpGet]
         public IActionResult GetIsyerleri(int firmaId)
         {

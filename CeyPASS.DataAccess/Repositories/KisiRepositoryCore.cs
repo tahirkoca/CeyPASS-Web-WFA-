@@ -340,8 +340,12 @@ namespace CeyPASS.DataAccess.Repositories
                 CepTel = k.CepTel,
                 Email = k.Email,
                 Fotograf = k.Fotograf,
-                PuantajYapilabilir = (bool)k.PuantajYapilirMi,
-                FirmaPersoneli = (bool)k.PuantajYapilirMi,
+                PuantajYapilabilir = k.PuantajYapilirMi ?? false,
+                // FirmaPersoneli DB'de ayrı kolon değil; Puantaj ile eşitlemek (eski kod) firma+puantajsız kaydı bozuyordu.
+                // Ziyaretçi / araç / taşeron değilse firma personeli kabul edilir (WFA varsayılanına uyumlu).
+                FirmaPersoneli = !(k.ZiyaretciMi ?? false)
+                                 && !(k.AracKartiMi ?? false)
+                                 && !(k.TaseronCalisanMi ?? false),
                 YemekHakkiVar = yemekHakkiVar,
                 GunlukYemekAdedi = gunlukLimit,
                 TaseronKartNo = taseronKartNo,
@@ -356,8 +360,7 @@ namespace CeyPASS.DataAccess.Repositories
         {
             var sql = @"
 UPDATE dbo.Kisiler
-   SET IstenCikisTarihi = @p0,
-       PuantajYapilirMi = 0
+   SET IstenCikisTarihi = @p0
  WHERE PersonelId = @p1";
 
             _context.Database.ExecuteSqlRaw(sql,

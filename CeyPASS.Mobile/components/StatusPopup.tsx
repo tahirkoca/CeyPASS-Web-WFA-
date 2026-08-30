@@ -9,9 +9,22 @@ interface StatusPopupProps {
   onClose: () => void;
   useModal?: boolean;
   autoCloseMs?: number;
+  onUndo?: () => void | Promise<void>;
+  undoLabel?: string;
+  undoLoading?: boolean;
 }
 
-export const StatusPopup: React.FC<StatusPopupProps> = ({ visible, type, message, onClose, useModal = true, autoCloseMs }) => {
+export const StatusPopup: React.FC<StatusPopupProps> = ({
+  visible,
+  type,
+  message,
+  onClose,
+  useModal = true,
+  autoCloseMs,
+  onUndo,
+  undoLabel = 'Geri al',
+  undoLoading = false,
+}) => {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0.8)).current;
 
@@ -39,9 +52,10 @@ export const StatusPopup: React.FC<StatusPopupProps> = ({ visible, type, message
     if (!visible) return;
     const ms = Number(autoCloseMs);
     if (!Number.isFinite(ms) || ms <= 0) return;
+    if (onUndo) return;
     const t = setTimeout(() => onClose(), ms);
     return () => clearTimeout(t);
-  }, [visible, autoCloseMs, onClose]);
+  }, [visible, autoCloseMs, onClose, onUndo]);
 
   const body = (
     <View style={[styles.overlayBase, useModal ? styles.overlayModal : styles.overlayInline]}>
@@ -54,13 +68,33 @@ export const StatusPopup: React.FC<StatusPopupProps> = ({ visible, type, message
 
         <Text style={styles.message}>{message}</Text>
 
-        <TouchableOpacity
-          style={[styles.button, { backgroundColor: type === 'success' ? '#22c55e' : '#ef4444' }]}
-          onPress={onClose}
-          activeOpacity={0.7}
-        >
-          <Text style={styles.buttonText}>Tamam</Text>
-        </TouchableOpacity>
+        {type === 'success' && onUndo ? (
+          <View style={styles.undoRow}>
+            <TouchableOpacity
+              style={[styles.button, styles.undoButton]}
+              onPress={onUndo}
+              disabled={undoLoading}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.undoButtonText}>{undoLoading ? 'Geri alınıyor...' : undoLabel}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.button, styles.dismissButton]}
+              onPress={onClose}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.buttonText}>Kapat</Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <TouchableOpacity
+            style={[styles.button, { backgroundColor: type === 'success' ? '#22c55e' : '#ef4444' }]}
+            onPress={onClose}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.buttonText}>Tamam</Text>
+          </TouchableOpacity>
+        )}
       </Animated.View>
     </View>
   );
@@ -133,6 +167,21 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     borderRadius: 12,
     alignItems: 'center',
+  },
+  undoRow: {
+    width: '100%',
+    gap: 10,
+  },
+  undoButton: {
+    backgroundColor: '#0f172a',
+  },
+  undoButtonText: {
+    color: 'white',
+    fontWeight: '700',
+    fontSize: 16,
+  },
+  dismissButton: {
+    backgroundColor: '#22c55e',
   },
   buttonText: {
     color: 'white',

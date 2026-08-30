@@ -40,10 +40,20 @@ export const raporService = {
     });
   },
 
-  async isyerleri(): Promise<ApiResult<{ id?: number; Id?: number; ad?: string; Ad?: string }[]>> {
+  async firmalar(): Promise<ApiResult<{ id?: number; Id?: number; ad?: string; Ad?: string }[]>> {
+    return await cachedGet<ApiResult<any>>("/Rapor/firmalar", {
+      timeout: 15000,
+      keyPrefix: "/Rapor/firmalar",
+      softTtlMs: 5 * 60 * 1000,
+      hardTtlMs: 60 * 60 * 1000,
+    });
+  },
+
+  async isyerleri(firmaId?: number | null): Promise<ApiResult<{ id?: number; Id?: number; ad?: string; Ad?: string }[]>> {
     return await cachedGet<ApiResult<any>>("/Rapor/isyerleri", {
       timeout: 15000,
-      keyPrefix: "/Rapor/isyerleri",
+      params: firmaId != null ? { firmaId } : undefined,
+      keyPrefix: `/Rapor/isyerleri:${firmaId ?? "session"}`,
       softTtlMs: 5 * 60 * 1000,
       hardTtlMs: 60 * 60 * 1000,
     });
@@ -54,10 +64,11 @@ export const raporService = {
     return response.data;
   },
 
-  async cihazlar(): Promise<ApiResult<{ id?: number; Id?: number; ad?: string; Ad?: string }[]>> {
+  async cihazlar(firmaId?: number | null): Promise<ApiResult<{ id?: number; Id?: number; ad?: string; Ad?: string }[]>> {
     return await cachedGet<ApiResult<any>>("/Rapor/cihazlar", {
       timeout: 15000,
-      keyPrefix: "/Rapor/cihazlar",
+      params: firmaId != null ? { firmaId } : undefined,
+      keyPrefix: `/Rapor/cihazlar:${firmaId ?? "session"}`,
       softTtlMs: 5 * 60 * 1000,
       hardTtlMs: 60 * 60 * 1000,
     });

@@ -54,12 +54,8 @@ namespace CeyPASS.DataAccess.Repositories
 
         public int GetNextId()
         {
-            var sql = "SELECT ISNULL(MAX(DepartmanId),0)+1 FROM Departmanlar";
-
-            return _context.Database
-                .SqlQueryRaw<int>(sql)
-                .AsEnumerable()
-                .Single();
+            var max = _context.Departmanlar.Select(d => (int?)d.DepartmanId).Max();
+            return (max ?? 0) + 1;
         }
 
         public bool Insert(int id, string ad, string aciklama)

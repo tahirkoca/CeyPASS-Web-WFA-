@@ -1,5 +1,5 @@
 import "./global.css";
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -46,19 +46,226 @@ import { ResmiTatillerScreen } from './components/ayarlar/ResmiTatillerScreen';
 import { AdminPanelScreen } from './components/admin/AdminPanelScreen';
 import { IzinTalepleriScreen } from './components/talepler/IzinTalepleriScreen';
 import { AvansTalepleriScreen } from './components/talepler/AvansTalepleriScreen';
+import { TipsSheet } from './components/TipsSheet';
+import { ShellActionsProvider } from './components/ShellActions';
 import { authService, setAuthToken } from './services/api';
 import { clearSession, loadSession, saveSession } from './services/session';
 import { preloadLoginBackground } from './services/preload';
 import { NotificationsProvider } from "./components/NotificationsProvider";
+import { UiPrefsProvider } from './services/uiPrefs';
 import * as Notifications from "expo-notifications";
 import Constants from "expo-constants";
 import { deviceTokenService } from "./services/deviceTokenApi";
 import api, { getApiBaseUrl } from "./services/api";
 import { WelcomeSplash } from "./components/WelcomeSplash";
 
+const PAGE_TITLES: Record<string, string> = {
+  dashboard: "Ana Sayfa",
+  profil: "Profil",
+  izinlerim: "İzinlerim",
+  avanslarim: "Avanslarım",
+  yetkiliPaneli: "Yetkili Paneli",
+  about: "Hakkında",
+  izinTalepleri: "İzin Talepleri",
+  avansTalepleri: "Avans Talepleri",
+  personeller: "Personeller",
+  kisiHareketleri: "Kişi Hareketleri",
+  izinler: "İzinler",
+  raporlar: "Raporlar",
+  puantaj: "Puantaj",
+  firmalar: "Firmalar",
+  isyerleri: "İşyerleri",
+  departmanlar: "Departmanlar",
+  pozisyonlar: "Pozisyonlar",
+  vardiyalar: "Vardiyalar",
+  calismaStatuleri: "Çalışma Statüleri",
+  cihazlar: "Cihazlar",
+  resmiTatiller: "Resmi Tatiller",
+  adminPanel: "Admin Panel",
+  qrGiris: "QR Giriş",
+};
+
+
+function LoggedInShell(props: {
+  userData: any;
+  abilities: any;
+  menuVisible: boolean;
+  setMenuVisible: (v: boolean) => void;
+  activePage: string;
+  setActivePage: (v: any) => void;
+  activeKey: string;
+  setActiveKey: (v: string) => void;
+  onLogout: () => void;
+}) {
+  const { userData, abilities, menuVisible, setMenuVisible, activePage, setActivePage, activeKey, setActiveKey, onLogout } = props;
+  const [tipsVisible, setTipsVisible] = useState(false);
+  const [statusMessage, setStatusMessage] = useState<string | null>("Hazır");
+
+  const view = abilities?.view ?? abilities?.View ?? {};
+  const canView = (k: string) => !!view?.[k];
+  const hasSicil = !!(userData?.sicilNo ?? userData?.SicilNo);
+  const canNavigate = (key: string) => {
+    if (key === "about") return true;
+    if (key === "profil" || key === "izinlerim" || key === "avanslarim" || key === "yetkiliPaneli") {
+      if (!hasSicil) return false;
+      return !!canView("Profil");
+    }
+    if (key === "dashboard") return !!canView("Dashboard");
+    if (key === "personeller") return !!canView("Personeller");
+    if (key === "kisiHareketleri") return !!canView("KisiHareketler");
+    if (key === "izinler") return !!canView("Izinler");
+    if (key === "raporlar") return !!canView("Raporlar");
+    if (key === "puantaj") return !!canView("AylikPuantaj");
+    if (key === "firmalar") return !!canView("Firmalar");
+    if (key === "isyerleri") return !!canView("Isyerler");
+    if (key === "departmanlar") return !!canView("Departmanlar");
+    if (key === "pozisyonlar") return !!canView("Pozisyonlar");
+    if (key === "vardiyalar") return !!canView("Vardiyalar");
+    if (key === "calismaStatuleri") return !!canView("CalismaStatuleri");
+    if (key === "cihazlar") return !!canView("Cihazlar");
+    if (key === "resmiTatiller") return !!canView("ResmiTatiller");
+    if (key === "izinTalepleri") return !!canView("IzinTalepleri");
+    if (key === "avansTalepleri") return !!canView("Avans");
+    if (key === "adminPanel") return (abilities?.rolId ?? abilities?.RolId) === 1;
+    if (key === "qrGiris") return !!canView("Profil") && hasSicil;
+    return false;
+  };
+
+  const navigateTo = (key: string) => {
+    if (!canNavigate(key)) return;
+    setActiveKey(key);
+    setActivePage(key as any);
+    setStatusMessage(`${PAGE_TITLES[key] ?? key} açıldı`);
+  };
+
+  const safePage = canNavigate(activePage) ? activePage : canView("Profil") && hasSicil ? "profil" : "dashboard";
+
+  const shellActions = useMemo(
+    () => ({
+      openTips: () => setTipsVisible(true),
+      setStatusMessage: (msg: string | null) => setStatusMessage(msg),
+    }),
+    []
+  );
+
+  return (
+    <ShellActionsProvider value={shellActions}>
+      <SafeAreaView edges={["left", "right", "bottom"]} style={{ flex: 1, backgroundColor: "#f8fafc" }}>
+        <StatusBar style="dark" />
+        <View style={{ flex: 1 }}>
+          {safePage === "dashboard" ? (
+            <Dashboard user={userData} onLogout={onLogout} onOpenMenu={() => setMenuVisible(true)} />
+          ) : safePage === "profil" ? (
+            <ProfilScreen
+              user={userData}
+              onOpenMenu={() => setMenuVisible(true)}
+              onNavigate={(k) => navigateTo(k)}
+            />
+          ) : safePage === "izinlerim" ? (
+            <IzinlerimScreen user={userData} onOpenMenu={() => setMenuVisible(true)} />
+          ) : safePage === "avanslarim" ? (
+            <AvanslarimScreen user={userData} onOpenMenu={() => setMenuVisible(true)} />
+          ) : safePage === "yetkiliPaneli" ? (
+            <YetkiliPaneliScreen user={userData} onOpenMenu={() => setMenuVisible(true)} />
+          ) : safePage === "about" ? (
+            <AboutScreen onOpenMenu={() => setMenuVisible(true)} />
+          ) : safePage === "izinTalepleri" ? (
+            <IzinTalepleriScreen user={userData} onOpenMenu={() => setMenuVisible(true)} />
+          ) : safePage === "avansTalepleri" ? (
+            <AvansTalepleriScreen user={userData} onOpenMenu={() => setMenuVisible(true)} />
+          ) : safePage === "personeller" ? (
+            <PersonellerScreen user={userData} abilities={abilities} onOpenMenu={() => setMenuVisible(true)} />
+          ) : safePage === "kisiHareketleri" ? (
+            <KisiHareketleriScreen user={userData} abilities={abilities} onOpenMenu={() => setMenuVisible(true)} />
+          ) : safePage === "izinler" ? (
+            <IzinlerScreen user={userData} abilities={abilities} onOpenMenu={() => setMenuVisible(true)} />
+          ) : safePage === "raporlar" ? (
+            <RaporlarScreen user={userData} abilities={abilities} onOpenMenu={() => setMenuVisible(true)} />
+          ) : safePage === "puantaj" ? (
+            <PuantajScreen user={userData} abilities={abilities} onOpenMenu={() => setMenuVisible(true)} />
+          ) : safePage === "firmalar" ? (
+            <FirmalarScreen user={userData} abilities={abilities} onOpenMenu={() => setMenuVisible(true)} />
+          ) : safePage === "isyerleri" ? (
+            <IsyerleriScreen user={userData} abilities={abilities} onOpenMenu={() => setMenuVisible(true)} />
+          ) : safePage === "departmanlar" ? (
+            <DepartmanlarScreen user={userData} abilities={abilities} onOpenMenu={() => setMenuVisible(true)} />
+          ) : safePage === "pozisyonlar" ? (
+            <PozisyonlarScreen user={userData} abilities={abilities} onOpenMenu={() => setMenuVisible(true)} />
+          ) : safePage === "vardiyalar" ? (
+            <VardiyalarScreen user={userData} abilities={abilities} onOpenMenu={() => setMenuVisible(true)} />
+          ) : safePage === "calismaStatuleri" ? (
+            <CalismaStatuleriScreen user={userData} abilities={abilities} onOpenMenu={() => setMenuVisible(true)} />
+          ) : safePage === "cihazlar" ? (
+            <CihazlarScreen user={userData} abilities={abilities} onOpenMenu={() => setMenuVisible(true)} />
+          ) : safePage === "resmiTatiller" ? (
+            <ResmiTatillerScreen user={userData} abilities={abilities} onOpenMenu={() => setMenuVisible(true)} />
+          ) : safePage === "adminPanel" ? (
+            <AdminPanelScreen
+              user={userData}
+              abilities={abilities}
+              onOpenMenu={() => setMenuVisible(true)}
+              onNavigate={(k) => navigateTo(k)}
+            />
+          ) : safePage === "qrGiris" ? (
+            <View className="flex-1">
+              <QrGirisScreen
+                onBack={() => {
+                  setActiveKey("profil");
+                  setActivePage("profil");
+                }}
+              />
+            </View>
+          ) : (
+            <View className="flex-1 items-center justify-center bg-[#f8fafc] px-6">
+              <Text className="text-[#1e293b] font-extrabold text-[16px] text-center">Bu ekran yakında.</Text>
+              <TouchableOpacity
+                className="mt-4 px-4 py-3 rounded-xl bg-[#f1f5f9]"
+                onPress={() => {
+                  const target = canNavigate("dashboard") ? "dashboard" : canNavigate("profil") ? "profil" : "dashboard";
+                  navigateTo(target);
+                }}
+              >
+                <Text className="text-[#334155] font-extrabold">Dashboard'a dön</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+        </View>
+
+        {statusMessage ? (
+          <View className="px-4 py-1.5 bg-[#f8fafc] border-t border-[#e2e8f0]">
+            <Text className="text-[#64748b] font-semibold text-[11px]" numberOfLines={1}>
+              {statusMessage}
+            </Text>
+          </View>
+        ) : null}
+
+        <SideMenu
+          visible={menuVisible}
+          abilities={abilities}
+          user={userData}
+          activeKey={activeKey}
+          onClose={() => setMenuVisible(false)}
+          onLogout={onLogout}
+          onOpenTips={() => setTipsVisible(true)}
+          onSelect={(key) => navigateTo(key)}
+        />
+
+        <TipsSheet
+          visible={tipsVisible}
+          pageKey={safePage}
+          pageTitle={PAGE_TITLES[safePage] ?? safePage}
+          onClose={() => setTipsVisible(false)}
+        />
+      </SafeAreaView>
+    </ShellActionsProvider>
+  );
+}
+
 export default function App() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [usernameError, setUsernameError] = useState('');
+  const [passwordError, setPasswordError] = useState('');
   const [loading, setLoading] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -262,10 +469,11 @@ export default function App() {
     ) : null;
 
   const handleLogin = async () => {
-    if (!username || !password) {
-      showPopup('error', 'Lütfen tüm alanları doldurun.');
-      return;
-    }
+    const uErr = !username.trim() ? 'Giriş bilgisi zorunludur.' : '';
+    const pErr = !password ? 'Şifre zorunludur.' : '';
+    setUsernameError(uErr);
+    setPasswordError(pErr);
+    if (uErr || pErr) return;
 
     setLoading(true);
     try {
@@ -340,143 +548,23 @@ export default function App() {
   if (bootBlock) return bootBlock;
 
   if (isLoggedIn) {
-    const view = abilities?.view ?? abilities?.View ?? {};
-    const canView = (k: string) => !!view?.[k];
-    const hasSicil = !!(userData?.sicilNo ?? userData?.SicilNo);
-    const canNavigate = (key: string) => {
-      if (key === "about") return true;
-      if (key === "profil" || key === "izinlerim" || key === "avanslarim" || key === "yetkiliPaneli") {
-        // Personel area requires profil permission + sicil number
-        if (!hasSicil) return false;
-        return !!canView("Profil");
-      }
-      if (key === "dashboard") return !!canView("Dashboard");
-      if (key === "personeller") return !!canView("Personeller");
-      if (key === "kisiHareketleri") return !!canView("KisiHareketler");
-      if (key === "izinler") return !!canView("Izinler");
-      if (key === "raporlar") return !!canView("Raporlar");
-      if (key === "puantaj") return !!canView("AylikPuantaj");
-      if (key === "firmalar") return !!canView("Firmalar");
-      if (key === "isyerleri") return !!canView("Isyerler");
-      if (key === "departmanlar") return !!canView("Departmanlar");
-      if (key === "pozisyonlar") return !!canView("Pozisyonlar");
-      if (key === "vardiyalar") return !!canView("Vardiyalar");
-      if (key === "calismaStatuleri") return !!canView("CalismaStatuleri");
-      if (key === "cihazlar") return !!canView("Cihazlar");
-      if (key === "resmiTatiller") return !!canView("ResmiTatiller");
-      if (key === "izinTalepleri") return !!canView("IzinTalepleri");
-      if (key === "avansTalepleri") return !!canView("Avans");
-      if (key === "adminPanel") return (abilities?.rolId ?? abilities?.RolId) === 1;
-      if (key === "qrGiris") return !!canView("Profil") && hasSicil;
-      return false;
-    };
-
-    // Safety: never render forbidden pages (web-like).
-    const safePage = canNavigate(activePage) ? activePage : canView("Profil") && hasSicil ? "profil" : "dashboard";
     return (
       <SafeAreaProvider style={{ flex: 1 }}>
-        <NotificationsProvider>
-          <SafeAreaView edges={['left','right','bottom']} style={{ flex: 1, backgroundColor: '#f8fafc' }}>
-            <StatusBar style="dark" />
-            {safePage === "dashboard" ? (
-              <Dashboard user={userData} onLogout={handleLogout} onOpenMenu={() => setMenuVisible(true)} />
-            ) : safePage === "profil" ? (
-              <ProfilScreen
-                user={userData}
-                onOpenMenu={() => setMenuVisible(true)}
-                onNavigate={(k) => {
-                  if (!canNavigate(k)) return;
-                  setActiveKey(k);
-                  setActivePage(k as any);
-                }}
-              />
-            ) : safePage === "izinlerim" ? (
-              <IzinlerimScreen user={userData} onOpenMenu={() => setMenuVisible(true)} />
-            ) : safePage === "avanslarim" ? (
-              <AvanslarimScreen user={userData} onOpenMenu={() => setMenuVisible(true)} />
-            ) : safePage === "yetkiliPaneli" ? (
-              <YetkiliPaneliScreen user={userData} onOpenMenu={() => setMenuVisible(true)} />
-            ) : safePage === "about" ? (
-              <AboutScreen onOpenMenu={() => setMenuVisible(true)} />
-            ) : safePage === "izinTalepleri" ? (
-              <IzinTalepleriScreen user={userData} onOpenMenu={() => setMenuVisible(true)} />
-            ) : safePage === "avansTalepleri" ? (
-              <AvansTalepleriScreen user={userData} onOpenMenu={() => setMenuVisible(true)} />
-            ) : safePage === "personeller" ? (
-              <PersonellerScreen user={userData} abilities={abilities} onOpenMenu={() => setMenuVisible(true)} />
-            ) : safePage === "kisiHareketleri" ? (
-              <KisiHareketleriScreen user={userData} abilities={abilities} onOpenMenu={() => setMenuVisible(true)} />
-            ) : safePage === "izinler" ? (
-              <IzinlerScreen user={userData} abilities={abilities} onOpenMenu={() => setMenuVisible(true)} />
-            ) : safePage === "raporlar" ? (
-              <RaporlarScreen user={userData} abilities={abilities} onOpenMenu={() => setMenuVisible(true)} />
-            ) : safePage === "puantaj" ? (
-              <PuantajScreen user={userData} abilities={abilities} onOpenMenu={() => setMenuVisible(true)} />
-            ) : safePage === "firmalar" ? (
-              <FirmalarScreen user={userData} abilities={abilities} onOpenMenu={() => setMenuVisible(true)} />
-            ) : safePage === "isyerleri" ? (
-              <IsyerleriScreen user={userData} abilities={abilities} onOpenMenu={() => setMenuVisible(true)} />
-            ) : safePage === "departmanlar" ? (
-              <DepartmanlarScreen user={userData} abilities={abilities} onOpenMenu={() => setMenuVisible(true)} />
-            ) : safePage === "pozisyonlar" ? (
-              <PozisyonlarScreen user={userData} abilities={abilities} onOpenMenu={() => setMenuVisible(true)} />
-            ) : safePage === "vardiyalar" ? (
-              <VardiyalarScreen user={userData} abilities={abilities} onOpenMenu={() => setMenuVisible(true)} />
-            ) : safePage === "calismaStatuleri" ? (
-              <CalismaStatuleriScreen user={userData} abilities={abilities} onOpenMenu={() => setMenuVisible(true)} />
-            ) : safePage === "cihazlar" ? (
-              <CihazlarScreen user={userData} abilities={abilities} onOpenMenu={() => setMenuVisible(true)} />
-            ) : safePage === "resmiTatiller" ? (
-              <ResmiTatillerScreen user={userData} abilities={abilities} onOpenMenu={() => setMenuVisible(true)} />
-            ) : safePage === "adminPanel" ? (
-              <AdminPanelScreen
-                user={userData}
-                abilities={abilities}
-                onOpenMenu={() => setMenuVisible(true)}
-                onNavigate={(k) => {
-                  if (!canNavigate(k)) return;
-                  setActiveKey(k);
-                  setActivePage(k as any);
-                }}
-              />
-            ) : safePage === "qrGiris" ? (
-              <View className="flex-1">
-                <QrGirisScreen onBack={() => {
-                  setActiveKey("profil");
-                  setActivePage("profil");
-                }} />
-              </View>
-            ) : (
-              <View className="flex-1 items-center justify-center bg-[#f8fafc] px-6">
-                <Text className="text-[#1e293b] font-extrabold text-[16px] text-center">Bu ekran yakında.</Text>
-                <TouchableOpacity
-                  className="mt-4 px-4 py-3 rounded-xl bg-[#f1f5f9]"
-                  onPress={() => {
-                    const target = canNavigate("dashboard") ? "dashboard" : canNavigate("profil") ? "profil" : "dashboard";
-                    setActiveKey(target);
-                    setActivePage(target as any);
-                  }}
-                >
-                  <Text className="text-[#334155] font-extrabold">Dashboard'a dön</Text>
-                </TouchableOpacity>
-              </View>
-            )}
-
-            <SideMenu
-              visible={menuVisible}
+        <UiPrefsProvider>
+          <NotificationsProvider>
+            <LoggedInShell
+              userData={userData}
               abilities={abilities}
-              user={userData}
+              menuVisible={menuVisible}
+              setMenuVisible={setMenuVisible}
+              activePage={activePage}
+              setActivePage={setActivePage}
               activeKey={activeKey}
-              onClose={() => setMenuVisible(false)}
+              setActiveKey={setActiveKey}
               onLogout={handleLogout}
-              onSelect={(key) => {
-                if (!canNavigate(key)) return;
-                setActiveKey(key);
-                setActivePage(key as any);
-              }}
             />
-          </SafeAreaView>
-        </NotificationsProvider>
+          </NotificationsProvider>
+        </UiPrefsProvider>
       </SafeAreaProvider>
     );
   }
@@ -542,17 +630,25 @@ export default function App() {
                       label="Giriş Bilgisi"
                       placeholder="Ad Soyad,TC,Sicil No veya E‑Posta giriniz"
                       value={username}
-                      onChangeText={setUsername}
+                      onChangeText={(t) => {
+                        setUsername(t);
+                        if (usernameError) setUsernameError('');
+                      }}
                       icon="account"
+                      error={usernameError}
                     />
 
                     <CustomInput
                       label="Şifre"
                       placeholder="Şifrenizi girin"
                       value={password}
-                      onChangeText={setPassword}
+                      onChangeText={(t) => {
+                        setPassword(t);
+                        if (passwordError) setPasswordError('');
+                      }}
                       secureTextEntry
                       icon="lock"
+                      error={passwordError}
                     />
 
                     <View className="flex-row items-center justify-between mt-2 mb-6 px-1">

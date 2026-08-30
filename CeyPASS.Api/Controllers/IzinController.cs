@@ -248,6 +248,14 @@ namespace CeyPASS.Api.Controllers
             return ok ? Ok(ApiResult.Ok("İzin başarıyla silindi.")) : BadRequest(ApiResult.Failure("İzin silinemedi."));
         }
 
+        [HttpPost("{id}/aktif")]
+        public ActionResult<ApiResult> Aktif(int id)
+        {
+            if (!_authorizationService.Can(PageName, YetkiTipleri.Delete)) return Forbid();
+            bool ok = _kisiIzinService.AktifYap(id);
+            return ok ? Ok(ApiResult.Ok("İzin tekrar aktif edildi.")) : BadRequest(ApiResult.Failure("İşlem başarısız."));
+        }
+
         private static bool TryParseDateOnly(string? value, out DateTime date)
         {
             date = default;

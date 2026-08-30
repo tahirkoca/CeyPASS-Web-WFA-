@@ -626,6 +626,12 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     
     <script>
+        if (window.CeyPASS && CeyPASS.filters) {
+            CeyPASS.filters.bindForm('puantaj', '#filterForm', [
+                'yil', 'ay', 'firmaId', 'isyeriId', 'personelId'
+            ]);
+        }
+
         function personelListesiniYukle() {
             var firmaId = $('#firmaId').val();
             var isyeriId = $('#isyeriId').val();

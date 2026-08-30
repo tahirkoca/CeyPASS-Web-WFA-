@@ -74,6 +74,37 @@ ORDER BY KH.Tarih DESC";
                 .ToList();
         }
 
+        public List<LastPassDTO> GetLastPassesArac(int firmaId, int take)
+        {
+            var sql = @"
+SELECT TOP (@p1)
+    KH.PersonelId                           AS PersonelId,
+    ISNULL(RTRIM(LTRIM(ISNULL(K.Ad, N'') + N' ' + ISNULL(K.Soyad, N''))), N'') AS AdSoyad,
+    K.Fotograf                              AS Foto,
+    ISNULL(D.DepartmanAdi, N'')             AS DepartmanAdi,
+    ISNULL(P.PozisyonAdi, N'')              AS Unvan,
+    KH.Tarih                                AS Zaman,
+    CASE 
+        WHEN KH.Tip = N'Giriş'     THEN CAST(1 AS bit)
+        WHEN KH.Tip = N'Yemekhane' THEN CAST(1 AS bit)
+        ELSE CAST(0 AS bit)
+    END                                     AS GirisMi,
+    ISNULL(C.CihazAdi, N'')                 AS TerminalAdi
+FROM KisiHareketler KH
+LEFT JOIN Kisiler         K  ON KH.PersonelId = K.PersonelId
+LEFT JOIN Departmanlar    D  ON K.DepartmanId = D.DepartmanId
+LEFT JOIN Cihazlar        C  ON KH.CihazId    = C.CihazId
+LEFT JOIN Pozisyonlar     P  ON K.PozisyonId  = P.PozisyonId
+WHERE C.FirmaId = @p0 AND C.AracGirisCikisMi=1
+ORDER BY KH.Tarih DESC";
+
+            return _context.Database
+                .SqlQueryRaw<LastPassDTO>(sql,
+                    new Microsoft.Data.SqlClient.SqlParameter("@p0", firmaId),
+                    new Microsoft.Data.SqlClient.SqlParameter("@p1", take))
+                .ToList();
+        }
+
         public AuthUserDTO Validate(int firmaId, string user, string password)
         {
             var sql = @"

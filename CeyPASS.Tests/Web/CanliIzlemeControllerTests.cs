@@ -48,13 +48,15 @@ namespace CeyPASS.Tests.Web
             // Stub service calls made during Index
             _svcMock.Setup(s => s.GetLastPasses(It.IsAny<int>(), It.IsAny<int>())).Returns(new List<LastPassDTO>());
             _svcMock.Setup(s => s.GetLastPassesYemekhane(It.IsAny<int>(), It.IsAny<int>())).Returns(new List<LastPassDTO>());
+            _svcMock.Setup(s => s.GetLastPassesArac(It.IsAny<int>(), It.IsAny<int>())).Returns(new List<LastPassDTO>());
             _khMock.Setup(k => k.GetLastMovesByFirma(It.IsAny<int>(), It.IsAny<int>())).Returns(new List<KisiHareketDTO>());
             _khMock.Setup(k => k.GetLastMovesByFirmaYemekhane(It.IsAny<int>(), It.IsAny<int>())).Returns(new List<KisiHareketDTO>());
+            _khMock.Setup(k => k.GetLastMovesByFirmaArac(It.IsAny<int>(), It.IsAny<int>())).Returns(new List<KisiHareketDTO>());
 
             return sut;
         }
 
-        // ─── Index — IsYemekhaneRole / IsDanismaRole (private static) ─────────
+        // ─── Index — IsYemekhaneRole / IsDanismaRole / IsArac ─────────
 
         [Fact]
         public void Index_YemekhaneRolu_IsYemekhaneTrueOlmali()
@@ -65,6 +67,19 @@ namespace CeyPASS.Tests.Web
 
             sonuc.Should().BeOfType<ViewResult>();
             ((bool)sut.ViewBag.IsYemekhane).Should().BeTrue();
+            ((bool)sut.ViewBag.CanMisafirKart).Should().BeFalse();
+        }
+
+        [Fact]
+        public void Index_AracRolu_IsAracTrueVeKartKapaliOlmali()
+        {
+            var sut = CreateSutWithRole("ARAÇ");
+
+            var sonuc = sut.Index();
+
+            sonuc.Should().BeOfType<ViewResult>();
+            ((bool)sut.ViewBag.IsArac).Should().BeTrue();
+            ((bool)sut.ViewBag.CanMisafirKart).Should().BeFalse();
         }
 
         [Fact]

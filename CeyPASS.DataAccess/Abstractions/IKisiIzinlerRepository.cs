@@ -14,6 +14,7 @@ namespace CeyPASS.DataAccess.Abstractions
         DataTable GetIzinRaporu(int? firmaId, string personelId, int? izinTipId, DateTime bas, DateTime bit);
         List<KisiIzinListRow> GetIzinRaporuPaged(int? firmaId, string personelId, int? izinTipId, DateTime bas, DateTime bit, int page, int pageSize, out int totalCount);
         bool PasifYap(int kisiIzinId);
+        bool AktifYap(int kisiIzinId);
         DataTable GetByPerson(string personelId, DateTime? bas = null, DateTime? bit = null);
     }
 }

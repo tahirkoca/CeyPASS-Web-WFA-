@@ -11,6 +11,8 @@ import * as FileSystem from "expo-file-system/legacy";
 import * as Sharing from "expo-sharing";
 import { Buffer } from "buffer";
 import { PdfPreviewModal } from "../PdfPreviewModal";
+import { BusyOverlay } from "../BusyOverlay";
+import { pageFilterPrefs, parsePrefDate } from "../../services/pageFilterPrefs";
 
 function pick<T = any>(obj: any, a: string, b?: string): T | undefined {
   if (!obj) return undefined;
@@ -32,6 +34,8 @@ function raporMultiKind(names: string[]): "none" | "isyeri" | "cihaz" {
   if (hasRaporParam(names, "@IsyeriIdList")) return "isyeri";
   return "none";
 }
+
+function fmtIsoDate(d: Date) {
   const pad = (n: number) => String(n).padStart(2, "0");
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
@@ -109,6 +113,7 @@ export function RaporlarScreen(props: { user: any; abilities: any; onOpenMenu: (
     (isAdmin && !!(props.abilities?.view?.Raporlar ?? props.abilities?.View?.Raporlar));
 
   const [loading, setLoading] = useState(true);
+  const [filtersHydrated, setFiltersHydrated] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [raporlar, setRaporlar] = useState<RaporTanimi[]>([]);
   const [procedureAdi, setProcedureAdi] = useState<string>("");
@@ -131,8 +136,11 @@ export function RaporlarScreen(props: { user: any; abilities: any; onOpenMenu: (
   const [exportFormat, setExportFormat] = useState<"pdf" | "excel">("pdf");
 
   const [raporModal, setRaporModal] = useState(false);
+  const [firmaModal, setFirmaModal] = useState(false);
   const [pageSizeModal, setPageSizeModal] = useState(false);
   const [isyeriModal, setIsyeriModal] = useState(false);
+  const [firmaList, setFirmaList] = useState<{ id: number; ad: string }[]>([]);
+  const [selectedFirmaId, setSelectedFirmaId] = useState<number | null>(null);
   const [isyeriList, setIsyeriList] = useState<{ id: number; ad: string }[]>([]);
   const [cihazList, setCihazList] = useState<{ id: number; ad: string }[]>([]);
   const [selectedIsyeriIds, setSelectedIsyeriIds] = useState<number[]>([]);
@@ -159,7 +167,6 @@ export function RaporlarScreen(props: { user: any; abilities: any; onOpenMenu: (
         rightIcon="bell-outline"
         rightBadge={notif.unreadCount}
         onRightPress={() => quickMenu.open("notif")}
-        rightA11yLabel="Bildirimler ve hesap"
       />
       {quickMenu.modal}
     </>
@@ -173,39 +180,118 @@ export function RaporlarScreen(props: { user: any; abilities: any; onOpenMenu: (
       setLoading(true);
       setError(null);
       try {
-        const [r, iy, cz] = await Promise.all([raporService.list(), raporService.isyerleri(), raporService.cihazlar()]);
+        const [r, firmalarRes, prefs] = await Promise.all([
+          raporService.list(),
+          raporService.firmalar(),
+          pageFilterPrefs.load("Raporlar"),
+        ]);
         if (!r?.success) throw new Error(r?.message ?? "Raporlar alınamadı.");
         const list = r.data ?? (r as any).Data ?? [];
-        setRaporlar(Array.isArray(list) ? list : []);
-        if (iy?.success) {
-          const raw = iy.data ?? (iy as any).Data ?? [];
-          setIsyeriList(
-            (Array.isArray(raw) ? raw : [])
-              .map((x: any) => ({
-                id: Number(pick<any>(x, "id", "Id") ?? 0),
-                ad: String(pick<any>(x, "ad", "Ad") ?? ""),
-              }))
-              .filter((x) => x.id > 0 && x.ad)
-          );
+        const raporList = Array.isArray(list) ? list : [];
+        setRaporlar(raporList);
+
+        let firms: { id: number; ad: string }[] = [];
+        if (firmalarRes?.success) {
+          const raw = firmalarRes.data ?? (firmalarRes as any).Data ?? [];
+          firms = (Array.isArray(raw) ? raw : [])
+            .map((x: any) => ({
+              id: Number(pick<any>(x, "id", "Id") ?? -1),
+              ad: String(pick<any>(x, "ad", "Ad") ?? ""),
+            }))
+            .filter((x) => x.ad && (x.id > 0 || (isAdmin && x.id === 0)));
         }
-        if (cz?.success) {
-          const raw = cz.data ?? (cz as any).Data ?? [];
-          setCihazList(
-            (Array.isArray(raw) ? raw : [])
-              .map((x: any) => ({
-                id: Number(pick<any>(x, "id", "Id") ?? 0),
-                ad: String(pick<any>(x, "ad", "Ad") ?? ""),
-              }))
-              .filter((x) => x.id > 0 && x.ad)
-          );
+        setFirmaList(firms);
+
+        const userFirma =
+          Number(pick<any>(props.user, "firmaId", "FirmaId") ?? pick<any>(props.abilities, "aktifFirmaId", "AktifFirmaId") ?? 0) || 0;
+        let prefer =
+          prefs?.firmaId != null && firms.some((f) => f.id === prefs.firmaId)
+            ? prefs.firmaId
+            : firms.find((f) => f.id === userFirma && f.id > 0)?.id ?? null;
+        if (prefer == null) prefer = firms.find((f) => f.id > 0)?.id ?? (isAdmin ? 0 : null);
+        setSelectedFirmaId(prefer);
+
+        const da = parsePrefDate(prefs?.dateA ?? null);
+        const db = parsePrefDate(prefs?.dateB ?? null);
+        if (da) setTBas(normalizeDateOnly(da));
+        if (db) setTBit(normalizeDateOnly(db));
+
+        if (prefs?.extra) {
+          const hit = raporList.find((x: any) => {
+            const proc = (pick<any>(x, "procedureAdi", "ProcedureAdi") ?? "").toString();
+            const ad = (pick<any>(x, "raporAdi", "RaporAdi") ?? "").toString();
+            return (
+              proc.toLowerCase() === String(prefs.extra).toLowerCase() ||
+              ad.toLowerCase() === String(prefs.extra).toLowerCase()
+            );
+          });
+          if (hit) {
+            const proc = (pick<any>(hit, "procedureAdi", "ProcedureAdi") ?? "").toString();
+            if (proc) setProcedureAdi(proc);
+          }
         }
       } catch (e: any) {
         setError(e?.message ?? "Beklenmeyen hata");
       } finally {
         setLoading(false);
+        setFiltersHydrated(true);
       }
     })();
   }, []);
+
+  useEffect(() => {
+    if (!filtersHydrated) return;
+    void pageFilterPrefs.save("Raporlar", {
+      firmaId: selectedFirmaId,
+      dateA: tBas,
+      dateB: tBit,
+      extra: procedureAdi || null,
+    });
+  }, [filtersHydrated, selectedFirmaId, tBas, tBit, procedureAdi]);
+
+  const loadMultiForFirma = async (firmaId: number | null) => {
+    if (firmaId == null || firmaId <= 0) {
+      setIsyeriList([]);
+      setCihazList([]);
+      setSelectedIsyeriIds([]);
+      setSelectedCihazIds([]);
+      return;
+    }
+    try {
+      const [iy, cz] = await Promise.all([raporService.isyerleri(firmaId), raporService.cihazlar(firmaId)]);
+      if (iy?.success) {
+        const raw = iy.data ?? (iy as any).Data ?? [];
+        setIsyeriList(
+          (Array.isArray(raw) ? raw : [])
+            .map((x: any) => ({
+              id: Number(pick<any>(x, "id", "Id") ?? 0),
+              ad: String(pick<any>(x, "ad", "Ad") ?? ""),
+            }))
+            .filter((x) => x.id > 0 && x.ad)
+        );
+      } else setIsyeriList([]);
+      if (cz?.success) {
+        const raw = cz.data ?? (cz as any).Data ?? [];
+        setCihazList(
+          (Array.isArray(raw) ? raw : [])
+            .map((x: any) => ({
+              id: Number(pick<any>(x, "id", "Id") ?? 0),
+              ad: String(pick<any>(x, "ad", "Ad") ?? ""),
+            }))
+            .filter((x) => x.id > 0 && x.ad)
+        );
+      } else setCihazList([]);
+      setSelectedIsyeriIds([]);
+      setSelectedCihazIds([]);
+    } catch {
+      setIsyeriList([]);
+      setCihazList([]);
+    }
+  };
+
+  useEffect(() => {
+    loadMultiForFirma(selectedFirmaId).catch(() => {});
+  }, [selectedFirmaId]);
 
   useEffect(() => {
     if (!procedureAdi) {
@@ -239,9 +325,23 @@ export function RaporlarScreen(props: { user: any; abilities: any; onOpenMenu: (
     return found?.label ?? procedureAdi;
   }, [procedureAdi, raporItems]);
 
+  const firmaItems = useMemo(
+    () => firmaList.map((f) => ({ key: String(f.id), label: f.ad })),
+    [firmaList]
+  );
+
+  const selectedFirmaLabel = useMemo(() => {
+    if (selectedFirmaId == null) return "-- Firma Seçiniz --";
+    const found = firmaList.find((f) => f.id === selectedFirmaId);
+    return found?.ad ?? `#${selectedFirmaId}`;
+  }, [selectedFirmaId, firmaList]);
+
   const pageSizeItems = useMemo(() => [50, 100, 200, 500].map((n) => ({ key: String(n), label: String(n) })), []);
 
-  const multiKind = useMemo(() => raporMultiKind(parametreler), [parametreler]);
+  const multiKind = useMemo(() => {
+    if (selectedFirmaId == null || selectedFirmaId <= 0) return "none" as const;
+    return raporMultiKind(parametreler);
+  }, [parametreler, selectedFirmaId]);
 
   const isyeriLabel = useMemo(() => {
     if (!selectedIsyeriIds.length) return "Tümü (yetkili işyerler)";
@@ -264,12 +364,17 @@ export function RaporlarScreen(props: { user: any; abilities: any; onOpenMenu: (
       showPopup("error", "Rapor seçiniz.");
       return;
     }
+    if (selectedFirmaId == null || (selectedFirmaId === 0 && !isAdmin) || selectedFirmaId < 0) {
+      showPopup("error", "Firma seçiniz.");
+      return;
+    }
     const p = forcePage ?? page;
     setLoading(true);
     setError(null);
     try {
       const r = await raporService.run({
         procedureAdi,
+        firmaId: selectedFirmaId,
         isyeriIds: multiKind === "isyeri" && selectedIsyeriIds.length ? selectedIsyeriIds : undefined,
         cihazIds: multiKind === "cihaz" && selectedCihazIds.length ? selectedCihazIds : undefined,
         tarihBaslangic: fmtIsoDate(tBas),
@@ -324,9 +429,14 @@ export function RaporlarScreen(props: { user: any; abilities: any; onOpenMenu: (
       const title = selectedRaporLabel || "Rapor";
       // Web ile aynı parametre isimleri
       const params: Record<string, any> = {
+        "@FirmaIdList": selectedFirmaId != null && selectedFirmaId > 0 ? String(selectedFirmaId) : "",
         "@TarihBaslangic": fmtIsoDate(tBas),
         "@TarihBitis": fmtIsoDate(tBit),
       };
+      if (selectedFirmaId == null || (selectedFirmaId === 0 && !isAdmin)) {
+        showPopup("error", "Firma seçiniz.");
+        return;
+      }
       const resp = await raporService.export({
         procedureName: procedureAdi,
         exportTitle: title,
@@ -383,6 +493,7 @@ export function RaporlarScreen(props: { user: any; abilities: any; onOpenMenu: (
   return (
     <View className="flex-1 bg-[#f8fafc]">
       <StatusPopup visible={popupVisible} type={popupType} message={popupMessage} onClose={() => setPopupVisible(false)} useModal={false} autoCloseMs={1500} />
+      <BusyOverlay visible={loading && !!raporlar.length} title="Yükleniyor..." message="Rapor hazırlanıyor" />
 
       {/* PDF preview uses existing reusable modal */}
       <PdfPreviewModal
@@ -479,6 +590,10 @@ export function RaporlarScreen(props: { user: any; abilities: any; onOpenMenu: (
             <Text className="text-[#0f172a] font-extrabold">Rapor Seçimi ve Parametreler</Text>
           </View>
           <View className="p-4">
+            <TouchableOpacity onPress={() => setFirmaModal(true)} className="px-3 py-3 rounded-xl border border-[#e2e8f0] bg-white">
+              <RowLabel label="Firma" value={selectedFirmaLabel} />
+            </TouchableOpacity>
+            <View className="h-3" />
             <TouchableOpacity onPress={() => setRaporModal(true)} className="px-3 py-3 rounded-xl border border-[#e2e8f0] bg-white">
               <RowLabel label="Rapor Türü" value={selectedRaporLabel} />
             </TouchableOpacity>
@@ -713,6 +828,25 @@ export function RaporlarScreen(props: { user: any; abilities: any; onOpenMenu: (
           onClose={() => setRaporModal(false)}
           onPick={(key) => {
             setProcedureAdi(key);
+            setTable(null);
+            setTotalCount(0);
+            setTotalPages(1);
+            setPage(1);
+          }}
+        />
+      ) : null}
+
+      {firmaModal ? (
+        <SelectModal
+          visible={firmaModal}
+          title="Firma Seç"
+          items={firmaItems}
+          onClose={() => setFirmaModal(false)}
+          onPick={(key) => {
+            const id = Number(key);
+            if (!Number.isFinite(id)) return;
+            if (id === 0 && !isAdmin) return;
+            setSelectedFirmaId(id);
             setTable(null);
             setTotalCount(0);
             setTotalPages(1);

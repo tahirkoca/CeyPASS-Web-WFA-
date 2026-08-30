@@ -23,16 +23,18 @@ namespace CeyPASS.WFA.UserControls.Raporlar
         private readonly IKullaniciFirmaIsyeriYetkiService _yetkiSvc;
         private readonly IKisiEkraniLookUpService _lookupSvc;
         private readonly ICihazService _cihazSvc;
+        private readonly IFirmaService _firmaSvc;
         private readonly IAuthorizationService _auth;
         AuthorizationHelper authHelp;
         private DataTable _report;
         private int? _loadedMultiFirmaId;
         private RaporParametreHelper.MultiSelectKind _loadedMultiKind;
         private IReadOnlyList<string> _aktifParametreler = Array.Empty<string>();
+        private bool _isAdmin;
         private const string PageName = "Raporlar";
         private const string PageNameUI = "Raporlar";
 
-        public ucRaporlar(ISessionContext session, IRaporService rsvc, IAuthorizationService auth, IKullaniciQueryService kqsvc, IKullaniciFirmaIsyeriYetkiService yetkiSvc, IKisiEkraniLookUpService lookupSvc, ICihazService cihazSvc)
+        public ucRaporlar(ISessionContext session, IRaporService rsvc, IAuthorizationService auth, IKullaniciQueryService kqsvc, IKullaniciFirmaIsyeriYetkiService yetkiSvc, IKisiEkraniLookUpService lookupSvc, ICihazService cihazSvc, IFirmaService firmaSvc)
         {
             var cid = Guid.NewGuid().ToString("N");
             InitializeComponent();
@@ -44,6 +46,7 @@ namespace CeyPASS.WFA.UserControls.Raporlar
             _yetkiSvc = yetkiSvc;
             _lookupSvc = lookupSvc;
             _cihazSvc = cihazSvc;
+            _firmaSvc = firmaSvc;
             authHelp = new AuthorizationHelper(_session, _auth);
             if (!_auth.ViewAbility(PageName))
             {
@@ -80,14 +83,114 @@ namespace CeyPASS.WFA.UserControls.Raporlar
             btnExceleDonustur.Tag = YetkiTipleri.Export;
             btnPdfDonustur.Tag = YetkiTipleri.Export;
 
+            _isAdmin = FirmaIsyeriYetkiHelper.IsAdmin(_session.RolId);
+            FirmalariYukle();
             RaporlariYukle();
+            RestoreRaporPrefs();
             StilVerDataGridView(dgRaporlar);
             cmbRaporTurleri.SelectedIndexChanged += CmbRaporTurleri_SelectedIndexChanged;
+            cmbFirma.SelectedIndexChanged += CmbFirma_SelectedIndexChanged;
+            dtpGirisTarihi.ValueChanged += (s, e) => PersistFilters();
+            dtpCikisTarihi.ValueChanged += (s, e) => PersistFilters();
             ApplyRaporParametreUi();
             EnsureMultiSelectGuncel();
+            PersistFilters();
 
             WinFormsAuthHelper.ApplyPageAuthorization(_auth, _session, PageName, this);
             LogHelper.Info(PageName, "Load", "Sayfa hazır", null, cid);
+        }
+
+        private void FirmalariYukle()
+        {
+            var yetkiler = _session.AktifKullaniciId.HasValue
+                ? _yetkiSvc.GetYetkiler((int)_session.AktifKullaniciId.Value) ?? new List<FirmaIsyeriYetkiDTO>()
+                : new List<FirmaIsyeriYetkiDTO>();
+            var list = FirmaIsyeriYetkiHelper.FilterFirmalar(_firmaSvc.GetAll(), yetkiler, _isAdmin)
+                .OrderBy(f => f.FirmaAdi)
+                .Select(f => new LookupItem { Id = f.FirmaId, Ad = f.FirmaAdi ?? $"Firma {f.FirmaId}" })
+                .ToList();
+
+            if (_isAdmin)
+                list.Insert(0, new LookupItem { Id = 0, Ad = "TÜMÜ" });
+
+            cmbFirma.SelectedIndexChanged -= CmbFirma_SelectedIndexChanged;
+            cmbFirma.DataSource = null;
+            cmbFirma.DisplayMember = nameof(LookupItem.Ad);
+            cmbFirma.ValueMember = nameof(LookupItem.Id);
+            cmbFirma.DataSource = list;
+
+            var prefs = PageFilterPrefsStore.Load(PageName);
+            int? prefer = prefs?.FirmaId;
+            if (!(prefer.HasValue && prefer.Value >= 0 && list.Any(x => x.Id == prefer.Value)))
+                prefer = _session.AktifFirmaId;
+
+            if (prefer.HasValue && list.Any(x => x.Id == prefer.Value))
+                cmbFirma.SelectedValue = prefer.Value;
+            else
+            {
+                var firstReal = list.FirstOrDefault(x => x.Id > 0);
+                if (firstReal != null)
+                    cmbFirma.SelectedValue = firstReal.Id;
+                else if (list.Count > 0)
+                    cmbFirma.SelectedIndex = 0;
+            }
+
+            if (prefs?.DateA.HasValue == true)
+                dtpGirisTarihi.Value = prefs.DateA.Value.Date;
+            if (prefs?.DateB.HasValue == true)
+                dtpCikisTarihi.Value = prefs.DateB.Value.Date;
+        }
+
+        private void PersistFilters()
+        {
+            string? extra = null;
+            if (cmbRaporTurleri.SelectedValue != null)
+                extra = cmbRaporTurleri.SelectedValue.ToString();
+            else if (cmbRaporTurleri.SelectedItem is RaporTanimi r)
+                extra = r.ProcedureAdi ?? r.RaporAdi;
+
+            PageFilterPrefsStore.Save(PageName, new PageFilterPrefs
+            {
+                FirmaId = GetSelectedFirmaId(),
+                DateA = dtpGirisTarihi.Value.Date,
+                DateB = dtpCikisTarihi.Value.Date,
+                Extra = extra
+            });
+        }
+
+        private void RestoreRaporPrefs()
+        {
+            var prefs = PageFilterPrefsStore.Load(PageName);
+            if (string.IsNullOrWhiteSpace(prefs?.Extra)) return;
+            var raporlar = cmbRaporTurleri.DataSource as System.Collections.IList;
+            if (raporlar == null) return;
+
+            for (int i = 0; i < raporlar.Count; i++)
+            {
+                if (raporlar[i] is not RaporTanimi r) continue;
+                if (string.Equals(r.ProcedureAdi, prefs.Extra, StringComparison.OrdinalIgnoreCase)
+                    || string.Equals(r.RaporAdi, prefs.Extra, StringComparison.OrdinalIgnoreCase))
+                {
+                    cmbRaporTurleri.SelectedIndex = i;
+                    return;
+                }
+            }
+        }
+
+        private int GetSelectedFirmaId()
+        {
+            if (cmbFirma.SelectedValue is int id)
+                return id;
+            if (cmbFirma.SelectedValue != null && int.TryParse(cmbFirma.SelectedValue.ToString(), out var parsed))
+                return parsed;
+            return 0;
+        }
+
+        private void CmbFirma_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            _loadedMultiFirmaId = null;
+            EnsureMultiSelectGuncel();
+            PersistFilters();
         }
         private void RaporlariYukle()
         {
@@ -104,6 +207,7 @@ namespace CeyPASS.WFA.UserControls.Raporlar
         private void CmbRaporTurleri_SelectedIndexChanged(object sender, EventArgs e)
         {
             ApplyRaporParametreUi();
+            PersistFilters();
         }
 
         private void ApplyRaporParametreUi()
@@ -148,15 +252,14 @@ namespace CeyPASS.WFA.UserControls.Raporlar
             }
 
             LogHelper.Info(PageName, "RaporGetir", "Başladı", $"{{\"proc\":\"{procedureAdi}\",\"tarihBas\":\"{dtpGirisTarihi.Value:yyyy-MM-dd}\",\"tarihBit\":\"{dtpCikisTarihi.Value:yyyy-MM-dd}\"}}", cid);
-            if (!_session.AktifFirmaId.HasValue)
+            int firmaId = GetSelectedFirmaId();
+            if (firmaId < 0 || (firmaId == 0 && !_isAdmin))
             {
                 MessageBox.Show("Firma bilgisi bulunamadı.", "Uyarı", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
-            int firmaId = _session.AktifFirmaId.Value;
-            bool isAdmin = FirmaIsyeriYetkiHelper.IsAdmin(_session.RolId);
             var yetkiler = _yetkiSvc.GetYetkiler((int)_session.AktifKullaniciId);
-            if (!FirmaIsyeriYetkiHelper.IsFirmaAuthorized(firmaId, yetkiler, isAdmin))
+            if (firmaId > 0 && !FirmaIsyeriYetkiHelper.IsFirmaAuthorized(firmaId, yetkiler, _isAdmin))
             {
                 MessageBox.Show("Seçili firma için rapor görüntüleme yetkiniz yok.", "Uyarı", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
@@ -166,14 +269,17 @@ namespace CeyPASS.WFA.UserControls.Raporlar
             string isyeriIdCsv = "";
             string cihazIdCsv = "";
 
-            if (kind == RaporParametreHelper.MultiSelectKind.Isyeri)
+            if (firmaId > 0)
             {
-                if (!TryBuildRaporIsyeriIdListCsv(firmaId, yetkiler, isAdmin, out isyeriIdCsv))
-                    return;
-            }
-            else if (kind == RaporParametreHelper.MultiSelectKind.Cihaz)
-            {
-                cihazIdCsv = string.Join(",", GetSeciliRaporCihazIds());
+                if (kind == RaporParametreHelper.MultiSelectKind.Isyeri)
+                {
+                    if (!TryBuildRaporIsyeriIdListCsv(firmaId, yetkiler, _isAdmin, out isyeriIdCsv))
+                        return;
+                }
+                else if (kind == RaporParametreHelper.MultiSelectKind.Cihaz)
+                {
+                    cihazIdCsv = string.Join(",", GetSeciliRaporCihazIds());
+                }
             }
 
             string firmaIdCsv = firmaId > 0 ? firmaId.ToString() : "";
@@ -195,12 +301,16 @@ namespace CeyPASS.WFA.UserControls.Raporlar
 
             try
             {
-                _report = _rsvc.CalistirRapor(procedureAdi, parametreler);
-                // Grid’i sıfırla ki kolonlar yeni DataTable sırasıyla oluşsun
-                dgRaporlar.DataSource = null;
-                dgRaporlar.Columns.Clear();
-                dgRaporlar.AutoGenerateColumns = true;
-                dgRaporlar.DataSource = _report;
+                using (CeypassBusyPanel.BusyScope(this, "Rapor yükleniyor", "Lütfen bekleyin…"))
+                {
+                    _report = _rsvc.CalistirRapor(procedureAdi, parametreler);
+                    // Grid’i sıfırla ki kolonlar yeni DataTable sırasıyla oluşsun
+                    dgRaporlar.DataSource = null;
+                    dgRaporlar.Columns.Clear();
+                    dgRaporlar.AutoGenerateColumns = true;
+                    dgRaporlar.DataSource = _report;
+                }
+                PersistFilters();
                 LogHelper.Info(PageName, "RaporGetir", "Tamamlandı", $"{{\"rows\":{_report?.Rows.Count ?? 0},\"cols\":{_report?.Columns.Count ?? 0}}}", cid);
             }
             catch (Exception ex)
@@ -313,10 +423,16 @@ namespace CeyPASS.WFA.UserControls.Raporlar
         }
         private void EnsureMultiSelectGuncel()
         {
-            if (!_session.AktifFirmaId.HasValue)
+            int firmaId = GetSelectedFirmaId();
+            if (firmaId <= 0)
+            {
+                chkRaporIsyerleri.Items.Clear();
+                pnlIsyeriFilters.Visible = false;
+                _loadedMultiFirmaId = firmaId;
+                _loadedMultiKind = RaporParametreHelper.MultiSelectKind.None;
                 return;
+            }
 
-            int firmaId = _session.AktifFirmaId.Value;
             var kind = RaporParametreHelper.GetMultiSelect(_aktifParametreler);
             if (_loadedMultiFirmaId == firmaId && _loadedMultiKind == kind)
                 return;
@@ -360,7 +476,7 @@ namespace CeyPASS.WFA.UserControls.Raporlar
         {
             try
             {
-                bool isAdmin = FirmaIsyeriYetkiHelper.IsAdmin(_session.RolId);
+                bool isAdmin = _isAdmin;
                 var yetkiler = _yetkiSvc.GetYetkiler((int)_session.AktifKullaniciId);
                 var list = _lookupSvc.GetIsyerleri(firmaId) ?? new List<LookupItem>();
                 list = FirmaIsyeriYetkiHelper.FilterIsyeriLookup(list, firmaId, yetkiler, isAdmin);
@@ -430,8 +546,11 @@ namespace CeyPASS.WFA.UserControls.Raporlar
 
         public void OpenFromDashboard(ReportRequest req)
         {
-            if (req.FirmaId > 0)
-                _session.AktifFirmaId = req.FirmaId;
+            if (req.FirmaId > 0 && cmbFirma.DataSource != null)
+            {
+                try { cmbFirma.SelectedValue = req.FirmaId; }
+                catch { /* liste yoksa varsayılan kalsın */ }
+            }
 
             _loadedMultiFirmaId = null;
             EnsureMultiSelectGuncel();

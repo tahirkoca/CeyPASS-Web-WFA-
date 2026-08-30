@@ -193,6 +193,21 @@ ORDER BY ki.Baslangic DESC";
             return true;
         }
 
+        public bool AktifYap(int kisiIzinId)
+        {
+            var entity = _context.KisiIzinler
+                .FirstOrDefault(k => k.KisiIzinId == kisiIzinId);
+
+            if (entity == null)
+                return false;
+
+            entity.AktifMi = true;
+            entity.GuncellemeTarihi = DateTime.Now;
+
+            _context.SaveChanges();
+            return true;
+        }
+
         public DataTable GetByPerson(string personelId, DateTime? bas = null, DateTime? bit = null)
         {
             var sql = @"

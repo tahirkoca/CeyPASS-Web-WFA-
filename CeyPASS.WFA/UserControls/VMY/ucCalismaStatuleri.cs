@@ -19,10 +19,12 @@ namespace CeyPASS.WFA.UserControls.VMY
         AuthorizationHelper authHelp;
         private const string PageName = "CalismaStatuleri";
         private const string PageNameUI = "Çalışma Statüleri";
+        private readonly WinFormsFieldErrors _fieldErrors;
 
         public ucCalismaStatuleri(ISessionContext session,ICalismaStatuService csvc,IAuthorizationService auth)
         {
             InitializeComponent();
+            _fieldErrors = new WinFormsFieldErrors(this);
             var cid = Guid.NewGuid().ToString("N");
            _session= session;
             _csvc = csvc;
@@ -185,10 +187,9 @@ namespace CeyPASS.WFA.UserControls.VMY
             if (_mode == ScreenMode.Edit && !_auth.Can(PageName, YetkiTipleri.Update)) { System.Media.SystemSounds.Beep.Play(); return; }
 
             string ad = (txtCalismaStatuAdi.Text ?? "").Trim();
-            if (string.IsNullOrWhiteSpace(ad))
+            _fieldErrors.Clear();
+            if (!_fieldErrors.Require(txtCalismaStatuAdi, ad, "Çalışma statü adı boş bırakılamaz."))
             {
-                MessageBox.Show("Çalışma statü adı boş bırakılamaz.", "Uyarı",
-                                MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 txtCalismaStatuAdi.Focus();
                 return;
             }
@@ -229,7 +230,7 @@ namespace CeyPASS.WFA.UserControls.VMY
             var item = chkCalismaStatuleri.SelectedItem as LookupItem;
             if (item == null) return;
 
-            if (MessageBox.Show($"“{item.Ad}” statüsünü silmek istiyor musunuz?","Onay", MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes)
+            if (!UiConfirm.Confirm(this, $"“{item.Ad}” statüsünü silmek istiyor musunuz?", "Onay", "Sil", "Vazgeç"))
                 return;
 
             bool ok = _csvc.Delete(item.Id);

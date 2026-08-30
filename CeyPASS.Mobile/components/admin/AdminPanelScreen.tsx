@@ -355,7 +355,6 @@ export function AdminPanelScreen(props: {
         rightIcon2="bell-outline"
         onRightPress2={() => quickMenu.open("notif")}
         rightBadge2={notif.unreadCount}
-        rightA11yLabel2="Bildirimler ve hesap"
       />
       {quickMenu.modal}
     </>

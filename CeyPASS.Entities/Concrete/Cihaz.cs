@@ -15,5 +15,9 @@ namespace CeyPASS.Entities.Concrete
         public decimal? Longitude { get; set; }
         public int? MesafeToleransMetre { get; set; }
         public bool SaatPenceresiAktifMi { get; set; }
+        /// <summary>Danışma / normal Canlı İzleme kaynağı.</summary>
+        public bool AnaGirisCikisMi { get; set; }
+        /// <summary>ARAÇ rolü Canlı İzleme kaynağı.</summary>
+        public bool AracGirisCikisMi { get; set; }
     }
 }

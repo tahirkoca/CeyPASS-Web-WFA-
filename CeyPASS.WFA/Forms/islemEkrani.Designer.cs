@@ -59,13 +59,18 @@ namespace CeyPASS.WFA.Forms
             this.pnlSidebarUserFooter.SuspendLayout();
             this.pnlSidebarToggleEdge.SuspendLayout();
             this.lblSayfaBasligi = new System.Windows.Forms.Label();
+            this.btnShortcuts = new System.Windows.Forms.Button();
             this.islemEkraniPanel = new System.Windows.Forms.Panel();
+            this.statusStrip = new System.Windows.Forms.StatusStrip();
+            this.lblStatusMessage = new System.Windows.Forms.ToolStripStatusLabel();
+            this.lblStatusCount = new System.Windows.Forms.ToolStripStatusLabel();
             this.pnlSidebarContainer = new System.Windows.Forms.Panel();
             this.pnlSidebarContainer.SuspendLayout();
             this.pnlSolMenu.SuspendLayout();
             this.pnlLogo.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pbLogo)).BeginInit();
             this.pnlUstBaslik.SuspendLayout();
+            this.statusStrip.SuspendLayout();
             this.SuspendLayout();
             // 
             // pnlSolMenu
@@ -582,12 +587,14 @@ namespace CeyPASS.WFA.Forms
             // pnlUstBaslik
             // 
             this.pnlUstBaslik.BackColor = System.Drawing.Color.White;
+            this.pnlUstBaslik.Controls.Add(this.btnShortcuts);
             this.pnlUstBaslik.Controls.Add(this.lblSayfaBasligi);
             this.pnlUstBaslik.Dock = System.Windows.Forms.DockStyle.Top;
             this.pnlUstBaslik.Location = new System.Drawing.Point(294, 0);
             this.pnlUstBaslik.Name = "pnlUstBaslik";
             this.pnlUstBaslik.Size = new System.Drawing.Size(1088, 57);
             this.pnlUstBaslik.TabIndex = 1;
+            this.pnlUstBaslik.Resize += new System.EventHandler(this.pnlUstBaslik_Resize);
             // 
             // lblSayfaBasligi
             // 
@@ -599,6 +606,20 @@ namespace CeyPASS.WFA.Forms
             this.lblSayfaBasligi.TabIndex = 0;
             this.lblSayfaBasligi.Text = "İşlem Ekranı";
             // 
+            // btnShortcuts
+            // 
+            this.btnShortcuts.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnShortcuts.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnShortcuts.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
+            this.btnShortcuts.Font = new System.Drawing.Font("Segoe MDL2 Assets", 11F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
+            this.btnShortcuts.Location = new System.Drawing.Point(1036, 14);
+            this.btnShortcuts.Name = "btnShortcuts";
+            this.btnShortcuts.Size = new System.Drawing.Size(32, 28);
+            this.btnShortcuts.TabIndex = 2;
+            this.btnShortcuts.Text = "\uE765";
+            this.btnShortcuts.UseVisualStyleBackColor = true;
+            this.btnShortcuts.Click += new System.EventHandler(this.btnShortcuts_Click);
+            // 
             // islemEkraniPanel
             // 
             this.islemEkraniPanel.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(248)))), ((int)(((byte)(249)))), ((int)(((byte)(250)))));
@@ -606,8 +627,36 @@ namespace CeyPASS.WFA.Forms
             this.islemEkraniPanel.Location = new System.Drawing.Point(294, 57);
             this.islemEkraniPanel.Margin = new System.Windows.Forms.Padding(0);
             this.islemEkraniPanel.Name = "islemEkraniPanel";
-            this.islemEkraniPanel.Size = new System.Drawing.Size(1088, 882);
+            this.islemEkraniPanel.Size = new System.Drawing.Size(1088, 860);
             this.islemEkraniPanel.TabIndex = 2;
+            // 
+            // statusStrip
+            // 
+            this.statusStrip.Dock = System.Windows.Forms.DockStyle.Bottom;
+            this.statusStrip.ImageScalingSize = new System.Drawing.Size(20, 20);
+            this.statusStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.lblStatusMessage,
+            this.lblStatusCount});
+            this.statusStrip.Location = new System.Drawing.Point(0, 917);
+            this.statusStrip.Name = "statusStrip";
+            this.statusStrip.Padding = new System.Windows.Forms.Padding(1, 0, 16, 0);
+            this.statusStrip.Size = new System.Drawing.Size(1382, 22);
+            this.statusStrip.TabIndex = 3;
+            this.statusStrip.Text = "statusStrip";
+            // 
+            // lblStatusMessage
+            // 
+            this.lblStatusMessage.Name = "lblStatusMessage";
+            this.lblStatusMessage.Size = new System.Drawing.Size(42, 16);
+            this.lblStatusMessage.Spring = true;
+            this.lblStatusMessage.Text = "Hazır";
+            this.lblStatusMessage.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            // 
+            // lblStatusCount
+            // 
+            this.lblStatusCount.Name = "lblStatusCount";
+            this.lblStatusCount.Size = new System.Drawing.Size(0, 16);
+            this.lblStatusCount.Visible = false;
             // 
             // islemEkrani
             // 
@@ -616,13 +665,16 @@ namespace CeyPASS.WFA.Forms
             this.ClientSize = new System.Drawing.Size(1382, 939);
             this.Controls.Add(this.islemEkraniPanel);
             this.Controls.Add(this.pnlUstBaslik);
+            this.Controls.Add(this.statusStrip);
             this.Controls.Add(this.pnlSidebarContainer);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
+            this.KeyPreview = true;
             this.Name = "islemEkrani";
             this.Text = "CeyPASS";
             this.WindowState = System.Windows.Forms.FormWindowState.Maximized;
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.islemEkrani_FormClosing);
             this.Load += new System.EventHandler(this.islemEkrani_Load);
+            this.KeyDown += new System.Windows.Forms.KeyEventHandler(this.islemEkrani_KeyDown);
             this.pnlSidebarContainer.ResumeLayout(false);
             this.pnlSidebarUserFooter.ResumeLayout(false);
             this.pnlSidebarUserFooter.PerformLayout();
@@ -633,7 +685,10 @@ namespace CeyPASS.WFA.Forms
             ((System.ComponentModel.ISupportInitialize)(this.pbLogo)).EndInit();
             this.pnlUstBaslik.ResumeLayout(false);
             this.pnlUstBaslik.PerformLayout();
+            this.statusStrip.ResumeLayout(false);
+            this.statusStrip.PerformLayout();
             this.ResumeLayout(false);
+            this.PerformLayout();
 
         }
 
@@ -645,7 +700,11 @@ namespace CeyPASS.WFA.Forms
         private System.Windows.Forms.PictureBox pbLogo;
         private System.Windows.Forms.Panel pnlUstBaslik;
         private System.Windows.Forms.Label lblSayfaBasligi;
+        private System.Windows.Forms.Button btnShortcuts;
         private System.Windows.Forms.Panel islemEkraniPanel;
+        private System.Windows.Forms.StatusStrip statusStrip;
+        private System.Windows.Forms.ToolStripStatusLabel lblStatusMessage;
+        private System.Windows.Forms.ToolStripStatusLabel lblStatusCount;
         private System.Windows.Forms.Button btnAnasayfa;
         private System.Windows.Forms.Label lblPOYBaslik;
         private System.Windows.Forms.Button btnDepartmanTanimlama;

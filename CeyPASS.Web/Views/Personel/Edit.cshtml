@@ -46,7 +46,7 @@
         </div>
     }
 
-    <form asp-action="Edit" method="post" enctype="multipart/form-data">
+    <form asp-action="Edit" method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
         @Html.AntiForgeryToken()
         <input type="hidden" name="originalPersonelId" value="@originalPersonelId" />
         <input type="hidden" name="kartTipi" value="@(ViewBag.KartTipi)" />

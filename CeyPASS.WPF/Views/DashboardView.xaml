@@ -1,0 +1,395 @@
+<UserControl x:Class="CeyPASS.WPF.Views.DashboardView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:dx="http://schemas.devexpress.com/winfx/2008/xaml/core"
+             xmlns:dxe="http://schemas.devexpress.com/winfx/2008/xaml/editors"
+             xmlns:dxg="http://schemas.devexpress.com/winfx/2008/xaml/grid"
+             xmlns:controls="clr-namespace:CeyPASS.WPF.Controls"
+             Background="Transparent">
+    <UserControl.Resources>
+        <Style x:Key="KpiCard" TargetType="Border">
+            <Setter Property="Background" Value="{DynamicResource Brush.Card}"/>
+            <Setter Property="CornerRadius" Value="14"/>
+            <Setter Property="Margin" Value="5"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="16,14"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="SnapsToDevicePixels" Value="True"/>
+            <Setter Property="Effect">
+                <Setter.Value>
+                    <DropShadowEffect BlurRadius="16" ShadowDepth="2" Direction="270" Opacity="0.06" Color="#0F172A"/>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="KpiTitle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="13.5"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="{DynamicResource Brush.TextMuted}"/>
+            <Setter Property="TextWrapping" Value="Wrap"/>
+            <Setter Property="Margin" Value="0,4,0,0"/>
+        </Style>
+
+        <Style x:Key="KpiValue" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="32"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+
+        <Style x:Key="IconCircle" TargetType="Border">
+            <Setter Property="Width" Value="56"/>
+            <Setter Property="Height" Value="56"/>
+            <Setter Property="CornerRadius" Value="14"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Margin" Value="0,0,14,0"/>
+        </Style>
+
+        <Style x:Key="PanelCard" TargetType="Border">
+            <Setter Property="Background" Value="{DynamicResource Brush.Card}"/>
+            <Setter Property="CornerRadius" Value="14"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Margin" Value="5"/>
+            <Setter Property="Effect">
+                <Setter.Value>
+                    <DropShadowEffect BlurRadius="14" ShadowDepth="1" Direction="270" Opacity="0.05" Color="#0F172A"/>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="GridHeader" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="12.5"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="{DynamicResource Brush.TextPrimary}"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+        </Style>
+
+        <Style x:Key="RefreshBtn" TargetType="Button">
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Padding" Value="14,7"/>
+            <Setter Property="Foreground" Value="{DynamicResource Brush.SecondaryFg}"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="12.5"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="bd" Background="{DynamicResource Brush.SecondaryBg}" CornerRadius="9"
+                                BorderBrush="{DynamicResource Brush.SecondaryBorder}" BorderThickness="1" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="bd" Property="Background" Value="{DynamicResource Brush.SecondaryHover}"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="bd" Property="Background" Value="#CBD5E1"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
+
+    <Border Background="{DynamicResource Brush.PageBg}">
+        <DockPanel Margin="14,12">
+            <controls:CeypassHelpTip DockPanel.Dock="Top" Topic="Dashboard"
+                                     HorizontalAlignment="Right" Margin="5,0,5,8"/>
+            <Border DockPanel.Dock="Top" Background="{DynamicResource Brush.Card}" CornerRadius="14" Padding="16,12"
+                    Margin="5,0,5,10" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1"
+                    Visibility="{Binding FirmaFilterVisibility}">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="10" ShadowDepth="1" Opacity="0.04" Color="#0F172A"/>
+                </Border.Effect>
+                <DockPanel>
+                    <Button DockPanel.Dock="Right" Content="Yenile" Style="{StaticResource RefreshBtn}"
+                            Command="{Binding RefreshCommand}" Margin="12,0,0,0" VerticalAlignment="Center"/>
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="Firma" FontWeight="SemiBold" Foreground="{DynamicResource Brush.TextMuted}"
+                                   VerticalAlignment="Center" Margin="0,0,10,0" FontSize="12.5"/>
+                        <ComboBox Width="300" Height="34" Padding="8,4"
+                                  ItemsSource="{Binding Firmalar}"
+                                  DisplayMemberPath="FirmaAdi"
+                                  SelectedItem="{Binding SelectedFirma, UpdateSourceTrigger=PropertyChanged}"/>
+                    </StackPanel>
+                </DockPanel>
+            </Border>
+
+            <TextBlock DockPanel.Dock="Top" Text="{Binding Error}" Foreground="#DC2626"
+                       TextWrapping="Wrap" Margin="8,0,8,8" FontSize="13"/>
+
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" MinHeight="230" MaxHeight="300"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <!-- KPI: ikon solda, bilgi sağda -->
+                <UniformGrid Grid.Row="0" Rows="2" Columns="4" Margin="0,0,0,6">
+                    <Border Style="{StaticResource KpiCard}"
+                            Tag="HareketiBulunanlar"
+                            PreviewMouseLeftButtonUp="KpiCard_PreviewMouseLeftButtonUp"
+                            ToolTip="Bugün en az 1 GİRİŞ ya da ÇIKIŞ hareketi bulunan kişi sayısını gösterir.">
+                        <DockPanel>
+                            <Border Style="{StaticResource IconCircle}" Background="#EBF5FB" DockPanel.Dock="Left">
+                                <Image Source="pack://application:,,,/Assets/icons8-enter-house-50.png"
+                                       Width="30" Height="30" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <StackPanel VerticalAlignment="Center">
+                                <TextBlock Text="{Binding GirisYapan}" Style="{StaticResource KpiValue}" Foreground="#3498DB"/>
+                                <TextBlock Text="Hareketi Bulunanlar" Style="{StaticResource KpiTitle}"/>
+                            </StackPanel>
+                        </DockPanel>
+                    </Border>
+
+                    <Border Style="{StaticResource KpiCard}"
+                            Tag="Iceridekiler"
+                            PreviewMouseLeftButtonUp="KpiCard_PreviewMouseLeftButtonUp"
+                            ToolTip="Şu anda işyerinde bulunan (son hareketi GİRİŞ olan) kişi sayısıdır.">
+                        <DockPanel>
+                            <Border Style="{StaticResource IconCircle}" Background="#EAFAf1" DockPanel.Dock="Left">
+                                <Image Source="pack://application:,,,/Assets/icons8-work-50.png"
+                                       Width="30" Height="30" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <StackPanel VerticalAlignment="Center">
+                                <TextBlock Text="{Binding Iceridekiler}" Style="{StaticResource KpiValue}" Foreground="#2ECC71"/>
+                                <TextBlock Text="İçeridekiler" Style="{StaticResource KpiTitle}"/>
+                            </StackPanel>
+                        </DockPanel>
+                    </Border>
+
+                    <Border Style="{StaticResource KpiCard}"
+                            Tag="Disaridakiler"
+                            PreviewMouseLeftButtonUp="KpiCard_PreviewMouseLeftButtonUp"
+                            ToolTip="Şu anda dışarıda olan (son hareketi ÇIKIŞ olan) kişi sayısıdır.">
+                        <DockPanel>
+                            <Border Style="{StaticResource IconCircle}" Background="#F4F6F7" DockPanel.Dock="Left">
+                                <Image Source="pack://application:,,,/Assets/icons8-leave-house-50.png"
+                                       Width="30" Height="30" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <StackPanel VerticalAlignment="Center">
+                                <TextBlock Text="{Binding Disaridakiler}" Style="{StaticResource KpiValue}" Foreground="#7F8C8D"/>
+                                <TextBlock Text="Dışarıdakiler" Style="{StaticResource KpiTitle}"/>
+                            </StackPanel>
+                        </DockPanel>
+                    </Border>
+
+                    <Border Style="{StaticResource KpiCard}"
+                            Tag="GecKalanlar"
+                            PreviewMouseLeftButtonUp="KpiCard_PreviewMouseLeftButtonUp"
+                            ToolTip="Planlanan mesai başlangıcına tolerans süresinden sonra gelen çalışanların sayısıdır.">
+                        <DockPanel>
+                            <Border Style="{StaticResource IconCircle}" Background="#FDEDEC" DockPanel.Dock="Left">
+                                <Image Source="pack://application:,,,/Assets/icons8-hurry-50.png"
+                                       Width="30" Height="30" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <StackPanel VerticalAlignment="Center">
+                                <TextBlock Text="{Binding GecKalanlar}" Style="{StaticResource KpiValue}" Foreground="#E74C3C"/>
+                                <TextBlock Text="Geç Kalanlar" Style="{StaticResource KpiTitle}"/>
+                            </StackPanel>
+                        </DockPanel>
+                    </Border>
+
+                    <Border Style="{StaticResource KpiCard}"
+                            Tag="Devamsizlar"
+                            PreviewMouseLeftButtonUp="KpiCard_PreviewMouseLeftButtonUp"
+                            ToolTip="Bugün hiç hareket yapmamış (gelmemiş) kişi sayısıdır. İzinli olanlar bu sayıya dahil değildir.">
+                        <DockPanel>
+                            <Border Style="{StaticResource IconCircle}" Background="#F9EBEA" DockPanel.Dock="Left">
+                                <Image Source="pack://application:,,,/Assets/icons8-attendance-50.png"
+                                       Width="30" Height="30" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <StackPanel VerticalAlignment="Center">
+                                <TextBlock Text="{Binding Devamsizlar}" Style="{StaticResource KpiValue}" Foreground="#C0392B"/>
+                                <TextBlock Text="Devamsızlar" Style="{StaticResource KpiTitle}"/>
+                            </StackPanel>
+                        </DockPanel>
+                    </Border>
+
+                    <Border Style="{StaticResource KpiCard}"
+                            Tag="Izinliler"
+                            PreviewMouseLeftButtonUp="KpiCard_PreviewMouseLeftButtonUp"
+                            ToolTip="Bugün tüm gün izinli olan kişi sayısıdır. Saatlik izin kullananlar bu sayıya dahil değildir.">
+                        <DockPanel>
+                            <Border Style="{StaticResource IconCircle}" Background="#FEF9E7" DockPanel.Dock="Left">
+                                <Image Source="pack://application:,,,/Assets/icons8-rest-50.png"
+                                       Width="30" Height="30" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <StackPanel VerticalAlignment="Center">
+                                <TextBlock Text="{Binding Izinliler}" Style="{StaticResource KpiValue}" Foreground="#D4AC0D"/>
+                                <TextBlock Text="İzinliler" Style="{StaticResource KpiTitle}"/>
+                            </StackPanel>
+                        </DockPanel>
+                    </Border>
+
+                    <Border Style="{StaticResource KpiCard}"
+                            Tag="IseBaslayanlar"
+                            PreviewMouseLeftButtonUp="KpiCard_PreviewMouseLeftButtonUp"
+                            ToolTip="Bu ay işe başlayan kişi sayısıdır.">
+                        <DockPanel>
+                            <Border Style="{StaticResource IconCircle}" Background="#E8F8F5" DockPanel.Dock="Left">
+                                <Image Source="pack://application:,,,/Assets/icons8-add-50.png"
+                                       Width="30" Height="30" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <StackPanel VerticalAlignment="Center">
+                                <TextBlock Text="{Binding IseBaslayan}" Style="{StaticResource KpiValue}" Foreground="#1ABC9C"/>
+                                <TextBlock Text="İşe Başlayanlar" Style="{StaticResource KpiTitle}"/>
+                            </StackPanel>
+                        </DockPanel>
+                    </Border>
+
+                    <Border Style="{StaticResource KpiCard}"
+                            Tag="IstenAyrilanlar"
+                            PreviewMouseLeftButtonUp="KpiCard_PreviewMouseLeftButtonUp"
+                            ToolTip="Bu ay işten ayrılan kişi sayısıdır.">
+                        <DockPanel>
+                            <Border Style="{StaticResource IconCircle}" Background="#F5EEF8" DockPanel.Dock="Left">
+                                <Image Source="pack://application:,,,/Assets/icons8-minus-50.png"
+                                       Width="30" Height="30" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <StackPanel VerticalAlignment="Center">
+                                <TextBlock Text="{Binding IstenAyrilan}" Style="{StaticResource KpiValue}" Foreground="#9B59B6"/>
+                                <TextBlock Text="İşten Ayrılanlar" Style="{StaticResource KpiTitle}"/>
+                            </StackPanel>
+                        </DockPanel>
+                    </Border>
+                </UniformGrid>
+
+                <UniformGrid Grid.Row="1" Rows="2" Columns="2">
+                    <Border Style="{StaticResource PanelCard}">
+                        <DockPanel>
+                            <Border DockPanel.Dock="Top" Background="{DynamicResource Brush.DashHeaderGec}" Padding="12,9"
+                                    CornerRadius="14,14,0,0" BorderBrush="{DynamicResource Brush.DashHeaderGecBorder}" BorderThickness="0,0,0,1">
+                                <StackPanel Orientation="Horizontal">
+                                    <Border Width="7" Height="7" CornerRadius="4" Background="#E74C3C"
+                                            VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                    <TextBlock Text="{Binding HdrGec}" Style="{StaticResource GridHeader}"/>
+                                </StackPanel>
+                            </Border>
+                            <dxg:GridControl ItemsSource="{Binding LateList}" AutoGenerateColumns="None" Margin="6,2,6,6">
+                                <dxg:GridControl.Columns>
+                                    <dxg:GridColumn FieldName="Ad" Header="Ad"/>
+                                    <dxg:GridColumn FieldName="Soyad" Header="Soyad"/>
+                                    <dxg:GridColumn FieldName="FazlaDakika" Header="Geç Kalınan Dakika"
+                                                    HorizontalHeaderContentAlignment="Right">
+                                        <dxg:GridColumn.EditSettings>
+                                            <dxe:TextEditSettings HorizontalContentAlignment="Right"/>
+                                        </dxg:GridColumn.EditSettings>
+                                    </dxg:GridColumn>
+                                </dxg:GridControl.Columns>
+                                <dxg:GridControl.View>
+                                    <dxg:TableView Style="{StaticResource CeypassTableView}" AutoWidth="True"
+                                                   ShowHorizontalLines="False" ShowVerticalLines="False"
+                                                   AllowColumnFiltering="False" ShowAutoFilterRow="False"
+                                                   RowMinHeight="28">
+                                        <dxg:TableView.FormatConditions>
+                                            <dxg:FormatCondition FieldName="FazlaDakika"
+                                                                Expression="[FazlaDakika] &gt;= 60"
+                                                                ApplyToRow="True">
+                                                <dxg:FormatCondition.Format>
+                                                    <dx:Format Background="#FFCDD2" Foreground="#0F172A"/>
+                                                </dxg:FormatCondition.Format>
+                                            </dxg:FormatCondition>
+                                        </dxg:TableView.FormatConditions>
+                                    </dxg:TableView>
+                                </dxg:GridControl.View>
+                            </dxg:GridControl>
+                        </DockPanel>
+                    </Border>
+
+                    <Border Style="{StaticResource PanelCard}">
+                        <DockPanel>
+                            <Border DockPanel.Dock="Top" Background="{DynamicResource Brush.DashHeaderDogum}" Padding="12,9"
+                                    CornerRadius="14,14,0,0" BorderBrush="{DynamicResource Brush.DashHeaderDogumBorder}" BorderThickness="0,0,0,1">
+                                <StackPanel Orientation="Horizontal">
+                                    <Border Width="7" Height="7" CornerRadius="4" Background="#0EA5E9"
+                                            VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                    <TextBlock Text="{Binding HdrDogum}" Style="{StaticResource GridHeader}"/>
+                                </StackPanel>
+                            </Border>
+                            <dxg:GridControl ItemsSource="{Binding Birthdays}" AutoGenerateColumns="None" Margin="6,2,6,6">
+                                <dxg:GridControl.Columns>
+                                    <dxg:GridColumn FieldName="Ad" Header="Ad"/>
+                                    <dxg:GridColumn FieldName="Soyad" Header="Soyad"/>
+                                    <dxg:GridColumn FieldName="DogumGunu" Header="Doğum Tarihi"/>
+                                </dxg:GridControl.Columns>
+                                <dxg:GridControl.View>
+                                    <dxg:TableView Style="{StaticResource CeypassTableView}" AutoWidth="True"
+                                                   ShowHorizontalLines="False" ShowVerticalLines="False"
+                                                   AllowColumnFiltering="False" ShowAutoFilterRow="False"
+                                                   RowMinHeight="28"/>
+                                </dxg:GridControl.View>
+                            </dxg:GridControl>
+                        </DockPanel>
+                    </Border>
+
+                    <Border Style="{StaticResource PanelCard}">
+                        <DockPanel>
+                            <Border DockPanel.Dock="Top" Background="{DynamicResource Brush.DashHeaderBaslayan}" Padding="12,9"
+                                    CornerRadius="14,14,0,0" BorderBrush="{DynamicResource Brush.DashHeaderBaslayanBorder}" BorderThickness="0,0,0,1">
+                                <StackPanel Orientation="Horizontal">
+                                    <Border Width="7" Height="7" CornerRadius="4" Background="#1ABC9C"
+                                            VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                    <TextBlock Text="{Binding HdrIseBaslayan}" Style="{StaticResource GridHeader}"/>
+                                </StackPanel>
+                            </Border>
+                            <dxg:GridControl ItemsSource="{Binding NewHires}" AutoGenerateColumns="None" Margin="6,2,6,6">
+                                <dxg:GridControl.Columns>
+                                    <dxg:GridColumn FieldName="BaslamaTarihi" Header="Başlama Tarihi">
+                                        <dxg:GridColumn.EditSettings>
+                                            <dxe:DateEditSettings DisplayFormat="dd.MM.yyyy"
+                                                                  Mask="dd.MM.yyyy"
+                                                                  MaskUseAsDisplayFormat="True"/>
+                                        </dxg:GridColumn.EditSettings>
+                                    </dxg:GridColumn>
+                                    <dxg:GridColumn FieldName="Ad" Header="Ad"/>
+                                    <dxg:GridColumn FieldName="Soyad" Header="Soyad"/>
+                                </dxg:GridControl.Columns>
+                                <dxg:GridControl.View>
+                                    <dxg:TableView Style="{StaticResource CeypassTableView}" AutoWidth="True"
+                                                   ShowHorizontalLines="False" ShowVerticalLines="False"
+                                                   AllowColumnFiltering="False" ShowAutoFilterRow="False"
+                                                   RowMinHeight="28"/>
+                                </dxg:GridControl.View>
+                            </dxg:GridControl>
+                        </DockPanel>
+                    </Border>
+
+                    <Border Style="{StaticResource PanelCard}">
+                        <DockPanel>
+                            <Border DockPanel.Dock="Top" Background="{DynamicResource Brush.DashHeaderAyrilan}" Padding="12,9"
+                                    CornerRadius="14,14,0,0" BorderBrush="{DynamicResource Brush.DashHeaderAyrilanBorder}" BorderThickness="0,0,0,1">
+                                <StackPanel Orientation="Horizontal">
+                                    <Border Width="7" Height="7" CornerRadius="4" Background="#9B59B6"
+                                            VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                    <TextBlock Text="{Binding HdrIstenAyrilan}" Style="{StaticResource GridHeader}"/>
+                                </StackPanel>
+                            </Border>
+                            <dxg:GridControl ItemsSource="{Binding Resignations}" AutoGenerateColumns="None" Margin="6,2,6,6">
+                                <dxg:GridControl.Columns>
+                                    <dxg:GridColumn FieldName="AyrilmaTarihi" Header="Ayrılma Tarihi">
+                                        <dxg:GridColumn.EditSettings>
+                                            <dxe:DateEditSettings DisplayFormat="dd.MM.yyyy"
+                                                                  Mask="dd.MM.yyyy"
+                                                                  MaskUseAsDisplayFormat="True"/>
+                                        </dxg:GridColumn.EditSettings>
+                                    </dxg:GridColumn>
+                                    <dxg:GridColumn FieldName="Ad" Header="Ad"/>
+                                    <dxg:GridColumn FieldName="Soyad" Header="Soyad"/>
+                                </dxg:GridControl.Columns>
+                                <dxg:GridControl.View>
+                                    <dxg:TableView Style="{StaticResource CeypassTableView}" AutoWidth="True"
+                                                   ShowHorizontalLines="False" ShowVerticalLines="False"
+                                                   AllowColumnFiltering="False" ShowAutoFilterRow="False"
+                                                   RowMinHeight="28"/>
+                                </dxg:GridControl.View>
+                            </dxg:GridControl>
+                        </DockPanel>
+                    </Border>
+                </UniformGrid>
+            </Grid>
+        </DockPanel>
+    </Border>
+</UserControl>

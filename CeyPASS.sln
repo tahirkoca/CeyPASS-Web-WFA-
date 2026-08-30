@@ -23,6 +23,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CeyPASS.Models", "CeyPASS.M
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CeyPASS.Api", "CeyPASS.Api\CeyPASS.Api.csproj", "{FBA46497-045C-46F5-B48D-78168DC5B36F}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CeyPASS.WPF", "CeyPASS.WPF\CeyPASS.WPF.csproj", "{1BB8F997-C971-44B2-9E46-0B602352398E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -147,6 +149,18 @@ Global
 		{FBA46497-045C-46F5-B48D-78168DC5B36F}.Release|x64.Build.0 = Release|Any CPU
 		{FBA46497-045C-46F5-B48D-78168DC5B36F}.Release|x86.ActiveCfg = Release|Any CPU
 		{FBA46497-045C-46F5-B48D-78168DC5B36F}.Release|x86.Build.0 = Release|Any CPU
+		{1BB8F997-C971-44B2-9E46-0B602352398E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1BB8F997-C971-44B2-9E46-0B602352398E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1BB8F997-C971-44B2-9E46-0B602352398E}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{1BB8F997-C971-44B2-9E46-0B602352398E}.Debug|x64.Build.0 = Debug|Any CPU
+		{1BB8F997-C971-44B2-9E46-0B602352398E}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{1BB8F997-C971-44B2-9E46-0B602352398E}.Debug|x86.Build.0 = Debug|Any CPU
+		{1BB8F997-C971-44B2-9E46-0B602352398E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1BB8F997-C971-44B2-9E46-0B602352398E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1BB8F997-C971-44B2-9E46-0B602352398E}.Release|x64.ActiveCfg = Release|Any CPU
+		{1BB8F997-C971-44B2-9E46-0B602352398E}.Release|x64.Build.0 = Release|Any CPU
+		{1BB8F997-C971-44B2-9E46-0B602352398E}.Release|x86.ActiveCfg = Release|Any CPU
+		{1BB8F997-C971-44B2-9E46-0B602352398E}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

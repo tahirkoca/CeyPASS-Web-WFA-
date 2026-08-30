@@ -1,0 +1,171 @@
+<UserControl x:Class="CeyPASS.WPF.Views.IzinlerView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:dxg="http://schemas.devexpress.com/winfx/2008/xaml/grid"
+             xmlns:dxe="http://schemas.devexpress.com/winfx/2008/xaml/editors"
+             xmlns:controls="clr-namespace:CeyPASS.WPF.Controls"
+             xmlns:wpf="clr-namespace:CeyPASS.WPF"
+             Background="Transparent">
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+    </UserControl.Resources>
+
+    <Border Background="{DynamicResource Brush.PageBg}">
+        <Grid Margin="14,12">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- Filtreler -->
+            <Border Grid.Row="0" Style="{StaticResource Card}" Padding="14,12" Margin="0,0,0,10">
+                <WrapPanel>
+                    <StackPanel Width="200" Margin="0,0,12,8">
+                        <TextBlock Text="Firma" Style="{StaticResource FieldLabel}"/>
+                        <ComboBox ItemsSource="{Binding Firmalar}"
+                                  SelectedItem="{Binding SelectedFirma}"
+                                  DisplayMemberPath="FirmaAdi"
+                                  Style="{StaticResource FieldCombo}"
+                                  IsEnabled="{Binding FiltersEnabled}"
+                                  DropDownOpened="Firma_DropDownOpened"/>
+                    </StackPanel>
+                    <StackPanel Width="240" Margin="0,0,12,8">
+                        <TextBlock Text="Kişi" Style="{StaticResource FieldLabel}"/>
+                        <ComboBox ItemsSource="{Binding Kisiler}"
+                                  SelectedItem="{Binding SelectedKisi}"
+                                  DisplayMemberPath="AdSoyad"
+                                  Style="{StaticResource FieldCombo}"
+                                  IsEnabled="{Binding FiltersEnabled}"
+                                  wpf:FieldValidation.Error="{Binding Errors[Kisi]}"
+                                  DropDownOpened="Kisi_DropDownOpened"/>
+                    </StackPanel>
+                    <StackPanel Width="200" Margin="0,0,12,8">
+                        <TextBlock Text="İzin tipi" Style="{StaticResource FieldLabel}"/>
+                        <ComboBox ItemsSource="{Binding IzinTipleri}"
+                                  SelectedItem="{Binding SelectedIzinTip}"
+                                  DisplayMemberPath="Ad"
+                                  Style="{StaticResource FieldCombo}"
+                                  IsEnabled="{Binding IzinTipEnabled}"
+                                  wpf:FieldValidation.Error="{Binding Errors[IzinTip]}"
+                                  DropDownOpened="IzinTip_DropDownOpened"/>
+                    </StackPanel>
+                    <StackPanel Width="140" Margin="0,0,12,8">
+                        <TextBlock Text="Başlangıç" Style="{StaticResource FieldLabel}"/>
+                        <DatePicker SelectedDate="{Binding BaslangicTarihi}"
+                                    Style="{StaticResource FieldDatePicker}"
+                                    wpf:FieldValidation.Error="{Binding Errors[BaslangicTarihi]}"/>
+                    </StackPanel>
+                    <StackPanel Width="140" Margin="0,0,12,8">
+                        <TextBlock Text="Bitiş" Style="{StaticResource FieldLabel}"/>
+                        <DatePicker SelectedDate="{Binding BitisTarihi}"
+                                    Style="{StaticResource FieldDatePicker}"
+                                    wpf:FieldValidation.Error="{Binding Errors[BitisTarihi]}"/>
+                    </StackPanel>
+                    <StackPanel Width="90" Margin="0,0,12,8">
+                        <TextBlock Text="Baş. saat" Style="{StaticResource FieldLabel}"/>
+                        <TextBox Text="{Binding BaslangicSaatText, UpdateSourceTrigger=LostFocus}"
+                                 Style="{StaticResource FieldBox}"
+                                 IsEnabled="{Binding SaatEnabled}"
+                                 wpf:FieldValidation.Error="{Binding Errors[BaslangicSaat]}"/>
+                    </StackPanel>
+                    <StackPanel Width="90" Margin="0,0,12,8">
+                        <TextBlock Text="Bit. saat" Style="{StaticResource FieldLabel}"/>
+                        <TextBox Text="{Binding BitisSaatText, UpdateSourceTrigger=LostFocus}"
+                                 Style="{StaticResource FieldBox}"
+                                 IsEnabled="{Binding SaatEnabled}"
+                                 wpf:FieldValidation.Error="{Binding Errors[BitisSaat]}"/>
+                    </StackPanel>
+                    <StackPanel Width="180" Margin="0,0,12,8" VerticalAlignment="Bottom">
+                        <CheckBox Content="Saatlik izin"
+                                  IsChecked="{Binding SaatlikIzinMi}"
+                                  IsEnabled="{Binding SaatlikCheckEnabled}"
+                                  Margin="0,0,0,6"/>
+                        <CheckBox Content="Yarım gün yıllık izin"
+                                  IsChecked="{Binding YarimGunYillikIzin}"/>
+                    </StackPanel>
+                    <StackPanel Width="200" Margin="0,0,12,8">
+                        <TextBlock Text="Yarım gün dilimi" Style="{StaticResource FieldLabel}"/>
+                        <ComboBox ItemsSource="{Binding YarimGunDilimler}"
+                                  SelectedIndex="{Binding YarimGunDilimIndex}"
+                                  Style="{StaticResource FieldCombo}"
+                                  IsEnabled="{Binding YarimGunDilimEnabled}"
+                                  wpf:FieldValidation.Error="{Binding Errors[YarimGunDilim]}"/>
+                    </StackPanel>
+                    <StackPanel Width="280" Margin="0,0,12,8">
+                        <TextBlock Text="Açıklama" Style="{StaticResource FieldLabel}"/>
+                        <TextBox Text="{Binding Aciklama, UpdateSourceTrigger=PropertyChanged}"
+                                 Style="{StaticResource FieldBox}"
+                                 IsReadOnly="{Binding AciklamaReadOnly}"
+                                 IsEnabled="{Binding FormEnabled}"/>
+                    </StackPanel>
+                </WrapPanel>
+            </Border>
+
+            <!-- Toolbar -->
+            <Border Grid.Row="1" Style="{StaticResource Card}" Padding="10,8" Margin="0,0,0,10">
+                <DockPanel>
+                    <controls:CeypassHelpTip DockPanel.Dock="Right" Topic="Izinler"
+                                             VerticalAlignment="Center" Margin="8,0,0,0"/>
+                    <StackPanel DockPanel.Dock="Left" Orientation="Horizontal">
+                        <Button Content="Listele" Style="{StaticResource PrimaryBtn}"
+                                Command="{Binding ListeleCommand}" Margin="0,0,8,0" Padding="14,8"/>
+                        <Button Content="İzin Ekle" Style="{StaticResource AddBtn}"
+                                Command="{Binding AddCommand}" Margin="0,0,8,0" Padding="14,8"/>
+                        <Button Content="Güncelle" Style="{StaticResource EditBtn}"
+                                Command="{Binding EditCommand}" Margin="0,0,8,0" Padding="14,8"/>
+                        <Button Content="Sil" Style="{StaticResource DangerBtn}"
+                                Command="{Binding DeleteCommand}" Margin="0,0,8,0" Padding="14,8"/>
+                    </StackPanel>
+                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" HorizontalAlignment="Right"
+                                Visibility="{Binding ShowSaveCancel, Converter={StaticResource BoolToVis}}">
+                        <Button Content="Kaydet" Style="{StaticResource SuccessBtn}"
+                                Command="{Binding SaveCommand}" Margin="0,0,8,0" Padding="14,8"/>
+                        <Button Content="Vazgeç" Style="{StaticResource SecondaryBtn}"
+                                Command="{Binding CancelCommand}" Padding="14,8"/>
+                    </StackPanel>
+                </DockPanel>
+            </Border>
+
+            <!-- Grid -->
+            <Border Grid.Row="2" Style="{StaticResource Card}" Padding="4">
+                <Grid>
+                    <dxg:GridControl ItemsSource="{Binding Grid}"
+                                     SelectedItem="{Binding SelectedRow}"
+                                     AutoGenerateColumns="None">
+                        <dxg:GridControl.Columns>
+                            <dxg:GridColumn FieldName="SicilNo" Header="Sicil No" Width="90"/>
+                            <dxg:GridColumn FieldName="AdSoyad" Header="Adı Soyadı" Width="160"/>
+                            <dxg:GridColumn FieldName="FirmaAdi" Header="Firma Adı" Width="110"/>
+                            <dxg:GridColumn FieldName="IzinTipi" Header="İzin Tipi" Width="110"/>
+                            <dxg:GridColumn FieldName="Başlangıç Tarihi" Header="Başlangıç Tarihi" Width="130">
+                                <dxg:GridColumn.EditSettings>
+                                    <dxe:TextEditSettings DisplayFormat="dd.MM.yyyy HH:mm"/>
+                                </dxg:GridColumn.EditSettings>
+                            </dxg:GridColumn>
+                            <dxg:GridColumn FieldName="Bitiş Tarihi" Header="Bitiş Tarihi" Width="130">
+                                <dxg:GridColumn.EditSettings>
+                                    <dxe:TextEditSettings DisplayFormat="dd.MM.yyyy HH:mm"/>
+                                </dxg:GridColumn.EditSettings>
+                            </dxg:GridColumn>
+                            <dxg:GridColumn FieldName="Süre(Gün)" Header="Süre(Gün)" Width="90"/>
+                            <dxg:GridColumn FieldName="Süre(Saat)" Header="Süre(Saat)" Width="90"/>
+                            <dxg:GridColumn FieldName="Saatlik İzin Mi" Header="Saatlik İzin Mi" Width="100"/>
+                            <dxg:GridColumn FieldName="Açıklama" Header="Açıklama" Width="*"/>
+                        </dxg:GridControl.Columns>
+                        <dxg:GridControl.View>
+                            <dxg:TableView Style="{StaticResource CeypassListTableView}"/>
+                        </dxg:GridControl.View>
+                    </dxg:GridControl>
+                    <controls:CeypassEmptyState ItemsSource="{Binding Grid}"
+                                                Title="İzin kaydı yok"
+                                                Message="Firma ve personel seçin; İzin Ekle ile yeni kayıt oluşturun."/>
+                </Grid>
+            </Border>
+
+            <TextBlock Grid.Row="3" Text="{Binding Error}" Foreground="#B91C1C"
+                       Margin="4,8,0,0" TextWrapping="Wrap"/>
+        </Grid>
+    </Border>
+</UserControl>

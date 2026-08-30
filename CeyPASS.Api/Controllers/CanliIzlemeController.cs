@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using CeyPASS.Business.Abstractions;
 using IAuthorizationService = CeyPASS.Business.Abstractions.IAuthorizationService;
 using CeyPASS.Entities.Concrete;
+using CeyPASS.Infrastructure.Helpers;
 using CeyPASS.Models;
 using System.Data;
 using System.Text;
@@ -142,11 +143,15 @@ namespace CeyPASS.Api.Controllers
             if (!_sessionContext.IsAdmin() && authKind != "CanliIzleme") return Forbid();
             if (!_sessionContext.AktifFirmaId.HasValue) return BadRequest(ApiResult.Failure("Firma bilgisi bulunamadı."));
 
-            // Web CanliIzlemeController.GetLastPassesInternal ile aynı: YEMEKHANE → yemekhane geçişleri
+            // Canlı İzleme rolüne göre kaynak: ARAÇ / YEMEKHANE / Ana giriş
             var rol = _sessionContext.RolAdi;
-            var passes = IsYemekhaneRole(rol)
-                ? _canliIzlemeService.GetLastPassesYemekhane(_sessionContext.AktifFirmaId.Value, take)
-                : _canliIzlemeService.GetLastPasses(_sessionContext.AktifFirmaId.Value, take);
+            List<LastPassDTO> passes;
+            if (CanliIzlemeRoleHelper.IsArac(rol))
+                passes = _canliIzlemeService.GetLastPassesArac(_sessionContext.AktifFirmaId.Value, take);
+            else if (CanliIzlemeRoleHelper.IsYemekhane(rol))
+                passes = _canliIzlemeService.GetLastPassesYemekhane(_sessionContext.AktifFirmaId.Value, take);
+            else
+                passes = _canliIzlemeService.GetLastPasses(_sessionContext.AktifFirmaId.Value, take);
             var result = passes.Select(x => new
             {
                 personelId = x.PersonelId,
@@ -169,11 +174,14 @@ namespace CeyPASS.Api.Controllers
             if (!_sessionContext.IsAdmin() && authKind != "CanliIzleme") return Forbid();
             if (!_sessionContext.AktifFirmaId.HasValue) return BadRequest(ApiResult.Failure("Firma bilgisi bulunamadı."));
 
-            // Web GetLastMovesInternal: YEMEKHANE ve DANIŞMA değilse yemekhane hareket listesi
             var rol = _sessionContext.RolAdi;
-            var moves = (IsYemekhaneRole(rol) && !IsDanismaRole(rol))
-                ? _kisiHareketService.GetLastMovesByFirmaYemekhane(take, _sessionContext.AktifFirmaId.Value)
-                : _kisiHareketService.GetLastMovesByFirma(take, _sessionContext.AktifFirmaId.Value);
+            List<KisiHareketDTO> moves;
+            if (CanliIzlemeRoleHelper.IsArac(rol) && !CanliIzlemeRoleHelper.IsDanisma(rol))
+                moves = _kisiHareketService.GetLastMovesByFirmaArac(take, _sessionContext.AktifFirmaId.Value);
+            else if (CanliIzlemeRoleHelper.IsYemekhane(rol) && !CanliIzlemeRoleHelper.IsDanisma(rol))
+                moves = _kisiHareketService.GetLastMovesByFirmaYemekhane(take, _sessionContext.AktifFirmaId.Value);
+            else
+                moves = _kisiHareketService.GetLastMovesByFirma(take, _sessionContext.AktifFirmaId.Value);
             var result = moves.Select(x => new
             {
                 tarih = x.Tarih,
@@ -204,16 +212,6 @@ namespace CeyPASS.Api.Controllers
                 departman = dto.Departman,
                 fotoBase64 = (dto.Foto != null && dto.Foto.Length > 0) ? Convert.ToBase64String(dto.Foto) : null
             }));
-        }
-
-        private static bool IsYemekhaneRole(string? rolAdi) =>
-            string.Equals(rolAdi ?? string.Empty, "YEMEKHANE", StringComparison.OrdinalIgnoreCase);
-
-        private static bool IsDanismaRole(string? rolAdi)
-        {
-            var r = rolAdi ?? "";
-            return r.IndexOf("DANIŞMA", StringComparison.OrdinalIgnoreCase) >= 0
-                   || r.IndexOf("DANISMA", StringComparison.OrdinalIgnoreCase) >= 0;
         }
     }
 }

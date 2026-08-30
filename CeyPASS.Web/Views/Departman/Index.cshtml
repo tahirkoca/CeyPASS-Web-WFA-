@@ -105,29 +105,10 @@
             </div>
             <div class="modal-body" id="silOnayModalBody"></div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Vazgeç</button>
                 <button type="button" class="btn btn-danger" id="silOnayModalSilBtn"><i class="bi bi-trash me-1"></i>Sil</button>
             </div>
         </div>
     </div>
 </div>
-<script>
-(function () {
-    var silOnayModalEl = document.getElementById('silOnayModal');
-    var silOnayModalBody = document.getElementById('silOnayModalBody');
-    var silOnayModalSilBtn = document.getElementById('silOnayModalSilBtn');
-    if (silOnayModalEl && silOnayModalBody && silOnayModalSilBtn) {
-        document.querySelectorAll('.btn-sil-onay').forEach(function (btn) {
-            btn.addEventListener('click', function () {
-                var form = this.closest('form');
-                var msg = this.getAttribute('data-msg') || 'Silmek istiyor musunuz?';
-                silOnayModalBody.textContent = msg;
-                var modal = new bootstrap.Modal(silOnayModalEl);
-                silOnayModalSilBtn.onclick = function () { modal.hide(); if (form) form.submit(); };
-                modal.show();
-            });
-        });
-    }
-})();
-</script>
 

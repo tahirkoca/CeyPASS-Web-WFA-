@@ -1,0 +1,90 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
+    <RootNamespace>CeyPASS.WPF</RootNamespace>
+    <AssemblyName>CeyPASS.WPF</AssemblyName>
+    <ApplicationTitle>CeyPASS PDKS</ApplicationTitle>
+    <AssemblyTitle>CeyPASS PDKS</AssemblyTitle>
+    <Product>CeyPASS PDKS</Product>
+    <Version>3.0.0.7</Version>
+    <AssemblyVersion>3.0.0.7</AssemblyVersion>
+    <FileVersion>3.0.0.7</FileVersion>
+    <InformationalVersion>3.0.0.7</InformationalVersion>
+    <!-- Masaüstü PDF/Playwright kullanmaz; sürücülerin publish/zip'e girmesini engeller (Web/Api etkilenmez). -->
+    <PlaywrightPlatform>none</PlaywrightPlatform>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Using Remove="System.Windows.Forms" />
+    <Using Remove="System.Drawing" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\CeyPASS.Business\CeyPASS.Business.csproj" />
+    <ProjectReference Include="..\CeyPASS.DataAccess\CeyPASS.DataAccess.csproj" />
+    <ProjectReference Include="..\CeyPASS.Entities\CeyPASS.Entities.csproj" />
+    <ProjectReference Include="..\CeyPASS.Infrastructure\CeyPASS.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Autoupdater.NET.Official" Version="1.9.2" />
+    <PackageReference Include="DevExpress.Wpf.Core" Version="25.1.5" />
+    <PackageReference Include="DevExpress.Wpf.Grid" Version="25.1.5" />
+    <PackageReference Include="DevExpress.Wpf.Printing" Version="25.1.5" />
+    <PackageReference Include="DevExpress.Wpf.Themes.Win11Light" Version="25.1.5" />
+    <PackageReference Include="DevExpress.Wpf.Themes.Win11Dark" Version="25.1.5" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="9.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="9.0.0" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="9.0.0" />
+    <PackageReference Include="System.Configuration.ConfigurationManager" Version="8.0.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Assets\ceyLogo.png" />
+    <Resource Include="Assets\ceyportTekirdag.png" />
+    <Resource Include="Assets\icons8-security-check-48.png" />
+    <Resource Include="Assets\ceypass50.png" />
+    <Resource Include="Assets\CeyPass200.png" />
+    <Resource Include="Assets\icons8-home-25.png" />
+    <Resource Include="Assets\icons8-department-25.png" />
+    <Resource Include="Assets\icons8-employee-25.png" />
+    <Resource Include="Assets\icons8-title-25.png" />
+    <Resource Include="Assets\icons8-rest-25.png" />
+    <Resource Include="Assets\icons8-run-25.png" />
+    <Resource Include="Assets\icons8-payroll-25.png" />
+    <Resource Include="Assets\icons8-report-25new.png" />
+    <Resource Include="Assets\icons8-status-25.png" />
+    <Resource Include="Assets\icons8-shift-25new.png" />
+    <Resource Include="Assets\icons8-tourniquet-25.png" />
+    <Resource Include="Assets\icons8-balloons-25.png" />
+    <Resource Include="Assets\icons8-windows-update-25.png" />
+    <Resource Include="Assets\Unknown_person.jpg" />
+    <Resource Include="Assets\icons8-enter-house-50.png" />
+    <Resource Include="Assets\icons8-work-50.png" />
+    <Resource Include="Assets\icons8-hurry-50.png" />
+    <Resource Include="Assets\icons8-leave-house-50.png" />
+    <Resource Include="Assets\icons8-attendance-50.png" />
+    <Resource Include="Assets\icons8-rest-50.png" />
+    <Resource Include="Assets\icons8-add-50.png" />
+    <Resource Include="Assets\icons8-minus-50.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="appsettings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="appsettings.Local.json" Condition="Exists('$(MSBuildProjectDirectory)\appsettings.Local.json')">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>Never</CopyToPublishDirectory>
+    </None>
+  </ItemGroup>
+
+</Project>

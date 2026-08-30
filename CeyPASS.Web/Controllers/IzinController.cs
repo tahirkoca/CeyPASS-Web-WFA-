@@ -358,6 +358,35 @@ namespace CeyPASS.Web.Controllers
             return RedirectToAction("Index");
         }
 
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult AktifYap(int id)
+        {
+            if (!_authorizationService.Can(PageName, YetkiTipleri.Delete))
+            {
+                TempData["Error"] = "İzin geri alma yetkiniz yok.";
+                return RedirectToAction("Index");
+            }
+
+            try
+            {
+                bool success = _kisiIzinService.AktifYap(id);
+                if (success)
+                {
+                    TempData["Success"] = "İzin tekrar aktif edildi.";
+                    BumpVer((int)_sessionContext.AktifFirmaId);
+                }
+                else
+                    TempData["Error"] = "İşlem başarısız.";
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = "Hata: " + ex.Message;
+            }
+
+            return RedirectToAction("Index");
+        }
+
         private void BumpVer(int firmaId)
         {
             var key = CacheVerPrefix + firmaId;

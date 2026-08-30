@@ -12,7 +12,7 @@
         </div>
     </div>
 
-    <form method="post" asp-controller="Isyeri" asp-action="Edit">
+    <form method="post" asp-controller="Isyeri" asp-action="Edit" class="needs-validation" novalidate>
         @Html.AntiForgeryToken()
         @Html.HiddenFor(m => m.ReturnUrl)
 

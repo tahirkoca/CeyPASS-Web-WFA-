@@ -19,10 +19,12 @@ namespace CeyPASS.WFA.UserControls
         private bool _wired;
         private const string PageName = "Departmanlar";
         private const string PageNameUI = "Departmanlar";
+        private readonly WinFormsFieldErrors _fieldErrors;
 
         public ucDepartmanTanimlama(ISessionContext session,IDepartmanService dsvc,IAuthorizationService auth)
         {
             InitializeComponent();
+            _fieldErrors = new WinFormsFieldErrors(this);
             _session = session;
             _dsvc = dsvc;
             _auth = auth;
@@ -236,10 +238,10 @@ namespace CeyPASS.WFA.UserControls
                 string ad = (txtDepartmanAdi.Text ?? "").Trim();
                 string ack = (txtDepartmanAciklama.Text ?? "").Trim();
 
-                if (string.IsNullOrWhiteSpace(ad))
+                _fieldErrors.Clear();
+                if (!_fieldErrors.Require(txtDepartmanAdi, ad, "Departman adı boş olamaz."))
                 {
                     LogHelper.Warn(PageName, "Validate", "Departman adı boş");
-                    MessageBox.Show("Departman adı boş olamaz.", "Uyarı",MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     txtDepartmanAdi.Focus();
                     return;
                 }
@@ -307,7 +309,7 @@ namespace CeyPASS.WFA.UserControls
                 return;
             }
 
-            if (MessageBox.Show($"“{it.Ad}” departmanı silinsin mi?","Onay", MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes) 
+            if (!UiConfirm.Confirm(this, $"“{it.Ad}” departmanı silinsin mi?", "Onay", "Sil", "Vazgeç")) 
             {
                 LogHelper.Info(PageName, "Delete", "Kullanıcı silme işlemini iptal etti",detayJson: $"{{\"DepartmanId\":{it.Id}}}");
                 return;

@@ -58,7 +58,7 @@ namespace CeyPASS.WFA.Forms
             this.pnlBackground.Dock = System.Windows.Forms.DockStyle.Fill;
             this.pnlBackground.Location = new System.Drawing.Point(0, 0);
             this.pnlBackground.Name = "pnlBackground";
-            this.pnlBackground.Size = new System.Drawing.Size(518, 312);
+            this.pnlBackground.Size = new System.Drawing.Size(480, 420);
             this.pnlBackground.TabIndex = 0;
             // 
             // pnlCard
@@ -70,10 +70,10 @@ namespace CeyPASS.WFA.Forms
             this.pnlCard.Controls.Add(this.lblSubtitle);
             this.pnlCard.Controls.Add(this.lblTitle);
             this.pnlCard.Controls.Add(this.pnlLogo);
-            this.pnlCard.Location = new System.Drawing.Point(49, 26);
+            this.pnlCard.Location = new System.Drawing.Point(30, 28);
             this.pnlCard.Name = "pnlCard";
-            this.pnlCard.Padding = new System.Windows.Forms.Padding(20);
-            this.pnlCard.Size = new System.Drawing.Size(420, 260);
+            this.pnlCard.Padding = new System.Windows.Forms.Padding(28, 24, 28, 24);
+            this.pnlCard.Size = new System.Drawing.Size(420, 364);
             this.pnlCard.TabIndex = 0;
             // 
             // canliEkranGirisButon
@@ -85,9 +85,10 @@ namespace CeyPASS.WFA.Forms
             this.canliEkranGirisButon.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.canliEkranGirisButon.Font = new System.Drawing.Font("Segoe UI", 11F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(162)));
             this.canliEkranGirisButon.ForeColor = System.Drawing.Color.White;
-            this.canliEkranGirisButon.Location = new System.Drawing.Point(20, 203);
+            this.canliEkranGirisButon.Location = new System.Drawing.Point(28, 296);
+            this.canliEkranGirisButon.Margin = new System.Windows.Forms.Padding(0, 12, 0, 0);
             this.canliEkranGirisButon.Name = "canliEkranGirisButon";
-            this.canliEkranGirisButon.Size = new System.Drawing.Size(380, 37);
+            this.canliEkranGirisButon.Size = new System.Drawing.Size(364, 44);
             this.canliEkranGirisButon.TabIndex = 4;
             this.canliEkranGirisButon.Text = "GİRİŞ";
             this.canliEkranGirisButon.UseVisualStyleBackColor = false;
@@ -95,14 +96,14 @@ namespace CeyPASS.WFA.Forms
             // 
             // pnlForm
             // 
-            this.pnlForm.Controls.Add(this.pnlBolge);
             this.pnlForm.Controls.Add(this.pnlPass);
             this.pnlForm.Controls.Add(this.pnlUser);
+            this.pnlForm.Controls.Add(this.pnlBolge);
             this.pnlForm.Dock = System.Windows.Forms.DockStyle.Top;
-            this.pnlForm.Location = new System.Drawing.Point(20, 105);
+            this.pnlForm.Location = new System.Drawing.Point(28, 114);
             this.pnlForm.Name = "pnlForm";
-            this.pnlForm.Padding = new System.Windows.Forms.Padding(0, 5, 0, 0);
-            this.pnlForm.Size = new System.Drawing.Size(380, 98);
+            this.pnlForm.Padding = new System.Windows.Forms.Padding(0, 8, 0, 16);
+            this.pnlForm.Size = new System.Drawing.Size(364, 164);
             this.pnlForm.TabIndex = 3;
             // 
             // pnlBolge
@@ -110,10 +111,11 @@ namespace CeyPASS.WFA.Forms
             this.pnlBolge.Controls.Add(this.canliIzlemeBolgeBox);
             this.pnlBolge.Controls.Add(this.label3);
             this.pnlBolge.Dock = System.Windows.Forms.DockStyle.Top;
-            this.pnlBolge.Location = new System.Drawing.Point(0, 64);
+            this.pnlBolge.Location = new System.Drawing.Point(0, 8);
             this.pnlBolge.Name = "pnlBolge";
-            this.pnlBolge.Size = new System.Drawing.Size(380, 34);
-            this.pnlBolge.TabIndex = 2;
+            this.pnlBolge.Padding = new System.Windows.Forms.Padding(0, 0, 0, 12);
+            this.pnlBolge.Size = new System.Drawing.Size(364, 48);
+            this.pnlBolge.TabIndex = 0;
             // 
             // canliIzlemeBolgeBox
             // 
@@ -121,10 +123,10 @@ namespace CeyPASS.WFA.Forms
             this.canliIzlemeBolgeBox.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.canliIzlemeBolgeBox.Font = new System.Drawing.Font("Segoe UI", 9.5F);
             this.canliIzlemeBolgeBox.FormattingEnabled = true;
-            this.canliIzlemeBolgeBox.Location = new System.Drawing.Point(80, 0);
+            this.canliIzlemeBolgeBox.Location = new System.Drawing.Point(90, 0);
             this.canliIzlemeBolgeBox.Name = "canliIzlemeBolgeBox";
-            this.canliIzlemeBolgeBox.Size = new System.Drawing.Size(300, 29);
-            this.canliIzlemeBolgeBox.TabIndex = 3;
+            this.canliIzlemeBolgeBox.Size = new System.Drawing.Size(274, 29);
+            this.canliIzlemeBolgeBox.TabIndex = 1;
             // 
             // label3
             // 
@@ -132,7 +134,7 @@ namespace CeyPASS.WFA.Forms
             this.label3.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(162)));
             this.label3.Location = new System.Drawing.Point(0, 0);
             this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(80, 34);
+            this.label3.Size = new System.Drawing.Size(90, 36);
             this.label3.TabIndex = 8;
             this.label3.Text = "Bölge";
             this.label3.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
@@ -142,10 +144,11 @@ namespace CeyPASS.WFA.Forms
             this.pnlPass.Controls.Add(this.canliEkranSifre);
             this.pnlPass.Controls.Add(this.label2);
             this.pnlPass.Dock = System.Windows.Forms.DockStyle.Top;
-            this.pnlPass.Location = new System.Drawing.Point(0, 32);
+            this.pnlPass.Location = new System.Drawing.Point(0, 104);
             this.pnlPass.Name = "pnlPass";
-            this.pnlPass.Size = new System.Drawing.Size(380, 32);
-            this.pnlPass.TabIndex = 1;
+            this.pnlPass.Padding = new System.Windows.Forms.Padding(0, 0, 0, 12);
+            this.pnlPass.Size = new System.Drawing.Size(364, 48);
+            this.pnlPass.TabIndex = 2;
             // 
             // canliEkranSifre
             // 
@@ -153,11 +156,11 @@ namespace CeyPASS.WFA.Forms
             this.canliEkranSifre.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.canliEkranSifre.Dock = System.Windows.Forms.DockStyle.Fill;
             this.canliEkranSifre.Font = new System.Drawing.Font("Segoe UI", 9.5F);
-            this.canliEkranSifre.Location = new System.Drawing.Point(80, 0);
+            this.canliEkranSifre.Location = new System.Drawing.Point(90, 0);
             this.canliEkranSifre.Name = "canliEkranSifre";
             this.canliEkranSifre.PasswordChar = '●';
-            this.canliEkranSifre.Size = new System.Drawing.Size(300, 29);
-            this.canliEkranSifre.TabIndex = 2;
+            this.canliEkranSifre.Size = new System.Drawing.Size(274, 29);
+            this.canliEkranSifre.TabIndex = 3;
             // 
             // label2
             // 
@@ -165,7 +168,7 @@ namespace CeyPASS.WFA.Forms
             this.label2.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(162)));
             this.label2.Location = new System.Drawing.Point(0, 0);
             this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(80, 32);
+            this.label2.Size = new System.Drawing.Size(90, 36);
             this.label2.TabIndex = 3;
             this.label2.Text = "Şifre";
             this.label2.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
@@ -175,10 +178,11 @@ namespace CeyPASS.WFA.Forms
             this.pnlUser.Controls.Add(this.canliEkranKullaniciAdi);
             this.pnlUser.Controls.Add(this.label1);
             this.pnlUser.Dock = System.Windows.Forms.DockStyle.Top;
-            this.pnlUser.Location = new System.Drawing.Point(0, 5);
+            this.pnlUser.Location = new System.Drawing.Point(0, 56);
             this.pnlUser.Name = "pnlUser";
-            this.pnlUser.Size = new System.Drawing.Size(380, 27);
-            this.pnlUser.TabIndex = 0;
+            this.pnlUser.Padding = new System.Windows.Forms.Padding(0, 0, 0, 12);
+            this.pnlUser.Size = new System.Drawing.Size(364, 48);
+            this.pnlUser.TabIndex = 1;
             // 
             // canliEkranKullaniciAdi
             // 
@@ -187,10 +191,10 @@ namespace CeyPASS.WFA.Forms
             this.canliEkranKullaniciAdi.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.canliEkranKullaniciAdi.Font = new System.Drawing.Font("Segoe UI", 9.5F);
             this.canliEkranKullaniciAdi.FormattingEnabled = true;
-            this.canliEkranKullaniciAdi.Location = new System.Drawing.Point(80, 0);
+            this.canliEkranKullaniciAdi.Location = new System.Drawing.Point(90, 0);
             this.canliEkranKullaniciAdi.Name = "canliEkranKullaniciAdi";
-            this.canliEkranKullaniciAdi.Size = new System.Drawing.Size(300, 29);
-            this.canliEkranKullaniciAdi.TabIndex = 1;
+            this.canliEkranKullaniciAdi.Size = new System.Drawing.Size(274, 29);
+            this.canliEkranKullaniciAdi.TabIndex = 2;
             // 
             // label1
             // 
@@ -198,9 +202,9 @@ namespace CeyPASS.WFA.Forms
             this.label1.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(162)));
             this.label1.Location = new System.Drawing.Point(0, 0);
             this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(80, 27);
+            this.label1.Size = new System.Drawing.Size(90, 36);
             this.label1.TabIndex = 1;
-            this.label1.Text = "Kullanıcı Adı";
+            this.label1.Text = "Kullanıcı";
             this.label1.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
             // lblSubtitle
@@ -208,9 +212,10 @@ namespace CeyPASS.WFA.Forms
             this.lblSubtitle.Dock = System.Windows.Forms.DockStyle.Top;
             this.lblSubtitle.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(162)));
             this.lblSubtitle.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(108)))), ((int)(((byte)(117)))), ((int)(((byte)(125)))));
-            this.lblSubtitle.Location = new System.Drawing.Point(20, 75);
+            this.lblSubtitle.Location = new System.Drawing.Point(28, 80);
             this.lblSubtitle.Name = "lblSubtitle";
-            this.lblSubtitle.Size = new System.Drawing.Size(380, 30);
+            this.lblSubtitle.Padding = new System.Windows.Forms.Padding(0, 4, 0, 8);
+            this.lblSubtitle.Size = new System.Drawing.Size(364, 34);
             this.lblSubtitle.TabIndex = 2;
             this.lblSubtitle.Text = "Canlı izleme ekranına bağlanmak için bilgilerinizi girin.";
             this.lblSubtitle.TextAlign = System.Drawing.ContentAlignment.TopCenter;
@@ -220,9 +225,9 @@ namespace CeyPASS.WFA.Forms
             this.lblTitle.Dock = System.Windows.Forms.DockStyle.Top;
             this.lblTitle.Font = new System.Drawing.Font("Segoe UI", 14F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(162)));
             this.lblTitle.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(28)))), ((int)(((byte)(28)))), ((int)(((byte)(28)))));
-            this.lblTitle.Location = new System.Drawing.Point(20, 45);
+            this.lblTitle.Location = new System.Drawing.Point(28, 48);
             this.lblTitle.Name = "lblTitle";
-            this.lblTitle.Size = new System.Drawing.Size(380, 30);
+            this.lblTitle.Size = new System.Drawing.Size(364, 32);
             this.lblTitle.TabIndex = 1;
             this.lblTitle.Text = "Canlı İzleme Girişi";
             this.lblTitle.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
@@ -231,10 +236,10 @@ namespace CeyPASS.WFA.Forms
             // 
             this.pnlLogo.Controls.Add(this.sirketLogo);
             this.pnlLogo.Dock = System.Windows.Forms.DockStyle.Top;
-            this.pnlLogo.Location = new System.Drawing.Point(20, 20);
+            this.pnlLogo.Location = new System.Drawing.Point(28, 24);
             this.pnlLogo.Name = "pnlLogo";
-            this.pnlLogo.Padding = new System.Windows.Forms.Padding(0, 0, 0, 5);
-            this.pnlLogo.Size = new System.Drawing.Size(380, 25);
+            this.pnlLogo.Padding = new System.Windows.Forms.Padding(0, 0, 0, 8);
+            this.pnlLogo.Size = new System.Drawing.Size(364, 24);
             this.pnlLogo.TabIndex = 0;
             // 
             // sirketLogo
@@ -243,24 +248,23 @@ namespace CeyPASS.WFA.Forms
             this.sirketLogo.Image = global::CeyPASS.WFA.Properties.Resources.ceyLogo;
             this.sirketLogo.Location = new System.Drawing.Point(0, 0);
             this.sirketLogo.Name = "sirketLogo";
-            this.sirketLogo.Size = new System.Drawing.Size(100, 20);
+            this.sirketLogo.Size = new System.Drawing.Size(100, 16);
             this.sirketLogo.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
             this.sirketLogo.TabIndex = 5;
             this.sirketLogo.TabStop = false;
             // 
             // canliIzlemeGirisEkrani
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 17F);
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(518, 312);
+            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.None;
+            this.ClientSize = new System.Drawing.Size(480, 420);
             this.Controls.Add(this.pnlBackground);
             this.Font = new System.Drawing.Font("Segoe UI", 8F);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MaximizeBox = false;
-            this.MaximumSize = new System.Drawing.Size(536, 359);
+            this.MaximumSize = new System.Drawing.Size(496, 459);
             this.MinimizeBox = false;
-            this.MinimumSize = new System.Drawing.Size(536, 359);
+            this.MinimumSize = new System.Drawing.Size(496, 459);
             this.Name = "canliIzlemeGirisEkrani";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             this.Text = "Canlı İzleme Ekranı Giriş";

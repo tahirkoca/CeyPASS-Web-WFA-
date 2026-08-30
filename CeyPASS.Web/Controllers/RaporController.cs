@@ -18,6 +18,7 @@ namespace CeyPASS.Web.Controllers
         private readonly IKullaniciFirmaIsyeriYetkiService _yetkiSvc;
         private readonly IKisiEkraniLookUpService _lookupService;
         private readonly ICihazService _cihazService;
+        private readonly IFirmaService _firmaService;
         private readonly ISessionContext _sessionContext;
         private readonly IAuthorizationService _authorizationService;
         private readonly IMemoryCache _cache;
@@ -31,6 +32,7 @@ namespace CeyPASS.Web.Controllers
             IKullaniciFirmaIsyeriYetkiService yetkiSvc,
             IKisiEkraniLookUpService lookupService,
             ICihazService cihazService,
+            IFirmaService firmaService,
             ISessionContext sessionContext,
             IAuthorizationService authorizationService,
             IMemoryCache cache)
@@ -40,6 +42,7 @@ namespace CeyPASS.Web.Controllers
             _yetkiSvc = yetkiSvc;
             _lookupService = lookupService;
             _cihazService = cihazService;
+            _firmaService = firmaService;
             _sessionContext = sessionContext;
             _authorizationService = authorizationService;
             _cache = cache;
@@ -67,20 +70,41 @@ namespace CeyPASS.Web.Controllers
                 : _raporService.GetProcedureParameterNames(procedureAdi);
             var multiKind = RaporParametreHelper.GetMultiSelect(spParams);
 
-            int selectedFirmaId = firmaId ?? (int)_sessionContext.AktifFirmaId;
             bool isAdmin = _sessionContext.IsAdmin();
-            var selectedIsyeriIdList = FirmaIsyeriYetkiHelper.ParseIsyeriIds(isyeriIds);
-            var selectedCihazIdList = FirmaIsyeriYetkiHelper.ParseIsyeriIds(cihazIds);
-
             List<FirmaIsyeriYetkiDTO>? yetkiler = null;
             if (_sessionContext.AktifKullaniciId.HasValue)
                 yetkiler = _yetkiSvc.GetYetkiler((int)_sessionContext.AktifKullaniciId);
+
+            var firmalar = FirmaIsyeriYetkiHelper.FilterFirmalar(_firmaService.GetAll(), yetkiler, isAdmin)
+                .OrderBy(f => f.FirmaAdi)
+                .Select(f => new LookupItem { Id = f.FirmaId, Ad = f.FirmaAdi ?? $"Firma {f.FirmaId}" })
+                .ToList();
+            if (isAdmin)
+                firmalar.Insert(0, new LookupItem { Id = 0, Ad = "TÜMÜ" });
+
+            int selectedFirmaId = firmaId ?? (_sessionContext.AktifFirmaId ?? 0);
+            if (selectedFirmaId == 0 && !isAdmin)
+            {
+                selectedFirmaId = firmalar.FirstOrDefault(f => f.Id > 0)?.Id
+                    ?? (_sessionContext.AktifFirmaId ?? 0);
+            }
+            else if (firmaId == null && selectedFirmaId > 0 && firmalar.All(f => f.Id != selectedFirmaId))
+            {
+                selectedFirmaId = firmalar.FirstOrDefault(f => f.Id > 0)?.Id ?? 0;
+            }
+
+            var selectedIsyeriIdList = FirmaIsyeriYetkiHelper.ParseIsyeriIds(isyeriIds);
+            var selectedCihazIdList = FirmaIsyeriYetkiHelper.ParseIsyeriIds(cihazIds);
 
             DataTable? raporData = null;
             int totalCount = 0;
             if (!string.IsNullOrWhiteSpace(procedureAdi))
             {
-                if (!FirmaIsyeriYetkiHelper.IsFirmaAuthorized(selectedFirmaId, yetkiler, isAdmin))
+                if (selectedFirmaId < 0 || (selectedFirmaId == 0 && !isAdmin))
+                {
+                    TempData["Error"] = "Firma bilgisi bulunamadı.";
+                }
+                else if (selectedFirmaId > 0 && !FirmaIsyeriYetkiHelper.IsFirmaAuthorized(selectedFirmaId, yetkiler, isAdmin))
                 {
                     TempData["Error"] = "Seçili firma için rapor görüntüleme yetkiniz yok.";
                 }
@@ -92,27 +116,30 @@ namespace CeyPASS.Web.Controllers
                         string cihazIdCsv = "";
                         var canRun = true;
 
-                        if (multiKind == RaporParametreHelper.MultiSelectKind.Isyeri)
+                        if (selectedFirmaId > 0)
                         {
-                            var (csv, status) = BuildRaporIsyeriIdListCsv(
-                                selectedFirmaId, selectedIsyeriIdList, yetkiler, isAdmin);
+                            if (multiKind == RaporParametreHelper.MultiSelectKind.Isyeri)
+                            {
+                                var (csv, status) = BuildRaporIsyeriIdListCsv(
+                                    selectedFirmaId, selectedIsyeriIdList, yetkiler, isAdmin);
 
-                            if (status == FirmaIsyeriYetkiHelper.RaporIsyeriListStatus.UnauthorizedSelection)
-                            {
-                                TempData["Error"] = "Seçilen işyerlerden bazıları için yetkiniz yok.";
-                                canRun = false;
+                                if (status == FirmaIsyeriYetkiHelper.RaporIsyeriListStatus.UnauthorizedSelection)
+                                {
+                                    TempData["Error"] = "Seçilen işyerlerden bazıları için yetkiniz yok.";
+                                    canRun = false;
+                                }
+                                else if (status == FirmaIsyeriYetkiHelper.RaporIsyeriListStatus.NoAccess)
+                                {
+                                    TempData["Error"] = "Seçili firma için rapor görüntüleme yetkiniz yok.";
+                                    canRun = false;
+                                }
+                                else
+                                    isyeriIdCsv = csv ?? "";
                             }
-                            else if (status == FirmaIsyeriYetkiHelper.RaporIsyeriListStatus.NoAccess)
+                            else if (multiKind == RaporParametreHelper.MultiSelectKind.Cihaz)
                             {
-                                TempData["Error"] = "Seçili firma için rapor görüntüleme yetkiniz yok.";
-                                canRun = false;
+                                cihazIdCsv = selectedCihazIdList.Count > 0 ? string.Join(",", selectedCihazIdList) : "";
                             }
-                            else
-                                isyeriIdCsv = csv ?? "";
-                        }
-                        else if (multiKind == RaporParametreHelper.MultiSelectKind.Cihaz)
-                        {
-                            cihazIdCsv = selectedCihazIdList.Count > 0 ? string.Join(",", selectedCihazIdList) : "";
                         }
 
                         if (canRun)
@@ -152,6 +179,8 @@ namespace CeyPASS.Web.Controllers
             }
 
             ViewBag.Raporlar = raporlar;
+            ViewBag.Firmalar = firmalar;
+            ViewBag.IsAdmin = isAdmin;
             ViewBag.SelectedProcedureAdi = procedureAdi;
             ViewBag.SelectedRapor = selectedRapor;
             ViewBag.BaslangicTarih = baslangicTarih;
@@ -161,11 +190,11 @@ namespace CeyPASS.Web.Controllers
             ViewBag.SelectedIsyeriIds = selectedIsyeriIdList;
             ViewBag.CihazIdsParam = cihazIds ?? "";
             ViewBag.SelectedCihazIds = selectedCihazIdList;
-            ViewBag.MultiSelectKind = multiKind;
-            ViewBag.Isyerleri = multiKind == RaporParametreHelper.MultiSelectKind.Isyeri
+            ViewBag.MultiSelectKind = selectedFirmaId > 0 ? multiKind : RaporParametreHelper.MultiSelectKind.None;
+            ViewBag.Isyerleri = selectedFirmaId > 0 && multiKind == RaporParametreHelper.MultiSelectKind.Isyeri
                 ? GetYetkiliIsyeriLookups(selectedFirmaId, yetkiler, isAdmin)
                 : new List<LookupItem>();
-            ViewBag.Cihazlar = multiKind == RaporParametreHelper.MultiSelectKind.Cihaz
+            ViewBag.Cihazlar = selectedFirmaId > 0 && multiKind == RaporParametreHelper.MultiSelectKind.Cihaz
                 ? (_cihazService.GetListe(true, selectedFirmaId) ?? new List<CihazListDTO>())
                 : new List<CihazListDTO>();
             ViewBag.CanExport = _authorizationService.Can(PageName, YetkiTipleri.Export);

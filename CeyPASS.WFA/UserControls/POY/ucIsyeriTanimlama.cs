@@ -26,10 +26,12 @@ namespace CeyPASS.WFA.UserControls
         private bool _saving;
         private const string PageName = "Isyerler";
         private const string PageNameUI = "İşyerleri";
+        private readonly WinFormsFieldErrors _fieldErrors;
 
         public ucIsyeriTanimlama(ISessionContext session,IIsyeriService isvc,IAuthorizationService auth, IKullaniciFirmaIsyeriYetkiService yetkiSvc)
         {
             InitializeComponent();
+            _fieldErrors = new WinFormsFieldErrors(this);
             _session = session;
             _isvc = isvc;
             _auth = auth;
@@ -266,10 +268,12 @@ namespace CeyPASS.WFA.UserControls
         {
             msg = string.Empty;
             ad = (txtIsyeriAdi.Text ?? string.Empty).Trim();
+            _fieldErrors.Clear();
 
             if (!int.TryParse(txtFirmaId.Text, out firmaId) || firmaId <= 0)
             {
                 msg = "Geçerli bir Firma Id giriniz.";
+                _fieldErrors.Set(txtFirmaId, msg);
                 txtFirmaId.Focus();
                 isyeriId = 0;
                 return false;
@@ -278,11 +282,12 @@ namespace CeyPASS.WFA.UserControls
             if (!int.TryParse(txtIsyeriId.Text, out isyeriId) || isyeriId <= 0)
             {
                 msg = "Geçerli bir İşyeri Id giriniz.";
+                _fieldErrors.Set(txtIsyeriId, msg);
                 txtIsyeriId.Focus();
                 return false;
             }
 
-            if (string.IsNullOrWhiteSpace(ad))
+            if (!_fieldErrors.Require(txtIsyeriAdi, ad, "İşyeri adı boş bırakılamaz."))
             {
                 msg = "İşyeri adı boş bırakılamaz.";
                 txtIsyeriAdi.Focus();
@@ -341,7 +346,6 @@ namespace CeyPASS.WFA.UserControls
             {
                 LogHelper.Warn(PageName, "Validate", "Girdi doğrulaması başarısız",
                            detayJson: $"{{\"Hata\":\"{error}\"}}");
-                MessageBox.Show(error, "Uyarı", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
@@ -416,9 +420,7 @@ namespace CeyPASS.WFA.UserControls
                 return;
             }
 
-            if (MessageBox.Show(
-                    string.Format("“{0}” kaydını silmek istiyor musunuz?", it.Ad),
-                    "Onay", MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes)
+            if (!UiConfirm.Confirm(this, string.Format("“{0}” kaydını silmek istiyor musunuz?", it.Ad), "Onay", "Sil", "Vazgeç"))
             {
                 LogHelper.Info(PageName, "Delete", "Kullanıcı silmeyi iptal etti",
                        detayJson: $"{{\"FirmaId\":{it.FirmaId},\"IsyeriId\":{it.IsyeriId}}}");

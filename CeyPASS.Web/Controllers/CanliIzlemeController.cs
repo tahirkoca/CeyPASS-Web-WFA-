@@ -1,5 +1,6 @@
 using CeyPASS.Business.Abstractions;
 using CeyPASS.Entities.Concrete;
+using CeyPASS.Infrastructure.Helpers;
 using CeyPASS.Web.Models.CanliIzleme;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -88,9 +89,10 @@ namespace CeyPASS.Web.Controllers
             if (user == null) return RedirectToAction(nameof(Login));
 
             ViewBag.User = user;
-            ViewBag.IsYemekhane = IsYemekhaneRole(user?.Rol);
-            ViewBag.IsDanisma = IsDanismaRole(user?.Rol);
-            ViewBag.CanMisafirKart = !(IsYemekhaneRole(user?.Rol) && !IsDanismaRole(user?.Rol));
+            ViewBag.IsYemekhane = CanliIzlemeRoleHelper.IsYemekhane(user?.Rol);
+            ViewBag.IsArac = CanliIzlemeRoleHelper.IsArac(user?.Rol);
+            ViewBag.IsDanisma = CanliIzlemeRoleHelper.IsDanisma(user?.Rol);
+            ViewBag.CanMisafirKart = !CanliIzlemeRoleHelper.HideKartAtama(user?.Rol);
 
             // İlk render (JS zaten 1 sn'de bir yenileyecek)
             ViewBag.LastPasses = GetLastPassesInternal(user.FirmaId, 4);
@@ -170,7 +172,7 @@ namespace CeyPASS.Web.Controllers
         {
             var user = GetUser();
             if (user == null) return Unauthorized();
-            if (IsYemekhaneRole(user?.Rol) && !IsDanismaRole(user?.Rol)) return Forbid();
+            if (CanliIzlemeRoleHelper.HideKartAtama(user?.Rol)) return Forbid();
 
             var cards = _msvc.GetCardsForNew(user.FirmaId);
             ViewBag.Cards = cards;
@@ -183,7 +185,7 @@ namespace CeyPASS.Web.Controllers
         {
             var user = GetUser();
             if (user == null) return Unauthorized();
-            if (IsYemekhaneRole(user?.Rol) && !IsDanismaRole(user?.Rol)) return Forbid();
+            if (CanliIzlemeRoleHelper.HideKartAtama(user?.Rol)) return Forbid();
 
             try
             {
@@ -201,7 +203,7 @@ namespace CeyPASS.Web.Controllers
         {
             var user = GetUser();
             if (user == null) return Unauthorized();
-            if (IsYemekhaneRole(user?.Rol) && !IsDanismaRole(user?.Rol)) return Forbid();
+            if (CanliIzlemeRoleHelper.HideKartAtama(user?.Rol)) return Forbid();
 
             if (string.IsNullOrWhiteSpace(tc))
             {
@@ -228,7 +230,7 @@ namespace CeyPASS.Web.Controllers
         {
             var user = GetUser();
             if (user == null) return Unauthorized();
-            if (IsYemekhaneRole(user?.Rol) && !IsDanismaRole(user?.Rol)) return Forbid();
+            if (CanliIzlemeRoleHelper.HideKartAtama(user?.Rol)) return Forbid();
 
             var aktifler = _msvc.GetTodayActiveAssignments(DateTime.Now, user.FirmaId);
             ViewBag.Assignments = aktifler;
@@ -241,7 +243,7 @@ namespace CeyPASS.Web.Controllers
         {
             var user = GetUser();
             if (user == null) return Unauthorized();
-            if (IsYemekhaneRole(user?.Rol) && !IsDanismaRole(user?.Rol)) return Forbid();
+            if (CanliIzlemeRoleHelper.HideKartAtama(user?.Rol)) return Forbid();
 
             try
             {
@@ -259,7 +261,7 @@ namespace CeyPASS.Web.Controllers
         {
             var user = GetUser();
             if (user == null) return Unauthorized();
-            if (IsYemekhaneRole(user?.Rol) && !IsDanismaRole(user?.Rol)) return Forbid();
+            if (CanliIzlemeRoleHelper.HideKartAtama(user?.Rol)) return Forbid();
 
             var isArac = string.Equals(tip, "arac", StringComparison.OrdinalIgnoreCase);
             var items = isArac
@@ -285,7 +287,7 @@ namespace CeyPASS.Web.Controllers
         {
             var user = GetUser();
             if (user == null) return Unauthorized();
-            if (IsYemekhaneRole(user?.Rol) && !IsDanismaRole(user?.Rol)) return Forbid();
+            if (CanliIzlemeRoleHelper.HideKartAtama(user?.Rol)) return Forbid();
 
             ViewBag.Cards = _aracSvc.GetCardsForNew(user.FirmaId);
             return PartialView("_AracKartiYeni", new AracKartiYeniModel { GirisSaati = DateTime.Now });
@@ -297,7 +299,7 @@ namespace CeyPASS.Web.Controllers
         {
             var user = GetUser();
             if (user == null) return Unauthorized();
-            if (IsYemekhaneRole(user?.Rol) && !IsDanismaRole(user?.Rol)) return Forbid();
+            if (CanliIzlemeRoleHelper.HideKartAtama(user?.Rol)) return Forbid();
 
             try
             {
@@ -315,7 +317,7 @@ namespace CeyPASS.Web.Controllers
         {
             var user = GetUser();
             if (user == null) return Unauthorized();
-            if (IsYemekhaneRole(user?.Rol) && !IsDanismaRole(user?.Rol)) return Forbid();
+            if (CanliIzlemeRoleHelper.HideKartAtama(user?.Rol)) return Forbid();
 
             if (string.IsNullOrWhiteSpace(tc))
                 return Json(new { ok = false, message = "T.C. kimlik numarası boş olamaz." });
@@ -339,7 +341,7 @@ namespace CeyPASS.Web.Controllers
         {
             var user = GetUser();
             if (user == null) return Unauthorized();
-            if (IsYemekhaneRole(user?.Rol) && !IsDanismaRole(user?.Rol)) return Forbid();
+            if (CanliIzlemeRoleHelper.HideKartAtama(user?.Rol)) return Forbid();
 
             ViewBag.Assignments = _aracSvc.GetTodayActiveAssignments(DateTime.Now, user.FirmaId);
             return PartialView("_AracKartiGuncelle", new AracKartiGuncelleModel { CikisSaati = DateTime.Now });
@@ -351,7 +353,7 @@ namespace CeyPASS.Web.Controllers
         {
             var user = GetUser();
             if (user == null) return Unauthorized();
-            if (IsYemekhaneRole(user?.Rol) && !IsDanismaRole(user?.Rol)) return Forbid();
+            if (CanliIzlemeRoleHelper.HideKartAtama(user?.Rol)) return Forbid();
 
             try
             {
@@ -367,25 +369,23 @@ namespace CeyPASS.Web.Controllers
         private List<LastPassDTO> GetLastPassesInternal(int firmaId, int take)
         {
             var user = GetUser();
-            bool yemekhane = IsYemekhaneRole(user?.Rol);
-            return yemekhane ? _svc.GetLastPassesYemekhane(firmaId, take) : _svc.GetLastPasses(firmaId, take);
+            var rol = user?.Rol;
+            if (CanliIzlemeRoleHelper.IsArac(rol))
+                return _svc.GetLastPassesArac(firmaId, take);
+            if (CanliIzlemeRoleHelper.IsYemekhane(rol))
+                return _svc.GetLastPassesYemekhane(firmaId, take);
+            return _svc.GetLastPasses(firmaId, take);
         }
 
         private List<KisiHareketDTO> GetLastMovesInternal(int firmaId, int top)
         {
             var user = GetUser();
-            bool yemekhane = IsYemekhaneRole(user?.Rol) && !IsDanismaRole(user?.Rol);
-            return yemekhane ? _khsvc.GetLastMovesByFirmaYemekhane(top, firmaId) : _khsvc.GetLastMovesByFirma(top, firmaId);
-        }
-
-        private static bool IsYemekhaneRole(string rolAdi) =>
-            string.Equals(rolAdi ?? string.Empty, "YEMEKHANE", StringComparison.OrdinalIgnoreCase);
-
-        private static bool IsDanismaRole(string rolAdi)
-        {
-            var r = rolAdi ?? "";
-            return r.IndexOf("DANIŞMA", StringComparison.OrdinalIgnoreCase) >= 0
-                   || r.IndexOf("DANISMA", StringComparison.OrdinalIgnoreCase) >= 0;
+            var rol = user?.Rol;
+            if (CanliIzlemeRoleHelper.IsArac(rol) && !CanliIzlemeRoleHelper.IsDanisma(rol))
+                return _khsvc.GetLastMovesByFirmaArac(top, firmaId);
+            if (CanliIzlemeRoleHelper.IsYemekhane(rol) && !CanliIzlemeRoleHelper.IsDanisma(rol))
+                return _khsvc.GetLastMovesByFirmaYemekhane(top, firmaId);
+            return _khsvc.GetLastMovesByFirma(top, firmaId);
         }
 
         private AuthUserDTO GetUser()

@@ -69,6 +69,31 @@ ORDER BY KH.Tarih DESC";
                 .ToList();
         }
 
+        public List<KisiHareketDTO> GetLastMovesByFirmaArac(int top, int firmaId)
+        {
+            var sql = @"
+SELECT TOP (@p0)
+    KH.Tarih       AS Tarih,
+    ISNULL(RTRIM(LTRIM(ISNULL(K.Ad, N'') + N' ' + ISNULL(K.Soyad, N''))), N'') AS AdSoyad,
+    ISNULL(D.DepartmanAdi, N'') AS Departman,
+    ISNULL(P.PozisyonAdi, N'')  AS Unvan,
+    ISNULL(C.CihazAdi, N'')     AS CihazAdi,
+    KH.PersonelId  AS PersonelId
+FROM KisiHareketler KH
+LEFT JOIN Kisiler         K  ON KH.PersonelId = K.PersonelId
+LEFT JOIN Departmanlar    D  ON K.DepartmanId = D.DepartmanId
+LEFT JOIN Cihazlar        C  ON KH.CihazId    = C.CihazId
+LEFT JOIN Pozisyonlar     P  ON K.PozisyonId  = P.PozisyonId
+WHERE C.FirmaId = @p1 AND C.AracGirisCikisMi=1
+ORDER BY KH.Tarih DESC";
+
+            return _context.Database
+                .SqlQueryRaw<KisiHareketDTO>(sql,
+                    new Microsoft.Data.SqlClient.SqlParameter("@p0", top),
+                    new Microsoft.Data.SqlClient.SqlParameter("@p1", firmaId))
+                .ToList();
+        }
+
         public DataTable GetByPersons(List<int> personIds, DateTime bas, DateTime bit, bool onlyAktif, bool onlyPasif, bool onlyYemekhane, int firmaId)
         {
             bool sicilSecili = personIds != null && personIds.Count > 0;
@@ -121,21 +146,7 @@ WHERE ");
                 paramIndex = 3;
             }
 
-            if (onlyAktif && !onlyPasif)
-                sb.AppendLine("  AND k.AktifMi = 1");
-            else if (!onlyAktif && onlyPasif)
-                sb.AppendLine("  AND k.AktifMi = 0");
-            else if (!onlyAktif && !onlyPasif)
-                sb.AppendLine("  AND k.AktifMi = 1");
-
-            if (onlyYemekhane)
-            {
-                sb.AppendLine("  AND k.Tip = N'Yemekhane'");
-            }
-            else
-            {
-                sb.AppendLine("  AND (k.Tip IN (N'G', N'Ç', N'C', N'Giriş', N'Çıkış', N'Giris', N'Cikis'))");
-            }
+            AppendAktifPasifYemekhaneFilters(sb, onlyAktif, onlyPasif, onlyYemekhane);
 
             if (sicilSecili)
             {
@@ -215,21 +226,7 @@ WHERE ");
                 paramIndex = 3;
             }
 
-            if (onlyAktif && !onlyPasif)
-                sbWhere.AppendLine("  AND k.AktifMi = 1");
-            else if (!onlyAktif && onlyPasif)
-                sbWhere.AppendLine("  AND k.AktifMi = 0");
-            else if (!onlyAktif && !onlyPasif)
-                sbWhere.AppendLine("  AND k.AktifMi = 1");
-
-            if (onlyYemekhane)
-            {
-                sbWhere.AppendLine("  AND k.Tip = N'Yemekhane'");
-            }
-            else
-            {
-                sbWhere.AppendLine("  AND (k.Tip IN (N'G', N'Ç', N'C', N'Giriş', N'Çıkış', N'Giris', N'Cikis'))");
-            }
+            AppendAktifPasifYemekhaneFilters(sbWhere, onlyAktif, onlyPasif, onlyYemekhane);
 
             if (sicilSecili)
             {
@@ -332,6 +329,18 @@ SELECT
             return _context.SaveChanges() > 0;
         }
 
+        public bool AktifYap(int id)
+        {
+            var entity = _context.KisiHareketler
+                .SingleOrDefault(k => k.Id == id);
+
+            if (entity == null)
+                return false;
+
+            entity.AktifMi = true;
+            return _context.SaveChanges() > 0;
+        }
+
         public DataTable GetAktifKisilerWithSicil(int firmaId, bool puantajYapilirMi = true)
         {
             var sql = @"
@@ -360,6 +369,33 @@ ORDER BY Ad, Soyad";
             }
 
             return dt;
+        }
+
+        /// <summary>
+        /// Hiç checkbox yoksa AktifMi ve Tip filtresi uygulanmaz (tüm hareketler).
+        /// Seçiliyse: Aktif/Pasif durum + turnike (G/Ç) ve/veya Yemekhane tipine göre daraltır.
+        /// </summary>
+        private static void AppendAktifPasifYemekhaneFilters(StringBuilder sb, bool onlyAktif, bool onlyPasif, bool onlyYemekhane)
+        {
+            bool anyFilter = onlyAktif || onlyPasif || onlyYemekhane;
+            if (!anyFilter)
+                return;
+
+            if (onlyAktif && !onlyPasif)
+                sb.AppendLine("  AND k.AktifMi = 1");
+            else if (!onlyAktif && onlyPasif)
+                sb.AppendLine("  AND k.AktifMi = 0");
+
+            bool includeTurnike = onlyAktif || onlyPasif;
+            bool includeYemek = onlyYemekhane;
+            const string turnikeTips = "k.Tip IN (N'G', N'Ç', N'C', N'Giriş', N'Çıkış', N'Giris', N'Cikis')";
+
+            if (includeTurnike && includeYemek)
+                sb.AppendLine($"  AND ({turnikeTips} OR k.Tip = N'Yemekhane')");
+            else if (includeYemek)
+                sb.AppendLine("  AND k.Tip = N'Yemekhane'");
+            else
+                sb.AppendLine($"  AND ({turnikeTips})");
         }
     }
 }

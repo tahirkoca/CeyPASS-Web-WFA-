@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { Colors } from '../constants/Colors';
 
 interface CustomInputProps {
   label: string;
@@ -11,6 +10,7 @@ interface CustomInputProps {
   secureTextEntry?: boolean;
   icon: keyof typeof MaterialCommunityIcons.glyphMap;
   className?: string;
+  error?: string;
 }
 
 export const CustomInput: React.FC<CustomInputProps> = ({
@@ -20,10 +20,12 @@ export const CustomInput: React.FC<CustomInputProps> = ({
   onChangeText,
   secureTextEntry,
   icon,
-  className
+  className,
+  error,
 }) => {
   const [isFocused, setIsFocused] = useState(false);
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+  const hasError = !!(error && error.trim());
 
   return (
     <View className={`mb-5 ${className}`}>
@@ -32,14 +34,18 @@ export const CustomInput: React.FC<CustomInputProps> = ({
       </Text>
       <View 
         className={`relative flex-row items-center border-[2px] rounded-xl px-4 py-3.5 transition-all ${
-          isFocused ? 'bg-white border-[#dc2626]' : 'bg-[#f8fafc] border-[#e2e8f0]'
+          hasError
+            ? 'bg-white border-[#dc2626]'
+            : isFocused
+              ? 'bg-white border-[#dc2626]'
+              : 'bg-[#f8fafc] border-[#e2e8f0]'
         }`}
-        style={isFocused ? { shadowColor: '#dc2626', shadowOpacity: 0.15, shadowRadius: 8, elevation: 4 } : {}}
+        style={isFocused || hasError ? { shadowColor: '#dc2626', shadowOpacity: 0.15, shadowRadius: 8, elevation: 4 } : {}}
       >
         <MaterialCommunityIcons 
           name={icon} 
           size={22} 
-          color={isFocused ? '#dc2626' : '#64748b'} 
+          color={isFocused || hasError ? '#dc2626' : '#64748b'} 
           style={{ marginRight: 12 }}
         />
         <TextInput
@@ -58,13 +64,14 @@ export const CustomInput: React.FC<CustomInputProps> = ({
             <MaterialCommunityIcons 
               name={isPasswordVisible ? 'eye-off-outline' : 'eye-outline'} 
               size={22} 
-              color={isFocused ? '#dc2626' : '#64748b'} 
+              color={isFocused || hasError ? '#dc2626' : '#64748b'} 
             />
           </TouchableOpacity>
         )}
       </View>
+      {hasError ? (
+        <Text className="mt-1.5 ml-1 text-[12px] font-semibold text-[#dc2626]">{error}</Text>
+      ) : null}
     </View>
-
-
   );
 };

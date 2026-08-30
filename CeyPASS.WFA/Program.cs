@@ -25,6 +25,8 @@ namespace CeyPASS.WFA
 {
     internal static class Program
     {
+        private const string AppDisplayName = "CeyPASS PDKS";
+
         /// <summary>
         /// The main entry point for the application.
         /// </summary>
@@ -44,6 +46,7 @@ namespace CeyPASS.WFA
                 // Arşivin kökünde CeyPASS.WFA.exe ve tüm dll'ler olmalı; aksi halde dosyalar kurulum\net8.0-windows\ altına gider ve uygulama açılmaz.
                 try
                 {
+                    AutoUpdater.AppTitle = AppDisplayName;
                     AutoUpdater.InstallationPath = Application.StartupPath ?? AppContext.BaseDirectory;
                     AutoUpdater.Mandatory = false;
                     AutoUpdater.UpdateMode = Mode.ForcedDownload;

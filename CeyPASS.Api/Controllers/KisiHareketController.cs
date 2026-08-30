@@ -206,6 +206,17 @@ namespace CeyPASS.Api.Controllers
             return success ? Ok(ApiResult.Ok("Hareket pasif yapıldı.")) : BadRequest(ApiResult.Failure("İşlem başarısız."));
         }
 
+        [HttpPost("{id}/aktif")]
+        public ActionResult<ApiResult> Aktif(int id)
+        {
+            if (!_authorizationService.Can(PageName, YetkiTipleri.Delete)) return Forbid();
+
+            bool success = _kisiHareketService.AktifYap(id);
+            return success
+                ? Ok(ApiResult.Ok("Hareket tekrar aktif edildi."))
+                : BadRequest(ApiResult.Failure("İşlem başarısız."));
+        }
+
         private static string NormalizeTip(string? tip)
         {
             var t = (tip ?? string.Empty).Trim();

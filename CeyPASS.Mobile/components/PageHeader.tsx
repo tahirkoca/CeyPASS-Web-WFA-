@@ -9,40 +9,33 @@ export function PageHeader(props: {
   onOpenMenu?: () => void;
   rightIcon?: keyof typeof MaterialCommunityIcons.glyphMap;
   onRightPress?: () => void;
-  rightA11yLabel?: string;
   rightIcon2?: keyof typeof MaterialCommunityIcons.glyphMap;
   onRightPress2?: () => void;
-  rightA11yLabel2?: string;
   rightBadge?: number | null;
   rightBadge2?: number | null;
 }) {
   const insets = useSafeAreaInsets();
-  // iOS notch safe-area can feel like a blank strip; keep it safe but tighter.
   const topPad = Math.max(0, (insets.top ?? 0) - 12);
   return (
     <View style={{ paddingTop: topPad }} className="px-5 pb-2 bg-white border-b border-[#f1f5f9]">
       <View className="relative h-[44px] justify-center">
-        {/* Left */}
         {props.onOpenMenu ? (
           <View className="absolute left-0 top-0 bottom-0 justify-center">
             <TouchableOpacity
               onPress={props.onOpenMenu}
               className="w-[44px] h-[44px] items-center justify-center bg-[#f1f5f9] rounded-xl"
-              accessibilityLabel="Menü"
             >
               <MaterialCommunityIcons name="menu" size={22} color="#1e293b" />
             </TouchableOpacity>
           </View>
         ) : null}
 
-        {/* Right */}
         <View className="absolute right-0 top-0 bottom-0 flex-row items-center justify-end">
           {props.rightIcon && props.onRightPress ? (
             <View className="relative">
               <TouchableOpacity
                 onPress={props.onRightPress}
                 className="w-[44px] h-[44px] items-center justify-center bg-[#f1f5f9] rounded-xl"
-                accessibilityLabel={props.rightA11yLabel || "Aksiyon"}
               >
                 <MaterialCommunityIcons name={props.rightIcon} size={22} color="#1e293b" />
               </TouchableOpacity>
@@ -60,7 +53,6 @@ export function PageHeader(props: {
               <TouchableOpacity
                 onPress={props.onRightPress2}
                 className="w-[44px] h-[44px] items-center justify-center bg-[#f1f5f9] rounded-xl"
-                accessibilityLabel={props.rightA11yLabel2 || "Aksiyon"}
               >
                 <MaterialCommunityIcons name={props.rightIcon2} size={22} color="#1e293b" />
               </TouchableOpacity>
@@ -75,7 +67,6 @@ export function PageHeader(props: {
           ) : null}
         </View>
 
-        {/* Center (never blocks buttons) */}
         <View pointerEvents="none" className="items-center px-[56px]">
           <Text className="text-[#1e293b] font-extrabold text-[16px]" numberOfLines={1} ellipsizeMode="tail">
             {props.title}
@@ -90,4 +81,3 @@ export function PageHeader(props: {
     </View>
   );
 }
-

@@ -11,7 +11,7 @@
         </div>
     </div>
 
-    <form method="post" asp-controller="Departman" asp-action="Edit">
+    <form method="post" asp-controller="Departman" asp-action="Edit" class="needs-validation" novalidate>
         @Html.AntiForgeryToken()
         @Html.HiddenFor(m => m.ReturnUrl)
 

@@ -1,5 +1,6 @@
 using CeyPASS.Business.Abstractions;
 using CeyPASS.Entities.Concrete;
+using CeyPASS.Infrastructure.Helpers;
 using CeyPASS.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -65,23 +66,13 @@ namespace CeyPASS.Api.Controllers
                 forbidOrBad = BadRequest(ApiResult.Failure("Firma bilgisi bulunamadı."));
                 return false;
             }
-            if (IsYemekhaneRole(_sessionContext.RolAdi) && !IsDanismaRole(_sessionContext.RolAdi))
+            if (CanliIzlemeRoleHelper.HideKartAtama(_sessionContext.RolAdi))
             {
                 forbidOrBad = Forbid();
                 return false;
             }
             firmaId = _sessionContext.AktifFirmaId.Value;
             return true;
-        }
-
-        private static bool IsYemekhaneRole(string? rolAdi) =>
-            string.Equals(rolAdi ?? string.Empty, "YEMEKHANE", StringComparison.OrdinalIgnoreCase);
-
-        private static bool IsDanismaRole(string? rolAdi)
-        {
-            var r = rolAdi ?? "";
-            return r.IndexOf("DANIŞMA", StringComparison.OrdinalIgnoreCase) >= 0
-                   || r.IndexOf("DANISMA", StringComparison.OrdinalIgnoreCase) >= 0;
         }
 
         private static object MapAtama(PuantajsizKartAtama a) => new

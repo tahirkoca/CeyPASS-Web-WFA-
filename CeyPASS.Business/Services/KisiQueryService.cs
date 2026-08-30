@@ -16,7 +16,16 @@ namespace CeyPASS.Business.Services
 
         public List<KisiListItem> GetAktifKisilerByFirma(int firmId, string? search = null, bool? puantajYapilirMi = true, int? isyeriId = null, IReadOnlyList<int>? isyeriIdIn = null, bool sadeceIstenCikanlar = false)
         {
-            return _repo.GetAktifByFirma(firmId, search, puantajYapilirMi, isyeriId, isyeriIdIn, ziyaretciMi: null, sadeceIstenCikanlar);
+            // aracKartiMi named: positional sadeceIstenCikanlar would otherwise bind to aracKartiMi
+            return _repo.GetAktifByFirma(
+                firmId,
+                search,
+                puantajYapilirMi,
+                isyeriId,
+                isyeriIdIn,
+                ziyaretciMi: null,
+                aracKartiMi: null,
+                sadeceIstenCikanlar: sadeceIstenCikanlar);
         }
 
         public List<KisiListItem> GetAktifKisilerByFirmaPaged(int firmId, string? search, bool? puantajYapilirMi, int? isyeriId, IReadOnlyList<int>? isyeriIdIn, bool sadeceIstenCikanlar, int page, int pageSize, out int totalCount)

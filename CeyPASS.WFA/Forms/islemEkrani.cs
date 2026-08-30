@@ -9,6 +9,7 @@ using CeyPASS.WFA.UserControls.Raporlar;
 using CeyPASS.WFA.UserControls.VMY;
 using Microsoft.Extensions.DependencyInjection;
 using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
 using System.Runtime.InteropServices;
@@ -29,6 +30,8 @@ namespace CeyPASS.WFA.Forms
         private readonly IServiceProvider _sp;
         private readonly IAuthorizationService _auth;
         private bool _sidebarCollapsed;
+        private string _currentPageKey = "Dashboard";
+        private ToolStripStatusLabel? _lblStatusUndo;
 
         public islemEkrani(ISessionContext session, IServiceProvider sp, IAuthorizationService auth)
         {
@@ -38,7 +41,7 @@ namespace CeyPASS.WFA.Forms
             _auth = auth;
             lblSayfaBasligi.Text = PageNameUI;
         }
-        private TUserControl AutoOpenTUserControl<TUserControl>(Panel host) where TUserControl : UserControl
+        private TUserControl AutoOpenTUserControl<TUserControl>(Panel host, string? pageKey = null) where TUserControl : UserControl
         {
             DetachHostControls(host);
             var uc = _sp.GetRequiredService<TUserControl>();
@@ -61,9 +64,10 @@ namespace CeyPASS.WFA.Forms
                 lblSayfaBasligi.Text = "İşlem Ekranı";
             }
 
+            AfterPageOpened(uc, pageKey);
             return uc;
         }
-        private void OpenTUserControl<TUserControl>(Panel host) where TUserControl : UserControl
+        private void OpenTUserControl<TUserControl>(Panel host, string? pageKey = null) where TUserControl : UserControl
         {
             // DI scoped örnekleri Clear() ile Dispose edilmemeli; aksi halde sayfaya dönüşte bozuk kontrol kalır.
             DetachHostControls(host);
@@ -93,6 +97,15 @@ namespace CeyPASS.WFA.Forms
             {
                 lblSayfaBasligi.Text = "İşlem Ekranı";
             }
+
+            AfterPageOpened(uc, pageKey);
+        }
+
+        private void AfterPageOpened(Control uc, string? pageKey)
+        {
+            if (!string.IsNullOrWhiteSpace(pageKey))
+                _currentPageKey = pageKey!;
+            UiStatus.Set($"{lblSayfaBasligi.Text} açık");
         }
 
         private static void DetachHostControls(Panel host)
@@ -105,45 +118,46 @@ namespace CeyPASS.WFA.Forms
         }
         private void Dashboard_ReportRequested(object sender, ReportRequest req)
         {
-            var raporlar = AutoOpenTUserControl<ucRaporlar>(islemEkraniPanel);
+            var raporlar = AutoOpenTUserControl<ucRaporlar>(islemEkraniPanel, "Raporlar");
             raporlar.OpenFromDashboard(req);
         }
         private void btnPersonelTanimlama_Click(object sender, EventArgs e)
         {
-            OpenTUserControl<ucPersonelTanimlama>(islemEkraniPanel);
+            OpenTUserControl<ucPersonelTanimlama>(islemEkraniPanel, "Personeller");
         }
         private void btnDepartmanTanimlama_Click(object sender, EventArgs e)
         {
-            OpenTUserControl<ucDepartmanTanimlama>(islemEkraniPanel);
+            OpenTUserControl<ucDepartmanTanimlama>(islemEkraniPanel, "Departmanlar");
         }
         private void btnPozisyonTanimlama_Click(object sender, EventArgs e)
         {
-            OpenTUserControl<ucPozisyonTanimla>(islemEkraniPanel);
+            OpenTUserControl<ucPozisyonTanimla>(islemEkraniPanel, "Pozisyonlar");
         }
         private void btnFirmaTanimlama_Click(object sender, EventArgs e)
         {
-            OpenTUserControl<ucFirmaTanimlama>(islemEkraniPanel);
+            OpenTUserControl<ucFirmaTanimlama>(islemEkraniPanel, "Firmalar");
         }
         private void btnIsyeriTanimlama_Click(object sender, EventArgs e)
         {
-            OpenTUserControl<ucIsyeriTanimlama>(islemEkraniPanel);
+            OpenTUserControl<ucIsyeriTanimlama>(islemEkraniPanel, "Isyerler");
         }
         private void btnRaporlar_Click(object sender, EventArgs e)
         {
-            var raporlar = AutoOpenTUserControl<ucRaporlar>(islemEkraniPanel);
+            var raporlar = AutoOpenTUserControl<ucRaporlar>(islemEkraniPanel, "Raporlar");
             raporlar.RefreshForActiveFirma();
         }
         private void islemEkrani_FormClosing(object sender, FormClosingEventArgs e)
         {
+            UiStatus.Unregister();
             // Kapatınca girisEkrani FormClosed ile tekrar gösterilir; Application.Exit() çağırma.
         }
         private void btnIzinler_Click(object sender, EventArgs e)
         {
-            OpenTUserControl<ucIzinler>(islemEkraniPanel);
+            OpenTUserControl<ucIzinler>(islemEkraniPanel, "Izinler");
         }
         private void btnAnasayfa_Click(object sender, EventArgs e)
         {
-            var dash = AutoOpenTUserControl<ucDashboard>(islemEkraniPanel);
+            var dash = AutoOpenTUserControl<ucDashboard>(islemEkraniPanel, "Dashboard");
             dash.ReportRequested -= Dashboard_ReportRequested;
             dash.ReportRequested += Dashboard_ReportRequested;
         }
@@ -158,7 +172,24 @@ namespace CeyPASS.WFA.Forms
             HideScrollBars();
             this.Resize += (s, e) => HideScrollBars();
             pnlSidebarToggleEdge.Layout += (s, e) => CenterToggleButtonsInEdge();
-            var dash = AutoOpenTUserControl<ucDashboard>(islemEkraniPanel);
+
+            UiStatus.Register(lblStatusMessage, lblStatusCount);
+            if (_lblStatusUndo == null)
+            {
+                _lblStatusUndo = new ToolStripStatusLabel
+                {
+                    Name = "lblStatusUndo",
+                    Text = "Geri al",
+                    IsLink = true,
+                    Visible = false,
+                    Margin = new Padding(8, 0, 0, 0)
+                };
+                statusStrip.Items.Add(_lblStatusUndo);
+            }
+            UiUndo.Register(_lblStatusUndo);
+            LayoutHeaderTools();
+
+            var dash = AutoOpenTUserControl<ucDashboard>(islemEkraniPanel, "Dashboard");
             dash.ReportRequested -= Dashboard_ReportRequested;
             dash.ReportRequested += Dashboard_ReportRequested;
         }
@@ -374,34 +405,37 @@ namespace CeyPASS.WFA.Forms
             lblSidebarUserRole.ForeColor = System.Drawing.Color.Gray;
             lblSidebarUserAvatar.ForeColor = System.Drawing.Color.White;
             btnSidebarLogout.ForeColor = System.Drawing.Color.LightGray;
+            statusStrip.BackColor = AppTheme.CardBackground;
+            lblStatusMessage.ForeColor = AppTheme.TextPrimary;
+            lblStatusCount.ForeColor = Color.Gray;
         }
         private void calismaStatuleriMenu_Click(object sender, EventArgs e)
         {
-            OpenTUserControl<ucCalismaStatuleri>(islemEkraniPanel);
+            OpenTUserControl<ucCalismaStatuleri>(islemEkraniPanel, "CalismaStatuleri");
         }
         private void calismaSekilleriMenu_Click(object sender, EventArgs e)
         {
-            OpenTUserControl<ucCalismaSekilleri>(islemEkraniPanel);
+            OpenTUserControl<ucCalismaSekilleri>(islemEkraniPanel, "Vardiyalar");
         }
         private void btnKisiHareketlerEkrani_Click(object sender, EventArgs e)
         {
-            OpenTUserControl<ucKisiHareketler>(islemEkraniPanel);
+            OpenTUserControl<ucKisiHareketler>(islemEkraniPanel, "KisiHareketler");
         }
         private void btnAylikPuantajEkrani_Click(object sender, EventArgs e)
         {
-            OpenTUserControl<ucAylikPuantajEkrani>(islemEkraniPanel);
+            OpenTUserControl<ucAylikPuantajEkrani>(islemEkraniPanel, "AylikPuantaj");
         }
         private void btnCihazlarEkrani_Click(object sender, EventArgs e)
         {
-            OpenTUserControl<ucCihazlar>(islemEkraniPanel);
+            OpenTUserControl<ucCihazlar>(islemEkraniPanel, "Cihazlar");
         }
         private void btnResmiTatiller_Click(object sender, EventArgs e)
         {
-            OpenTUserControl<ucResmiTatiller>(islemEkraniPanel);
+            OpenTUserControl<ucResmiTatiller>(islemEkraniPanel, "ResmiTatiller");
         }
         private void btnAdminPanel_Click(object sender, EventArgs e)
         {
-            OpenTUserControl<CeyPASS.WFA.UserControls.Admin.ucAdminPanel>(islemEkraniPanel);
+            OpenTUserControl<CeyPASS.WFA.UserControls.Admin.ucAdminPanel>(islemEkraniPanel, "Admin");
         }
 
         private void btnSidebarLogout_Click(object sender, EventArgs e)
@@ -411,6 +445,49 @@ namespace CeyPASS.WFA.Forms
             if (onay != DialogResult.Yes) return;
             _session.Clear();
             this.Close();
+        }
+
+        // ─── Kısayollar ─────────────────────────────────────────────────────
+
+        private ToolTip? toolTipHeader;
+
+        private void RefreshHeaderTooltips()
+        {
+            toolTipHeader ??= new ToolTip();
+            toolTipHeader.SetToolTip(btnShortcuts, "Kısayollar (F1 / Ctrl+/)");
+        }
+
+        private void btnShortcuts_Click(object sender, EventArgs e)
+            => UiShortcutsForm.ShowFor(this, _currentPageKey);
+
+        private void islemEkrani_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.F1)
+            {
+                UiShortcutsForm.ShowFor(this, _currentPageKey);
+                e.Handled = true;
+                e.SuppressKeyPress = true;
+                return;
+            }
+
+            if (e.Control && (e.KeyCode == Keys.Oem2 || e.KeyCode == Keys.Divide || e.KeyCode == Keys.OemQuestion))
+            {
+                UiShortcutsForm.ShowFor(this, _currentPageKey);
+                e.Handled = true;
+                e.SuppressKeyPress = true;
+            }
+        }
+
+        private void pnlUstBaslik_Resize(object sender, EventArgs e)
+            => LayoutHeaderTools();
+
+        private void LayoutHeaderTools()
+        {
+            const int rightPad = 16;
+            int y = 14;
+            int x = pnlUstBaslik.ClientSize.Width - rightPad - btnShortcuts.Width;
+            btnShortcuts.Location = new Point(x, y);
+            RefreshHeaderTooltips();
         }
     }
 }

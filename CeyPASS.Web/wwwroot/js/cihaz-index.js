@@ -1,25 +1,7 @@
 (function () {
     'use strict';
 
-    /* ---- Silme onay modali ---- */
-    var silOnayModalEl = document.getElementById('silOnayModal');
-    var silOnayModalBody = document.getElementById('silOnayModalBody');
-    var silOnayModalSilBtn = document.getElementById('silOnayModalSilBtn');
-
-    if (silOnayModalEl && silOnayModalBody && silOnayModalSilBtn) {
-        document.querySelectorAll('.btn-sil-onay').forEach(function (btn) {
-            btn.addEventListener('click', function () {
-                var form = this.closest('form');
-                var msg = this.getAttribute('data-msg') || 'Emin misiniz?';
-                var btnText = this.getAttribute('data-btn-text') || 'Onayla';
-                silOnayModalBody.textContent = msg;
-                silOnayModalSilBtn.innerHTML = '<i class="bi bi-trash me-1"></i>' + btnText;
-                var modal = new bootstrap.Modal(silOnayModalEl);
-                silOnayModalSilBtn.onclick = function () { modal.hide(); if (form) form.submit(); };
-                modal.show();
-            });
-        });
-    }
+    /* Confirm (.btn-sil-onay) is handled globally by site.js / CeyPASS.confirm */
 
     /* ---- QR Modal ---- */
     var qrModalEl = document.getElementById('qrModal');

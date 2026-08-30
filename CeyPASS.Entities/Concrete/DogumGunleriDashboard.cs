@@ -9,6 +9,8 @@ namespace CeyPASS.Entities.Concrete
         public string Soyad { get; set; } = "";
         public int FirmaId { get; set; }
         public int IsyeriId { get; set; }
+        public string FirmaAdi { get; set; } = "";
+        public string IsyeriAdi { get; set; } = "";
         public DateTime BuYilDogumGunu { get; set; }
         public int Gun { get; set; }
         public int Ay { get; set; }

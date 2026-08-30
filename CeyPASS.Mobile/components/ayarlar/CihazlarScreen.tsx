@@ -81,9 +81,17 @@ export function CihazlarScreen(props: { user: any; abilities: any; onOpenMenu: (
   const [popupVisible, setPopupVisible] = useState(false);
   const [popupType, setPopupType] = useState<"success" | "error">("success");
   const [popupMessage, setPopupMessage] = useState("");
-  const showPopup = (type: "success" | "error", message: string) => {
+  const [popupUndo, setPopupUndo] = useState<(() => Promise<void>) | null>(null);
+  const [undoLoading, setUndoLoading] = useState(false);
+  const closePopup = () => {
+    setPopupVisible(false);
+    setPopupUndo(null);
+    setUndoLoading(false);
+  };
+  const showPopup = (type: "success" | "error", message: string, undo?: () => Promise<void>) => {
     setPopupType(type);
     setPopupMessage(message);
+    setPopupUndo(undo ?? null);
     setPopupVisible(true);
   };
   const quickMenu = useHeaderQuickMenu();
@@ -249,8 +257,27 @@ export function CihazlarScreen(props: { user: any; abilities: any; onOpenMenu: (
     try {
       const resp = confirmMode === "pasif" ? await ayarlarService.pasifCihaz(confirmId) : await ayarlarService.aktifCihaz(confirmId);
       if (!resp?.success) throw new Error(resp?.message || "İşlem başarısız.");
-      showPopup("success", resp?.message || (confirmMode === "pasif" ? "Cihaz pasif yapıldı." : "Cihaz aktif yapıldı."));
+      const msg = resp?.message || (confirmMode === "pasif" ? "Cihaz pasif yapıldı." : "Cihaz aktif yapıldı.");
       setConfirmVisible(false);
+      if (confirmMode === "pasif" && confirmId) {
+        const undoId = confirmId;
+        showPopup("success", msg, async () => {
+          setUndoLoading(true);
+          try {
+            const ur = await ayarlarService.aktifCihaz(undoId);
+            if (!ur?.success) throw new Error(ur?.message || "Geri alma başarısız.");
+            closePopup();
+            showPopup("success", "Geri alındı.");
+            await refresh();
+          } catch (err: any) {
+            showPopup("error", err?.message || "Geri alma başarısız.");
+          } finally {
+            setUndoLoading(false);
+          }
+        });
+      } else {
+        showPopup("success", msg);
+      }
       await refresh();
     } catch (e: any) {
       showPopup("error", e?.message || "Hata oluştu.");
@@ -269,7 +296,6 @@ export function CihazlarScreen(props: { user: any; abilities: any; onOpenMenu: (
         rightIcon2="bell-outline"
         onRightPress2={() => quickMenu.open("notif")}
         rightBadge2={notif.unreadCount}
-        rightA11yLabel2="Bildirimler ve hesap"
       />
       {quickMenu.modal}
     </>
@@ -278,7 +304,7 @@ export function CihazlarScreen(props: { user: any; abilities: any; onOpenMenu: (
   if (loading) {
     return (
       <View className="flex-1 bg-[#f8fafc]">
-        <StatusPopup visible={popupVisible} type={popupType} message={popupMessage} onClose={() => setPopupVisible(false)} useModal={false} />
+        <StatusPopup visible={popupVisible} type={popupType} message={popupMessage} onClose={closePopup} useModal={false} autoCloseMs={popupUndo ? 7000 : undefined} onUndo={popupUndo ? () => popupUndo() : undefined} undoLoading={undoLoading} />
         {topBar}
         <View className="flex-1 items-center justify-center">
           <ActivityIndicator />
@@ -304,7 +330,7 @@ export function CihazlarScreen(props: { user: any; abilities: any; onOpenMenu: (
 
   return (
     <View className="flex-1 bg-[#f8fafc]">
-      <StatusPopup visible={popupVisible} type={popupType} message={popupMessage} onClose={() => setPopupVisible(false)} useModal={false} />
+      <StatusPopup visible={popupVisible} type={popupType} message={popupMessage} onClose={closePopup} useModal={false} autoCloseMs={popupUndo ? 7000 : undefined} onUndo={popupUndo ? () => popupUndo() : undefined} undoLoading={undoLoading} />
       {topBar}
 
       <ScrollView className="flex-1 px-4" contentContainerStyle={{ paddingBottom: 24 }}>
@@ -414,6 +440,30 @@ export function CihazlarScreen(props: { user: any; abilities: any; onOpenMenu: (
                   <TouchableOpacity onPress={() => setTipModal(true)} className="mt-2 px-4 py-3 rounded-xl bg-white border border-[#e2e8f0]">
                     <Text className="text-[#0f172a] font-extrabold">{tipLabel}</Text>
                   </TouchableOpacity>
+
+                  <TouchableOpacity
+                    onPress={() => setModel((m: any) => ({ ...m, AnaGirisCikisMi: !Boolean((m as any)?.AnaGirisCikisMi ?? (m as any)?.anaGirisCikisMi) }))}
+                    className="mt-4 px-4 py-3 rounded-xl bg-white border border-[#e2e8f0] flex-row items-center gap-2"
+                  >
+                    <MaterialCommunityIcons
+                      name={Boolean((model as any)?.AnaGirisCikisMi ?? (model as any)?.anaGirisCikisMi) ? "checkbox-marked" : "checkbox-blank-outline"}
+                      size={22}
+                      color="#0f172a"
+                    />
+                    <Text className="text-[#0f172a] font-semibold flex-1">Ana giriş/çıkış (Danışma)</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    onPress={() => setModel((m: any) => ({ ...m, AracGirisCikisMi: !Boolean((m as any)?.AracGirisCikisMi ?? (m as any)?.aracGirisCikisMi) }))}
+                    className="mt-2 px-4 py-3 rounded-xl bg-white border border-[#e2e8f0] flex-row items-center gap-2"
+                  >
+                    <MaterialCommunityIcons
+                      name={Boolean((model as any)?.AracGirisCikisMi ?? (model as any)?.aracGirisCikisMi) ? "checkbox-marked" : "checkbox-blank-outline"}
+                      size={22}
+                      color="#0f172a"
+                    />
+                    <Text className="text-[#0f172a] font-semibold flex-1">Araç giriş/çıkış (ARAÇ)</Text>
+                  </TouchableOpacity>
                 </ScrollView>
                 <View className="p-4 border-t border-[#f1f5f9] flex-row gap-2">
                   <TouchableOpacity onPress={() => setFormVisible(false)} disabled={saving} className={`flex-1 py-3 rounded-xl items-center ${saving ? "bg-[#e2e8f0]" : "bg-[#f1f5f9]"}`}>
@@ -455,7 +505,7 @@ export function CihazlarScreen(props: { user: any; abilities: any; onOpenMenu: (
                 </View>
                 <View className="p-4 border-t border-[#f1f5f9] flex-row gap-2">
                   <TouchableOpacity onPress={() => setConfirmVisible(false)} disabled={confirmSaving} className={`flex-1 py-3 rounded-xl items-center ${confirmSaving ? "bg-[#e2e8f0]" : "bg-[#f1f5f9]"}`}>
-                    <Text className="text-[#334155] font-extrabold">İptal</Text>
+                    <Text className="text-[#334155] font-extrabold">Vazgeç</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     onPress={doConfirm}
@@ -464,7 +514,7 @@ export function CihazlarScreen(props: { user: any; abilities: any; onOpenMenu: (
                       confirmSaving ? (confirmMode === "pasif" ? "bg-[#fca5a5]" : "bg-[#bbf7d0]") : confirmMode === "pasif" ? "bg-[#dc2626]" : "bg-[#16a34a]"
                     }`}
                   >
-                    <Text className="text-white font-extrabold">{confirmSaving ? "İşleniyor..." : confirmMode === "pasif" ? "Pasif Yap" : "Aktif Yap"}</Text>
+                    <Text className="text-white font-extrabold">{confirmSaving ? "İşleniyor..." : confirmMode === "pasif" ? "Pasife al" : "Aktif et"}</Text>
                   </TouchableOpacity>
                 </View>
               </View>

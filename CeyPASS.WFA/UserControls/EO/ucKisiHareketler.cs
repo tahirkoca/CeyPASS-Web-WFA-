@@ -25,6 +25,9 @@ namespace CeyPASS.WFA.UserControls.EO
         AuthorizationHelper authHelp;
         private const string PageName = "KisiHareketler";
         private const string PageNameUI = "Kişi Hareketleri";
+        private readonly WinFormsFieldErrors _fieldErrors;
+        private static readonly Color SilButtonColor = Color.FromArgb(220, 53, 69);
+        private static readonly Color AktifEtButtonColor = Color.FromArgb(40, 167, 69);
         private int SelectedFirmaId
         {
             get
@@ -39,6 +42,7 @@ namespace CeyPASS.WFA.UserControls.EO
         public ucKisiHareketler(ISessionContext session, IKisiHareketService khsvc, IKisiQueryService kqsvc, IAuthorizationService auth, IFirmaService firmaSvc, IKullaniciFirmaIsyeriYetkiService yetkiSvc, IKisiEkraniLookUpService iklsvc)
         {
             InitializeComponent();
+            _fieldErrors = new WinFormsFieldErrors(this);
             _session = session;
             _khsvc = khsvc;
             _kqsvc = kqsvc;
@@ -68,10 +72,16 @@ namespace CeyPASS.WFA.UserControls.EO
             btnHareketleriGetir.Click += (s, e) => LoadGrid();
             btnHareketEkle.Click += (s, e) => AddForCheckedPersons();
             btnHareketGuncelle.Click += (s, e) => UpdateSelected();
-            btnHareketSil.Click += (s, e) => SoftDeleteSelected();
+            btnHareketSil.Click += (s, e) => SoftDeleteOrActivateSelected();
             chkKisiler.KeyDown += chkKisiler_KeyDown;
-            cmbKartTipi.SelectedIndexChanged += (s, e) => LoadPersons();
+            cmbKartTipi.SelectedIndexChanged += KartTipiPersistHandler;
             cmbIsyeriFilter.SelectedIndexChanged += cmbIsyeriFilter_SelectedIndexChanged;
+            chbAktifHareketler.CheckedChanged += (s, e) => ApplySilButtonUi();
+            chbPasifHareketler.CheckedChanged += (s, e) => ApplySilButtonUi();
+            dgKisiHareketler.SelectionChanged += (s, e) => ApplySilButtonUi();
+            dgKisiHareketler.CurrentCellChanged += (s, e) => ApplySilButtonUi();
+
+            ApplySilButtonUi();
 
             var hareketBilgi = new ToolTip();
             hareketBilgi.SetToolTip(btnHareketleriGetir, "Seçilen personelin tüm firmalardaki hareketleri listelenir (Firma kolonu: kartın okunduğu firma).");
@@ -99,8 +109,10 @@ namespace CeyPASS.WFA.UserControls.EO
                 if (_session.AktifKullaniciId.HasValue)
                     _kullaniciYetkileri = _yetkiSvc.GetYetkiler((int)_session.AktifKullaniciId) ?? new List<FirmaIsyeriYetkiDTO>();
                 LoadFirmaComboBox();
+                RestoreNonCascadePrefs();
                 IsyeriFilteriniYukle(SelectedFirmaId);
                 LoadPersons();
+                PersistFilters();
 
                 AppTheme.ApplyToControl(this);
                 LogHelper.Info("KisiHareketler", "Open", "Ekran açıldı", detayJson: $"{{\"FirmaId\":{_session.AktifFirmaId}}}");
@@ -112,6 +124,12 @@ namespace CeyPASS.WFA.UserControls.EO
                 dtpHareketBitisTarihi.Format = DateTimePickerFormat.Custom;
                 dtpHareketBitisTarihi.CustomFormat = "dd.MM.yyyy HH:mm";
                 dtpHareketBitisTarihi.ShowUpDown = true;
+
+                dtpHareketBaslangicTarihi.ValueChanged += (s, e2) => PersistFilters();
+                dtpHareketBitisTarihi.ValueChanged += (s, e2) => PersistFilters();
+                chbAktifHareketler.CheckedChanged += (s, e2) => PersistFilters();
+                chbPasifHareketler.CheckedChanged += (s, e2) => PersistFilters();
+                chbYemekhaneHareketleri.CheckedChanged += (s, e2) => PersistFilters();
             }
             catch (Exception ex)
             {
@@ -119,6 +137,65 @@ namespace CeyPASS.WFA.UserControls.EO
                 throw;
             }
         }
+
+        private void PersistFilters()
+        {
+            var kart = cmbKartTipi.SelectedItem?.ToString() ?? "";
+            if (chbYemekhaneHareketleri.Checked)
+                kart += "|Y";
+
+            PageFilterPrefsStore.Save(PageName, new PageFilterPrefs
+            {
+                FirmaId = SelectedFirmaId > 0 ? SelectedFirmaId : null,
+                IsyeriId = GetSeciliIsyeriFilterId(),
+                DateA = dtpHareketBaslangicTarihi.Value,
+                DateB = dtpHareketBitisTarihi.Value,
+                BoolA = chbAktifHareketler.Checked,
+                BoolB = chbPasifHareketler.Checked,
+                Extra = kart
+            });
+        }
+
+        /// <summary>Firma/işyeri dışında tarih, aktif/pasif, kart tip tercihlerini uygular.</summary>
+        private void RestoreNonCascadePrefs()
+        {
+            var prefs = PageFilterPrefsStore.Load(PageName);
+            if (prefs == null) return;
+
+            if (prefs.DateA.HasValue)
+                dtpHareketBaslangicTarihi.Value = prefs.DateA.Value;
+            if (prefs.DateB.HasValue)
+                dtpHareketBitisTarihi.Value = prefs.DateB.Value;
+            if (prefs.BoolA.HasValue)
+                chbAktifHareketler.Checked = prefs.BoolA.Value;
+            if (prefs.BoolB.HasValue)
+                chbPasifHareketler.Checked = prefs.BoolB.Value;
+
+            if (!string.IsNullOrWhiteSpace(prefs.Extra))
+            {
+                var extra = prefs.Extra;
+                bool yemek = extra.EndsWith("|Y", StringComparison.Ordinal);
+                chbYemekhaneHareketleri.Checked = yemek;
+                var kart = yemek ? extra[..^2] : extra;
+                for (int i = 0; i < cmbKartTipi.Items.Count; i++)
+                {
+                    if (string.Equals(cmbKartTipi.Items[i]?.ToString(), kart, StringComparison.OrdinalIgnoreCase))
+                    {
+                        cmbKartTipi.SelectedIndexChanged -= KartTipiPersistHandler;
+                        cmbKartTipi.SelectedIndex = i;
+                        cmbKartTipi.SelectedIndexChanged += KartTipiPersistHandler;
+                        break;
+                    }
+                }
+            }
+        }
+
+        private void KartTipiPersistHandler(object? sender, EventArgs e)
+        {
+            LoadPersons();
+            PersistFilters();
+        }
+
         private void LoadFirmaComboBox()
         {
             try
@@ -140,8 +217,14 @@ namespace CeyPASS.WFA.UserControls.EO
                     cmbFirma.ValueMember = "FirmaId";
                     cmbFirma.Enabled = true;
 
-                    if (firmalar.Any(f => f.FirmaId == _session.AktifFirmaId))
+                    var prefs = PageFilterPrefsStore.Load(PageName);
+                    int? prefer = prefs?.FirmaId;
+                    if (prefer.HasValue && firmalar.Any(f => f.FirmaId == prefer.Value))
+                        cmbFirma.SelectedValue = prefer.Value;
+                    else if (firmalar.Any(f => f.FirmaId == _session.AktifFirmaId))
                         cmbFirma.SelectedValue = _session.AktifFirmaId;
+                    else if (firmalar.Count > 0)
+                        cmbFirma.SelectedIndex = 0;
                 }
 
                 pnlFirmaFilter.Visible = true;
@@ -162,6 +245,7 @@ namespace CeyPASS.WFA.UserControls.EO
                     IsyeriFilteriniYukle(SelectedFirmaId);
                     TemizlePersonelSecimi();
                     LoadPersons();
+                    PersistFilters();
                 }
             }
             catch (Exception ex)
@@ -176,6 +260,7 @@ namespace CeyPASS.WFA.UserControls.EO
             {
                 TemizlePersonelSecimi();
                 LoadPersons();
+                PersistFilters();
             }
             catch (Exception ex)
             {
@@ -198,7 +283,13 @@ namespace CeyPASS.WFA.UserControls.EO
                 cmbIsyeriFilter.DisplayMember = nameof(LookupItem.Ad);
                 cmbIsyeriFilter.ValueMember = nameof(LookupItem.Id);
                 cmbIsyeriFilter.DataSource = data;
-                cmbIsyeriFilter.SelectedValue = 0;
+
+                var prefs = PageFilterPrefsStore.Load(PageName);
+                var preferredIsyeri = prefs?.IsyeriId;
+                if (preferredIsyeri.HasValue && data.Any(x => x.Id == preferredIsyeri.Value))
+                    cmbIsyeriFilter.SelectedValue = preferredIsyeri.Value;
+                else
+                    cmbIsyeriFilter.SelectedValue = 0;
             }
             catch (Exception ex)
             {
@@ -248,47 +339,50 @@ namespace CeyPASS.WFA.UserControls.EO
         {
             if (chkKisiler == null) return;
 
-            bool puantajYapilir = PuantajYapilanlarSecili;
-            var seciliIsyeri = GetSeciliIsyeriFilterId();
-            var (isyeriId, isyeriIdIn) = FirmaIsyeriYetkiHelper.ResolveKisiQueryIsyeriFilter(
-                SelectedFirmaId, seciliIsyeri, _kullaniciYetkileri, _isAdmin);
-
-            var data = _kqsvc.GetAktifKisilerByFirma(SelectedFirmaId, null, puantajYapilir, isyeriId, isyeriIdIn)
-                ?? new List<KisiListItem>();
-
-            var list = new List<LookupItem>();
-            foreach (var k in data)
+            using (CeypassBusyPanel.BusyScope(this, "Personeller yükleniyor"))
             {
-                if (string.IsNullOrWhiteSpace(k.PersonelId) || string.IsNullOrWhiteSpace(k.AdSoyad))
-                    continue;
-                if (!int.TryParse(k.PersonelId, out int id) || id <= 0)
-                    continue;
-                list.Add(new LookupItem { Id = id, Ad = k.AdSoyad });
+                bool puantajYapilir = PuantajYapilanlarSecili;
+                var seciliIsyeri = GetSeciliIsyeriFilterId();
+                var (isyeriId, isyeriIdIn) = FirmaIsyeriYetkiHelper.ResolveKisiQueryIsyeriFilter(
+                    SelectedFirmaId, seciliIsyeri, _kullaniciYetkileri, _isAdmin);
+
+                var data = _kqsvc.GetAktifKisilerByFirma(SelectedFirmaId, null, puantajYapilir, isyeriId, isyeriIdIn)
+                    ?? new List<KisiListItem>();
+
+                var list = new List<LookupItem>();
+                foreach (var k in data)
+                {
+                    if (string.IsNullOrWhiteSpace(k.PersonelId) || string.IsNullOrWhiteSpace(k.AdSoyad))
+                        continue;
+                    if (!int.TryParse(k.PersonelId, out int id) || id <= 0)
+                        continue;
+                    list.Add(new LookupItem { Id = id, Ad = k.AdSoyad });
+                }
+
+                chkKisiler.BeginUpdate();
+                try
+                {
+                    chkKisiler.DataSource = null;
+                    chkKisiler.Items.Clear();
+                    chkKisiler.DisplayMember = nameof(LookupItem.Ad);
+
+                    foreach (var li in list)
+                        chkKisiler.Items.Add(li);
+
+                    if (chkKisiler.Items.Count > 0)
+                        chkKisiler.SelectedIndex = 0;
+                    else
+                        MessageBox.Show(BosListeUyariMesaji(seciliIsyeri), "Bilgi", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+                finally
+                {
+                    chkKisiler.EndUpdate();
+                }
+
+                chkKisiler.CheckOnClick = true;
+                LogHelper.Info("KisiHareketler", "LoadPeople", "Kişi listesi yüklendi",
+                    detayJson: $"{{\"FirmaId\":{SelectedFirmaId},\"IsyeriId\":{(seciliIsyeri.HasValue ? seciliIsyeri.Value.ToString() : "null")},\"Adet\":{chkKisiler.Items.Count}}}");
             }
-
-            chkKisiler.BeginUpdate();
-            try
-            {
-                chkKisiler.DataSource = null;
-                chkKisiler.Items.Clear();
-                chkKisiler.DisplayMember = nameof(LookupItem.Ad);
-
-                foreach (var li in list)
-                    chkKisiler.Items.Add(li);
-
-                if (chkKisiler.Items.Count > 0)
-                    chkKisiler.SelectedIndex = 0;
-                else
-                    MessageBox.Show(BosListeUyariMesaji(seciliIsyeri), "Bilgi", MessageBoxButtons.OK, MessageBoxIcon.Information);
-            }
-            finally
-            {
-                chkKisiler.EndUpdate();
-            }
-
-            chkKisiler.CheckOnClick = true;
-            LogHelper.Info("KisiHareketler", "LoadPeople", "Kişi listesi yüklendi",
-                detayJson: $"{{\"FirmaId\":{SelectedFirmaId},\"IsyeriId\":{(seciliIsyeri.HasValue ? seciliIsyeri.Value.ToString() : "null")},\"Adet\":{chkKisiler.Items.Count}}}");
         }
         private void LoadGrid()
         {
@@ -303,36 +397,41 @@ namespace CeyPASS.WFA.UserControls.EO
 
             try
             {
-                var ids = GetCheckedPersonIds();
-                var bas = dtpHareketBaslangicTarihi.Value;
-                var bit = dtpHareketBitisTarihi.Value;
+                using (CeypassBusyPanel.BusyScope(this, "Hareketler yükleniyor", "Lütfen bekleyin…"))
+                {
+                    var ids = GetCheckedPersonIds();
+                    var bas = dtpHareketBaslangicTarihi.Value;
+                    var bit = dtpHareketBitisTarihi.Value;
 
-                LogHelper.Info("KisiHareketler", "LoadGrid", "Grid sorgusu başlatıldı",
-                    detayJson: $"{{\"SeciliIds\":\"{string.Join(",", ids)}\",\"Baslangic\":\"{bas:yyyy-MM-dd HH:mm}\",\"Bitis\":\"{bit:yyyy-MM-dd HH:mm}\",\"Aktif\":{(chbAktifHareketler.Checked ? 1 : 0)},\"Pasif\":{(chbPasifHareketler.Checked ? 1 : 0)},\"Yemekhane\":{(chbYemekhaneHareketleri.Checked ? 1 : 0)},\"PersonelFirmaId\":{SelectedFirmaId},\"TumFirmalarHareket\":{(ids.Count > 0).ToString().ToLower()}}}",
-                    cid: cid);
+                    LogHelper.Info("KisiHareketler", "LoadGrid", "Grid sorgusu başlatıldı",
+                        detayJson: $"{{\"SeciliIds\":\"{string.Join(",", ids)}\",\"Baslangic\":\"{bas:yyyy-MM-dd HH:mm}\",\"Bitis\":\"{bit:yyyy-MM-dd HH:mm}\",\"Aktif\":{(chbAktifHareketler.Checked ? 1 : 0)},\"Pasif\":{(chbPasifHareketler.Checked ? 1 : 0)},\"Yemekhane\":{(chbYemekhaneHareketleri.Checked ? 1 : 0)},\"PersonelFirmaId\":{SelectedFirmaId},\"TumFirmalarHareket\":{(ids.Count > 0).ToString().ToLower()}}}",
+                        cid: cid);
 
-                var dt = _khsvc.GetByPersons(ids, bas, bit, chbAktifHareketler.Checked, chbPasifHareketler.Checked, chbYemekhaneHareketleri.Checked, SelectedFirmaId);
+                    var dt = _khsvc.GetByPersons(ids, bas, bit, chbAktifHareketler.Checked, chbPasifHareketler.Checked, chbYemekhaneHareketleri.Checked, SelectedFirmaId);
 
-                dgKisiHareketler.DataSource = dt;
-                BeautifyGrid(dgKisiHareketler);
+                    dgKisiHareketler.DataSource = dt;
+                    BeautifyGrid(dgKisiHareketler);
 
-                SetCol("Tarih", "Tarih", 15, true, "dd.MM.yyyy HH:mm:ss");
-                SetCol("Firma", "Firma", 12, true);             
-                SetCol("SicilNo", "Sicil No", 10, true);       
-                SetCol("AdSoyad", "Adı Soyadı", 18, true);
-                SetCol("CihazAdi", "Turnike", 15, true);
-                SetCol("Tip", "Hareket Tipi", 10, true);
-                SetCol("KayitZamani", "Kayıt Zamanı", 15, true, "dd.MM.yyyy HH:mm:ss");
-                SetCol("AktifMi", "Aktif", 5, false);
+                    SetCol("Tarih", "Tarih", 15, true, "dd.MM.yyyy HH:mm:ss");
+                    SetCol("Firma", "Firma", 12, true);             
+                    SetCol("SicilNo", "Sicil No", 10, true);       
+                    SetCol("AdSoyad", "Adı Soyadı", 18, true);
+                    SetCol("CihazAdi", "Turnike", 15, true);
+                    SetCol("Tip", "Hareket Tipi", 10, true);
+                    SetCol("KayitZamani", "Kayıt Zamanı", 15, true, "dd.MM.yyyy HH:mm:ss");
+                    SetCol("AktifMi", "Aktif", 5, false);
 
-                Hide("Id");
-                Hide("CihazId");
-                Hide("PersonelId");
-                Hide("FirmaId");
+                    Hide("Id");
+                    Hide("CihazId");
+                    Hide("PersonelId");
+                    Hide("FirmaId");
 
-                void Hide(string n) { var c = dgKisiHareketler.Columns[n]; if (c != null) c.Visible = false; }
+                    void Hide(string n) { var c = dgKisiHareketler.Columns[n]; if (c != null) c.Visible = false; }
 
-                LogHelper.Info("KisiHareketler", "LoadGrid", "Grid yüklendi", detayJson: $"{{\"Satir\":{(dt?.Rows.Count ?? 0)}}}", cid: cid);
+                    LogHelper.Info("KisiHareketler", "LoadGrid", "Grid yüklendi", detayJson: $"{{\"Satir\":{(dt?.Rows.Count ?? 0)}}}", cid: cid);
+                    ApplySilButtonUi();
+                }
+                PersistFilters();
             }
             catch (Exception ex)
             {
@@ -417,7 +516,8 @@ namespace CeyPASS.WFA.UserControls.EO
             if (ids.Count == 0)
             {
                 LogHelper.Warn("KisiHareketler", "Create", "Kişi seçilmedi");
-                MessageBox.Show("Kişi seçiniz.");
+                _fieldErrors.Clear();
+                _fieldErrors.Set(chkKisiler, "Kişi seçiniz.");
                 return;
             }
 
@@ -476,11 +576,49 @@ namespace CeyPASS.WFA.UserControls.EO
                 MessageBox.Show("Güncelleme başarısız.");
             }
         }
-        private void SoftDeleteSelected()
+        private bool IsActivateMode()
+        {
+            if (TryGetSelectedAktifMi(out var aktifMi))
+                return !aktifMi;
+            return chbPasifHareketler.Checked && !chbAktifHareketler.Checked;
+        }
+
+        private bool TryGetSelectedAktifMi(out bool aktifMi)
+        {
+            aktifMi = true;
+            if (dgKisiHareketler.CurrentRow == null) return false;
+            var drv = dgKisiHareketler.CurrentRow.DataBoundItem as DataRowView;
+            if (drv?.Row?.Table.Columns.Contains("AktifMi") != true) return false;
+            var v = drv["AktifMi"];
+            if (v == null || v == DBNull.Value) return false;
+            aktifMi = Convert.ToBoolean(v);
+            return true;
+        }
+
+        private void ApplySilButtonUi()
+        {
+            bool activate = IsActivateMode();
+            btnHareketSil.Text = activate ? "Aktif Et" : "Sil";
+            btnHareketSil.BackColor = activate ? AktifEtButtonColor : SilButtonColor;
+            try
+            {
+                btnHareketSil.Image = activate
+                    ? Properties.Resources.icons8_check_mark_50
+                    : Properties.Resources.icons8_minus_50;
+            }
+            catch
+            {
+                // kaynak yoksa metin/renk yeterli
+            }
+        }
+
+        private void SoftDeleteOrActivateSelected()
         {
             if (!_auth.Can(PageName, YetkiTipleri.Delete))
             {
-                LogHelper.Warn("KisiHareketler", "ActionDenied", "Silme yetkisi yok", detayJson: $"{{\"Yetki\":\"Delete\"}}");
+                LogHelper.Warn("KisiHareketler", "ActionDenied",
+                    IsActivateMode() ? "Aktif etme yetkisi yok" : "Silme yetkisi yok",
+                    detayJson: $"{{\"Yetki\":\"Delete\"}}");
                 System.Media.SystemSounds.Beep.Play();
                 return;
             }
@@ -490,23 +628,47 @@ namespace CeyPASS.WFA.UserControls.EO
             if (drv == null) return;
 
             int id = Convert.ToInt32(drv["Id"]);
-            if (MessageBox.Show("Kayıt pasif edilsin mi?", "Onay", MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes)
+            bool activate = IsActivateMode();
+            string confirm = activate ? "Kayıt tekrar aktif edilsin mi?" : "Kayıt pasif edilsin mi?";
+            if (!UiConfirm.Confirm(this, confirm, "Onay", activate ? "Aktif et" : "Pasife al", "Vazgeç"))
             {
-                LogHelper.Info("KisiHareketler", "Delete", "Kullanıcı pasife çekmeyi iptal etti", detayJson: $"{{\"Id\":{id}}}");
+                LogHelper.Info("KisiHareketler", activate ? "Activate" : "Delete",
+                    "Kullanıcı işlemi iptal etti", detayJson: $"{{\"Id\":{id}}}");
                 return;
             }
 
-            if (_khsvc.PasifYap(id))
+            bool ok = activate ? _khsvc.AktifYap(id) : _khsvc.PasifYap(id);
+            if (ok)
             {
-                LogHelper.Info("KisiHareketler", "Delete", "Kayıt pasife çekildi", detayJson: $"{{\"Id\":{id}}}");
+                LogHelper.Info("KisiHareketler", activate ? "Activate" : "Delete",
+                    activate ? "Kayıt tekrar aktif edildi" : "Kayıt pasife çekildi",
+                    detayJson: $"{{\"Id\":{id}}}");
                 LoadGrid();
+                ApplySilButtonUi();
+                if (!activate)
+                {
+                    var undoId = id;
+                    UiUndo.Offer("Hareket pasife alındı.", () =>
+                    {
+                        if (_khsvc.AktifYap(undoId))
+                        {
+                            LoadGrid();
+                            ApplySilButtonUi();
+                            UiStatus.Set("Geri alındı.");
+                        }
+                        else
+                            MessageBox.Show("Geri alma başarısız.");
+                    });
+                }
             }
             else
             {
-                LogHelper.Warn("KisiHareketler", "Delete", "Pasife çekme başarısız", detayJson: $"{{\"Id\":{id}}}");
+                LogHelper.Warn("KisiHareketler", activate ? "Activate" : "Delete",
+                    "İşlem başarısız", detayJson: $"{{\"Id\":{id}}}");
                 MessageBox.Show("İşlem başarısız.");
             }
         }
+
         private bool ShowInput(out DateTime tarih, out string tip, DateTime? defTarih = null, string defTip = null)
         {
             tarih = DateTime.Now;

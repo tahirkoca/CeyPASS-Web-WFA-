@@ -6,6 +6,7 @@ import { PageHeader } from "../PageHeader";
 import { useHeaderQuickMenu } from "../HeaderQuickMenu";
 import { useNotificationsContext } from "../NotificationsProvider";
 import { ayarlarService, CalismaSekli } from "../../services/ayarlarApi";
+import { useUiPrefs } from "../../services/uiPrefs";
 
 function pick<T = any>(obj: any, a: string, b?: string): T | undefined {
   if (!obj) return undefined;
@@ -44,6 +45,7 @@ function toTimeSpanInput(value: string) {
 }
 
 export function VardiyalarScreen(props: { user: any; abilities: any; onOpenMenu: () => void }) {
+  const { listRowPadClass } = useUiPrefs();
   const actions = props.abilities?.actions?.Vardiyalar ?? props.abilities?.Actions?.Vardiyalar ?? {};
   const canCreate = !!(actions?.Create ?? actions?.create);
   const canUpdate = !!(actions?.Update ?? actions?.update);
@@ -228,7 +230,6 @@ export function VardiyalarScreen(props: { user: any; abilities: any; onOpenMenu:
         rightIcon2="bell-outline"
         onRightPress2={() => quickMenu.open("notif")}
         rightBadge2={notif.unreadCount}
-        rightA11yLabel2="Bildirimler ve hesap"
       />
       {quickMenu.modal}
     </>
@@ -291,7 +292,7 @@ export function VardiyalarScreen(props: { user: any; abilities: any; onOpenMenu:
           ) : (
             rows.map((r) => (
               <View key={`v_${r.id}`} className="mb-3 bg-white rounded-2xl border border-[#e2e8f0] overflow-hidden">
-                <View className="px-4 py-3 border-b border-[#f1f5f9] flex-row items-center justify-between">
+                <View className={`px-4 ${listRowPadClass} border-b border-[#f1f5f9] flex-row items-center justify-between`}>
                   <View className="flex-1">
                     <Text className="text-[#0f172a] font-extrabold" numberOfLines={1}>
                       {r.ad}
@@ -399,7 +400,7 @@ export function VardiyalarScreen(props: { user: any; abilities: any; onOpenMenu:
                 </View>
                 <View className="p-4 border-t border-[#f1f5f9] flex-row gap-2">
                   <TouchableOpacity onPress={() => setDelVisible(false)} disabled={delSaving} className={`flex-1 py-3 rounded-xl items-center ${delSaving ? "bg-[#e2e8f0]" : "bg-[#f1f5f9]"}`}>
-                    <Text className="text-[#334155] font-extrabold">İptal</Text>
+                    <Text className="text-[#334155] font-extrabold">Vazgeç</Text>
                   </TouchableOpacity>
                   <TouchableOpacity onPress={doDelete} disabled={delSaving} className={`flex-1 py-3 rounded-xl items-center ${delSaving ? "bg-[#fca5a5]" : "bg-[#dc2626]"}`}>
                     <Text className="text-white font-extrabold">{delSaving ? "Siliniyor..." : "Sil"}</Text>

@@ -28,5 +28,7 @@ namespace CeyPASS.DataAccess
         public decimal? Longitude { get; set; }
         public int? MesafeToleransMetre { get; set; }
         public bool SaatPenceresiAktifMi { get; set; }
+        public bool AnaGirisCikisMi { get; set; }
+        public bool AracGirisCikisMi { get; set; }
     }
 }

@@ -6,6 +6,7 @@
     var baslangicTarih = ViewBag.BaslangicTarih as DateTime? ?? new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
     var bitisTarih = ViewBag.BitisTarih as DateTime? ?? DateTime.Today;
     var selectedFirmaId = ViewBag.SelectedFirmaId as int? ?? 0;
+    var firmalar = ViewBag.Firmalar as List<CeyPASS.Entities.Concrete.LookupItem> ?? new List<CeyPASS.Entities.Concrete.LookupItem>();
     var canExport = ViewBag.CanExport as bool? ?? false;
     var selectedRapor = ViewBag.SelectedRapor as CeyPASS.Entities.Concrete.RaporTanimi;
     var currentPage = ViewBag.Page as int? ?? 1;
@@ -110,7 +111,24 @@
                     <form method="get" action="@Url.Action("Index")" id="raporForm">
                         <input type="hidden" name="page" value="1" />
                         <div class="row g-3 align-items-end">
-                            <div class="col-12 col-lg-4">
+                            <div class="col-12 col-lg-2">
+                                <label for="firmaId" class="form-label">Firma <span class="text-danger">*</span></label>
+                                <select name="firmaId" id="firmaId" class="form-select" required title="Rapor firması">
+                                    @foreach (var f in firmalar)
+                                    {
+                                        if (f.Id == selectedFirmaId)
+                                        {
+                                            <option value="@f.Id" selected="selected">@f.Ad</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="@f.Id">@f.Ad</option>
+                                        }
+                                    }
+                                </select>
+                            </div>
+
+                            <div class="col-12 col-lg-5">
                                 <label for="procedureAdi" class="form-label">Rapor Türü <span class="text-danger">*</span></label>
                                 <select name="procedureAdi" id="procedureAdi" class="form-select" required title="Dosya tipine göre rapor seçimi yapın">
                                     <option value="">-- Rapor Seçiniz --</option>
@@ -364,6 +382,24 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     
     <script>
+        if (window.CeyPASS && CeyPASS.filters) {
+            CeyPASS.filters.bindForm('rapor', '#raporForm', [
+                'firmaId', 'procedureAdi', 'tarihBaslangic', 'tarihBitis', 'pageSize', 'isyeriIds', 'cihazIds'
+            ], { autoSubmit: false });
+        }
+
+        function syncMultiChkFromHidden() {
+            var isyeriHidden = document.getElementById('isyeriIdsHidden');
+            var cihazHidden = document.getElementById('cihazIdsHidden');
+            var raw = (isyeriHidden && isyeriHidden.value) || (cihazHidden && cihazHidden.value) || '';
+            if (!raw) return;
+            var set = raw.split(',').map(function (s) { return s.trim(); }).filter(Boolean);
+            document.querySelectorAll('.multi-chk').forEach(function (c) {
+                c.checked = set.indexOf(String(c.value)) >= 0;
+            });
+        }
+        syncMultiChkFromHidden();
+
         function syncMultiIdsHidden() {
             var isyeriHidden = document.getElementById('isyeriIdsHidden');
             var cihazHidden = document.getElementById('cihazIdsHidden');

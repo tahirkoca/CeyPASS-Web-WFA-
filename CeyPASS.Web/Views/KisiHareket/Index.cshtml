@@ -291,8 +291,17 @@
                                                     {
                                                         <form method="post" action="@Url.Action("PasifYap", new { id = hareket.Id })" style="display: inline;">
                                                             @Html.AntiForgeryToken()
-                                                            <button type="button" class="btn btn-sm btn-danger btn-sil-onay" data-msg="Bu hareketi pasif yapmak istediğinizden emin misiniz?" data-btn-text="Pasif Yap" title="Pasif Yap">
+                                                            <button type="button" class="btn btn-sm btn-danger btn-sil-onay" data-msg="Bu hareketi pasif yapmak istediğinizden emin misiniz?" data-btn-text="Pasife al" data-undo-url="@Url.Action("AktifYap", new { id = hareket.Id })" title="Pasife al">
                                                                 <i class="bi bi-trash"></i>
+                                                            </button>
+                                                        </form>
+                                                    }
+                                                    @if (canDelete && !hareket.AktifMi)
+                                                    {
+                                                        <form method="post" action="@Url.Action("AktifYap", new { id = hareket.Id })" style="display: inline;">
+                                                            @Html.AntiForgeryToken()
+                                                            <button type="button" class="btn btn-sm btn-success btn-sil-onay" data-msg="Bu hareketi tekrar aktif etmek istediğinizden emin misiniz?" data-btn-text="Aktif et" title="Aktif et">
+                                                                <i class="bi bi-check-circle"></i>
                                                             </button>
                                                         </form>
                                                     }
@@ -467,8 +476,8 @@
             </div>
             <div class="modal-body" id="silOnayModalBody"></div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
-                <button type="button" class="btn btn-danger" id="silOnayModalSilBtn"><i class="bi bi-trash me-1"></i>Pasif Yap</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Vazgeç</button>
+                <button type="button" class="btn btn-danger" id="silOnayModalSilBtn"><i class="bi bi-trash me-1"></i>Pasife al</button>
             </div>
         </div>
     </div>
@@ -478,25 +487,14 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     
     <script>
-        (function () {
-            var silOnayModalEl = document.getElementById('silOnayModal');
-            var silOnayModalBody = document.getElementById('silOnayModalBody');
-            var silOnayModalSilBtn = document.getElementById('silOnayModalSilBtn');
-            if (silOnayModalEl && silOnayModalBody && silOnayModalSilBtn) {
-                document.querySelectorAll('.btn-sil-onay').forEach(function (btn) {
-                    btn.addEventListener('click', function () {
-                        var form = this.closest('form');
-                        var msg = this.getAttribute('data-msg') || 'Emin misiniz?';
-                        var btnText = this.getAttribute('data-btn-text') || 'Onayla';
-                        silOnayModalBody.textContent = msg;
-                        silOnayModalSilBtn.innerHTML = '<i class="bi bi-trash me-1"></i>' + btnText;
-                        var modal = new bootstrap.Modal(silOnayModalEl);
-                        silOnayModalSilBtn.onclick = function () { modal.hide(); if (form) form.submit(); };
-                        modal.show();
-                    });
-                });
-            }
-        })();
+        // .btn-sil-onay → CeyPASS.confirm (site.js)
+
+        if (window.CeyPASS && CeyPASS.filters) {
+            CeyPASS.filters.bindForm('kisiHareket', '#filterForm', [
+                'firmaId', 'isyeriId', 'kartTipi', 'baslangic', 'bitis',
+                'pageSize', 'sadeceAktif', 'sadecePasif', 'sadeceYemekhane'
+            ]);
+        }
 
         // Personel checkbox'ları değiştiğinde form'u submit et
         $('.personel-checkbox').change(function() {

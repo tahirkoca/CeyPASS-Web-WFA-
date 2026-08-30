@@ -1,0 +1,125 @@
+<UserControl x:Class="CeyPASS.WPF.Controls.CeypassWindowChrome"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Name="Root"
+             VerticalAlignment="Center">
+    <UserControl.Resources>
+        <Style x:Key="CapsuleSlice" TargetType="Button">
+            <Setter Property="Width" Value="36"/>
+            <Setter Property="Height" Value="28"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Focusable" Value="False"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="bd" Background="Transparent">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="bd" Property="Background" Value="{DynamicResource Brush.ChromeHover}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="CapsuleSliceClose" TargetType="Button" BasedOn="{StaticResource CapsuleSlice}">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="bd" Background="Transparent">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="bd" Property="Background" Value="#FEE2E2"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="CapsuleSep" TargetType="Border">
+            <Setter Property="Width" Value="1"/>
+            <Setter Property="Height" Value="14"/>
+            <Setter Property="Background" Value="{DynamicResource Brush.ChromeSep}"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+
+        <Style x:Key="ChromeIcon" TargetType="Path">
+            <Setter Property="Stroke" Value="{DynamicResource Brush.ChromeIcon}"/>
+            <Setter Property="StrokeThickness" Value="1.4"/>
+            <Setter Property="StrokeStartLineCap" Value="Round"/>
+            <Setter Property="StrokeEndLineCap" Value="Round"/>
+            <Setter Property="StrokeLineJoin" Value="Round"/>
+            <Setter Property="Fill" Value="Transparent"/>
+            <Setter Property="Width" Value="12"/>
+            <Setter Property="Height" Value="12"/>
+            <Setter Property="Stretch" Value="Uniform"/>
+        </Style>
+    </UserControl.Resources>
+
+    <Border x:Name="CapsuleHost"
+            CornerRadius="14"
+            Background="{DynamicResource Brush.ChromeBg}"
+            BorderBrush="{DynamicResource Brush.ChromeBorder}"
+            BorderThickness="1"
+            Padding="2,1"
+            SnapsToDevicePixels="True">
+        <Border.Style>
+            <Style TargetType="Border">
+                <Style.Triggers>
+                    <DataTrigger Binding="{Binding Variant, ElementName=Root}" Value="Glass">
+                        <Setter Property="Background" Value="#66FFFFFF"/>
+                        <Setter Property="BorderBrush" Value="#55FFFFFF"/>
+                    </DataTrigger>
+                </Style.Triggers>
+            </Style>
+        </Border.Style>
+
+        <StackPanel Orientation="Horizontal">
+            <Button x:Name="BtnMinimize" Style="{StaticResource CapsuleSlice}"
+                    Click="BtnMinimize_OnClick" ToolTip="Küçült">
+                <Path Style="{StaticResource ChromeIcon}" Data="M 1,6 H 11"/>
+            </Button>
+
+            <Border x:Name="SepAfterMin" Style="{StaticResource CapsuleSep}"/>
+
+            <Button x:Name="BtnMaximize" Style="{StaticResource CapsuleSlice}"
+                    Click="BtnMaximize_OnClick" ToolTip="Büyüt">
+                <Grid Width="12" Height="12">
+                    <Path x:Name="IcoMax" Style="{StaticResource ChromeIcon}"
+                          Data="M 1.5,1.5 H 10.5 V 10.5 H 1.5 Z"/>
+                    <Path x:Name="IcoRestore" Style="{StaticResource ChromeIcon}"
+                          Visibility="Collapsed"
+                          Data="M 3.5,3.5 H 10.5 V 10.5 H 3.5 Z M 1.5,5.5 V 1.5 H 8.5"/>
+                </Grid>
+            </Button>
+
+            <Border x:Name="SepAfterMax" Style="{StaticResource CapsuleSep}"/>
+
+            <Button x:Name="BtnClose" Style="{StaticResource CapsuleSliceClose}"
+                    Click="BtnClose_OnClick" ToolTip="Kapat">
+                <Path x:Name="IcoClose"
+                      Data="M 2,2 L 10,10 M 10,2 L 2,10">
+                    <Path.Style>
+                        <Style TargetType="Path" BasedOn="{StaticResource ChromeIcon}">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsMouseOver, ElementName=BtnClose}" Value="True">
+                                    <Setter Property="Stroke" Value="#DC2626"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Path.Style>
+                </Path>
+            </Button>
+        </StackPanel>
+    </Border>
+</UserControl>
+

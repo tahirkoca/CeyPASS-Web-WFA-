@@ -50,7 +50,7 @@
         <div class="col-md-12">
             <div class="card">
                 <div class="card-body">
-                    <form method="get" action="@Url.Action("Index")" class="row g-3">
+                    <form method="get" action="@Url.Action("Index")" id="filterForm" class="row g-3">
                         <input type="hidden" name="page" value="1" />
                         <div class="col-md-3">
                             <label for="calismaDurumu" class="form-label">Durum:</label>
@@ -338,7 +338,7 @@
                         <input type="hidden" name="search" value="@search" />
                         <input type="hidden" name="isyeriId" value="@(selectedIsyeriId?.ToString() ?? "")" />
                         <div class="modal-body">
-                            <p class="text-muted small mb-3">İşten çıkış tarihini seçin, isteğe bağlı firma dışı kart numarasını girin ve <strong>Kaydet</strong> butonuna basın.</p>
+                            <p class="text-muted small mb-3">İşten çıkış tarihini seçin, isteğe bağlı firma dışı kart numarasını girin ve <strong>İşten çıkar</strong> butonuna basın.</p>
                             <input type="hidden" name="id" id="modalIstenCikarPersonelId" />
                             <div class="mb-3">
                                 <label for="modalIstenCikarTarih" class="form-label">İşten çıkış tarihi</label>
@@ -350,8 +350,8 @@
                             </div>
                         </div>
                         <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
-                            <button type="submit" class="btn btn-danger"><i class="bi bi-check-lg me-1"></i>Kaydet</button>
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Vazgeç</button>
+                            <button type="submit" class="btn btn-danger"><i class="bi bi-check-lg me-1"></i>İşten çıkar</button>
                         </div>
                     </form>
                 </div>
@@ -367,8 +367,8 @@
                     </div>
                     <div class="modal-body" id="istenCikarOnayModalBody"></div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
-                        <button type="button" class="btn btn-danger" id="istenCikarOnayModalOnaylaBtn"><i class="bi bi-check-lg me-1"></i>Onayla</button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Vazgeç</button>
+                        <button type="button" class="btn btn-danger" id="istenCikarOnayModalOnaylaBtn"><i class="bi bi-check-lg me-1"></i>İşten çıkar</button>
                     </div>
                 </div>
             </div>
@@ -379,6 +379,12 @@
 @section Scripts {
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <script>
+        if (window.CeyPASS && CeyPASS.filters) {
+            CeyPASS.filters.bindForm('personel', '#filterForm', [
+                'calismaDurumu', 'kartTipi', 'firmaId', 'isyeriId', 'search', 'pageSize'
+            ]);
+        }
+
         document.getElementById('kartTipi')?.addEventListener('change', function() {
             this.closest('form')?.submit();
         });
@@ -487,6 +493,17 @@
                         onayModalBody.textContent = msg;
                         onayModalBtn.onclick = function () {
                             bootstrap.Modal.getInstance(onayModalEl).hide();
+                            if (window.CeyPASS && CeyPASS.undo) {
+                                var pid = idEl.value;
+                                var fields = {};
+                                form.querySelectorAll('input, select').forEach(function (inp) {
+                                    if (!inp.name || inp.name === '__RequestVerificationToken') return;
+                                    fields[inp.name] = inp.value;
+                                });
+                                fields.id = pid;
+                                fields.puantajYapilirMi = '@(kartTipi == "puantaj" ? "true" : "false")';
+                                CeyPASS.undo.queue({ url: '@Url.Action("TekrarAktifEt", "Personel")', fields: fields });
+                            }
                             form.submit();
                         };
                         var modal = new bootstrap.Modal(onayModalEl);

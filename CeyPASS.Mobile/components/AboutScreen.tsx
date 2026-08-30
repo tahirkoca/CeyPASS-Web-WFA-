@@ -54,7 +54,6 @@ export function AboutScreen(props: { onOpenMenu?: () => void }) {
         rightIcon="bell-outline"
         onRightPress={() => quickMenu.open("notif")}
         rightBadge={notif.unreadCount}
-        rightA11yLabel="Bildirimler ve hesap"
       />
       {quickMenu.modal}
 

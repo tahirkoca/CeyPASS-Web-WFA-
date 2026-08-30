@@ -84,6 +84,12 @@ namespace CeyPASS.DataAccess
             modelBuilder.Entity<Cihazlar>()
                 .Property(e => e.SaatPenceresiAktifMi)
                 .HasColumnName("SaatPenceresiAktifMi");
+            modelBuilder.Entity<Cihazlar>()
+                .Property(e => e.AnaGirisCikisMi)
+                .HasColumnName("AnaGirisCikisMi");
+            modelBuilder.Entity<Cihazlar>()
+                .Property(e => e.AracGirisCikisMi)
+                .HasColumnName("AracGirisCikisMi");
             modelBuilder.Entity<PuantajTipleri>().HasKey(e => e.Kod);
             modelBuilder.Entity<RaporTanimlari>().HasKey(e => e.Id);
             modelBuilder.Entity<ResmiTatiller>().HasKey(e => e.Tarih);

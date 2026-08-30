@@ -96,5 +96,11 @@ export const izinService = {
     await invalidate("/Izin");
     return response.data;
   },
+
+  async aktifYap(id: number): Promise<ApiResult<any>> {
+    const response = await api.post(`/Izin/${encodeURIComponent(String(id))}/aktif`, {}, { timeout: 15000 });
+    await invalidate("/Izin");
+    return response.data;
+  },
 };
 

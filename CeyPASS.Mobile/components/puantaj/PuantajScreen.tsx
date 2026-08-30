@@ -9,6 +9,8 @@ import { puantajService, PuantajGunSatirDTO, PuantajLookupsDto, PuantajTipDTO } 
 import * as FileSystem from "expo-file-system/legacy";
 import * as Sharing from "expo-sharing";
 import { getApiBaseUrl, getAuthToken } from "../../services/api";
+import { BusyOverlay } from "../BusyOverlay";
+import { pageFilterPrefs, parsePrefDate } from "../../services/pageFilterPrefs";
 
 function pick<T = any>(obj: any, a: string, b?: string): T | undefined {
   if (!obj) return undefined;
@@ -268,6 +270,8 @@ export function PuantajScreen(props: { user: any; abilities: any; onOpenMenu: ()
   const [lookup, setLookup] = useState<PuantajLookupsDto | null>(null);
   const didInitRef = useRef(false);
   const [filterBusy, setFilterBusy] = useState(false);
+  const [filtersHydrated, setFiltersHydrated] = useState(false);
+  const skipServerSelectRef = useRef(false);
 
   const [firmaId, setFirmaId] = useState<number | null>(null);
   const [isyeriId, setIsyeriId] = useState<number | null>(null);
@@ -405,10 +409,16 @@ export function PuantajScreen(props: { user: any; abilities: any; onOpenMenu: ()
       const ff = asInt(data?.selectedFirmaId ?? data?.SelectedFirmaId, firmaId ?? 0);
       const fi = data?.selectedIsyeriId ?? data?.SelectedIsyeriId ?? null;
 
-      setYil(fy);
-      setAy(fa);
-      if (ff) setFirmaId(ff);
-      setIsyeriId(fi != null ? asInt(fi, 0) || null : null);
+      if (!skipServerSelectRef.current) {
+        setYil(fy);
+        setAy(fa);
+        if (ff) setFirmaId(ff);
+        setIsyeriId(fi != null ? asInt(fi, 0) || null : null);
+      } else {
+        // After restoring prefs, keep client filter values; only fill missing firma.
+        if (!firmaId && ff) setFirmaId(ff);
+        skipServerSelectRef.current = false;
+      }
 
       // If current personel is invalid for selected filters, clear.
       const personelSet = new Set((data?.personeller ?? []).map((x: any) => String(x.personelId ?? x.PersonelId)));
@@ -467,8 +477,20 @@ export function PuantajScreen(props: { user: any; abilities: any; onOpenMenu: ()
   };
 
   useEffect(() => {
-    didInitRef.current = true;
-    loadLookups(undefined, { silent: false });
+    (async () => {
+      const prefs = await pageFilterPrefs.load("AylikPuantaj");
+      if (prefs) {
+        const da = parsePrefDate(prefs.dateA ?? null);
+        if (da) {
+          setYil(da.getFullYear());
+          setAy(da.getMonth() + 1);
+        }
+        if (typeof prefs.firmaId === "number" && prefs.firmaId > 0) setFirmaId(prefs.firmaId);
+        if (typeof prefs.isyeriId === "number" && prefs.isyeriId > 0) setIsyeriId(prefs.isyeriId);
+        if (prefs.firmaId || prefs.isyeriId || prefs.dateA) skipServerSelectRef.current = true;
+      }
+      setFiltersHydrated(true);
+    })();
     // Enable LayoutAnimation on Android
     if (Platform.OS === "android") {
       try {
@@ -476,8 +498,27 @@ export function PuantajScreen(props: { user: any; abilities: any; onOpenMenu: ()
         UIManager.setLayoutAnimationEnabledExperimental?.(true);
       } catch { }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (!filtersHydrated) return;
+    didInitRef.current = true;
+    const pFirma = firmaId;
+    const pIsyeri = isyeriId;
+    const pYil = yil;
+    const pAy = ay;
+    loadLookups({ firmaId: pFirma, isyeriId: pIsyeri, yil: pYil, ay: pAy }, { silent: false });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filtersHydrated]);
+
+  useEffect(() => {
+    if (!filtersHydrated) return;
+    void pageFilterPrefs.save("AylikPuantaj", {
+      firmaId,
+      isyeriId,
+      dateA: new Date(yil, ay - 1, 1),
+    });
+  }, [filtersHydrated, firmaId, isyeriId, yil, ay]);
 
   useEffect(() => {
     if (!personelId) return;
@@ -738,7 +779,6 @@ export function PuantajScreen(props: { user: any; abilities: any; onOpenMenu: ()
       rightIcon2="bell-outline"
       onRightPress2={() => quickMenu.open("notif")}
       rightBadge2={notif.unreadCount}
-      rightA11yLabel2="Bildirimler ve hesap"
     />
   );
 
@@ -746,6 +786,7 @@ export function PuantajScreen(props: { user: any; abilities: any; onOpenMenu: ()
     return (
       <View className="flex-1 bg-[#f8fafc]">
         <StatusPopup visible={popupVisible} type={popupType} message={popupMessage} onClose={() => setPopupVisible(false)} />
+        <BusyOverlay visible title="Yükleniyor..." message="Puantaj filtreleri hazırlanıyor" />
         {topBar}
         <View className="flex-1 items-center justify-center">
           <ActivityIndicator />
@@ -774,6 +815,7 @@ export function PuantajScreen(props: { user: any; abilities: any; onOpenMenu: ()
   return (
     <View className="flex-1 bg-[#f8fafc]">
       <StatusPopup visible={popupVisible} type={popupType} message={popupMessage} onClose={() => setPopupVisible(false)} />
+      <BusyOverlay visible={filterBusy || rowsLoading || saving} title={saving ? "İşleniyor..." : "Yükleniyor..."} message={saving ? "Lütfen bekleyin" : "Puantaj verileri güncelleniyor"} />
       {topBar}
 
       <View className="px-4 pt-4">

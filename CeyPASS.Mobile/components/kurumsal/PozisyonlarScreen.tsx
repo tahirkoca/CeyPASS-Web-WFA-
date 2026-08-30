@@ -6,6 +6,7 @@ import { PageHeader } from "../PageHeader";
 import { useHeaderQuickMenu } from "../HeaderQuickMenu";
 import { useNotificationsContext } from "../NotificationsProvider";
 import { organizasyonService, LookupItem } from "../../services/organizasyonApi";
+import { useUiPrefs } from "../../services/uiPrefs";
 
 function asInt(value: any, def = 0) {
   const n = Number(value);
@@ -13,6 +14,7 @@ function asInt(value: any, def = 0) {
 }
 
 export function PozisyonlarScreen(props: { user: any; abilities: any; onOpenMenu: () => void }) {
+  const { listRowPadClass } = useUiPrefs();
   const actions = props.abilities?.actions?.Pozisyonlar ?? props.abilities?.Actions?.Pozisyonlar ?? {};
   const canCreate = !!(actions?.Create ?? actions?.create);
   const canUpdate = !!(actions?.Update ?? actions?.update);
@@ -165,7 +167,6 @@ export function PozisyonlarScreen(props: { user: any; abilities: any; onOpenMenu
         rightIcon2={canCreate ? "plus" : "bell-outline"}
         onRightPress2={canCreate ? openCreate : () => quickMenu.open("notif")}
         rightBadge2={canCreate ? undefined : notif.unreadCount}
-        rightA11yLabel2={canCreate ? "Pozisyon ekle" : "Bildirimler ve hesap"}
       />
       {quickMenu.modal}
     </>
@@ -227,7 +228,7 @@ export function PozisyonlarScreen(props: { user: any; abilities: any; onOpenMenu
           ) : (
             filtered.map((r) => (
               <View key={`p_${r.id}`} className="mb-3 bg-white rounded-2xl border border-[#e2e8f0] overflow-hidden">
-                <View className="px-4 py-3 border-b border-[#f1f5f9] flex-row items-center justify-between">
+                <View className={`px-4 ${listRowPadClass} border-b border-[#f1f5f9] flex-row items-center justify-between`}>
                   <View className="flex-1">
                     <Text className="text-[#0f172a] font-extrabold" numberOfLines={1}>
                       {r.ad}
@@ -337,7 +338,7 @@ export function PozisyonlarScreen(props: { user: any; abilities: any; onOpenMenu
                     disabled={delSaving}
                     className={`flex-1 py-3 rounded-xl items-center ${delSaving ? "bg-[#e2e8f0]" : "bg-[#f1f5f9]"}`}
                   >
-                    <Text className="text-[#334155] font-extrabold">İptal</Text>
+                    <Text className="text-[#334155] font-extrabold">Vazgeç</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     onPress={doDelete}

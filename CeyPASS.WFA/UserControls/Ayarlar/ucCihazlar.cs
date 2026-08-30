@@ -20,6 +20,7 @@ namespace CeyPASS.WFA.UserControls.Ayarlar
         private bool _wired;
         private const string PageName = "Cihazlar";
         private const string PageNameUI = "Cihazlar";
+        private readonly WinFormsFieldErrors _fieldErrors;
 
         /// <summary>
         /// Admin Panel'den açıldığında true; tüm firmaların tüm cihazları (aktif/pasif) listelenir.
@@ -29,6 +30,7 @@ namespace CeyPASS.WFA.UserControls.Ayarlar
         public ucCihazlar(ISessionContext session, ICihazService svc, IAuthorizationService auth, IKullaniciFirmaIsyeriYetkiService yetkiSvc)
         {
             InitializeComponent();
+            _fieldErrors = new WinFormsFieldErrors(this);
             _session = session;
             _svc = svc;
             _auth = auth;
@@ -170,6 +172,8 @@ namespace CeyPASS.WFA.UserControls.Ayarlar
             txtAciklama.ReadOnly = true;
             cmbCihazTipleri.Enabled = false;
             chkSaatPenceresiAktifMi.Enabled = false;
+            chkAnaGirisCikisMi.Enabled = false;
+            chkAracGirisCikisMi.Enabled = false;
 
             WinFormsAuthHelper.ApplyPageAuthorization(_auth, _session, PageName, this);
             FillInputsFromSelection();
@@ -202,6 +206,8 @@ namespace CeyPASS.WFA.UserControls.Ayarlar
             txtAciklama.ReadOnly = false;
             cmbCihazTipleri.Enabled = true;
             chkSaatPenceresiAktifMi.Enabled = true;
+            chkAnaGirisCikisMi.Enabled = true;
+            chkAracGirisCikisMi.Enabled = true;
 
             btnKaydet.Tag = YetkiTipleri.Create;
             WinFormsAuthHelper.ApplyPageAuthorization(_auth, _session, PageName, this);
@@ -240,6 +246,8 @@ namespace CeyPASS.WFA.UserControls.Ayarlar
             txtAciklama.ReadOnly = false;
             cmbCihazTipleri.Enabled = true;
             chkSaatPenceresiAktifMi.Enabled = true;
+            chkAnaGirisCikisMi.Enabled = true;
+            chkAracGirisCikisMi.Enabled = true;
 
             btnKaydet.Tag = YetkiTipleri.Update;
             WinFormsAuthHelper.ApplyPageAuthorization(_auth, _session, PageName, this);
@@ -259,6 +267,8 @@ namespace CeyPASS.WFA.UserControls.Ayarlar
             if (cmbCihazTipleri.Items.Count > 0)
                 cmbCihazTipleri.SelectedIndex = 0;
             chkSaatPenceresiAktifMi.Checked = false;
+            chkAnaGirisCikisMi.Checked = false;
+            chkAracGirisCikisMi.Checked = false;
         }
         private void FillInputs(Cihaz c)
         {
@@ -271,6 +281,8 @@ namespace CeyPASS.WFA.UserControls.Ayarlar
             if (cmbCihazTipleri.DataSource != null)
                 cmbCihazTipleri.SelectedValue = c.CihazTipi;
             chkSaatPenceresiAktifMi.Checked = c.SaatPenceresiAktifMi;
+            chkAnaGirisCikisMi.Checked = c.AnaGirisCikisMi;
+            chkAracGirisCikisMi.Checked = c.AracGirisCikisMi;
         }
         private void FillInputsFromSelection()
         {
@@ -284,10 +296,14 @@ namespace CeyPASS.WFA.UserControls.Ayarlar
         }
         private Cihaz CollectFromInputs()
         {
-            if (string.IsNullOrWhiteSpace(txtCihazAdi.Text))
-                throw new Exception("Cihaz Adı boş olamaz.");
-            if (string.IsNullOrWhiteSpace(txtIpAdres.Text))
-                throw new Exception("IP Adres boş olamaz.");
+            _fieldErrors.Clear();
+            bool ok = true;
+            if (!_fieldErrors.Require(txtCihazAdi, txtCihazAdi.Text, "Cihaz Adı boş olamaz."))
+                ok = false;
+            if (!_fieldErrors.Require(txtIpAdres, txtIpAdres.Text, "IP Adres boş olamaz."))
+                ok = false;
+            if (!ok)
+                throw new Exception(_fieldErrors.FirstMessage ?? "Zorunlu alanları doldurun.");
 
             int.TryParse(txtPort.Text, out var port);
             if (port <= 0) port = 4370;
@@ -303,7 +319,9 @@ namespace CeyPASS.WFA.UserControls.Ayarlar
                 Notlar = string.IsNullOrWhiteSpace(txtAciklama.Text) ? null : txtAciklama.Text.Trim(),
                 CihazTipi = Convert.ToInt32(cmbCihazTipleri.SelectedValue),
                 AktifMi = true,
-                SaatPenceresiAktifMi = chkSaatPenceresiAktifMi.Checked
+                SaatPenceresiAktifMi = chkSaatPenceresiAktifMi.Checked,
+                AnaGirisCikisMi = chkAnaGirisCikisMi.Checked,
+                AracGirisCikisMi = chkAracGirisCikisMi.Checked
             };
         }
         private void Save()
@@ -372,18 +390,24 @@ namespace CeyPASS.WFA.UserControls.Ayarlar
             if (!_auth.DeleteAbility(PageName))
             { MessageBox.Show("Silme (pasife çekme) yetkiniz yok."); return; }
 
-            if (MessageBox.Show($"“{it.CihazAdi}” pasife çekilsin mi?",
-                    "Onay", MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes)
+            if (!UiConfirm.Confirm(this, $"“{it.CihazAdi}” pasife çekilsin mi?", "Onay", "Pasife al", "Vazgeç"))
                 return;
 
             var cid = Guid.NewGuid().ToString("N");
             try
             {
-                _svc.PasifYap(it.CihazId);
+                var cihazId = it.CihazId;
+                _svc.PasifYap(cihazId);
                 LoadList();
                 EnterListMode();
-                MessageBox.Show("Cihaz pasife çekildi.");
-                LogHelper.Info(PageName, "Delete", $"Cihaz pasife çekildi (Id={it.CihazId}).",
+                UiUndo.Offer("Cihaz pasife çekildi.", () =>
+                {
+                    _svc.AktifYap(cihazId);
+                    LoadList();
+                    EnterListMode();
+                    UiStatus.Set("Geri alındı.");
+                });
+                LogHelper.Info(PageName, "Delete", $"Cihaz pasife çekildi (Id={cihazId}).",
                                detayJson: $"{{\"Ad\":\"{LogHelper.Escape((string)it.CihazAdi)}\"}}", cid: cid);
             }
             catch (Exception ex)

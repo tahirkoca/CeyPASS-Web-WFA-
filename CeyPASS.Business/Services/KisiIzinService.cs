@@ -19,6 +19,7 @@ namespace CeyPASS.Business.Services
         public bool Guncelle(KisiIzin izin) => _repo.Update(izin);
         public KisiIzin GetById(int kisiIzinId) => _repo.GetById(kisiIzinId);
         public bool PasifYap(int kisiIzinId) => _repo.PasifYap(kisiIzinId);
+        public bool AktifYap(int kisiIzinId) => _repo.AktifYap(kisiIzinId);
         public DataTable GetTumIzinler(int? firmaId, string personelId, int? izinTipId, DateTime bas, DateTime bit) => _repo.GetIzinRaporu(firmaId, personelId, izinTipId, bas, bit);
         public List<KisiIzinListRow> GetTumIzinlerPaged(int? firmaId, string personelId, int? izinTipId, DateTime bas, DateTime bit, int page, int pageSize, out int totalCount)
             => _repo.GetIzinRaporuPaged(firmaId, personelId, izinTipId, bas, bit, page, pageSize, out totalCount);

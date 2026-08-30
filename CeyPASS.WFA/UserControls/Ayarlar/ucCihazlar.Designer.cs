@@ -43,6 +43,8 @@ namespace CeyPASS.WFA.UserControls.Ayarlar
             this.cmbCihazTipleri = new System.Windows.Forms.ComboBox();
             this.lblSaatPenceresi = new System.Windows.Forms.Label();
             this.chkSaatPenceresiAktifMi = new System.Windows.Forms.CheckBox();
+            this.chkAnaGirisCikisMi = new System.Windows.Forms.CheckBox();
+            this.chkAracGirisCikisMi = new System.Windows.Forms.CheckBox();
             this.lblHeaderInfo = new System.Windows.Forms.Label();
             this.pnlFooter = new System.Windows.Forms.Panel();
             this.btnVazgec = new System.Windows.Forms.Button();
@@ -125,10 +127,12 @@ namespace CeyPASS.WFA.UserControls.Ayarlar
             this.tlpForm.Controls.Add(this.cmbCihazTipleri, 1, 6);
             this.tlpForm.Controls.Add(this.lblSaatPenceresi, 0, 7);
             this.tlpForm.Controls.Add(this.chkSaatPenceresiAktifMi, 1, 7);
+            this.tlpForm.Controls.Add(this.chkAnaGirisCikisMi, 1, 8);
+            this.tlpForm.Controls.Add(this.chkAracGirisCikisMi, 1, 9);
             this.tlpForm.Dock = System.Windows.Forms.DockStyle.Top;
             this.tlpForm.Location = new System.Drawing.Point(20, 68);
             this.tlpForm.Name = "tlpForm";
-            this.tlpForm.RowCount = 8;
+            this.tlpForm.RowCount = 10;
             this.tlpForm.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 50F));
             this.tlpForm.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 50F));
             this.tlpForm.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 50F));
@@ -137,7 +141,9 @@ namespace CeyPASS.WFA.UserControls.Ayarlar
             this.tlpForm.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 80F));
             this.tlpForm.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 50F));
             this.tlpForm.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 50F));
-            this.tlpForm.Size = new System.Drawing.Size(845, 440);
+            this.tlpForm.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 40F));
+            this.tlpForm.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 40F));
+            this.tlpForm.Size = new System.Drawing.Size(845, 520);
             this.tlpForm.TabIndex = 0;
             // 
             // label8
@@ -322,6 +328,30 @@ namespace CeyPASS.WFA.UserControls.Ayarlar
             this.chkSaatPenceresiAktifMi.TabIndex = 15;
             this.chkSaatPenceresiAktifMi.Text = "Yemek saat penceresi aktif";
             this.chkSaatPenceresiAktifMi.UseVisualStyleBackColor = true;
+            // 
+            // chkAnaGirisCikisMi
+            // 
+            this.chkAnaGirisCikisMi.Anchor = System.Windows.Forms.AnchorStyles.Left;
+            this.chkAnaGirisCikisMi.AutoSize = true;
+            this.chkAnaGirisCikisMi.Font = new System.Drawing.Font("Segoe UI", 10F);
+            this.chkAnaGirisCikisMi.Location = new System.Drawing.Point(172, 447);
+            this.chkAnaGirisCikisMi.Name = "chkAnaGirisCikisMi";
+            this.chkAnaGirisCikisMi.Size = new System.Drawing.Size(400, 27);
+            this.chkAnaGirisCikisMi.TabIndex = 16;
+            this.chkAnaGirisCikisMi.Text = "Ana giriş/çıkış (Danışma / normal Canlı İzleme)";
+            this.chkAnaGirisCikisMi.UseVisualStyleBackColor = true;
+            // 
+            // chkAracGirisCikisMi
+            // 
+            this.chkAracGirisCikisMi.Anchor = System.Windows.Forms.AnchorStyles.Left;
+            this.chkAracGirisCikisMi.AutoSize = true;
+            this.chkAracGirisCikisMi.Font = new System.Drawing.Font("Segoe UI", 10F);
+            this.chkAracGirisCikisMi.Location = new System.Drawing.Point(172, 487);
+            this.chkAracGirisCikisMi.Name = "chkAracGirisCikisMi";
+            this.chkAracGirisCikisMi.Size = new System.Drawing.Size(320, 27);
+            this.chkAracGirisCikisMi.TabIndex = 17;
+            this.chkAracGirisCikisMi.Text = "Araç giriş/çıkış (ARAÇ Canlı İzleme)";
+            this.chkAracGirisCikisMi.UseVisualStyleBackColor = true;
             // 
             // lblHeaderInfo
             // 
@@ -537,6 +567,8 @@ namespace CeyPASS.WFA.UserControls.Ayarlar
         private System.Windows.Forms.ComboBox cmbCihazTipleri;
         private System.Windows.Forms.Label lblSaatPenceresi;
         private System.Windows.Forms.CheckBox chkSaatPenceresiAktifMi;
+        private System.Windows.Forms.CheckBox chkAnaGirisCikisMi;
+        private System.Windows.Forms.CheckBox chkAracGirisCikisMi;
 
         // Butonlar (Orijinal tipleri korundu)
         private System.Windows.Forms.Button btnVazgec;

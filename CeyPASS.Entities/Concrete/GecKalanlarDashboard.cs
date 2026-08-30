@@ -7,6 +7,8 @@
         public string Soyad { get; set; } = "";
         public int FirmaId { get; set; }
         public int IsyeriId { get; set; }
+        public string FirmaAdi { get; set; } = "";
+        public string IsyeriAdi { get; set; } = "";
         public int FazlaDakika { get; set; }
     }
 }

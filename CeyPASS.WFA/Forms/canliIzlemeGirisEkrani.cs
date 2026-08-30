@@ -33,6 +33,9 @@ namespace CeyPASS.WFA.Forms
         private void canliIzlemeGirisEkrani_Load(object sender, EventArgs e)
         {
             ApplyTheme();
+            pnlCard.Location = new System.Drawing.Point(
+                (pnlBackground.ClientSize.Width - pnlCard.Width) / 2,
+                (pnlBackground.ClientSize.Height - pnlCard.Height) / 2);
             var dt = _svc.GetFirmalar();
             canliIzlemeBolgeBox.DataSource = dt;
             canliIzlemeBolgeBox.DisplayMember = "FirmaAdi";

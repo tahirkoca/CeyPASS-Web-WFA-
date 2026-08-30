@@ -179,3 +179,7 @@ __pycache__/
 CeyPASS.Mobile/.env
 CeyPASS.Mobile/.env.*
 !CeyPASS.Mobile/.env.example
+
+# Docs screenshot capture (Playwright)
+docs/scripts/node_modules/
+docs/scripts/package-lock.json

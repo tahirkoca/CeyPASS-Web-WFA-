@@ -183,7 +183,6 @@ export function ResmiTatillerScreen(props: { user: any; abilities: any; onOpenMe
         rightIcon2={canApprove ? "upload" : canCreate ? "plus" : "bell-outline"}
         onRightPress2={canApprove ? () => setBulkVisible(true) : canCreate ? openCreate : () => quickMenu.open("notif")}
         rightBadge2={canApprove || canCreate ? undefined : notif.unreadCount}
-        rightA11yLabel2={canApprove ? "Sabit tatilleri aktar" : canCreate ? "Resmi tatil ekle" : "Bildirimler ve hesap"}
       />
       {quickMenu.modal}
     </>

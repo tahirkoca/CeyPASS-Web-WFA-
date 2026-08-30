@@ -28,6 +28,7 @@ namespace CeyPASS.WFA.UserControls.VMY
         AuthorizationHelper authHelp;
         private const string PageName = "Vardiyalar";
         private const string PageNameUI = "Vardiyalar";
+        private readonly WinFormsFieldErrors _fieldErrors;
 
         private Panel pnlYemekPencereleri;
         private Button btnYemekSaatleri;
@@ -59,6 +60,7 @@ namespace CeyPASS.WFA.UserControls.VMY
             ICihazService cihazSvc)
         {
             InitializeComponent();
+            _fieldErrors = new WinFormsFieldErrors(this);
             _session = session;
             _vsvc = vsvc;
             _auth = auth;
@@ -740,8 +742,7 @@ namespace CeyPASS.WFA.UserControls.VMY
                 return;
             }
 
-            if (MessageBox.Show("Seçili yemek saat penceresi silinsin mi?", "Onay",
-                    MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes)
+            if (!UiConfirm.Confirm(this, "Seçili yemek saat penceresi silinsin mi?", "Onay", "Sil", "Vazgeç"))
                 return;
 
             if (!_yemekYetkiSvc.Delete(_seciliYemekYetkiId.Value))
@@ -957,10 +958,9 @@ namespace CeyPASS.WFA.UserControls.VMY
             { System.Media.SystemSounds.Beep.Play(); return; }
 
             var ad = (txtVardiyaAdi.Text ?? "").Trim();
-            if (string.IsNullOrWhiteSpace(ad))
+            _fieldErrors.Clear();
+            if (!_fieldErrors.Require(txtVardiyaAdi, ad, "Vardiya adı boş bırakılamaz."))
             {
-                MessageBox.Show("Vardiya adı boş bırakılamaz.", "Uyarı",
-                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 txtVardiyaAdi.Focus();
                 return;
             }
@@ -1008,8 +1008,7 @@ namespace CeyPASS.WFA.UserControls.VMY
             if (!_auth.Can(PageName, YetkiTipleri.Delete)) { System.Media.SystemSounds.Beep.Play(); return; }
             if (!(chkVardiyalar.SelectedItem is CalismaSekli it)) return;
 
-            if (MessageBox.Show($"“{it.Ad}” silinsin mi?",
-                "Onay", MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes)
+            if (!UiConfirm.Confirm(this, $"“{it.Ad}” silinsin mi?", "Onay", "Sil", "Vazgeç"))
                 return;
 
             try

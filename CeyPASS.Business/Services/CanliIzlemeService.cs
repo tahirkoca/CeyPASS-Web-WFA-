@@ -26,6 +26,10 @@ namespace CeyPASS.Business.Services
         {
             return _canliRepo.GetLastPassesYemekhane(firmaId, take);
         }
+        public List<LastPassDTO> GetLastPassesArac(int firmaId, int take)
+        {
+            return _canliRepo.GetLastPassesArac(firmaId, take);
+        }
         public List<string> GetKullaniciAdlariByFirma(int firmaId)
         {
             return _canliRepo.GetKullaniciAdlariByFirma(firmaId);

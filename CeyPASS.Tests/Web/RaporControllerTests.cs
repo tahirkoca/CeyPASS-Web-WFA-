@@ -23,6 +23,7 @@ namespace CeyPASS.Tests.Web
         private readonly Mock<IKullaniciFirmaIsyeriYetkiService> _yetkiMock = new();
         private readonly Mock<IKisiEkraniLookUpService> _lookupMock = new();
         private readonly Mock<ICihazService> _cihazMock = new();
+        private readonly Mock<IFirmaService> _firmaMock = new();
         private readonly Mock<ISessionContext> _sessionMock = new();
         private readonly Mock<IAuthorizationService> _authMock = new();
         private readonly IMemoryCache _cache;
@@ -30,6 +31,10 @@ namespace CeyPASS.Tests.Web
         public RaporControllerTests()
         {
             _cache = new MemoryCache(new MemoryCacheOptions());
+            _firmaMock.Setup(f => f.GetAll()).Returns(new List<Firma>
+            {
+                new() { FirmaId = 1, FirmaAdi = "Test Firma" }
+            });
         }
 
         public void Dispose() => _cache.Dispose();
@@ -42,6 +47,7 @@ namespace CeyPASS.Tests.Web
                 _yetkiMock.Object,
                 _lookupMock.Object,
                 _cihazMock.Object,
+                _firmaMock.Object,
                 _sessionMock.Object,
                 _authMock.Object,
                 _cache);

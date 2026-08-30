@@ -6,7 +6,8 @@ import * as ImagePicker from "expo-image-picker";
 import { PersonelHeader } from "./PersonelHeader";
 import { personelService } from "../../services/personelApi";
 import { StatusPopup } from "../StatusPopup";
-
+import { BusyOverlay } from "../BusyOverlay";
+import { pageFilterPrefs } from "../../services/pageFilterPrefs";
 type LookupItem = { Id?: number; id?: number; Ad?: string; ad?: string };
 type FirmaItem = { FirmaId?: number; firmaId?: number; FirmaAdi?: string; firmaAdi?: string };
 type CalismaSekliItem = { Id?: number; id?: number; Ad?: string; ad?: string };
@@ -228,6 +229,7 @@ function PersonelFormModal(props: {
   const [dogumDate, setDogumDate] = useState<Date | null>(null);
   const [iseDate, setIseDate] = useState<Date>(new Date());
   const [pickerKind, setPickerKind] = useState<null | "dogum" | "ise">(null);
+  const [fieldErrors, setFieldErrors] = useState<{ PersonelId?: string; Ad?: string; Soyad?: string }>({});
 
   const [localLookups, setLocalLookups] = useState<any>(props.lookups);
   useEffect(() => {
@@ -311,6 +313,7 @@ function PersonelFormModal(props: {
     setDogumDate(toDateOrNull(pick(init, "DogumTarihi", "dogumTarihi")));
     setIseDate(toDateOrNull(pick(init, "IseGirisTarihi", "iseGirisTarihi")) ?? new Date());
     setPickerKind(null);
+    setFieldErrors({});
   }, [props.visible, props.initial, statuler.length, aktifFirma]);
 
   const vardiyaLabel = useMemo(() => {
@@ -402,6 +405,13 @@ function PersonelFormModal(props: {
   }
 
   async function submit() {
+    const nextErrors: { PersonelId?: string; Ad?: string; Soyad?: string } = {};
+    if (!s(kisi?.PersonelId).trim()) nextErrors.PersonelId = "Sicil No zorunludur.";
+    if (!s(kisi?.Ad).trim()) nextErrors.Ad = "Ad zorunludur.";
+    if (!s(kisi?.Soyad).trim()) nextErrors.Soyad = "Soyad zorunludur.";
+    setFieldErrors(nextErrors);
+    if (nextErrors.PersonelId || nextErrors.Ad || nextErrors.Soyad) return;
+
     const vardiyaCsvNow = joinCsv(vardiyaIds);
     const dogumIsoNow = dogumDate ? fmtIsoDate(dogumDate) : null;
     const iseIsoNow = iseDate ? fmtIsoDate(iseDate) : null;
@@ -470,11 +480,35 @@ function PersonelFormModal(props: {
           <View className="bg-white rounded-3xl border border-[#f1f5f9] p-5">
             <Text className="text-[#1e293b] font-extrabold mb-4">Temel Bilgiler</Text>
             <Text className="text-[#64748b] font-semibold mb-2">Sicil No *</Text>
-            <TextInput className="bg-[#f8fafc] border border-[#e2e8f0] rounded-2xl px-4 py-3 mb-3" value={s(kisi?.PersonelId)} onChangeText={(t) => setKisi((p: any) => ({ ...p, PersonelId: t }))} />
+            <TextInput
+              className={`bg-[#f8fafc] border rounded-2xl px-4 py-3 ${fieldErrors.PersonelId ? "border-[#dc2626] mb-1" : "border-[#e2e8f0] mb-3"}`}
+              value={s(kisi?.PersonelId)}
+              onChangeText={(t) => {
+                setKisi((p: any) => ({ ...p, PersonelId: t }));
+                if (fieldErrors.PersonelId) setFieldErrors((e) => ({ ...e, PersonelId: undefined }));
+              }}
+            />
+            {fieldErrors.PersonelId ? <Text className="text-[#dc2626] font-semibold text-[12px] mb-3">{fieldErrors.PersonelId}</Text> : null}
             <Text className="text-[#64748b] font-semibold mb-2">Ad *</Text>
-            <TextInput className="bg-[#f8fafc] border border-[#e2e8f0] rounded-2xl px-4 py-3 mb-3" value={s(kisi?.Ad)} onChangeText={(t) => setKisi((p: any) => ({ ...p, Ad: t }))} />
+            <TextInput
+              className={`bg-[#f8fafc] border rounded-2xl px-4 py-3 ${fieldErrors.Ad ? "border-[#dc2626] mb-1" : "border-[#e2e8f0] mb-3"}`}
+              value={s(kisi?.Ad)}
+              onChangeText={(t) => {
+                setKisi((p: any) => ({ ...p, Ad: t }));
+                if (fieldErrors.Ad) setFieldErrors((e) => ({ ...e, Ad: undefined }));
+              }}
+            />
+            {fieldErrors.Ad ? <Text className="text-[#dc2626] font-semibold text-[12px] mb-3">{fieldErrors.Ad}</Text> : null}
             <Text className="text-[#64748b] font-semibold mb-2">Soyad *</Text>
-            <TextInput className="bg-[#f8fafc] border border-[#e2e8f0] rounded-2xl px-4 py-3 mb-3" value={s(kisi?.Soyad)} onChangeText={(t) => setKisi((p: any) => ({ ...p, Soyad: t }))} />
+            <TextInput
+              className={`bg-[#f8fafc] border rounded-2xl px-4 py-3 ${fieldErrors.Soyad ? "border-[#dc2626] mb-1" : "border-[#e2e8f0] mb-3"}`}
+              value={s(kisi?.Soyad)}
+              onChangeText={(t) => {
+                setKisi((p: any) => ({ ...p, Soyad: t }));
+                if (fieldErrors.Soyad) setFieldErrors((e) => ({ ...e, Soyad: undefined }));
+              }}
+            />
+            {fieldErrors.Soyad ? <Text className="text-[#dc2626] font-semibold text-[12px] mb-3">{fieldErrors.Soyad}</Text> : null}
             <Text className="text-[#64748b] font-semibold mb-2">TC Kimlik No</Text>
             <TextInput className="bg-[#f8fafc] border border-[#e2e8f0] rounded-2xl px-4 py-3 mb-3" keyboardType="numeric" value={s(kisi?.TcKimlikNo)} onChangeText={(t) => setKisi((p: any) => ({ ...p, TcKimlikNo: t }))} />
             <Text className="text-[#64748b] font-semibold mb-2">Kart No</Text>
@@ -627,14 +661,23 @@ function PersonelFormModal(props: {
 export function PersonellerScreen(props: { user: any; abilities?: any; onOpenMenu?: () => void }) {
   const subtitle = useMemo(() => (props.user?.adSoyad ?? props.user?.AdSoyad ?? "").toString(), [props.user]);
   const [loading, setLoading] = useState(true);
+  const [filtersHydrated, setFiltersHydrated] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lookups, setLookups] = useState<any>(null);
   const [popupVisible, setPopupVisible] = useState(false);
   const [popupType, setPopupType] = useState<"success" | "error">("success");
   const [popupMessage, setPopupMessage] = useState("");
-  const showPopup = (type: "success" | "error", message: string) => {
+  const [popupUndo, setPopupUndo] = useState<(() => Promise<void>) | null>(null);
+  const [undoLoading, setUndoLoading] = useState(false);
+  const closePopup = () => {
+    setPopupVisible(false);
+    setPopupUndo(null);
+    setUndoLoading(false);
+  };
+  const showPopup = (type: "success" | "error", message: string, undo?: () => Promise<void>) => {
     setPopupType(type);
     setPopupMessage(message);
+    setPopupUndo(undo ?? null);
     setPopupVisible(true);
   };
 
@@ -696,18 +739,24 @@ export function PersonellerScreen(props: { user: any; abilities?: any; onOpenMen
   async function loadLookups() {
     try {
       const r = await personelService.lookupsForFirma(firmaId);
-      if (r?.success) setLookups(r.data);
+      if (r?.success) {
+        setLookups(r.data);
+        return r.data;
+      }
     } catch {}
+    return null;
   }
 
-  async function loadList(nextPage = 1, nextPageSize = pageSize) {
+  async function loadList(nextPage = 1, nextPageSize = pageSize, opts?: { manageLoading?: boolean; isyeriIdOverride?: number | null }) {
+    const manageLoading = opts?.manageLoading !== false;
+    const listIsyeriId = opts?.isyeriIdOverride !== undefined ? opts.isyeriIdOverride : isyeriId;
     try {
-      setLoading(true);
+      if (manageLoading) setLoading(true);
       setError(null);
       const r = await personelService.list({
         search: q || undefined,
         firmaId: firmaId ?? undefined,
-        isyeriId: isyeriId ?? undefined,
+        isyeriId: listIsyeriId ?? undefined,
         puantajYapilirMi: sadeceIstenCikanlar ? undefined : puantajYapilirMi,
         sadeceIstenCikanlar,
         page: nextPage,
@@ -739,23 +788,53 @@ export function PersonellerScreen(props: { user: any; abilities?: any; onOpenMen
       setTotalPages(1);
       setTotalCount(0);
     } finally {
-      setLoading(false);
+      if (manageLoading) setLoading(false);
     }
   }
 
   useEffect(() => {
-    // initial load
-    loadLookups();
-    loadList(1, pageSize);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    (async () => {
+      const prefs = await pageFilterPrefs.load("Personeller");
+      if (prefs) {
+        if (typeof prefs.firmaId === "number" && prefs.firmaId > 0) setFirmaId(prefs.firmaId);
+        if (typeof prefs.isyeriId === "number" && prefs.isyeriId > 0) setIsyeriId(prefs.isyeriId);
+        if (prefs.boolA === true) setCalismaDurumu("cikan");
+        else if (prefs.boolA === false) setCalismaDurumu("aktif");
+        if (prefs.boolB === true) setKartTipi("puantaj");
+        else if (prefs.boolB === false) setKartTipi("puantajsiz");
+      }
+      setFiltersHydrated(true);
+    })();
   }, []);
 
   useEffect(() => {
-    // filters changed -> reload page 1
-    loadLookups();
-    loadList(1, pageSize);
+    if (!filtersHydrated) return;
+    void pageFilterPrefs.save("Personeller", {
+      firmaId,
+      isyeriId,
+      boolA: calismaDurumu === "cikan",
+      boolB: kartTipi === "puantaj",
+    });
+    (async () => {
+      setLoading(true);
+      try {
+        const data = await loadLookups();
+        let effectiveIsyeri = isyeriId;
+        if (data && isyeriId != null) {
+          const list = (data?.Isyerleri ?? data?.isyerleri ?? []) as LookupItem[];
+          if (!list.some((x) => pickId(x) === isyeriId)) {
+            effectiveIsyeri = null;
+            setIsyeriId(null);
+            return; // next effect run with cleared isyeri
+          }
+        }
+        await loadList(1, pageSize, { manageLoading: false, isyeriIdOverride: effectiveIsyeri });
+      } finally {
+        setLoading(false);
+      }
+    })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [kartTipi, calismaDurumu, firmaId, isyeriId, pageSize]);
+  }, [filtersHydrated, kartTipi, calismaDurumu, firmaId, isyeriId, pageSize]);
 
   useEffect(() => {
     if (!pendingEditOpen) return;
@@ -962,7 +1041,24 @@ export function PersonellerScreen(props: { user: any; abilities?: any; onOpenMen
         showPopup("error", msg);
       }
       else {
-        showPopup("success", r?.message || "İşlem başarılı.");
+        const undoPid = pid;
+        const puantajForUndo = !!pick(detail, "PuantajYapilabilir", "puantajYapilabilir");
+        showPopup("success", r?.message || "İşlem başarılı.", async () => {
+          setUndoLoading(true);
+          try {
+            const ur = await personelService.tekrarAktifEt({ personelId: undoPid, puantajYapilirMi: puantajForUndo });
+            if (!ur?.success) throw new Error(ur?.message || "Geri alma başarısız.");
+            closePopup();
+            showPopup("success", "Geri alındı.");
+            setIstenVisible(false);
+            await openDetails(undoPid);
+            await loadList(page, pageSize);
+          } catch (err: any) {
+            showPopup("error", apiErrorMessage(err));
+          } finally {
+            setUndoLoading(false);
+          }
+        });
         setIstenVisible(false);
         await openDetails(pid);
         await loadList(page, pageSize);
@@ -978,7 +1074,8 @@ export function PersonellerScreen(props: { user: any; abilities?: any; onOpenMen
 
   return (
     <View className="flex-1 bg-[#f8fafc]">
-      <StatusPopup visible={popupVisible} type={popupType} message={popupMessage} onClose={() => setPopupVisible(false)} useModal={false} autoCloseMs={1500} />
+      <StatusPopup visible={popupVisible} type={popupType} message={popupMessage} onClose={closePopup} useModal={false} autoCloseMs={popupUndo ? 7000 : 1500} onUndo={popupUndo ? () => popupUndo() : undefined} undoLoading={undoLoading} />
+      <BusyOverlay visible={loading} title="Yükleniyor..." message="Personel listesi hazırlanıyor" />
       <PersonelHeader title="Personeller" subtitle={subtitle} onOpenMenu={props.onOpenMenu} />
 
       <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 30 }}>
@@ -1202,7 +1299,7 @@ export function PersonellerScreen(props: { user: any; abilities?: any; onOpenMen
                       className="flex-1 bg-[#16a34a] rounded-2xl py-4 items-center"
                       disabled={acting}
                     >
-                      <Text className="text-white font-extrabold">Aktif Et</Text>
+                      <Text className="text-white font-extrabold">Aktif et</Text>
                     </TouchableOpacity>
                   ) : null}
                   {!sadeceIstenCikanlar && can.update ? (
@@ -1282,7 +1379,7 @@ export function PersonellerScreen(props: { user: any; abilities?: any; onOpenMen
                 <Text className="text-[#334155] font-extrabold">Vazgeç</Text>
               </TouchableOpacity>
               <TouchableOpacity onPress={doTekrarAktifEt} disabled={acting} className="flex-1 bg-[#16a34a] rounded-2xl py-3 items-center">
-                <Text className="text-white font-extrabold">{acting ? "İşleniyor..." : "Aktif Et"}</Text>
+                <Text className="text-white font-extrabold">{acting ? "İşleniyor..." : "Aktif et"}</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -1317,7 +1414,7 @@ export function PersonellerScreen(props: { user: any; abilities?: any; onOpenMen
                 <Text className="text-[#334155] font-extrabold">Vazgeç</Text>
               </TouchableOpacity>
               <TouchableOpacity onPress={doIstenCikar} disabled={acting} className="flex-1 bg-[#dc2626] rounded-2xl py-3 items-center">
-                <Text className="text-white font-extrabold">{acting ? "İşleniyor..." : "Onayla"}</Text>
+                <Text className="text-white font-extrabold">{acting ? "İşleniyor..." : "İşten çıkar"}</Text>
               </TouchableOpacity>
             </View>
           </View>

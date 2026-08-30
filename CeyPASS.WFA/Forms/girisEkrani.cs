@@ -28,10 +28,12 @@ namespace CeyPASS.WFA
         private readonly IMisafirKartService _mksvc;
         private readonly IKullaniciFirmaIsyeriYetkiService _yetkiSvc;
         private readonly IServiceProvider _sp;
+        private readonly WinFormsFieldErrors _fieldErrors;
 
         public girisEkrani(ISessionContext session,ICanliIzlemeService svc,ISifreService ssvc,IKullaniciService ksvc,IEmailService esvc,IKisiHareketService khsvc,IKisiDetayService kdsvc,IMisafirKartService mksvc, IKullaniciFirmaIsyeriYetkiService yetkiSvc, IServiceProvider sp)
         {
             InitializeComponent();
+            _fieldErrors = new WinFormsFieldErrors(this);
             SendMessage(txtSifre.Handle, EM_SETCUEBANNER, 0, "Şifrenizi giriniz");
             this.KeyPreview = true;
             this.KeyDown += girisEkrani_KeyDown;
@@ -45,10 +47,35 @@ namespace CeyPASS.WFA
             _mksvc = mksvc;
             _yetkiSvc = yetkiSvc;
             _sp = sp;
+            this.Resize += (_, _) => LayoutLoginChrome();
+        }
+
+        /// <summary>WPF LoginWindow ile aynı boyut ve dikey hizalama (460×700, kart ortada).</summary>
+        private void LayoutLoginChrome()
+        {
+            const int marginRight = 18;
+            const int marginTop = 18;
+
+            btnCanliIzleme.Location = new Point(
+                pnlBackground.ClientSize.Width - btnCanliIzleme.Width - marginRight,
+                marginTop);
+
+            pnlLoginCard.Location = new Point(
+                (pnlBackground.ClientSize.Width - pnlLoginCard.Width) / 2,
+                (pnlBackground.ClientSize.Height - pnlLoginCard.Height) / 2);
+
+            if (lblVersion != null)
+            {
+                lblVersion.Location = new Point(
+                    pnlBackground.ClientSize.Width - lblVersion.Width - 20,
+                    pnlBackground.ClientSize.Height - lblVersion.Height - 16);
+            }
         }
         private void girisEkrani_Load(object sender, EventArgs e) 
         {
+            ApplyCanliIzlemeIcon();
             CreateVersionLabel();
+            LayoutLoginChrome();
             // Sürüm: AssemblyVersion ile aynı kaynaktan; Application.ProductVersion AssemblyInformationalVersion kullanır
             var version = Application.ProductVersion ?? Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "0.0.0";
             this.Text = $"CeyPASS v{version}";
@@ -58,10 +85,36 @@ namespace CeyPASS.WFA
             if (cmbKullaniciAdi.Items.Count > 0)
                 cmbKullaniciAdi.SelectedIndex = 0;
         }
+
+        /// <summary>48px kaynak ikon buton yüksekliğini aşıp kesiliyordu; WPF gibi ~22px kullan.</summary>
+        private void ApplyCanliIzlemeIcon()
+        {
+            var src = Properties.Resources.icons8_security_check_48;
+            if (src == null) return;
+            var scaled = new Bitmap(22, 22);
+            using (var g = Graphics.FromImage(scaled))
+            {
+                g.InterpolationMode = InterpolationMode.HighQualityBicubic;
+                g.SmoothingMode = SmoothingMode.HighQuality;
+                g.DrawImage(src, 0, 0, 22, 22);
+            }
+            btnCanliIzleme.Image = scaled;
+            btnCanliIzleme.ImageAlign = ContentAlignment.MiddleCenter;
+            btnCanliIzleme.TextAlign = ContentAlignment.MiddleCenter;
+            btnCanliIzleme.TextImageRelation = TextImageRelation.ImageBeforeText;
+        }
         private void btnGiris_Click(object sender, EventArgs e)
         {
             string kullaniciAdi = (cmbKullaniciAdi.SelectedValue ?? cmbKullaniciAdi.Text)?.ToString()?.Trim() ?? "";
             string sifre = txtSifre.Text.Trim();
+
+            _fieldErrors.Clear();
+            bool ok = true;
+            if (!_fieldErrors.Require(cmbKullaniciAdi, kullaniciAdi, "Lütfen kullanıcı adınızı girin."))
+                ok = false;
+            if (!_fieldErrors.Require(txtSifre, sifre, "Lütfen şifrenizi girin."))
+                ok = false;
+            if (!ok) return;
 
             Kullanici kullanici = _ksvc.GirisYap(kullaniciAdi, sifre);
 
@@ -106,7 +159,8 @@ namespace CeyPASS.WFA
 
             if (string.IsNullOrEmpty(kullaniciAdi))
             {
-                MessageBox.Show("Lütfen kullanıcı adınızı girin.");
+                _fieldErrors.Clear();
+                _fieldErrors.Set(cmbKullaniciAdi, "Lütfen kullanıcı adınızı girin.");
                 return;
             }
 
@@ -156,7 +210,7 @@ namespace CeyPASS.WFA
             lblVersion = new Label
             {
                 Text = $"Ver {version}",
-                Font = new Font("Segoe UI", 20f, FontStyle.Bold),
+                Font = new Font("Segoe UI", 13f, FontStyle.Bold),
                 ForeColor = Color.White,
                 BackColor = Color.Transparent,
                 AutoSize = true,
@@ -168,23 +222,8 @@ namespace CeyPASS.WFA
             //pnlBackground.Controls.Add(lblVersion, 2, 4);
             pnlBackground.Controls.Add(lblVersion);
 
-            // Sağ alt köşeye yerleştir
-            lblVersion.Location = new Point(
-                this.ClientSize.Width - lblVersion.Width - 15,
-                this.ClientSize.Height - lblVersion.Height - 10
-            );
-
-            // Resize olayında konumu güncelle
-            this.Resize += (s, e) =>
-            {
-                if (lblVersion != null)
-                {
-                    lblVersion.Location = new Point(
-                        this.ClientSize.Width - lblVersion.Width - 15,
-                        this.ClientSize.Height - lblVersion.Height - 10
-                    );
-                }
-            };
+            this.MinimumSize = this.Size;
+            this.MaximumSize = this.Size;
         }
         private void pnlBackground_Paint(object sender, PaintEventArgs e)
         {

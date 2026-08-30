@@ -37,6 +37,8 @@ namespace CeyPASS.WFA.UserControls.Raporlar
             this.pnlSearchFilters = new System.Windows.Forms.Panel();
             this.label4 = new System.Windows.Forms.Label();
             this.cmbRaporTurleri = new System.Windows.Forms.ComboBox();
+            this.lblFirma = new System.Windows.Forms.Label();
+            this.cmbFirma = new System.Windows.Forms.ComboBox();
             this.txtFiltrele = new System.Windows.Forms.TextBox();
             this.btnFiltrele = new System.Windows.Forms.Button();
             this.pnlActions = new System.Windows.Forms.FlowLayoutPanel();
@@ -84,10 +86,10 @@ namespace CeyPASS.WFA.UserControls.Raporlar
             this.pnlGridContainer.BackColor = System.Drawing.Color.White;
             this.pnlGridContainer.Controls.Add(this.dgRaporlar);
             this.pnlGridContainer.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.pnlGridContainer.Location = new System.Drawing.Point(0, 220);
+            this.pnlGridContainer.Location = new System.Drawing.Point(0, 250);
             this.pnlGridContainer.Name = "pnlGridContainer";
             this.pnlGridContainer.Padding = new System.Windows.Forms.Padding(10, 6, 10, 10);
-            this.pnlGridContainer.Size = new System.Drawing.Size(1358, 603);
+            this.pnlGridContainer.Size = new System.Drawing.Size(1358, 573);
             this.pnlGridContainer.TabIndex = 2;
             // 
             // dgRaporlar
@@ -109,7 +111,7 @@ namespace CeyPASS.WFA.UserControls.Raporlar
             this.pnlFilters.Dock = System.Windows.Forms.DockStyle.Top;
             this.pnlFilters.Location = new System.Drawing.Point(0, 0);
             this.pnlFilters.Name = "pnlFilters";
-            this.pnlFilters.Size = new System.Drawing.Size(1358, 220);
+            this.pnlFilters.Size = new System.Drawing.Size(1358, 250);
             this.pnlFilters.TabIndex = 0;
             // 
             // tlpFilters
@@ -126,10 +128,10 @@ namespace CeyPASS.WFA.UserControls.Raporlar
             this.tlpFilters.Location = new System.Drawing.Point(0, 0);
             this.tlpFilters.Name = "tlpFilters";
             this.tlpFilters.RowCount = 2;
-            this.tlpFilters.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 128F));
+            this.tlpFilters.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 158F));
             this.tlpFilters.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 86F));
             this.tlpFilters.SetColumnSpan(this.pnlIsyeriFilters, 3);
-            this.tlpFilters.Size = new System.Drawing.Size(1358, 220);
+            this.tlpFilters.Size = new System.Drawing.Size(1358, 250);
             this.tlpFilters.TabIndex = 0;
             // 
             // pnlDateFilters
@@ -185,39 +187,60 @@ namespace CeyPASS.WFA.UserControls.Raporlar
             // 
             this.pnlSearchFilters.Controls.Add(this.label4);
             this.pnlSearchFilters.Controls.Add(this.cmbRaporTurleri);
+            this.pnlSearchFilters.Controls.Add(this.lblFirma);
+            this.pnlSearchFilters.Controls.Add(this.cmbFirma);
             this.pnlSearchFilters.Controls.Add(this.txtFiltrele);
             this.pnlSearchFilters.Controls.Add(this.btnFiltrele);
             this.pnlSearchFilters.Dock = System.Windows.Forms.DockStyle.Fill;
             this.pnlSearchFilters.Location = new System.Drawing.Point(410, 3);
             this.pnlSearchFilters.Name = "pnlSearchFilters";
             this.pnlSearchFilters.Padding = new System.Windows.Forms.Padding(10);
-            this.pnlSearchFilters.Size = new System.Drawing.Size(445, 161);
+            this.pnlSearchFilters.Size = new System.Drawing.Size(445, 152);
             this.pnlSearchFilters.TabIndex = 1;
             // 
             // label4
             // 
             this.label4.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
             this.label4.ForeColor = System.Drawing.Color.Gray;
-            this.label4.Location = new System.Drawing.Point(10, 10);
+            this.label4.Location = new System.Drawing.Point(10, 58);
             this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(200, 20);
-            this.label4.TabIndex = 0;
+            this.label4.Size = new System.Drawing.Size(200, 18);
+            this.label4.TabIndex = 2;
             this.label4.Text = "Rapor Türü";
             // 
             // cmbRaporTurleri
             // 
             this.cmbRaporTurleri.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.cmbRaporTurleri.Font = new System.Drawing.Font("Segoe UI", 10F);
-            this.cmbRaporTurleri.Location = new System.Drawing.Point(10, 33);
+            this.cmbRaporTurleri.Location = new System.Drawing.Point(10, 76);
             this.cmbRaporTurleri.Name = "cmbRaporTurleri";
             this.cmbRaporTurleri.Size = new System.Drawing.Size(400, 31);
-            this.cmbRaporTurleri.TabIndex = 1;
+            this.cmbRaporTurleri.TabIndex = 3;
+            // 
+            // lblFirma
+            // 
+            this.lblFirma.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
+            this.lblFirma.ForeColor = System.Drawing.Color.Gray;
+            this.lblFirma.Location = new System.Drawing.Point(10, 6);
+            this.lblFirma.Name = "lblFirma";
+            this.lblFirma.Size = new System.Drawing.Size(200, 18);
+            this.lblFirma.TabIndex = 0;
+            this.lblFirma.Text = "Firma";
+            // 
+            // cmbFirma
+            // 
+            this.cmbFirma.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cmbFirma.Font = new System.Drawing.Font("Segoe UI", 10F);
+            this.cmbFirma.Location = new System.Drawing.Point(10, 24);
+            this.cmbFirma.Name = "cmbFirma";
+            this.cmbFirma.Size = new System.Drawing.Size(400, 31);
+            this.cmbFirma.TabIndex = 1;
             // 
             // txtFiltrele
             // 
             this.txtFiltrele.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left))));
             this.txtFiltrele.Font = new System.Drawing.Font("Segoe UI", 10F);
-            this.txtFiltrele.Location = new System.Drawing.Point(10, 90);
+            this.txtFiltrele.Location = new System.Drawing.Point(10, 114);
             this.txtFiltrele.Name = "txtFiltrele";
             this.txtFiltrele.Size = new System.Drawing.Size(312, 30);
             this.txtFiltrele.TabIndex = 2;
@@ -230,7 +253,7 @@ namespace CeyPASS.WFA.UserControls.Raporlar
             this.btnFiltrele.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnFiltrele.Image = global::CeyPASS.WFA.Properties.Resources.icons8_search_251;
             this.btnFiltrele.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            this.btnFiltrele.Location = new System.Drawing.Point(328, 90);
+            this.btnFiltrele.Location = new System.Drawing.Point(328, 114);
             this.btnFiltrele.Name = "btnFiltrele";
             this.btnFiltrele.Padding = new System.Windows.Forms.Padding(5, 0, 5, 0);
             this.btnFiltrele.Size = new System.Drawing.Size(82, 30);
@@ -386,6 +409,8 @@ namespace CeyPASS.WFA.UserControls.Raporlar
 
         private System.Windows.Forms.Label label4;
         private System.Windows.Forms.ComboBox cmbRaporTurleri;
+        private System.Windows.Forms.Label lblFirma;
+        private System.Windows.Forms.ComboBox cmbFirma;
         private System.Windows.Forms.TextBox txtFiltrele;
         private System.Windows.Forms.Button btnFiltrele;
 

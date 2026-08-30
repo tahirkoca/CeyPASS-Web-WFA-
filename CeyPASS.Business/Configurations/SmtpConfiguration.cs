@@ -1,3 +1,4 @@
+using System;
 using System.Configuration;
 
 namespace CeyPASS.Infrastructure.Configuration
@@ -24,6 +25,25 @@ namespace CeyPASS.Infrastructure.Configuration
             FromAddress = ConfigurationManager.AppSettings["EmailFromAddress"] ?? string.Empty;
             FromName = ConfigurationManager.AppSettings["EmailFromName"] ?? string.Empty;
         }
+
+        public SmtpConfiguration(
+            string host,
+            int port,
+            bool enableSsl,
+            string username,
+            string password,
+            string fromAddress,
+            string fromName)
+        {
+            Host = host ?? string.Empty;
+            Port = port;
+            EnableSsl = enableSsl;
+            Username = username ?? string.Empty;
+            Password = password ?? string.Empty;
+            FromAddress = fromAddress ?? string.Empty;
+            FromName = fromName ?? string.Empty;
+        }
+
         public void Validate()
         {
             if (string.IsNullOrWhiteSpace(Host))

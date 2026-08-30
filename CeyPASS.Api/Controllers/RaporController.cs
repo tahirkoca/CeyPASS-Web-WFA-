@@ -26,6 +26,7 @@ namespace CeyPASS.Api.Controllers
         private readonly IKullaniciFirmaIsyeriYetkiService _yetkiSvc;
         private readonly IKisiEkraniLookUpService _lookupService;
         private readonly ICihazService _cihazService;
+        private readonly IFirmaService _firmaService;
         private const string PageName = "Raporlar";
 
         public RaporController(
@@ -35,7 +36,8 @@ namespace CeyPASS.Api.Controllers
             IKullaniciQueryService kullaniciQueryService,
             IKullaniciFirmaIsyeriYetkiService yetkiSvc,
             IKisiEkraniLookUpService lookupService,
-            ICihazService cihazService)
+            ICihazService cihazService,
+            IFirmaService firmaService)
         {
             _raporService = raporService;
             _authorizationService = authorizationService;
@@ -44,6 +46,7 @@ namespace CeyPASS.Api.Controllers
             _yetkiSvc = yetkiSvc;
             _lookupService = lookupService;
             _cihazService = cihazService;
+            _firmaService = firmaService;
         }
 
         public sealed class PagedResponse<T>
@@ -91,46 +94,70 @@ namespace CeyPASS.Api.Controllers
             return Ok(ApiResult<List<string>>.Ok(names));
         }
 
-        [HttpGet("cihazlar")]
-        public ActionResult<ApiResult<List<LookupItem>>> GetCihazlar()
+        [HttpGet("firmalar")]
+        public ActionResult<ApiResult<List<LookupItem>>> GetFirmalar()
         {
             if (!_authorizationService.ViewAbility(PageName)) return Forbid();
-
-            int firmaId = _sessionContext.AktifFirmaId ?? 0;
-            if (firmaId == 0) return BadRequest(ApiResult.Failure("Firma bilgisi bulunamadı."));
 
             bool isAdmin = _sessionContext.IsAdmin();
             List<FirmaIsyeriYetkiDTO>? yetkiler = null;
             if (_sessionContext.AktifKullaniciId.HasValue)
                 yetkiler = _yetkiSvc.GetYetkiler(_sessionContext.AktifKullaniciId.Value);
 
-            if (!FirmaIsyeriYetkiHelper.IsFirmaAuthorized(firmaId, yetkiler, isAdmin))
+            var all = _firmaService.GetAll() ?? new List<Firma>();
+            var filtered = FirmaIsyeriYetkiHelper.FilterFirmalar(all, yetkiler, isAdmin)
+                .OrderBy(f => f.FirmaAdi)
+                .Select(f => new LookupItem { Id = f.FirmaId, Ad = f.FirmaAdi ?? $"Firma {f.FirmaId}" })
+                .ToList();
+
+            if (isAdmin)
+                filtered.Insert(0, new LookupItem { Id = 0, Ad = "TÜMÜ" });
+
+            return Ok(ApiResult<List<LookupItem>>.Ok(filtered));
+        }
+
+        [HttpGet("cihazlar")]
+        public ActionResult<ApiResult<List<LookupItem>>> GetCihazlar([FromQuery] int? firmaId = null)
+        {
+            if (!_authorizationService.ViewAbility(PageName)) return Forbid();
+
+            bool isAdmin = _sessionContext.IsAdmin();
+            int resolved = firmaId ?? (_sessionContext.AktifFirmaId ?? 0);
+            if (resolved == 0)
+                return Ok(ApiResult<List<LookupItem>>.Ok(new List<LookupItem>()));
+
+            List<FirmaIsyeriYetkiDTO>? yetkiler = null;
+            if (_sessionContext.AktifKullaniciId.HasValue)
+                yetkiler = _yetkiSvc.GetYetkiler(_sessionContext.AktifKullaniciId.Value);
+
+            if (!FirmaIsyeriYetkiHelper.IsFirmaAuthorized(resolved, yetkiler, isAdmin))
                 return Forbid();
 
-            var list = _cihazService.GetListe(true, firmaId) ?? new List<CihazListDTO>();
+            var list = _cihazService.GetListe(true, resolved) ?? new List<CihazListDTO>();
             var items = list.Select(c => new LookupItem { Id = c.CihazId, Ad = c.CihazAdi }).ToList();
             return Ok(ApiResult<List<LookupItem>>.Ok(items));
         }
 
         [HttpGet("isyerleri")]
-        public ActionResult<ApiResult<List<LookupItem>>> GetIsyerleri()
+        public ActionResult<ApiResult<List<LookupItem>>> GetIsyerleri([FromQuery] int? firmaId = null)
         {
             if (!_authorizationService.ViewAbility(PageName)) return Forbid();
 
-            int firmaId = _sessionContext.AktifFirmaId ?? 0;
-            if (firmaId == 0) return BadRequest(ApiResult.Failure("Firma bilgisi bulunamadı."));
-
             bool isAdmin = _sessionContext.IsAdmin();
+            int resolved = firmaId ?? (_sessionContext.AktifFirmaId ?? 0);
+            if (resolved == 0)
+                return Ok(ApiResult<List<LookupItem>>.Ok(new List<LookupItem>()));
+
             List<FirmaIsyeriYetkiDTO>? yetkiler = null;
             if (_sessionContext.AktifKullaniciId.HasValue)
                 yetkiler = _yetkiSvc.GetYetkiler(_sessionContext.AktifKullaniciId.Value);
 
-            if (!FirmaIsyeriYetkiHelper.IsFirmaAuthorized(firmaId, yetkiler, isAdmin))
+            if (!FirmaIsyeriYetkiHelper.IsFirmaAuthorized(resolved, yetkiler, isAdmin))
                 return Forbid();
 
             var items = FirmaIsyeriYetkiHelper.FilterIsyeriLookup(
-                _lookupService.GetIsyerleri(firmaId) ?? new List<LookupItem>(),
-                firmaId,
+                _lookupService.GetIsyerleri(resolved) ?? new List<LookupItem>(),
+                resolved,
                 yetkiler,
                 isAdmin);
 
@@ -144,20 +171,26 @@ namespace CeyPASS.Api.Controllers
             if (string.IsNullOrWhiteSpace(request.ProcedureAdi))
                 return BadRequest(ApiResult.Failure("Rapor seçiniz."));
 
+            bool isAdmin = _sessionContext.IsAdmin();
             int firmaId = request.FirmaId ?? (_sessionContext.AktifFirmaId ?? 0);
-            if (!_sessionContext.IsAdmin())
-                firmaId = _sessionContext.AktifFirmaId ?? firmaId;
-            if (firmaId == 0) return BadRequest(ApiResult.Failure("Firma bilgisi bulunamadı."));
+            if (!isAdmin && request.FirmaId == null)
+                firmaId = _sessionContext.AktifFirmaId ?? 0;
+
+            if (firmaId < 0)
+                return BadRequest(ApiResult.Failure("Geçersiz firma."));
+            if (firmaId == 0 && !isAdmin)
+                return BadRequest(ApiResult.Failure("Firma bilgisi bulunamadı."));
+            if (firmaId == 0 && isAdmin && request.FirmaId == null)
+                return BadRequest(ApiResult.Failure("Firma bilgisi bulunamadı."));
 
             if (request.Page < 1) request.Page = 1;
             if (request.PageSize < 1) request.PageSize = 100;
 
-            bool isAdmin = _sessionContext.IsAdmin();
             List<FirmaIsyeriYetkiDTO>? yetkiler = null;
             if (_sessionContext.AktifKullaniciId.HasValue)
                 yetkiler = _yetkiSvc.GetYetkiler(_sessionContext.AktifKullaniciId.Value);
 
-            if (!FirmaIsyeriYetkiHelper.IsFirmaAuthorized(firmaId, yetkiler, isAdmin))
+            if (firmaId > 0 && !FirmaIsyeriYetkiHelper.IsFirmaAuthorized(firmaId, yetkiler, isAdmin))
                 return Forbid();
 
             var spParams = _raporService.GetProcedureParameterNames(request.ProcedureAdi);
@@ -165,25 +198,28 @@ namespace CeyPASS.Api.Controllers
 
             string isyeriIdCsv = "";
             string cihazIdCsv = "";
-            if (kind == RaporParametreHelper.MultiSelectKind.Isyeri)
+            if (firmaId > 0)
             {
-                var (csv, status) = BuildRaporIsyeriIdListCsv(
-                    firmaId,
-                    request.IsyeriIds,
-                    yetkiler,
-                    isAdmin);
+                if (kind == RaporParametreHelper.MultiSelectKind.Isyeri)
+                {
+                    var (csv, status) = BuildRaporIsyeriIdListCsv(
+                        firmaId,
+                        request.IsyeriIds,
+                        yetkiler,
+                        isAdmin);
 
-                if (status == FirmaIsyeriYetkiHelper.RaporIsyeriListStatus.UnauthorizedSelection)
-                    return BadRequest(ApiResult.Failure("Seçilen işyerlerden bazıları için yetkiniz yok."));
-                if (status == FirmaIsyeriYetkiHelper.RaporIsyeriListStatus.NoAccess)
-                    return Forbid();
-                isyeriIdCsv = csv ?? "";
-            }
-            else if (kind == RaporParametreHelper.MultiSelectKind.Cihaz)
-            {
-                cihazIdCsv = request.CihazIds != null && request.CihazIds.Count > 0
-                    ? string.Join(",", request.CihazIds.Where(id => id > 0).Distinct())
-                    : "";
+                    if (status == FirmaIsyeriYetkiHelper.RaporIsyeriListStatus.UnauthorizedSelection)
+                        return BadRequest(ApiResult.Failure("Seçilen işyerlerden bazıları için yetkiniz yok."));
+                    if (status == FirmaIsyeriYetkiHelper.RaporIsyeriListStatus.NoAccess)
+                        return Forbid();
+                    isyeriIdCsv = csv ?? "";
+                }
+                else if (kind == RaporParametreHelper.MultiSelectKind.Cihaz)
+                {
+                    cihazIdCsv = request.CihazIds != null && request.CihazIds.Count > 0
+                        ? string.Join(",", request.CihazIds.Where(id => id > 0).Distinct())
+                        : "";
+                }
             }
 
             string firmaIdCsv = firmaId > 0 ? firmaId.ToString() : "";
@@ -249,41 +285,64 @@ namespace CeyPASS.Api.Controllers
                 if (string.IsNullOrWhiteSpace(request.ProcedureName))
                     return BadRequest(ApiResult.Failure("Rapor seçiniz."));
 
-                int firmaId = _sessionContext.AktifFirmaId ?? 0;
-                if (firmaId == 0) return BadRequest(ApiResult.Failure("Firma bilgisi bulunamadı."));
-
                 bool isAdmin = _sessionContext.IsAdmin();
+                int firmaId = ResolveExportFirmaId(request, isAdmin);
+                if (!isAdmin)
+                {
+                    // Non-admin: @FirmaIdList yoksa session; varsa yetki kontrolü
+                    if (request.Params != null && request.Params.TryGetValue("@FirmaIdList", out var rawList) && rawList != null)
+                    {
+                        var s = rawList.ToString()?.Trim() ?? "";
+                        if (string.IsNullOrEmpty(s))
+                            firmaId = 0;
+                        else if (int.TryParse(s.Split(',')[0].Trim(), out var parsed))
+                            firmaId = parsed;
+                    }
+                    else
+                        firmaId = _sessionContext.AktifFirmaId ?? 0;
+                }
+                if (firmaId < 0)
+                    return BadRequest(ApiResult.Failure("Geçersiz firma."));
+                if (firmaId == 0 && !isAdmin)
+                    return BadRequest(ApiResult.Failure("Firma bilgisi bulunamadı."));
+
                 List<FirmaIsyeriYetkiDTO>? yetkiler = null;
                 if (_sessionContext.AktifKullaniciId.HasValue)
                     yetkiler = _yetkiSvc.GetYetkiler(_sessionContext.AktifKullaniciId.Value);
 
-                if (!FirmaIsyeriYetkiHelper.IsFirmaAuthorized(firmaId, yetkiler, isAdmin))
+                if (firmaId > 0 && !FirmaIsyeriYetkiHelper.IsFirmaAuthorized(firmaId, yetkiler, isAdmin))
                     return Forbid();
 
-                if (!request.Params.ContainsKey("@FirmaIdList"))
-                    request.Params["@FirmaIdList"] = firmaId.ToString();
+                request.Params["@FirmaIdList"] = firmaId > 0 ? firmaId.ToString() : "";
 
-                if (!request.Params.ContainsKey("@IsyeriIdList"))
+                if (firmaId == 0)
                 {
-                    var (isyeriIdCsv, status) = BuildRaporIsyeriIdListCsv(
-                        firmaId,
-                        request.IsyeriIds,
-                        yetkiler,
-                        isAdmin);
-
-                    if (status == FirmaIsyeriYetkiHelper.RaporIsyeriListStatus.UnauthorizedSelection)
-                        return BadRequest(ApiResult.Failure("Seçilen işyerlerden bazıları için yetkiniz yok."));
-                    if (status == FirmaIsyeriYetkiHelper.RaporIsyeriListStatus.NoAccess)
-                        return Forbid();
-
-                    request.Params["@IsyeriIdList"] = isyeriIdCsv ?? "";
-                }
-
-                if (!request.Params.ContainsKey("@CihazIdList") && request.CihazIds != null && request.CihazIds.Count > 0)
-                    request.Params["@CihazIdList"] = string.Join(",", request.CihazIds.Where(id => id > 0).Distinct());
-                else if (!request.Params.ContainsKey("@CihazIdList"))
+                    request.Params["@IsyeriIdList"] = "";
                     request.Params["@CihazIdList"] = "";
+                }
+                else
+                {
+                    if (!request.Params.ContainsKey("@IsyeriIdList"))
+                    {
+                        var (isyeriIdCsv, status) = BuildRaporIsyeriIdListCsv(
+                            firmaId,
+                            request.IsyeriIds,
+                            yetkiler,
+                            isAdmin);
 
+                        if (status == FirmaIsyeriYetkiHelper.RaporIsyeriListStatus.UnauthorizedSelection)
+                            return BadRequest(ApiResult.Failure("Seçilen işyerlerden bazıları için yetkiniz yok."));
+                        if (status == FirmaIsyeriYetkiHelper.RaporIsyeriListStatus.NoAccess)
+                            return Forbid();
+
+                        request.Params["@IsyeriIdList"] = isyeriIdCsv ?? "";
+                    }
+
+                    if (!request.Params.ContainsKey("@CihazIdList") && request.CihazIds != null && request.CihazIds.Count > 0)
+                        request.Params["@CihazIdList"] = string.Join(",", request.CihazIds.Where(id => id > 0).Distinct());
+                    else if (!request.Params.ContainsKey("@CihazIdList"))
+                        request.Params["@CihazIdList"] = "";
+                }
                 if (!request.Params.ContainsKey("@TarihBaslangic") || !request.Params.ContainsKey("@TarihBitis"))
                     return BadRequest(ApiResult.Failure("Tarih parametreleri eksik."));
 
@@ -322,6 +381,25 @@ namespace CeyPASS.Api.Controllers
             {
                 return BadRequest(ApiResult.Failure($"Rapor oluşturulurken hata: {ex.Message}"));
             }
+        }
+
+        private int ResolveExportFirmaId(RaporExportRequest request, bool isAdmin)
+        {
+            if (!isAdmin)
+                return _sessionContext.AktifFirmaId ?? 0;
+
+            if (request.Params != null && request.Params.TryGetValue("@FirmaIdList", out var raw) && raw != null)
+            {
+                var s = raw.ToString()?.Trim() ?? "";
+                if (string.IsNullOrEmpty(s))
+                    return 0;
+                var first = s.Split(',')[0].Trim();
+                if (int.TryParse(first, out var parsed))
+                    return parsed;
+                return -1;
+            }
+
+            return _sessionContext.AktifFirmaId ?? 0;
         }
 
         private (string? csv, FirmaIsyeriYetkiHelper.RaporIsyeriListStatus status) BuildRaporIsyeriIdListCsv(

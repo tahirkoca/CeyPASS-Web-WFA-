@@ -1,0 +1,30 @@
+<UserControl x:Class="CeyPASS.WPF.Views.AdminPanelView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:CeyPASS.WPF.Controls"
+             Background="{DynamicResource Brush.PageBg}">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        <DockPanel Grid.Row="0" Margin="12,10,12,0">
+            <controls:CeypassHelpTip DockPanel.Dock="Right" Topic="AdminPanel"
+                                     VerticalAlignment="Center"/>
+            <TextBlock Text="Yönetim Paneli" FontSize="15" FontWeight="Bold"
+                       VerticalAlignment="Center"
+                       Foreground="{DynamicResource Brush.TextPrimary}"/>
+        </DockPanel>
+        <TabControl Grid.Row="1" x:Name="TabAdmin" Margin="8" FontSize="13.5">
+            <TabItem Header="Firma" x:Name="TabFirma"/>
+            <TabItem Header="İşyeri" x:Name="TabIsyeri"/>
+            <TabItem Header="Cihaz" x:Name="TabCihaz"/>
+            <TabItem Header="Departman" x:Name="TabDepartman"/>
+            <TabItem Header="Pozisyon" x:Name="TabPozisyon"/>
+            <TabItem Header="Resmi Tatil" x:Name="TabResmiTatil"/>
+            <TabItem Header="Çalışma Statüsü" x:Name="TabCalismaStatu"/>
+            <TabItem Header="Vardiya" x:Name="TabVardiya"/>
+            <TabItem Header="Güncelleme Bildirimi" x:Name="TabGuncelleme"/>
+        </TabControl>
+    </Grid>
+</UserControl>
