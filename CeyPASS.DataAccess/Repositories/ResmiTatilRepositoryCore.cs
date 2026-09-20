@@ -9,6 +9,7 @@ using System.Linq;
 
 namespace CeyPASS.DataAccess.Repositories
 {
+    /// <summary>Resmi tatil erişimi.</summary>
     public class ResmiTatilRepositoryCore : IResmiTatilRepository
     {
         private readonly CeyPASSDataConnectionCore _context;
@@ -18,6 +19,7 @@ namespace CeyPASS.DataAccess.Repositories
             _context = context;
         }
 
+        /// <summary>Doldur Sabit işlemini gerçekleştirir.</summary>
         public void DoldurSabit(int basYil, int bitYil)
         {
             var sql = "EXEC sp_ResmiTatiller_DoldurSabit @p0, @p1";
@@ -27,6 +29,7 @@ namespace CeyPASS.DataAccess.Repositories
                 new Microsoft.Data.SqlClient.SqlParameter("@p1", bitYil));
         }
 
+        /// <summary>Ekle Veya Guncelle işlemini ekler.</summary>
         public void EkleVeyaGuncelle(DateTime tarih, string ad, decimal? calismaSaat)
         {
             var sql = "EXEC sp_ResmiTatilEkle @p0, @p1, @p2";
@@ -48,6 +51,7 @@ namespace CeyPASS.DataAccess.Repositories
             _context.Database.ExecuteSqlRaw(sql, pTarih, pAd, pSaat);
         }
 
+        /// <summary>List sorgularını getirir.</summary>
         public List<ResmiTatilDTO> GetList(int? yil = null)
         {
             var query = _context.ResmiTatiller.AsNoTracking().AsQueryable();

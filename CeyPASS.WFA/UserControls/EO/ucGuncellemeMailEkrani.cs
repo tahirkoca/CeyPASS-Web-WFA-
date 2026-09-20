@@ -7,6 +7,7 @@ using System.Windows.Forms;
 
 namespace CeyPASS.WFA.UserControls.EO
 {
+    /// <summary>Sürüm güncellemesi duyurusu — e-posta ve uygulama içi bildirim.</summary>
     public partial class ucGuncellemeMailEkrani : UserControl
     {
         private readonly INotificationService _notificationService;
@@ -17,6 +18,7 @@ namespace CeyPASS.WFA.UserControls.EO
         private const string PageName = "Guncelleme";
         private const string PageNameUI = "Güncelleme Bildirimi";
 
+        /// <summary>Görüntüleme yetkisi yoksa kontrol gizlenir.</summary>
         public ucGuncellemeMailEkrani(INotificationService notificationService, IMailService mailService, IAuthorizationService auth, ISessionContext session)
         {
             InitializeComponent();

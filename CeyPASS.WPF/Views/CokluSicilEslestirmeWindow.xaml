@@ -1,0 +1,175 @@
+<Window x:Class="CeyPASS.WPF.Views.CokluSicilEslestirmeWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:dxg="http://schemas.devexpress.com/winfx/2008/xaml/grid"
+        Title="{Binding Title}"
+        Height="680" Width="1020"
+        MinHeight="520" MinWidth="860"
+        WindowStartupLocation="CenterOwner"
+        ShowInTaskbar="False"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        ResizeMode="CanResizeWithGrip"
+        FontFamily="Segoe UI"
+        PreviewKeyDown="Window_OnPreviewKeyDown"
+        MouseLeftButtonDown="Window_OnMouseLeftButtonDown">
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+    </Window.Resources>
+    <Border Background="{DynamicResource Brush.Card}" CornerRadius="16" Margin="12">
+        <Border.Effect>
+            <DropShadowEffect BlurRadius="28" ShadowDepth="4" Opacity="0.22" Color="#0F172A"/>
+        </Border.Effect>
+        <DockPanel>
+            <Border DockPanel.Dock="Top" Height="5" Background="#2563EB" CornerRadius="16,16,0,0"/>
+            <Border DockPanel.Dock="Bottom" Padding="18,0,18,16">
+                <DockPanel>
+                    <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,12,0">
+                        <TextBlock Text="Kapatmak için" FontSize="12" Foreground="{DynamicResource Brush.TextMuted}" VerticalAlignment="Center"/>
+                        <Border Background="{DynamicResource Brush.SecondaryBg}" CornerRadius="5" Padding="7,2" Margin="7,0"
+                                BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1">
+                            <TextBlock Text="Esc" FontSize="11.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.SecondaryFg}"/>
+                        </Border>
+                        <TextBlock Text="tuşuna basın" FontSize="12" Foreground="{DynamicResource Brush.TextMuted}" VerticalAlignment="Center"/>
+                    </StackPanel>
+                    <Button DockPanel.Dock="Right" Content="Kapat" Style="{StaticResource SecondaryBtn}"
+                            IsCancel="True" Click="BtnKapat_OnClick" Padding="16,8"/>
+                    <TextBlock Text="{Binding Error}" Foreground="#B91C1C" VerticalAlignment="Center" TextWrapping="Wrap"/>
+                </DockPanel>
+            </Border>
+            <Grid Margin="18,14,18,8">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*" MinHeight="140"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <StackPanel Grid.Row="0" Margin="0,0,0,8">
+                    <TextBlock Text="{Binding Title}" FontSize="16" FontWeight="SemiBold" Foreground="{DynamicResource Brush.TextPrimary}"/>
+                    <TextBlock Text="{Binding Subtitle}" FontSize="12.5" Foreground="{DynamicResource Brush.TextMuted}" Margin="0,3,0,0"/>
+                    <TextBlock Text="Aynı TC kimlik numarasına sahip, farklı sicil numaralı personelleri ana sicile bağlayın."
+                               FontSize="13" Foreground="{DynamicResource Brush.TextMuted}" Margin="0,6,0,0" TextWrapping="Wrap"/>
+                </StackPanel>
+
+                <Border Grid.Row="1" Margin="0,0,0,8" Padding="10,8" Background="{DynamicResource Brush.DialogSoft}" CornerRadius="10">
+                    <DockPanel>
+                        <TextBlock DockPanel.Dock="Right" Text="{Binding SummaryText}" FontSize="13" FontWeight="SemiBold"
+                                   Foreground="#2563EB" VerticalAlignment="Center"/>
+                        <TextBlock Text="Bağlantı özeti" FontWeight="SemiBold" Foreground="{DynamicResource Brush.TextMuted}" VerticalAlignment="Center"/>
+                    </DockPanel>
+                </Border>
+
+                <Grid Grid.Row="2" Margin="0,0,0,8">
+                    <dxg:GridControl ItemsSource="{Binding Rows}" SelectedItem="{Binding SelectedRow}" AutoGenerateColumns="None">
+                        <dxg:GridControl.Columns>
+                            <dxg:GridColumn FieldName="HedefPersonelId" Header="Hedef Sicil" Width="88"/>
+                            <dxg:GridColumn FieldName="HedefAdSoyad" Header="Ad Soyad" Width="160"/>
+                            <dxg:GridColumn FieldName="FirmaIsyeri" Header="Firma / İşyeri" Width="170"/>
+                            <dxg:GridColumn FieldName="BolumAdi" Header="Bölüm" Width="100"/>
+                            <dxg:GridColumn FieldName="AktarimGunSayisi" Header="Aktarım Gün" Width="82"/>
+                            <dxg:GridColumn FieldName="GirisCikis" Header="Giriş — Çıkış" Width="150"/>
+                            <dxg:GridColumn FieldName="Aciklama" Header="Açıklama" Width="120"/>
+                            <dxg:GridColumn FieldName="AktifText" Header="Durum" Width="72"/>
+                        </dxg:GridControl.Columns>
+                        <dxg:GridControl.View>
+                            <dxg:TableView Style="{StaticResource CeypassTableView}" AutoWidth="True"
+                                           ShowGroupPanel="False" AllowEditing="False"/>
+                        </dxg:GridControl.View>
+                    </dxg:GridControl>
+                    <Border Background="#FAFAFA" CornerRadius="10" Padding="16"
+                            Visibility="{Binding ShowEmptyState, Converter={StaticResource BoolToVis}}"
+                            IsHitTestVisible="False">
+                        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <TextBlock Text="Henüz hedef sicil bağlantısı yok" FontSize="14" FontWeight="SemiBold"
+                                       Foreground="{DynamicResource Brush.TextPrimary}" HorizontalAlignment="Center"/>
+                            <TextBlock Text="Alttaki formdan hedef sicil seçip Kaydet ile bağlantı oluşturun."
+                                       FontSize="12" Foreground="{DynamicResource Brush.TextMuted}" Margin="0,4,0,0"
+                                       TextWrapping="Wrap" TextAlignment="Center" MaxWidth="360"/>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+
+                <Border Grid.Row="3" Padding="10" Background="{DynamicResource Brush.DialogSoft}" CornerRadius="12">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" MaxHeight="260">
+                        <StackPanel>
+                            <TextBlock Text="{Binding EditorModeText}" FontSize="12.5" FontWeight="SemiBold"
+                                       Foreground="{DynamicResource Brush.TextPrimary}" Margin="0,0,0,6"/>
+
+                            <TextBlock Text="{Binding HedefOrgText}" FontSize="11.5" Foreground="{DynamicResource Brush.TextMuted}"
+                                       TextWrapping="Wrap" Margin="0,0,0,6"/>
+
+                            <Grid Margin="0,0,0,6">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" MinWidth="180"/>
+                                    <ColumnDefinition Width="10"/>
+                                    <ColumnDefinition Width="88"/>
+                                    <ColumnDefinition Width="10"/>
+                                    <ColumnDefinition Width="130"/>
+                                    <ColumnDefinition Width="10"/>
+                                    <ColumnDefinition Width="150"/>
+                                </Grid.ColumnDefinitions>
+
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Text="Hedef Sicil" Style="{StaticResource FieldLabel}" Margin="0,0,0,3"/>
+                                    <ComboBox ItemsSource="{Binding Hedefler}" SelectedItem="{Binding SelectedHedef}"
+                                              DisplayMemberPath="Display" IsEditable="True" IsTextSearchEnabled="True"
+                                              StaysOpenOnEdit="True" Style="{StaticResource FieldCombo}"
+                                              Height="28" FontSize="12.5" Padding="6,4"/>
+                                </StackPanel>
+                                <StackPanel Grid.Column="2">
+                                    <TextBlock Text="Aktarım Gün" Style="{StaticResource FieldLabel}" Margin="0,0,0,3"/>
+                                    <TextBox Text="{Binding AktarimGun, UpdateSourceTrigger=PropertyChanged}"
+                                             Style="{StaticResource FieldBox}" Height="28" FontSize="12.5" Padding="6,4"/>
+                                </StackPanel>
+                                <StackPanel Grid.Column="4">
+                                    <TextBlock Text="İşe Giriş" Style="{StaticResource FieldLabel}" Margin="0,0,0,3"/>
+                                    <DatePicker SelectedDate="{Binding IseGirisTarihi, UpdateSourceTrigger=PropertyChanged}"
+                                                Style="{StaticResource FieldDatePicker}" Height="28" FontSize="12.5"/>
+                                </StackPanel>
+                                <StackPanel Grid.Column="6">
+                                    <TextBlock Text="İşten Çıkış" Style="{StaticResource FieldLabel}" Margin="0,0,0,3"/>
+                                    <TextBox Text="{Binding AktifCalisiyorPlaceholder, Mode=OneWay}" IsReadOnly="True"
+                                             Style="{StaticResource FieldBox}" Height="28" FontSize="12.5" Padding="6,4"
+                                             Foreground="#059669" FontWeight="SemiBold"
+                                             Visibility="{Binding ShowAktifCalisiyorText, Converter={StaticResource BoolToVis}}"/>
+                                    <TextBox Text="{Binding IstenCikisDisplayText, Mode=OneWay}" IsReadOnly="True"
+                                             Style="{StaticResource FieldBox}" Height="28" FontSize="12.5" Padding="6,4"
+                                             Visibility="{Binding ShowIstenCikisDateText, Converter={StaticResource BoolToVis}}"/>
+                                </StackPanel>
+                            </Grid>
+
+                            <Grid Margin="0,0,0,8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0" Margin="0,0,10,0">
+                                    <TextBlock Text="Açıklama" Style="{StaticResource FieldLabel}" Margin="0,0,0,3"/>
+                                    <TextBox Text="{Binding Aciklama, UpdateSourceTrigger=PropertyChanged}"
+                                             Style="{StaticResource FieldBox}" Height="28" FontSize="12.5" Padding="6,4"/>
+                                </StackPanel>
+                                <CheckBox Grid.Column="1" Content="Aktif bağlantı" IsChecked="{Binding AktifMi}"
+                                          VerticalAlignment="Bottom" Margin="0,0,0,2" FontSize="12"/>
+                            </Grid>
+
+                            <WrapPanel HorizontalAlignment="Left">
+                                <Button Content="Kaydet" Style="{StaticResource PrimaryBtn}" Margin="0,0,6,6"
+                                        Command="{Binding SaveCommand}" Padding="10,6" MinWidth="84"/>
+                                <Button Content="Pasifleştir" Style="{StaticResource DangerBtn}" Margin="0,0,6,6"
+                                        Command="{Binding PasiflestirCommand}" Padding="10,6" MinWidth="84"/>
+                                <Button Content="Aktifleştir" Style="{StaticResource SuccessBtn}" Margin="0,0,6,6"
+                                        Command="{Binding AktiflestirCommand}" Padding="10,6" MinWidth="84"/>
+                                <Button Content="Temizle" Style="{StaticResource SecondaryBtn}" Margin="0,0,0,6"
+                                        Command="{Binding ClearCommand}" Padding="10,6" MinWidth="84"/>
+                                <Button Content="Tümünü pasifleştir" Style="{StaticResource DangerBtn}" Margin="0,0,0,6"
+                                        Command="{Binding PasiflestirTumunuCommand}" Padding="10,6" MinWidth="120"/>
+                            </WrapPanel>
+                        </StackPanel>
+                    </ScrollViewer>
+                </Border>
+            </Grid>
+        </DockPanel>
+    </Border>
+</Window>

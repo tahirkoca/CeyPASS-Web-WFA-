@@ -12,6 +12,9 @@ using Xunit;
 
 namespace CeyPASS.Tests.Web
 {
+    /// <summary>
+    /// İşyeri tanım ekranı MVC.
+    /// </summary>
     public class IsyeriControllerTests
     {
         private readonly Mock<IIsyeriService> _isyeriMock = new();
@@ -33,6 +36,9 @@ namespace CeyPASS.Tests.Web
 
         // ─── Create POST ──────────────────────────────────────────────────────
 
+        /// <summary>
+        /// POST Yetkisiz IndexeYonlendirir
+        /// </summary>
         [Fact]
         public void Create_POST_Yetkisiz_IndexeYonlendirir()
         {
@@ -45,6 +51,9 @@ namespace CeyPASS.Tests.Web
             ((string)_sut.TempData["Error"]!).Should().NotBeNullOrEmpty();
         }
 
+        /// <summary>
+        /// POST boşIsyeriAdi Goruntumudöner
+        /// </summary>
         [Fact]
         public void Create_POST_BosIsyeriAdi_GoruntumuDoner()
         {
@@ -57,6 +66,9 @@ namespace CeyPASS.Tests.Web
             _sut.ModelState.IsValid.Should().BeFalse();
         }
 
+        /// <summary>
+        /// POST FirmaIdsıfır Goruntumudöner
+        /// </summary>
         [Fact]
         public void Create_POST_FirmaIdSifir_GoruntumuDoner()
         {
@@ -69,6 +81,9 @@ namespace CeyPASS.Tests.Web
             _sut.ModelState.IsValid.Should().BeFalse();
         }
 
+        /// <summary>
+        /// POST ServisBasarili IndexeYonlendirir
+        /// </summary>
         [Fact]
         public void Create_POST_ServisBasarili_IndexeYonlendirir()
         {
@@ -85,6 +100,9 @@ namespace CeyPASS.Tests.Web
 
         // ─── Index ────────────────────────────────────────────────────────────
 
+        /// <summary>
+        /// Yetkisiz HomeIndexeYonlendirir
+        /// </summary>
         [Fact]
         public void Index_Yetkisiz_HomeIndexeYonlendirir()
         {
@@ -101,6 +119,9 @@ namespace CeyPASS.Tests.Web
 
         // ─── Edit GET ─────────────────────────────────────────────────────────
 
+        /// <summary>
+        /// GET Yetkisiz IndexeYonlendirir
+        /// </summary>
         [Fact]
         public void Edit_GET_Yetkisiz_IndexeYonlendirir()
         {
@@ -115,6 +136,9 @@ namespace CeyPASS.Tests.Web
 
         // ─── Edit POST ────────────────────────────────────────────────────────
 
+        /// <summary>
+        /// POST Yetkisiz IndexeYonlendirir
+        /// </summary>
         [Fact]
         public void Edit_POST_Yetkisiz_IndexeYonlendirir()
         {
@@ -127,6 +151,9 @@ namespace CeyPASS.Tests.Web
             ((string)_sut.TempData["Error"]!).Should().NotBeNullOrEmpty();
         }
 
+        /// <summary>
+        /// POST boşIsyeriAdi Goruntumudöner
+        /// </summary>
         [Fact]
         public void Edit_POST_BosIsyeriAdi_GoruntumuDoner()
         {
@@ -141,6 +168,9 @@ namespace CeyPASS.Tests.Web
 
         // ─── Delete ───────────────────────────────────────────────────────────
 
+        /// <summary>
+        /// Yetkisiz IndexeYonlendirir
+        /// </summary>
         [Fact]
         public void Delete_Yetkisiz_IndexeYonlendirir()
         {

@@ -12,11 +12,14 @@ using Microsoft.AspNetCore.Routing;
 
 namespace CeyPASS.Web.Services
 {
+    /// <summary>Razor view çıktısını string olarak üretir (PDF vb.).</summary>
     public interface IRazorViewToStringRenderer
     {
+        /// <summary>Belirtilen view adını model ile render edip HTML string döner.</summary>
         Task<string> RenderAsync(string viewName, object model, Action<ViewDataDictionary>? configureViewData = null);
     }
 
+    /// <summary>Razor view motoru ile sunucu tarafı HTML render.</summary>
     public sealed class RazorViewToStringRenderer : IRazorViewToStringRenderer
     {
         private readonly IRazorViewEngine _viewEngine;
@@ -33,6 +36,7 @@ namespace CeyPASS.Web.Services
             _serviceProvider = serviceProvider;
         }
 
+        /// <inheritdoc />
         public async Task<string> RenderAsync(string viewName, object model, Action<ViewDataDictionary>? configureViewData = null)
         {
             var httpContext = new DefaultHttpContext { RequestServices = _serviceProvider };

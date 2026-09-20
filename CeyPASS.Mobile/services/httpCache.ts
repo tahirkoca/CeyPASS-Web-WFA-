@@ -1,5 +1,9 @@
+/**
+ * GET yanıtları için bellek + SecureStore önbellek (soft/hard TTL, inflight birleştirme).
+ */
 import * as SecureStore from "expo-secure-store";
 
+/** Önbellek kaydı: veri ve yenileme pencereleri. */
 export type CacheEntry<T = any> = {
   fetchedAt: number; // epoch ms
   softTtlMs: number;
@@ -60,6 +64,7 @@ async function indexAdd(prefix: string, rawKey: string) {
   await saveIndex(idx);
 }
 
+/** Bellek veya SecureStore’dan önbellek girdisi. */
 export async function getCached<T>(rawKey: string): Promise<CacheEntry<T> | null> {
   if (!rawKey) return null;
   const inMem = mem.get(rawKey);
@@ -77,12 +82,14 @@ export async function getCached<T>(rawKey: string): Promise<CacheEntry<T> | null
   }
 }
 
+/** Önbelleği güncelle; isteğe bağlı prefix indeksine ekle. */
 export async function setCached<T>(rawKey: string, entry: CacheEntry<T>, opts?: { prefix?: string }) {
   mem.set(rawKey, entry as any);
   await SecureStore.setItemAsync(toStoreKey(rawKey), JSON.stringify(entry));
   if (opts?.prefix) await indexAdd(opts.prefix, rawKey);
 }
 
+/** Aynı anahtar için eşzamanlı istekleri tek promise’de birleştir. */
 export function withInflight<T>(rawKey: string, fn: () => Promise<T>): Promise<T> {
   const prev = inflight.get(rawKey);
   if (prev) return prev as Promise<T>;
@@ -93,6 +100,7 @@ export function withInflight<T>(rawKey: string, fn: () => Promise<T>): Promise<T
   return p;
 }
 
+/** Prefix altındaki tüm önbellek anahtarlarını sil (mutasyon sonrası). */
 export async function invalidate(prefix: string) {
   if (!prefix) return;
   const idx = await loadIndex();
@@ -111,6 +119,7 @@ export async function invalidate(prefix: string) {
   await saveIndex(idx);
 }
 
+/** SWR: soft TTL’de cache, hard TTL’de zorunlu fetch; forceRefresh atlar. */
 export async function resolveCached<T>(args: {
   rawKey: string;
   prefix?: string;

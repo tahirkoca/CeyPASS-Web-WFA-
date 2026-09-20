@@ -7,6 +7,9 @@ using Xunit;
 
 namespace CeyPASS.Tests.Unit
 {
+    /// <summary>
+    /// Kişi detay sorgusu: geçersiz ID'de erken çıkış; geçerli ID'de standart detay (puantajsız kart değil).
+    /// </summary>
     public class KisiQueryServiceTests
     {
         private readonly Mock<IKisiRepository> _repoMock = new();
@@ -17,6 +20,9 @@ namespace CeyPASS.Tests.Unit
             _sut = new KisiQueryService(_repoMock.Object);
         }
 
+        /// <summary>
+        /// Null personel ID için detay null, puantajsız bayrağı false; repo çağrılmaz.
+        /// </summary>
         [Fact]
         public void GetDetayOrPuantajsizKart_NullId_NullVeFalseDoner()
         {
@@ -27,6 +33,9 @@ namespace CeyPASS.Tests.Unit
             _repoMock.Verify(r => r.GetDetay(It.IsAny<string>()), Times.Never);
         }
 
+        /// <summary>
+        /// Boş/whitespace ID aynı erken çıkış kuralına tabidir.
+        /// </summary>
         [Fact]
         public void GetDetayOrPuantajsizKart_WhitespaceId_NullVeFalseDoner()
         {
@@ -37,6 +46,9 @@ namespace CeyPASS.Tests.Unit
             _repoMock.Verify(r => r.GetDetay(It.IsAny<string>()), Times.Never);
         }
 
+        /// <summary>
+        /// Geçerli ID ile GetDetay çağrılır; normal personel için isPuantajsiz false.
+        /// </summary>
         [Fact]
         public void GetDetayOrPuantajsizKart_GecerliId_RepoCagrilirVeIsPuantajsizFalse()
         {

@@ -6,6 +6,7 @@ using CeyPASS.Models;
 
 namespace CeyPASS.Api.Controllers
 {
+    /// <summary>Genel lookup toplu endpoint.</summary>
     [Authorize]
     [ApiController]
     [Route("api/v1/[controller]")]
@@ -28,6 +29,8 @@ namespace CeyPASS.Api.Controllers
             _sessionContext = sessionContext;
         }
 
+        
+        /// <summary>Aktif firma için birleşik lookup.</summary>
         [HttpGet("lookups")]
         public ActionResult<ApiResult<object>> GetAllLookups()
         {
@@ -37,7 +40,6 @@ namespace CeyPASS.Api.Controllers
             var data = new
             {
                 Isyerleri = _lookupService.GetIsyerleri(firmaId),
-                Departmanlar = _lookupService.GetDepartmanlar(firmaId),
                 Pozisyonlar = _lookupService.GetPozisyonlar(firmaId),
                 Bolumler = _lookupService.GetBolumler(firmaId),
                 CalismaStatuleri = _lookupService.GetCalismaStatuleri(firmaId),
@@ -47,6 +49,8 @@ namespace CeyPASS.Api.Controllers
             return Ok(ApiResult<object>.Ok(data));
         }
 
+        
+        /// <summary>Firma lookup listesi.</summary>
         [HttpGet("firmalar")]
         public ActionResult<ApiResult<List<LookupItem>>> GetFirmalar()
         {

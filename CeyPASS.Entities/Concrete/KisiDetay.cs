@@ -2,6 +2,7 @@
 
 namespace CeyPASS.Entities.Concrete
 {
+    /// <summary>Personel düzenleme ekranı için genişletilmiş sicil alanları.</summary>
     public class KisiDetay
     {
         public string PersonelId { get; set; }
@@ -10,7 +11,6 @@ namespace CeyPASS.Entities.Concrete
         public string KartNo { get; set; }
         public string TcKimlikNo { get; set; }
         public int? PozisyonId { get; set; }
-        public int? DepartmanId { get; set; }
         public int FirmaId { get; set; }
         public int? IsyeriId { get; set; }
         public int? BolumId { get; set; }
@@ -19,6 +19,7 @@ namespace CeyPASS.Entities.Concrete
         public DateTime? IstenCikisTarihi { get; set; }
         public int? CalismaStatusuId { get; set; }
         public string CalismaStatusuText { get; set; }
+        /// <summary>Seçili çalışma şekilleri; virgülle ayrılmış id listesi.</summary>
         public string CalismaSekliCsv { get; set; }
         public string CepTel { get; set; }
         public string Email { get; set; }
@@ -27,6 +28,7 @@ namespace CeyPASS.Entities.Concrete
         public bool PuantajYapilabilir { get; set; }
         public bool YemekHakkiVar { get; set; }
         public int? GunlukYemekAdedi { get; set; }
+        /// <summary>Taşeron kartı firma dışı kart numarası.</summary>
         public string TaseronKartNo { get; set; }          
         public bool ZiyaretciMi { get; set; }
         public bool AracKartiMi { get; set; }

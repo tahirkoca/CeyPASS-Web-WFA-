@@ -3,6 +3,7 @@ using System.Windows.Controls;
 
 namespace CeyPASS.WPF.Controls;
 
+/// <summary>Açık/koyu tema geçiş düğmesi (CeypassTheme).</summary>
 public partial class CeypassThemeToggle : UserControl
 {
     public CeypassThemeToggle()

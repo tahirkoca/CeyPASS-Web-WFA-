@@ -1,4 +1,5 @@
 using CeyPASS.Business.Abstractions;
+using CeyPASS.Business.Services;
 using CeyPASS.Entities.Concrete;
 using CeyPASS.Infrastructure.Helpers;
 using CeyPASS.Models;
@@ -10,6 +11,7 @@ using System.Linq;
 
 namespace CeyPASS.Api.Controllers
 {
+    /// <summary>Canlı izleme misafir/araç kart atamaları ve terminal kart komutları (<c>api/v1/CanliIzleme</c> alt yolu).</summary>
     [Authorize]
     [ApiController]
     [Route("api/v1/CanliIzleme")]
@@ -17,16 +19,25 @@ namespace CeyPASS.Api.Controllers
     {
         private readonly IMisafirKartService _misafirSvc;
         private readonly IAracKartiService _aracSvc;
+        private readonly ICanliIzlemeKartKomutService _kartKomutSvc;
         private readonly ISessionContext _sessionContext;
 
         public CanliIzlemeKartController(
             IMisafirKartService misafirSvc,
             IAracKartiService aracSvc,
+            ICanliIzlemeKartKomutService kartKomutSvc,
             ISessionContext sessionContext)
         {
             _misafirSvc = misafirSvc;
             _aracSvc = aracSvc;
+            _kartKomutSvc = kartKomutSvc;
             _sessionContext = sessionContext;
+        }
+
+        public sealed class KartKomutRequest
+        {
+            public string? PersonelId { get; set; }
+            public bool Pasif { get; set; }
         }
 
         public sealed class CreateKartRequest
@@ -36,6 +47,7 @@ namespace CeyPASS.Api.Controllers
             public DateTime GirisSaati { get; set; } = DateTime.Now;
             public string? Aciklama { get; set; }
             public string? TcKimlikNo { get; set; }
+            public string? PasaportNo { get; set; }
             public string? ZiyaretEdilenKisi { get; set; }
             public string? Plaka { get; set; }
         }
@@ -47,10 +59,12 @@ namespace CeyPASS.Api.Controllers
             public DateTime? CikisSaati { get; set; }
             public string? Aciklama { get; set; }
             public string? TcKimlikNo { get; set; }
+            public string? PasaportNo { get; set; }
             public string? ZiyaretEdilenKisi { get; set; }
             public string? Plaka { get; set; }
         }
 
+        // Danışma vb. rollerde kart atama ekranı kapalı; mobil ana JWT ile de erişilemez.
         private bool EnsureCanliIzlemeAuth(out int firmaId, out ActionResult? forbidOrBad)
         {
             firmaId = 0;
@@ -81,6 +95,7 @@ namespace CeyPASS.Api.Controllers
             kartId = a.KartId,
             adSoyad = a.MisafirAdSoyad,
             tcKimlikNo = a.TCKimlikNo,
+            pasaportNo = a.PasaportNo,
             ziyaretEdilenKisi = a.ZiyaretEdilenKisi,
             plaka = a.Plaka,
             kartAdi = a.KartAdi,
@@ -93,14 +108,17 @@ namespace CeyPASS.Api.Controllers
         {
             adSoyad = x.AdSoyad,
             tcKimlikNo = x.TCKimlikNo,
+            pasaportNo = x.PasaportNo,
             ziyaretEdilenKisi = x.ZiyaretEdilenKisi,
             plaka = x.Plaka,
+            notlar = x.Notlar,
             sonZiyaret = x.SonZiyaret,
             gosterim = x.Gosterim
         };
 
         // ─── Misafir ─────────────────────────────────────────────────────────
 
+        /// <summary>Yeni misafir ataması için boşta kart listesi.</summary>
         [HttpGet("misafir-kart/kartlar")]
         public ActionResult<ApiResult<List<object>>> MisafirKartlar()
         {
@@ -111,16 +129,18 @@ namespace CeyPASS.Api.Controllers
             return Ok(ApiResult<List<object>>.Ok(list));
         }
 
+        /// <summary>Açık misafir kart atamaları.</summary>
         [HttpGet("misafir-kart/aktif")]
         public ActionResult<ApiResult<List<object>>> MisafirAktif()
         {
             if (!EnsureCanliIzlemeAuth(out var firmaId, out var err)) return err!;
-            var list = _misafirSvc.GetTodayActiveAssignments(DateTime.Now, firmaId)
+            var list = _misafirSvc.GetOpenActiveAssignments(firmaId)
                 .Select(MapAtama)
                 .ToList();
             return Ok(ApiResult<List<object>>.Ok(list));
         }
 
+        /// <summary>Yeni misafir kart ataması oluşturur.</summary>
         [HttpPost("misafir-kart")]
         public ActionResult<ApiResult<object>> MisafirCreate([FromBody] CreateKartRequest req)
         {
@@ -134,7 +154,8 @@ namespace CeyPASS.Api.Controllers
                     req.GirisSaati,
                     req.Aciklama ?? "",
                     req.TcKimlikNo ?? "",
-                    req.ZiyaretEdilenKisi ?? "");
+                    req.ZiyaretEdilenKisi ?? "",
+                    req.PasaportNo);
                 return Ok(ApiResult<object>.Ok(new { atamaId = id }, "Kayıt başarıyla oluşturuldu."));
             }
             catch (Exception ex)
@@ -143,6 +164,7 @@ namespace CeyPASS.Api.Controllers
             }
         }
 
+        /// <summary>Mevcut misafir atamasını günceller veya çıkış saati işler.</summary>
         [HttpPut("misafir-kart/{id:int}")]
         public ActionResult<ApiResult<object>> MisafirUpdate(int id, [FromBody] UpdateKartRequest req)
         {
@@ -156,7 +178,8 @@ namespace CeyPASS.Api.Controllers
                     req.CikisSaati,
                     req.Aciklama ?? "",
                     req.TcKimlikNo ?? "",
-                    req.ZiyaretEdilenKisi ?? "");
+                    req.ZiyaretEdilenKisi ?? "",
+                    req.PasaportNo);
                 return Ok(ApiResult<object>.Ok(new { }, "Kayıt güncellendi."));
             }
             catch (Exception ex)
@@ -165,6 +188,7 @@ namespace CeyPASS.Api.Controllers
             }
         }
 
+        /// <summary>TC ile önceki misafir kaydından otomatik doldurma.</summary>
         [HttpGet("misafir-kart/by-tc")]
         public ActionResult<ApiResult<object>> MisafirByTc([FromQuery] string tc)
         {
@@ -180,11 +204,13 @@ namespace CeyPASS.Api.Controllers
             {
                 adSoyad = rec.MisafirAdSoyad,
                 tcKimlikNo = rec.TCKimlikNo,
+                pasaportNo = rec.PasaportNo,
                 ziyaretEdilenKisi = rec.ZiyaretEdilenKisi,
                 aciklama = rec.Notlar
             }));
         }
 
+        /// <summary>Geçmiş misafir ziyaret araması.</summary>
         [HttpGet("misafir-kart/gecmis")]
         public ActionResult<ApiResult<List<object>>> MisafirGecmis([FromQuery] string? ad = null)
         {
@@ -197,6 +223,7 @@ namespace CeyPASS.Api.Controllers
 
         // ─── Araç ────────────────────────────────────────────────────────────
 
+        /// <summary>Yeni araç ataması için kullanılabilir kartlar.</summary>
         [HttpGet("arac-kart/kartlar")]
         public ActionResult<ApiResult<List<object>>> AracKartlar()
         {
@@ -207,16 +234,18 @@ namespace CeyPASS.Api.Controllers
             return Ok(ApiResult<List<object>>.Ok(list));
         }
 
+        /// <summary>Açık araç kart atamaları.</summary>
         [HttpGet("arac-kart/aktif")]
         public ActionResult<ApiResult<List<object>>> AracAktif()
         {
             if (!EnsureCanliIzlemeAuth(out var firmaId, out var err)) return err!;
-            var list = _aracSvc.GetTodayActiveAssignments(DateTime.Now, firmaId)
+            var list = _aracSvc.GetOpenActiveAssignments(firmaId)
                 .Select(MapAtama)
                 .ToList();
             return Ok(ApiResult<List<object>>.Ok(list));
         }
 
+        /// <summary>Yeni araç kart ataması.</summary>
         [HttpPost("arac-kart")]
         public ActionResult<ApiResult<object>> AracCreate([FromBody] CreateKartRequest req)
         {
@@ -231,7 +260,8 @@ namespace CeyPASS.Api.Controllers
                     req.Aciklama ?? "",
                     req.TcKimlikNo ?? "",
                     req.ZiyaretEdilenKisi ?? "",
-                    req.Plaka ?? "");
+                    req.Plaka ?? "",
+                    req.PasaportNo);
                 return Ok(ApiResult<object>.Ok(new { atamaId = id }, "Kayıt başarıyla oluşturuldu."));
             }
             catch (Exception ex)
@@ -240,6 +270,7 @@ namespace CeyPASS.Api.Controllers
             }
         }
 
+        /// <summary>Araç atamasını günceller.</summary>
         [HttpPut("arac-kart/{id:int}")]
         public ActionResult<ApiResult<object>> AracUpdate(int id, [FromBody] UpdateKartRequest req)
         {
@@ -254,7 +285,8 @@ namespace CeyPASS.Api.Controllers
                     req.Aciklama ?? "",
                     req.TcKimlikNo ?? "",
                     req.ZiyaretEdilenKisi ?? "",
-                    req.Plaka ?? "");
+                    req.Plaka ?? "",
+                    req.PasaportNo);
                 return Ok(ApiResult<object>.Ok(new { }, "Kayıt güncellendi."));
             }
             catch (Exception ex)
@@ -263,6 +295,7 @@ namespace CeyPASS.Api.Controllers
             }
         }
 
+        /// <summary>TC ile araç ziyaretçi bilgisi ön doldurma.</summary>
         [HttpGet("arac-kart/by-tc")]
         public ActionResult<ApiResult<object>> AracByTc([FromQuery] string tc)
         {
@@ -278,12 +311,49 @@ namespace CeyPASS.Api.Controllers
             {
                 adSoyad = rec.MisafirAdSoyad,
                 tcKimlikNo = rec.TCKimlikNo,
+                pasaportNo = rec.PasaportNo,
                 ziyaretEdilenKisi = rec.ZiyaretEdilenKisi,
                 plaka = rec.Plaka,
                 aciklama = rec.Notlar
             }));
         }
 
+        /// <summary>Misafir/araç birleşik atama listesi; komut kuyruk durumu satırlara eklenir.</summary>
+        /// <param name="tip">tumu | misafir | arac filtre anahtarı.</param>
+        [HttpGet("atama-liste")]
+        public ActionResult<ApiResult<List<KartAtamaListeSatir>>> AtamaListe([FromQuery] string tip = "tumu")
+        {
+            if (!EnsureCanliIzlemeAuth(out var firmaId, out var err)) return err!;
+            var list = KartAtamaListePresenter.Load(_misafirSvc, _aracSvc, _kartKomutSvc, firmaId, tip);
+            return Ok(ApiResult<List<KartAtamaListeSatir>>.Ok(list));
+        }
+
+        /// <summary>Turnike/cihaz için kart kısıtlama veya kısıt kaldırma komutunu kuyruğa alır.</summary>
+        [HttpPost("kart-komut")]
+        public ActionResult<ApiResult<object>> KartKomut([FromBody] KartKomutRequest req)
+        {
+            if (!EnsureCanliIzlemeAuth(out var firmaId, out var err)) return err!;
+            var pid = (req?.PersonelId ?? "").Trim();
+            if (string.IsNullOrEmpty(pid))
+                return BadRequest(ApiResult.Failure("PersonelId gerekli."));
+            try
+            {
+                // Komut anında cihaza gitmez; CanliIzlemeKartKomut kuyruğu terminal senkronu ile işler.
+                if (req!.Pasif)
+                    _kartKomutSvc.EnqueuePasif(firmaId, pid, _sessionContext.AktifKullaniciId);
+                else
+                    _kartKomutSvc.EnqueueAktif(firmaId, pid, _sessionContext.AktifKullaniciId);
+                return Ok(ApiResult<object>.Ok(new { }, req.Pasif
+                    ? "Kısıtlama komutu kuyruğa alındı."
+                    : "Kısıt kaldırma komutu kuyruğa alındı."));
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ApiResult.Failure(ex.Message));
+            }
+        }
+
+        /// <summary>Geçmiş araç ziyaret araması.</summary>
         [HttpGet("arac-kart/gecmis")]
         public ActionResult<ApiResult<List<object>>> AracGecmis([FromQuery] string? ad = null)
         {

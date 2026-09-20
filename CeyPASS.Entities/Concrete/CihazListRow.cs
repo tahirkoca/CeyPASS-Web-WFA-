@@ -1,5 +1,6 @@
 ﻿namespace CeyPASS.Entities.Concrete
 {
+    /// <summary>Cihaz yönetim grid satırı.</summary>
     public class CihazListRow
     {
         public int CihazId { get; set; }

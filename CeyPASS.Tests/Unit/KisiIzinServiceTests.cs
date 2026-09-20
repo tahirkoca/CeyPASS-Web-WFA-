@@ -8,6 +8,9 @@ using Xunit;
 
 namespace CeyPASS.Tests.Unit
 {
+    /// <summary>
+    /// Personel izin bakiye ve izin kayıtları servis kuralları.
+    /// </summary>
     public class KisiIzinServiceTests
     {
         private readonly KisiIzinService _sut;
@@ -17,6 +20,9 @@ namespace CeyPASS.Tests.Unit
             _sut = new KisiIzinService(new Mock<IKisiIzinlerRepository>().Object);
         }
 
+        /// <summary>
+        /// PersonelIdboş Hataverir
+        /// </summary>
         [Fact]
         public void ValidateKayit_PersonelIdBos_HataVerir()
         {
@@ -26,6 +32,9 @@ namespace CeyPASS.Tests.Unit
             message.Should().NotBeNullOrWhiteSpace();
         }
 
+        /// <summary>
+        /// GunlukIzin IzinTipSeçilmemis Hataverir
+        /// </summary>
         [Fact]
         public void ValidateKayit_GunlukIzin_IzinTipSeçilmemis_HataVerir()
         {
@@ -42,6 +51,9 @@ namespace CeyPASS.Tests.Unit
             message.Should().NotBeNullOrWhiteSpace();
         }
 
+        /// <summary>
+        /// SaatlikIzin FarkliGunler Hataverir
+        /// </summary>
         [Fact]
         public void ValidateKayit_SaatlikIzin_FarkliGunler_HataVerir()
         {
@@ -59,6 +71,9 @@ namespace CeyPASS.Tests.Unit
             message.Should().NotBeNullOrWhiteSpace();
         }
 
+        /// <summary>
+        /// SaatlikIzin BititsBastanOnce Hataverir
+        /// </summary>
         [Fact]
         public void ValidateKayit_SaatlikIzin_BititsBastanOnce_HataVerir()
         {
@@ -77,6 +92,9 @@ namespace CeyPASS.Tests.Unit
             message.Should().NotBeNullOrWhiteSpace();
         }
 
+        /// <summary>
+        /// SaatlikIzin BasBitisAyni Hataverir
+        /// </summary>
         [Fact]
         public void ValidateKayit_SaatlikIzin_BasBitisAyni_HataVerir()
         {
@@ -95,6 +113,9 @@ namespace CeyPASS.Tests.Unit
             message.Should().NotBeNullOrWhiteSpace();
         }
 
+        /// <summary>
+        /// GunlukIzin BitisBaslangictanOnce Hataverir
+        /// </summary>
         [Fact]
         public void ValidateKayit_GunlukIzin_BitisBaslangictanOnce_HataVerir()
         {
@@ -111,6 +132,9 @@ namespace CeyPASS.Tests.Unit
             message.Should().NotBeNullOrWhiteSpace();
         }
 
+        /// <summary>
+        /// GeçerliSaatlikIzin Geçerli
+        /// </summary>
         [Fact]
         public void ValidateKayit_GecerliSaatlikIzin_Gecerli()
         {
@@ -129,6 +153,9 @@ namespace CeyPASS.Tests.Unit
             message.Should().BeNull();
         }
 
+        /// <summary>
+        /// GeçerliGunlukIzin Geçerli
+        /// </summary>
         [Fact]
         public void ValidateKayit_GecerliGunlukIzin_Gecerli()
         {
@@ -145,6 +172,9 @@ namespace CeyPASS.Tests.Unit
             message.Should().BeNull();
         }
 
+        /// <summary>
+        /// YarimGunYillik Geçerli
+        /// </summary>
         [Fact]
         public void ValidateKayit_YarimGunYillik_Gecerli()
         {
@@ -165,6 +195,9 @@ namespace CeyPASS.Tests.Unit
             message.Should().BeNull();
         }
 
+        /// <summary>
+        /// YarimGunYillik YanlisIzinTipi Hata
+        /// </summary>
         [Fact]
         public void ValidateKayit_YarimGunYillik_YanlisIzinTipi_Hata()
         {

@@ -10,6 +10,7 @@ using System.Linq;
 
 namespace CeyPASS.Api.Controllers
 {
+    /// <summary>Avans talep listesi ve onay; sayfa yetkisi Avans.</summary>
     [Authorize]
     [ApiController]
     [Route("api/v1/[controller]")]
@@ -33,6 +34,8 @@ namespace CeyPASS.Api.Controllers
             _kisiQueryService = kisiQueryService;
         }
 
+        
+        /// <summary>Yetkili ise tüm talepler, değilse kendi talepleri.</summary>
         [HttpGet]
         public ActionResult<ApiResult<List<AvansTalepListItem>>> Get()
         {
@@ -52,6 +55,8 @@ namespace CeyPASS.Api.Controllers
             return Forbid();
         }
 
+        
+        /// <summary>Oturum personelinin avans talepleri.</summary>
         [HttpGet("kendi")]
         public ActionResult<ApiResult<List<AvansTalepListItem>>> GetKendi()
         {
@@ -60,6 +65,8 @@ namespace CeyPASS.Api.Controllers
             return Ok(ApiResult<List<AvansTalepListItem>>.Ok(Map(items)));
         }
 
+        
+        /// <summary>Yeni avans talebi.</summary>
         [HttpPost("talep")]
         public ActionResult<ApiResult<int>> Post([FromBody] AvansTalepRequest request)
         {
@@ -70,6 +77,8 @@ namespace CeyPASS.Api.Controllers
             return Ok(ApiResult<int>.Ok(id, "Avans talebiniz alındı."));
         }
 
+        
+        /// <summary>Avans onayı.</summary>
         [HttpPost("onayla")]
         public ActionResult<ApiResult> Onayla([FromBody] AvansOnayRequest request)
         {
@@ -80,6 +89,8 @@ namespace CeyPASS.Api.Controllers
             return success ? Ok(ApiResult.Ok("Avans onaylandı.")) : BadRequest(ApiResult.Failure("İşlem başarısız."));
         }
 
+        
+        /// <summary>Avans reddi.</summary>
         [HttpPost("reddet")]
         public ActionResult<ApiResult> Reddet([FromBody] AvansOnayRequest request)
         {
@@ -90,6 +101,8 @@ namespace CeyPASS.Api.Controllers
             return success ? Ok(ApiResult.Ok("Avans reddedildi.")) : BadRequest(ApiResult.Failure("İşlem başarısız."));
         }
 
+        
+        /// <summary>Avans talebini iptal eder.</summary>
         [HttpDelete("{id}")]
         public ActionResult<ApiResult> Delete(int id)
         {

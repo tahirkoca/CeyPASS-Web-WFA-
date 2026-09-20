@@ -13,6 +13,7 @@ using Font = System.Drawing.Font;
 
 namespace CeyPASS.WFA.UserControls.Izinler
 {
+    /// <summary>Personel izin kayıtları listesi ve yarım gün yıllık izin desteği.</summary>
     public partial class ucIzinler : UserControl
     {
         [DllImport("user32.dll", CharSet = CharSet.Unicode)]
@@ -27,12 +28,14 @@ namespace CeyPASS.WFA.UserControls.Izinler
         private readonly IFirmaService _fsvc;
         private readonly IKisiIzinService _kisvc;
         private readonly IKullaniciFirmaIsyeriYetkiService _yetkiSvc;
+        private readonly IKisiEkraniLookUpService _iklsvc;
         AuthorizationHelper authHelp;
         private ScreenMode _mode = ScreenMode.List;
         private int? _editingIzinId = null;
         private bool _saving = false;
         private HashSet<int> _firmaYetkileri = new HashSet<int>();
         private List<FirmaIsyeriYetkiDTO> _kullaniciYetkileri;
+        private bool _isAdmin;
         private bool _kisilerLoaded = false;
         private bool _izinlerLoaded = false;
         private bool _izinTipleriLoaded = false;
@@ -43,7 +46,8 @@ namespace CeyPASS.WFA.UserControls.Izinler
         private const int TUMU_INT = 0;
         private const string TUMU_STR = "ALL";
 
-        public ucIzinler(ISessionContext session, IAuthorizationService auth, IKisiQueryService ksvc, IIzinTipService isvc, IFirmaService fsvc, IKisiIzinService kisvc, IKullaniciFirmaIsyeriYetkiService yetkiSvc)
+        /// <summary>Yetki ve firma kapsamı ile izin CRUD ekranını hazırlar.</summary>
+        public ucIzinler(ISessionContext session, IAuthorizationService auth, IKisiQueryService ksvc, IIzinTipService isvc, IFirmaService fsvc, IKisiIzinService kisvc, IKullaniciFirmaIsyeriYetkiService yetkiSvc, IKisiEkraniLookUpService iklsvc)
         {
             InitializeComponent();
             _fieldErrors = new WinFormsFieldErrors(this);
@@ -63,6 +67,7 @@ namespace CeyPASS.WFA.UserControls.Izinler
             _fsvc = fsvc;
             _kisvc = kisvc;
             _yetkiSvc = yetkiSvc;
+            _iklsvc = iklsvc;
 
             authHelp = new AuthorizationHelper(_session, _auth);
             if (!_auth.ViewAbility(PageName))
@@ -103,14 +108,17 @@ namespace CeyPASS.WFA.UserControls.Izinler
             }
 
             _kullaniciYetkileri = _yetkiSvc.GetYetkiler((int)_session.AktifKullaniciId);
+            _isAdmin = FirmaIsyeriYetkiHelper.IsAdmin(_session.RolId);
             _firmaYetkileri = _kullaniciYetkileri
                 .Select(y => y.FirmaId)
                 .Distinct()
                 .ToHashSet();
 
             LoadAuthorizedFirms();
+            IsyeriFilteriniYukle(GetSelectedFirmaIdForQuery());
             cmbKisilerSecimi.Enter += cmbKisiListesi_Enter;
             cmbIzinlerSecimi.Enter += cmbIzinTipleri_Enter;
+            cmbIsyeriFilter.SelectedIndexChanged += cmbIsyeriFilter_SelectedIndexChanged;
             cmbFirmalarSecimi.SelectedValueChanged += (s, e) =>
             {
                 ClearCombo(cmbKisilerSecimi);
@@ -118,6 +126,8 @@ namespace CeyPASS.WFA.UserControls.Izinler
 
                 ClearCombo(cmbIzinlerSecimi);
                 _izinTipleriLoaded = false;
+                IsyeriFilteriniYukle(GetSelectedFirmaIdForQuery());
+                PersistFilters();
             };
 
             ClearCombo(cmbKisilerSecimi);
@@ -157,23 +167,17 @@ namespace CeyPASS.WFA.UserControls.Izinler
                 MessageBox.Show("Firmalar yüklenemedi: " + ex.Message);
             }
         }
+        /// <summary>Seçili firma/işyeri yetkisine göre kişi listesini yükler.</summary>
         private void cmbKisiListesi_Enter(object sender, EventArgs e)
         {
             if (_kisilerLoaded) return;
-            if (cmbFirmalarSecimi.SelectedValue == null ||
-                !int.TryParse(cmbFirmalarSecimi.SelectedValue.ToString(), out var firmaId))
-                return;
-
-            if (firmaId == TUMU_INT && _session.AktifFirmaId.HasValue)
-                firmaId = (int)_session.AktifFirmaId.Value;
+            var firmaId = GetSelectedFirmaIdForQuery();
             if (firmaId <= 0)
                 return;
 
             try
             {
-                bool isAdmin = FirmaIsyeriYetkiHelper.IsAdmin(_session.RolId);
-                var (isyeriId, isyeriIdIn) = FirmaIsyeriYetkiHelper.ResolveKisiQueryIsyeriFilter(
-                    firmaId, null, _kullaniciYetkileri, isAdmin);
+                var (isyeriId, isyeriIdIn) = ResolveIsyeriFilter(firmaId);
                 var kisiler = _ksvc.GetAktifKisilerByFirma(firmaId, isyeriId: isyeriId, isyeriIdIn: isyeriIdIn);
                 kisiler.Insert(0, new KisiListItem { PersonelId = TUMU_STR, AdSoyad = "— TÜMÜ —" });
                 cmbKisilerSecimi.DisplayMember = "AdSoyad";
@@ -189,6 +193,99 @@ namespace CeyPASS.WFA.UserControls.Izinler
                 LogHelper.Error(PageName, "KisilerLoad", "Hata", ex);
                 MessageBox.Show("Kişi listesi yüklenemedi: " + ex.Message);
             }
+        }
+
+        /// <summary>Combo seçimine göre sorgu firma Id (Tümü ise aktif firma).</summary>
+        private int GetSelectedFirmaIdForQuery()
+        {
+            if (cmbFirmalarSecimi.SelectedValue == null ||
+                !int.TryParse(cmbFirmalarSecimi.SelectedValue.ToString(), out var firmaId))
+                return 0;
+            if (firmaId == TUMU_INT && _session.AktifFirmaId.HasValue)
+                firmaId = (int)_session.AktifFirmaId.Value;
+            return firmaId;
+        }
+
+        /// <summary>Seçili işyeri Id (Tümü/-1 ise null; 0 geçerli işyeridir).</summary>
+        private int? GetSeciliIsyeriFilterId()
+        {
+            if (cmbIsyeriFilter?.SelectedValue == null)
+                return null;
+            int val;
+            if (cmbIsyeriFilter.SelectedValue is int v)
+                val = v;
+            else if (!int.TryParse(cmbIsyeriFilter.SelectedValue.ToString(), out val))
+                return null;
+            return FirmaIsyeriYetkiHelper.ToIsyeriQueryFilterId(val);
+        }
+
+        /// <summary>Yetkiye göre tek işyeri veya işyeri listesi filtresi üretir.</summary>
+        private (int? isyeriId, IReadOnlyList<int> isyeriIdIn) ResolveIsyeriFilter(int firmaId)
+            => FirmaIsyeriYetkiHelper.ResolveKisiQueryIsyeriFilter(
+                firmaId, GetSeciliIsyeriFilterId(), _kullaniciYetkileri, _isAdmin);
+
+        /// <summary>Firma değişince yetkili işyerlerini yükler.</summary>
+        private void IsyeriFilteriniYukle(int firmaId)
+        {
+            cmbIsyeriFilter.SelectedIndexChanged -= cmbIsyeriFilter_SelectedIndexChanged;
+            try
+            {
+                var data = new List<LookupItem> { FirmaIsyeriYetkiHelper.CreateIsyeriFilterTumuItem() };
+                if (firmaId > 0)
+                {
+                    var list = _iklsvc.GetIsyerleri(firmaId) ?? new List<LookupItem>();
+                    list = FirmaIsyeriYetkiHelper.FilterIsyeriLookup(list, firmaId, _kullaniciYetkileri, _isAdmin);
+                    data.AddRange(list);
+                }
+
+                cmbIsyeriFilter.DropDownStyle = ComboBoxStyle.DropDownList;
+                cmbIsyeriFilter.DataSource = null;
+                cmbIsyeriFilter.DisplayMember = nameof(LookupItem.Ad);
+                cmbIsyeriFilter.ValueMember = nameof(LookupItem.Id);
+                cmbIsyeriFilter.DataSource = data;
+
+                var prefs = PageFilterPrefsStore.Load(PageName);
+                var preferredIsyeri = prefs?.IsyeriId;
+                if (preferredIsyeri.HasValue && preferredIsyeri.Value >= 0 && data.Any(x => x.Id == preferredIsyeri.Value))
+                    cmbIsyeriFilter.SelectedValue = preferredIsyeri.Value;
+                else
+                    cmbIsyeriFilter.SelectedValue = FirmaIsyeriYetkiHelper.IsyeriFilterTumuId;
+            }
+            catch (Exception ex)
+            {
+                LogHelper.Error(PageName, "IsyeriFilteriniYukle", "İşyeri listesi yüklenirken hata", ex);
+            }
+            finally
+            {
+                cmbIsyeriFilter.SelectedIndexChanged += cmbIsyeriFilter_SelectedIndexChanged;
+            }
+        }
+
+        /// <summary>İşyeri değişince kişi listesini ve (liste modunda) grid'i yeniler.</summary>
+        private void cmbIsyeriFilter_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            ClearCombo(cmbKisilerSecimi);
+            _kisilerLoaded = false;
+            PersistFilters();
+            cmbKisiListesi_Enter(cmbKisilerSecimi, EventArgs.Empty);
+            if (_mode == ScreenMode.List)
+                btnIzinleriGoster_Click(sender, e);
+        }
+
+        /// <summary>Firma ve işyeri filtre tercihlerini yerel olarak saklar.</summary>
+        private void PersistFilters()
+        {
+            int? firmaId = null;
+            if (cmbFirmalarSecimi.SelectedValue != null &&
+                int.TryParse(cmbFirmalarSecimi.SelectedValue.ToString(), out var fId) &&
+                fId != TUMU_INT)
+                firmaId = fId;
+
+            PageFilterPrefsStore.Save(PageName, new PageFilterPrefs
+            {
+                FirmaId = firmaId,
+                IsyeriId = GetSeciliIsyeriFilterId()
+            });
         }
         private void cmbIzinTipleri_Enter(object sender, EventArgs e)
         {
@@ -585,7 +682,14 @@ namespace CeyPASS.WFA.UserControls.Izinler
 
             try
             {
-                var dt = _kisvc.GetTumIzinler(firmaId, personelId, izinTipId, bas, bit);
+                var resolveFirmaId = firmaId
+                    ?? (GetSelectedFirmaIdForQuery() > 0 ? GetSelectedFirmaIdForQuery() : 0);
+                int? isyeriId = null;
+                IReadOnlyList<int> isyeriIdIn = null;
+                if (resolveFirmaId > 0)
+                    (isyeriId, isyeriIdIn) = ResolveIsyeriFilter(resolveFirmaId);
+
+                var dt = _kisvc.GetTumIzinler(firmaId, personelId, izinTipId, bas, bit, isyeriId, isyeriIdIn);
                 dgIzinlerTablosu.DataSource = dt;
                 UpdateToolbarState();
 
@@ -985,7 +1089,14 @@ namespace CeyPASS.WFA.UserControls.Izinler
                     itId != TUMU_INT)
                     izinTipId = itId;
 
-                var dt = _kisvc.GetTumIzinler(firmaId, personelId, izinTipId, bas, bit);
+                var resolveFirmaId = firmaId
+                    ?? (GetSelectedFirmaIdForQuery() > 0 ? GetSelectedFirmaIdForQuery() : 0);
+                int? isyeriId = null;
+                IReadOnlyList<int> isyeriIdIn = null;
+                if (resolveFirmaId > 0)
+                    (isyeriId, isyeriIdIn) = ResolveIsyeriFilter(resolveFirmaId);
+
+                var dt = _kisvc.GetTumIzinler(firmaId, personelId, izinTipId, bas, bit, isyeriId, isyeriIdIn);
                 dgIzinlerTablosu.DataSource = dt;
 
                 if (dgIzinlerTablosu.Columns.Contains("KisiIzinId"))

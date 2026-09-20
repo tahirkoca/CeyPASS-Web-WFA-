@@ -5,7 +5,7 @@ using System.Linq;
 namespace CeyPASS.DataAccess
 {
     /// <summary>
-    /// EF Core DbContext - Entity Framework 6'dan geçiş için oluşturuldu
+    /// CeyPASS veritabanı EF Core bağlamı; mevcut SQL Server şeması (database-first) ile eşlenir.
     /// </summary>
     public class CeyPASSDataConnectionCore : DbContext
     {
@@ -24,6 +24,7 @@ namespace CeyPASS.DataAccess
         public DbSet<KisiIzinler> KisiIzinler { get; set; }
         public DbSet<Pozisyonlar> Pozisyonlar { get; set; }
         public DbSet<PuantajsizKartAtamalari> PuantajsizKartAtamalari { get; set; }
+        public DbSet<CanliIzlemeKartKomutKuyrugu> CanliIzlemeKartKomutKuyrugu { get; set; }
         public DbSet<RaporTanimlari> RaporTanimlari { get; set; }
         public DbSet<ResmiTatiller> ResmiTatiller { get; set; }
         public DbSet<SistemAyarlar> SistemAyarlar { get; set; }
@@ -52,12 +53,12 @@ namespace CeyPASS.DataAccess
         public DbSet<Bolumler> Bolumler { get; set; }
         public DbSet<PersonelVardiyaYemekYetkileri> PersonelVardiyaYemekYetkileri { get; set; }
 
+        /// <summary>
+        /// Database-first şema eşlemesi: birleşik anahtarlar, view'lar ve SQL Server'a özel sütun davranışları.
+        /// </summary>
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
-
-            // Database First yaklaşımı - mevcut veritabanı şemasını kullan
-            // Primary key'ler EDMX'ten alınan bilgilere göre tanımlanıyor
 
             // View'lar için key tanımlaması
             modelBuilder.Entity<vw_YemekhaneEngellenenBekleyenler>(entity =>
@@ -80,6 +81,7 @@ namespace CeyPASS.DataAccess
             modelBuilder.Entity<Pozisyonlar>().HasKey(e => e.PozisyonId);
             modelBuilder.Entity<IzinTipleri>().HasKey(e => e.IzinTipId);
             modelBuilder.Entity<Cihazlar>().HasKey(e => e.CihazId);
+            // OUTPUT clause tetikleyici/legacy tablo uyumsuzluğunu önler
             modelBuilder.Entity<Cihazlar>().ToTable("Cihazlar", t => t.UseSqlOutputClause(false));
             modelBuilder.Entity<Cihazlar>()
                 .Property(e => e.SaatPenceresiAktifMi)
@@ -98,6 +100,7 @@ namespace CeyPASS.DataAccess
             modelBuilder.Entity<KisiHareketler>().HasKey(e => e.Id);
             modelBuilder.Entity<KisiIzinler>().HasKey(e => e.KisiIzinId);
             modelBuilder.Entity<KisiIzinler>().ToTable(t => t.UseSqlOutputClause(false));
+            // SureDakika veritabanında hesaplanır; EF güncelleme göndermez
             modelBuilder.Entity<KisiIzinler>()
                 .Property(e => e.SureDakika)
                 .ValueGeneratedOnAddOrUpdate()
@@ -108,6 +111,7 @@ namespace CeyPASS.DataAccess
             modelBuilder.Entity<PuantajOnay>().HasKey(e => new { e.PersonelId, e.Tarih });
             modelBuilder.Entity<FinalPuantajVerisi>().HasKey(e => e.Id);
             modelBuilder.Entity<PuantajsizKartAtamalari>().HasKey(e => e.AtamaId);
+            modelBuilder.Entity<CanliIzlemeKartKomutKuyrugu>().HasKey(e => e.Id);
             modelBuilder.Entity<KullaniciEkstraYetkilendirme>().HasKey(e => new { e.KullaniciId, e.SayfaAdi, e.YetkiTipi, e.Allowed });
             modelBuilder.Entity<KullaniciSifreKurtarma>().HasKey(e => e.Id);
             modelBuilder.Entity<SayfaYetkileri>().HasKey(e => new { e.RolId, e.SayfaAdi, e.YetkiTipi });
@@ -116,8 +120,10 @@ namespace CeyPASS.DataAccess
             modelBuilder.Entity<YemekhaneGecisHareketler>().HasKey(e => e.Id);
             modelBuilder.Entity<YemekhaneGirisLimitler>().HasKey(e => e.Id);
             modelBuilder.Entity<TaseronKartlari>().HasKey(e => e.Id);
+            // Aynı TC için ana-hedef sicil çifti (puantaj aktarımı)
             modelBuilder.Entity<CokluSicilBaglantilari>().HasKey(e => new { e.TCKimlikNo, e.AnaPersonelId, e.HedefPersonelId });
             modelBuilder.Entity<SistemMailAlicilari>().HasKey(e => e.Id);
+            // Tablo adı legacy: MobilUygulamaTokenleri
             modelBuilder.Entity<CeyPASS.Entities.Concrete.UserDeviceToken>().ToTable("MobilUygulamaTokenleri").HasKey(e => e.Id);
             modelBuilder.Entity<PersonelVardiyaYemekYetkileri>(entity =>
             {

@@ -1,3 +1,4 @@
+/** Bildirim sayacı context (Dashboard / header badge). */
 import React, { createContext, useContext, useMemo, useState } from "react";
 import { StatusPopup } from "./StatusPopup";
 import { useNotifications, NotificationItem } from "./useNotifications";
@@ -10,6 +11,7 @@ type Ctx = {
 
 const NotificationsContext = createContext<Ctx | null>(null);
 
+/** useNotifications sarmalayıcı + yeni bildirim toast. */
 export function NotificationsProvider(props: { children: React.ReactNode }) {
   const [toastVisible, setToastVisible] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
@@ -49,6 +51,7 @@ export function NotificationsProvider(props: { children: React.ReactNode }) {
   );
 }
 
+/** unreadCount, topItems, refresh. */
 export function useNotificationsContext() {
   const ctx = useContext(NotificationsContext);
   if (!ctx) throw new Error("useNotificationsContext must be used within NotificationsProvider");

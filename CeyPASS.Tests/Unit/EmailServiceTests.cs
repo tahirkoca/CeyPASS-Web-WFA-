@@ -5,6 +5,9 @@ using Xunit;
 
 namespace CeyPASS.Tests.Unit
 {
+    /// <summary>
+    /// E-posta maskeleme (gizlilik) ve gönderim öncesi zorunlu alan kontrolleri.
+    /// </summary>
     public class EmailServiceTests
     {
         private readonly EmailService _sut;
@@ -26,6 +29,9 @@ namespace CeyPASS.Tests.Unit
 
         // ─── MaskEmail ────────────────────────────────────────────────────────
 
+        /// <summary>
+        /// NullVeyaboş boşStringdöner
+        /// </summary>
         [Theory]
         [InlineData(null)]
         [InlineData("")]
@@ -35,18 +41,27 @@ namespace CeyPASS.Tests.Unit
             _sut.MaskEmail(email).Should().Be("");
         }
 
+        /// <summary>
+        /// AtIsaretsiz Aynendöner
+        /// </summary>
         [Fact]
         public void MaskEmail_AtIsaretsiz_AynenDoner()
         {
             _sut.MaskEmail("gecersizemail").Should().Be("gecersizemail");
         }
 
+        /// <summary>
+        /// IkiKarakterKullanici Yildizlidöner
+        /// </summary>
         [Fact]
         public void MaskEmail_IkiKarakterKullanici_YildizliDoner()
         {
             _sut.MaskEmail("ab@domain.com").Should().Be("**@domain.com");
         }
 
+        /// <summary>
+        /// NormalEmail MaskelenmisStringdöner
+        /// </summary>
         [Fact]
         public void MaskEmail_NormalEmail_MaskelenmisStringDoner()
         {
@@ -56,6 +71,9 @@ namespace CeyPASS.Tests.Unit
 
         // ─── SendEmail guard'ları ─────────────────────────────────────────────
 
+        /// <summary>
+        /// BoşEmail Argumentistisna fırlatılır
+        /// </summary>
         [Fact]
         public void SendEmail_BosEmail_ArgumentException()
         {
@@ -65,6 +83,9 @@ namespace CeyPASS.Tests.Unit
             act.Should().Throw<ArgumentException>().WithMessage("*boş olamaz*");
         }
 
+        /// <summary>
+        /// BoşKonu Argumentistisna fırlatılır
+        /// </summary>
         [Fact]
         public void SendEmail_BosKonu_ArgumentException()
         {

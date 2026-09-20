@@ -9,6 +9,7 @@ using System.Windows.Forms;
 
 namespace CeyPASS.WFA.UserControls.Dashboard
 {
+    /// <summary>Ana sayfa özet kartları ve rapor kısayolları.</summary>
     public partial class ucDashboard : UserControl
     {
         private ToolTip dashboardToolTip;
@@ -20,8 +21,10 @@ namespace CeyPASS.WFA.UserControls.Dashboard
         private readonly IKullaniciFirmaIsyeriYetkiService _yetkiSvc;
         private const string PageName = "Dashboard";
         private const string PageNameUI = "Ana Sayfa";
+        /// <summary>Raporlar sayfasına yönlendirme isteği.</summary>
         public event EventHandler<ReportRequest> ReportRequested;
 
+        /// <summary>Firma seçimine göre dashboard metriklerini yükler.</summary>
         public ucDashboard(ISessionContext session, IDashboardService dsvc, IAuthorizationService asvc, IFirmaService firmaSvc, IKullaniciFirmaIsyeriYetkiService yetkiSvc)
         {
             InitializeComponent();
@@ -307,6 +310,7 @@ namespace CeyPASS.WFA.UserControls.Dashboard
             Order(g, "AyrilmaTarihi", "Ad", "Soyad", "FirmaAdi", "IsyeriAdi");
             SetMinWidth(g, ("AyrilmaTarihi", 110), ("Ad", 120), ("Soyad", 130), ("FirmaAdi", 110), ("IsyeriAdi", 110));
         }
+        /// <summary>Dashboard tabloları için zebra satır ve başlık stili.</summary>
         public static void ApplyModernGridTheme(DataGridView g)
         {
             g.BorderStyle = BorderStyle.None;

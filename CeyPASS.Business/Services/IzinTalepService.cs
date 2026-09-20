@@ -6,6 +6,7 @@ using System.Collections.Generic;
 
 namespace CeyPASS.Business.Services
 {
+    /// <summary>İzin talep onay akışı.</summary>
     public class IzinTalepService : IIzinTalepService
     {
         private readonly IIzinTalepRepository _repo;
@@ -25,6 +26,7 @@ namespace CeyPASS.Business.Services
             _bildirimService = bildirimService;
         }
 
+        /// <inheritdoc />
         public int TalepOlustur(IzinTalep talep, int talepEdenKullaniciId)
         {
             if (talep == null) throw new ArgumentNullException(nameof(talep));
@@ -69,10 +71,13 @@ namespace CeyPASS.Business.Services
             return id;
         }
 
+        /// <inheritdoc />
         public List<IzinTalep> PersonelTalepleri(string personelId) => _repo.GetByPersonel(personelId);
 
+        /// <inheritdoc />
         public List<IzinTalep> UstYetkiliBekleyenler(string ustYetkiliPersonelId) => _repo.GetUstYetkiliBekleyenler(ustYetkiliPersonelId);
 
+        /// <inheritdoc />
         public bool UstYetkiliOnayla(int talepId, string ustYetkiliPersonelId, string? aciklama)
         {
             var t = _repo.GetById(talepId);
@@ -89,6 +94,7 @@ namespace CeyPASS.Business.Services
             return ok;
         }
 
+        /// <inheritdoc />
         public bool UstYetkiliReddet(int talepId, string ustYetkiliPersonelId, string? aciklama)
         {
             var t = _repo.GetById(talepId);
@@ -105,8 +111,10 @@ namespace CeyPASS.Business.Services
             return ok;
         }
 
+        /// <inheritdoc />
         public List<IzinTalep> IkBekleyenler() => _repo.GetIkBekleyenler();
 
+        /// <inheritdoc />
         public bool IkOnayla(int talepId, int ikKullaniciId, string? aciklama)
         {
             var t = _repo.GetById(talepId);
@@ -138,6 +146,7 @@ namespace CeyPASS.Business.Services
             return true;
         }
 
+        /// <inheritdoc />
         public bool IkReddet(int talepId, int ikKullaniciId, string? aciklama)
         {
             var t = _repo.GetById(talepId);
@@ -150,10 +159,13 @@ namespace CeyPASS.Business.Services
             return ok;
         }
 
+        /// <inheritdoc />
         public bool DonusImzasinaAc(int talepId, int ikKullaniciId) => _repo.DonusImzasinaAc(talepId, ikKullaniciId);
 
+        /// <inheritdoc />
         public bool KullanimImzaAt(int talepId, int personelKullaniciId) => _repo.KullanimImzaAt(talepId, personelKullaniciId);
 
+        /// <inheritdoc />
         public bool IsSupervisor(string personelId)
         {
             if (string.IsNullOrWhiteSpace(personelId)) return false;

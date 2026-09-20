@@ -7,6 +7,7 @@ using CeyPASS.Models;
 
 namespace CeyPASS.Api.Controllers
 {
+    /// <summary>Pozisyon tanımları.</summary>
     [Authorize]
     [ApiController]
     [Route("api/v1/[controller]")]
@@ -27,6 +28,8 @@ namespace CeyPASS.Api.Controllers
             _authorizationService = authorizationService;
         }
 
+        
+        /// <summary>Pozisyon listesi.</summary>
         [HttpGet]
         public ActionResult<ApiResult<List<LookupItem>>> Get()
         {
@@ -35,6 +38,8 @@ namespace CeyPASS.Api.Controllers
             return Ok(ApiResult<List<LookupItem>>.Ok(list));
         }
 
+        
+        /// <summary>Pozisyon detayı.</summary>
         [HttpGet("{id}")]
         public ActionResult<ApiResult<PozisyonDetail>> GetById(int id)
         {
@@ -51,6 +56,8 @@ namespace CeyPASS.Api.Controllers
             }));
         }
 
+        
+        /// <summary>Pozisyon ekler.</summary>
         [HttpPost]
         public ActionResult<ApiResult> Post([FromBody] PozisyonRequest request)
         {
@@ -60,6 +67,8 @@ namespace CeyPASS.Api.Controllers
             return ok ? Ok(ApiResult.Ok("Pozisyon başarıyla eklendi.")) : BadRequest(ApiResult.Failure("İşlem başarısız."));
         }
 
+        
+        /// <summary>Pozisyon günceller.</summary>
         [HttpPut("{id}")]
         public ActionResult<ApiResult> Put(int id, [FromBody] PozisyonRequest request)
         {
@@ -72,6 +81,8 @@ namespace CeyPASS.Api.Controllers
             return ok ? Ok(ApiResult.Ok("Pozisyon güncellendi.")) : BadRequest(ApiResult.Failure("İşlem başarısız."));
         }
 
+        
+        /// <summary>Pozisyon siler.</summary>
         [HttpDelete("{id}")]
         public ActionResult<ApiResult> Delete(int id)
         {

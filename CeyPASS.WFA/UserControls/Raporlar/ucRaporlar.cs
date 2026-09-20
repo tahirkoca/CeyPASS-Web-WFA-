@@ -1,5 +1,6 @@
 using CeyPASS.Business.Abstractions;
 using CeyPASS.Entities.Concrete;
+using CeyPASS.Entities.Helpers;
 using CeyPASS.Infrastructure.Helpers;
 using System;
 using System.Collections.Generic;
@@ -12,6 +13,7 @@ using Color = System.Drawing.Color;
 
 namespace CeyPASS.WFA.UserControls.Raporlar
 {
+    /// <summary>Parametrik rapor seçimi, çalıştırma ve dışa aktarma.</summary>
     public partial class ucRaporlar : UserControl
     {
         [DllImport("user32.dll", CharSet = CharSet.Auto)]
@@ -34,6 +36,7 @@ namespace CeyPASS.WFA.UserControls.Raporlar
         private const string PageName = "Raporlar";
         private const string PageNameUI = "Raporlar";
 
+        /// <summary>Görüntüleme yetkisi yoksa kontrol gizlenir.</summary>
         public ucRaporlar(ISessionContext session, IRaporService rsvc, IAuthorizationService auth, IKullaniciQueryService kqsvc, IKullaniciFirmaIsyeriYetkiService yetkiSvc, IKisiEkraniLookUpService lookupSvc, ICihazService cihazSvc, IFirmaService firmaSvc)
         {
             var cid = Guid.NewGuid().ToString("N");
@@ -219,6 +222,7 @@ namespace CeyPASS.WFA.UserControls.Raporlar
             _loadedMultiFirmaId = null;
             EnsureMultiSelectGuncel();
         }
+        /// <summary>Rapor sonuç grid'i için ortak başlık ve satır stili.</summary>
         public static void StilVerDataGridView(DataGridView dgv)
         {
             dgv.AlternatingRowsDefaultCellStyle.BackColor = Color.LightGray;
@@ -361,6 +365,7 @@ namespace CeyPASS.WFA.UserControls.Raporlar
                 ExportHelper.ExportToPdf(dt, saveFileDialog.FileName, cmbRaporTurleri?.Text ?? "Rapor");
             }
         }
+        /// <summary>Rapor grid satırlarını Türkçe (tr-TR) duyarsız metinle filtreler.</summary>
         private void txtFiltrele_TextChanged(object sender, EventArgs e)
         {
             var cid = Guid.NewGuid().ToString("N");
@@ -369,28 +374,41 @@ namespace CeyPASS.WFA.UserControls.Raporlar
 
             string filterText = txtFiltrele.Text.Trim();
 
+            DataTable bound;
             if (string.IsNullOrEmpty(filterText))
             {
-                _report.DefaultView.RowFilter = "";
+                bound = _report;
             }
             else
             {
-                List<string> filterConditions = new List<string>();
-                foreach (DataColumn column in _report.Columns)
+                bound = _report.Clone();
+                foreach (DataRow row in _report.Rows)
                 {
-                    if (column.DataType == typeof(string) || column.DataType == typeof(int) || column.DataType == typeof(double))
+                    bool match = false;
+                    foreach (DataColumn column in _report.Columns)
                     {
-                        filterConditions.Add($"CONVERT([{column.ColumnName}], System.String) LIKE '%{filterText}%'");
+                        if (column.DataType != typeof(string)
+                            && column.DataType != typeof(int)
+                            && column.DataType != typeof(double))
+                            continue;
+                        var cell = Convert.ToString(row[column]);
+                        if (TurkishText.ContainsIgnoreCase(cell, filterText))
+                        {
+                            match = true;
+                            break;
+                        }
                     }
+                    if (match)
+                        bound.ImportRow(row);
                 }
-                _report.DefaultView.RowFilter = string.Join(" OR ", filterConditions);
-                dgRaporlar.DataSource = null;
-                dgRaporlar.Columns.Clear();
-                dgRaporlar.AutoGenerateColumns = true;
-                dgRaporlar.DataSource = _report.DefaultView;
             }
+
+            dgRaporlar.DataSource = null;
+            dgRaporlar.Columns.Clear();
+            dgRaporlar.AutoGenerateColumns = true;
+            dgRaporlar.DataSource = bound.DefaultView;
             WinFormsAuthHelper.ApplyPageAuthorization(_auth, _session, PageName, this);
-            LogHelper.Info(PageName, "Filtre", "Uygulandı", $"{{\"sonucSatir\":{(_report?.DefaultView?.Count ?? 0)}}}", cid);
+            LogHelper.Info(PageName, "Filtre", "Uygulandı", $"{{\"sonucSatir\":{(bound?.DefaultView?.Count ?? 0)}}}", cid);
         }
         private DataTable GetDataTableFromGrid(DataGridView grid)
         {
@@ -483,7 +501,7 @@ namespace CeyPASS.WFA.UserControls.Raporlar
 
                 chkRaporIsyerleri.BeginUpdate();
                 chkRaporIsyerleri.Items.Clear();
-                foreach (var iy in list.Where(x => x.Id > 0))
+                foreach (var iy in list.Where(x => x.Id >= 0))
                     chkRaporIsyerleri.Items.Add(iy, false);
 
                 chkRaporIsyerleri.DisplayMember = nameof(LookupItem.Ad);
@@ -504,7 +522,7 @@ namespace CeyPASS.WFA.UserControls.Raporlar
             return chkRaporIsyerleri.CheckedItems
                 .OfType<LookupItem>()
                 .Select(x => x.Id)
-                .Where(id => id > 0)
+                .Where(id => id >= 0)
                 .Distinct()
                 .ToList();
         }
@@ -544,6 +562,7 @@ namespace CeyPASS.WFA.UserControls.Raporlar
             return true;
         }
 
+        /// <summary>Dashboard kısayolundan rapor tipi ve parametreleri uygular.</summary>
         public void OpenFromDashboard(ReportRequest req)
         {
             if (req.FirmaId > 0 && cmbFirma.DataSource != null)

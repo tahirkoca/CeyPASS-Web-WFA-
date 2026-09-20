@@ -16,7 +16,9 @@ public static class FieldValidation
             typeof(FieldValidation),
             new PropertyMetadata(null, OnErrorChanged));
 
+    /// <summary>Attached hata metni (null = geçerli).</summary>
     public static string? GetError(DependencyObject obj) => (string?)obj.GetValue(ErrorProperty);
+    /// <summary>Attached hata metni; kırmızı çerçeve ve tooltip güncellenir.</summary>
     public static void SetError(DependencyObject obj, string? value) => obj.SetValue(ErrorProperty, value);
 
     private static void OnErrorChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)

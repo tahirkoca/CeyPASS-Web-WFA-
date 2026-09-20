@@ -1,3 +1,4 @@
+/** Firma tanımları ve IT birim maili. */
 import React, { useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, Modal, ScrollView, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
@@ -6,7 +7,8 @@ import { PageHeader } from "../PageHeader";
 import { useHeaderQuickMenu } from "../HeaderQuickMenu";
 import { useNotificationsContext } from "../NotificationsProvider";
 import { organizasyonService, FirmaRow } from "../../services/organizasyonApi";
-import { useUiPrefs } from "../../services/uiPrefs";
+import { useUiPrefs } from "../../services/uiPrefs";
+import { toTrLower } from "../../services/turkishText";
 
 function pick<T = any>(obj: any, a: string, b?: string): T | undefined {
   if (!obj) return undefined;
@@ -74,7 +76,7 @@ export function FirmalarScreen(props: { user: any; abilities: any; onOpenMenu: (
   }, []);
 
   const filtered = useMemo(() => {
-    const qq = q.trim().toLowerCase();
+    const qq = toTrLower(q).trim();
     const rows = (items ?? []).map((x) => ({
       firmaId: pick<number>(x, "firmaId", "FirmaId") ?? 0,
       firmaAdi: (pick<string>(x, "firmaAdi", "FirmaAdi") ?? "").toString(),
@@ -82,7 +84,7 @@ export function FirmalarScreen(props: { user: any; abilities: any; onOpenMenu: (
     }));
     if (!qq) return rows.sort((a, b) => a.firmaAdi.localeCompare(b.firmaAdi, "tr"));
     return rows
-      .filter((r) => `${r.firmaId} ${r.firmaAdi} ${r.itBirimMail}`.toLowerCase().includes(qq))
+      .filter((r) => toTrLower(`${r.firmaId} ${r.firmaAdi} ${r.itBirimMail}`).includes(qq))
       .sort((a, b) => a.firmaAdi.localeCompare(b.firmaAdi, "tr"));
   }, [items, q]);
 

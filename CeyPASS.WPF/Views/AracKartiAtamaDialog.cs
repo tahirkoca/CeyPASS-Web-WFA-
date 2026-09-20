@@ -6,10 +6,10 @@ using CeyPASS.Entities.Helpers;
 
 namespace CeyPASS.WPF.Views;
 
-/// <summary>WFA aracKartiAtama karşılığı.</summary>
+/// <summary>WFA aracKartiAtama karşılığı; plaka zorunlu, T.C./pasaport en az biri.</summary>
 public static class AracKartiAtamaDialog
 {
-    public static void ShowYeni(Window owner, ISessionContext session, IAracKartiService svc, int firmaId)
+    public static void ShowYeni(Window owner, ISessionContext session, IAracKartiService svc, int firmaId, string? preselectPersonelId = null)
     {
         session.AktifFirmaId = firmaId;
         var cards = svc.GetCardsForNew(firmaId) ?? new List<KisiListItem>();
@@ -20,16 +20,23 @@ public static class AracKartiAtamaDialog
 
         var fields = BuildFormFields(cards, isGuncelle: false, svc);
 
-        var history = new GecmisZiyaretciPanel { Margin = new Thickness(12, 0, 0, 0) };
+        var history = new GecmisZiyaretciPanel
+        {
+            Margin = new Thickness(12, 0, 0, 0),
+            VerticalAlignment = VerticalAlignment.Stretch
+        };
         history.SetSearchPlaceholder("İsim veya plaka ara...");
         history.LoadListe(ad => svc.SearchGecmisZiyaretciler(firmaId, ad));
+        // Geçmiş ziyaretçi/araç kaydı forma aktarılır.
         history.ZiyaretciSecildi += item =>
         {
             if (item == null) return;
             fields.TxtAd.Text = item.AdSoyad ?? "";
             fields.TcField.ShowMasked(item.TCKimlikNo);
+            fields.TxtPasaport.Text = item.PasaportNo ?? "";
             fields.TxtPlaka.Text = item.Plaka ?? "";
             fields.TxtKime.Text = item.ZiyaretEdilenKisi ?? "";
+            fields.TxtAciklama.Text = item.Notlar ?? "";
             fields.DtpGiris.EditValue = DateTime.Now;
         };
 
@@ -38,29 +45,28 @@ public static class AracKartiAtamaDialog
         root.Children.Add(fields.Panel);
         root.Children.Add(history);
 
-        if (cards.Count > 0)
-            fields.CmbKart.SelectedIndex = 0;
+        SelectKartByPersonelId(fields.CmbKart, cards, preselectPersonelId);
 
         UiFormDialog.Show(
             title: "Araç Kartı Ver",
-            subtitle: "Plaka zorunludur. Geçmiş ziyaretçiden seçim veya arama ile formu doldurabilirsiniz.",
+            subtitle: "Plaka zorunludur. T.C. veya Pasaport'tan en az biri girilmelidir.",
             body: root,
             owner: owner,
             primaryText: "Kaydet",
             secondaryText: "İptal",
             width: 920,
-            validateOnPrimary: () => SaveYeni(session, svc, fields, owner));
+            validateOnPrimary: () => SaveYeni(session, svc, fields, owner),
+            maxBodyHeight: 520);
     }
 
-    public static void ShowGuncelle(Window owner, ISessionContext session, IAracKartiService svc, int firmaId)
+    public static void ShowGuncelle(Window owner, ISessionContext session, IAracKartiService svc, int firmaId, int? preselectAtamaId = null)
     {
         session.AktifFirmaId = firmaId;
-        var now = DateTime.Now;
-        var aktifler = svc.GetTodayActiveAssignments(now, firmaId) ?? new List<PuantajsizKartAtama>();
+        var aktifler = svc.GetOpenActiveAssignments(firmaId) ?? new List<PuantajsizKartAtama>();
 
         if (aktifler.Count == 0)
         {
-            UiDialog.Info("Bugün için güncellenecek aktif atama bulunamadı.", "Araç Kartı Güncelle", owner);
+            UiDialog.Info("Güncellenecek aktif atama bulunamadı.", "Araç Kartı Güncelle", owner);
             return;
         }
 
@@ -72,17 +78,18 @@ public static class AracKartiAtamaDialog
                 fields.TxtAd.Text = a.MisafirAdSoyad ?? "";
                 fields.TxtKime.Text = a.ZiyaretEdilenKisi ?? "";
                 fields.TcField.ShowMasked(a.TCKimlikNo);
+                fields.TxtPasaport.Text = a.PasaportNo ?? "";
                 fields.TxtPlaka.Text = a.Plaka ?? "";
                 fields.TxtAciklama.Text = a.Notlar ?? "";
                 fields.DtpGiris.EditValue = a.Baslangic;
                 fields.DtpCikis.EditValue = DateTime.Now;
             }
         };
-        fields.CmbKart.SelectedIndex = 0;
+        SelectAtamaById(fields.CmbKart, aktifler, preselectAtamaId);
 
         UiFormDialog.Show(
             title: "Verilen Araç Kartını Güncelle",
-            subtitle: "Bugünkü aktif araç kartı atamasını güncelleyin.",
+            subtitle: "Aktif araç kartı atamasını güncelleyin.",
             body: fields.Panel,
             owner: owner,
             primaryText: "Kaydet",
@@ -91,12 +98,44 @@ public static class AracKartiAtamaDialog
             validateOnPrimary: () => SaveGuncelle(svc, fields, owner));
     }
 
+    private static void SelectKartByPersonelId(ComboBox cmb, List<KisiListItem> cards, string? personelId)
+    {
+        if (cards.Count == 0) return;
+        if (!string.IsNullOrWhiteSpace(personelId))
+        {
+            var match = cards.FirstOrDefault(c =>
+                string.Equals(c.PersonelId?.Trim(), personelId.Trim(), StringComparison.OrdinalIgnoreCase));
+            if (match != null)
+            {
+                cmb.SelectedItem = match;
+                return;
+            }
+        }
+        cmb.SelectedIndex = 0;
+    }
+
+    private static void SelectAtamaById(ComboBox cmb, List<PuantajsizKartAtama> aktifler, int? atamaId)
+    {
+        if (aktifler.Count == 0) return;
+        if (atamaId.HasValue)
+        {
+            var match = aktifler.FirstOrDefault(a => a.AtamaId == atamaId.Value);
+            if (match != null)
+            {
+                cmb.SelectedItem = match;
+                return;
+            }
+        }
+        cmb.SelectedIndex = 0;
+    }
+
     private sealed class AracFormFields
     {
         public Grid Panel { get; init; } = null!;
         public ComboBox CmbKart { get; init; } = null!;
         public TextBox TxtAd { get; init; } = null!;
         public CanliIzlemeKartFormHelper.TcField TcField { get; init; } = null!;
+        public TextBox TxtPasaport { get; init; } = null!;
         public TextBox TxtPlaka { get; init; } = null!;
         public TextBox TxtKime { get; init; } = null!;
         public DevExpress.Xpf.Editors.DateEdit DtpGiris { get; init; } = null!;
@@ -128,17 +167,19 @@ public static class AracKartiAtamaDialog
 
         var tcBox = CanliIzlemeKartFormHelper.CreateField();
         var tcField = new CanliIzlemeKartFormHelper.TcField(tcBox);
+        var txtPasaport = CanliIzlemeKartFormHelper.CreateField();
+        txtPasaport.MaxLength = 50;
         var txtPlaka = CanliIzlemeKartFormHelper.CreateField();
         var txtKime = CanliIzlemeKartFormHelper.CreateField();
-        tcField.OnLeave(() => TryFillFromTc(svc, tcField, txtAd, txtKime, txtPlaka));
-        row = CanliIzlemeKartFormHelper.AddSplitRow(grid, row, "T.C. Kimlik No *", tcBox, "Plaka *", txtPlaka);
-        row = CanliIzlemeKartFormHelper.AddFullRow(grid, row, "Kime Geldiği", txtKime);
+        var txtAciklama = CanliIzlemeKartFormHelper.CreateAciklama();
+        tcField.OnLeave(() => TryFillFromTc(svc, tcField, txtAd, txtKime, txtPlaka, txtPasaport, txtAciklama));
+        row = CanliIzlemeKartFormHelper.AddSplitRow(grid, row, "T.C. Kimlik No", tcBox, "Pasaport No", txtPasaport);
+        row = CanliIzlemeKartFormHelper.AddSplitRow(grid, row, "Plaka *", txtPlaka, "Kime Geldiği", txtKime);
 
         var dtpGiris = CanliIzlemeKartFormHelper.CreateDateTimeEdit(DateTime.Now);
         var dtpCikis = CanliIzlemeKartFormHelper.CreateDateTimeEdit(DateTime.Now, isGuncelle);
         row = CanliIzlemeKartFormHelper.AddSplitRow(grid, row, "Giriş Saati", dtpGiris, "Çıkış Saati", dtpCikis);
 
-        var txtAciklama = CanliIzlemeKartFormHelper.CreateAciklama();
         CanliIzlemeKartFormHelper.AddFullRow(grid, row, "Açıklama", txtAciklama);
 
         return new AracFormFields
@@ -147,6 +188,7 @@ public static class AracKartiAtamaDialog
             CmbKart = cmbKart,
             TxtAd = txtAd,
             TcField = tcField,
+            TxtPasaport = txtPasaport,
             TxtPlaka = txtPlaka,
             TxtKime = txtKime,
             DtpGiris = dtpGiris,
@@ -160,7 +202,9 @@ public static class AracKartiAtamaDialog
         CanliIzlemeKartFormHelper.TcField tcField,
         TextBox txtAd,
         TextBox txtKime,
-        TextBox txtPlaka)
+        TextBox txtPlaka,
+        TextBox txtPasaport,
+        TextBox txtAciklama)
     {
         var tc = tcField.Box.Text?.Trim();
         if (string.IsNullOrEmpty(tc) || TcKimlikHelper.LooksMasked(tc)) return;
@@ -175,6 +219,10 @@ public static class AracKartiAtamaDialog
                 txtKime.Text = rec.ZiyaretEdilenKisi;
             if (!string.IsNullOrEmpty(rec.Plaka) && string.IsNullOrWhiteSpace(txtPlaka.Text))
                 txtPlaka.Text = rec.Plaka;
+            if (!string.IsNullOrEmpty(rec.PasaportNo) && string.IsNullOrWhiteSpace(txtPasaport.Text))
+                txtPasaport.Text = rec.PasaportNo;
+            if (!string.IsNullOrEmpty(rec.Notlar) && string.IsNullOrWhiteSpace(txtAciklama.Text))
+                txtAciklama.Text = rec.Notlar;
         }
         catch
         {
@@ -200,7 +248,8 @@ public static class AracKartiAtamaDialog
                          ?? (f.CmbKart.SelectedItem as KisiListItem)?.PersonelId
                          ?? throw new InvalidOperationException("Kart seçiniz.");
 
-            var tc = f.TcField.ResolveForSave();
+            var tc = f.TcField.ResolveOptionalForSave();
+            var pasaport = string.IsNullOrWhiteSpace(f.TxtPasaport.Text) ? null : f.TxtPasaport.Text.Trim();
             var kime = string.IsNullOrWhiteSpace(f.TxtKime.Text) ? null : f.TxtKime.Text.Trim();
             var giris = (DateTime)(f.DtpGiris.EditValue ?? DateTime.Now);
 
@@ -212,7 +261,8 @@ public static class AracKartiAtamaDialog
                 f.TxtAciklama.Text,
                 tc,
                 kime ?? "",
-                plaka);
+                plaka,
+                pasaport);
 
             UiDialog.Success("Kayıt başarıyla oluşturuldu.", "Bilgi", owner);
             return true;
@@ -238,12 +288,13 @@ public static class AracKartiAtamaDialog
             if (string.IsNullOrWhiteSpace(plaka))
                 throw new InvalidOperationException("Plaka giriniz.");
 
-            var tc = f.TcField.ResolveForSave();
+            var tc = f.TcField.ResolveOptionalForSave();
+            var pasaport = string.IsNullOrWhiteSpace(f.TxtPasaport.Text) ? null : f.TxtPasaport.Text.Trim();
             var kime = string.IsNullOrWhiteSpace(f.TxtKime.Text) ? null : f.TxtKime.Text.Trim();
             var giris = (DateTime)(f.DtpGiris.EditValue ?? DateTime.Now);
             DateTime? cikis = f.DtpCikis.IsEnabled ? (DateTime?)(f.DtpCikis.EditValue ?? DateTime.Now) : null;
 
-            svc.UpdateAssignment(a.AtamaId, f.TxtAd.Text, giris, cikis, f.TxtAciklama.Text, tc, kime ?? "", plaka);
+            svc.UpdateAssignment(a.AtamaId, f.TxtAd.Text, giris, cikis, f.TxtAciklama.Text, tc, kime ?? "", plaka, pasaport);
             UiDialog.Success("Kayıt güncellendi.", "Bilgi", owner);
             return true;
         }

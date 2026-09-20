@@ -2,6 +2,7 @@ using System;
 
 namespace CeyPASS.Entities.Concrete
 {
+    /// <summary>İşyeri/cihaz bazlı yemek geçiş penceresi yetkisi.</summary>
     public class PersonelVardiyaYemekYetki
     {
         public int Id { get; set; }

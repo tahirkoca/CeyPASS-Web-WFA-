@@ -9,6 +9,7 @@ using System.Linq;
 
 namespace CeyPASS.Business.Services
 {
+    /// <summary>Mobil QR geçiş işleme.</summary>
     public class MobileQrService : IMobileQrService
     {
         private readonly ICihazRepository _cihazRepository;
@@ -25,6 +26,7 @@ namespace CeyPASS.Business.Services
             _context = context;
         }
 
+        /// <inheritdoc />
         public ApiResult<string> ProcessQrScan(QrIstekModel request, string personelId)
         {
             try

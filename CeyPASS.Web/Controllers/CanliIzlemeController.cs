@@ -1,4 +1,5 @@
 using CeyPASS.Business.Abstractions;
+using CeyPASS.Business.Services;
 using CeyPASS.Entities.Concrete;
 using CeyPASS.Infrastructure.Helpers;
 using CeyPASS.Web.Models.CanliIzleme;
@@ -12,6 +13,7 @@ using System.Text.Json;
 
 namespace CeyPASS.Web.Controllers
 {
+    /// <summary>Canlı geçiş izleme; ayrı oturum (session) ve rol bazlı kart/hareket ekranı.</summary>
     public class CanliIzlemeController : Controller
     {
         private const string SessionKey = "CanliIzlemeUser";
@@ -20,21 +22,25 @@ namespace CeyPASS.Web.Controllers
         private readonly IKisiDetayService _kdsvc;
         private readonly IMisafirKartService _msvc;
         private readonly IAracKartiService _aracSvc;
+        private readonly ICanliIzlemeKartKomutService _kartKomutSvc;
 
         public CanliIzlemeController(
             ICanliIzlemeService svc,
             IKisiHareketService khsvc,
             IKisiDetayService kdsvc,
             IMisafirKartService msvc,
-            IAracKartiService aracSvc)
+            IAracKartiService aracSvc,
+            ICanliIzlemeKartKomutService kartKomutSvc)
         {
             _svc = svc;
             _khsvc = khsvc;
             _kdsvc = kdsvc;
             _msvc = msvc;
             _aracSvc = aracSvc;
+            _kartKomutSvc = kartKomutSvc;
         }
 
+        /// <summary>Canlı izleme giriş formu (firma + kullanıcı).</summary>
         [HttpGet]
         public IActionResult Login()
         {
@@ -47,6 +53,7 @@ namespace CeyPASS.Web.Controllers
             return View(new CanliIzlemeLoginModel());
         }
 
+        /// <summary>Canlı izleme kimlik doğrulama; başarılı oturum session'a yazılır.</summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult Login(CanliIzlemeLoginModel model)
@@ -74,6 +81,7 @@ namespace CeyPASS.Web.Controllers
             return RedirectToAction(nameof(Index));
         }
 
+        /// <summary>Canlı izleme oturumunu sonlandırır.</summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult Logout()
@@ -82,6 +90,7 @@ namespace CeyPASS.Web.Controllers
             return RedirectToAction(nameof(Login));
         }
 
+        /// <summary>Ana canlı izleme paneli; rol bayrakları ve ilk geçiş/hareket verisi.</summary>
         [HttpGet]
         public IActionResult Index()
         {
@@ -93,15 +102,18 @@ namespace CeyPASS.Web.Controllers
             ViewBag.IsArac = CanliIzlemeRoleHelper.IsArac(user?.Rol);
             ViewBag.IsDanisma = CanliIzlemeRoleHelper.IsDanisma(user?.Rol);
             ViewBag.CanMisafirKart = !CanliIzlemeRoleHelper.HideKartAtama(user?.Rol);
+            ViewBag.ShowHareketListesi = CanliIzlemeRoleHelper.ShowHareketListesi(user?.Rol);
 
             // İlk render (JS zaten 1 sn'de bir yenileyecek)
             ViewBag.LastPasses = GetLastPassesInternal(user.FirmaId, 4);
-            ViewBag.LastMoves = GetLastMovesInternal(user.FirmaId, 15);
+            ViewBag.LastMoves = ViewBag.ShowHareketListesi
+                ? GetLastMovesInternal(user.FirmaId, 15)
+                : new List<KisiHareketDTO>();
 
             return View();
         }
 
-        // JSON endpoints (WinForms Timer = 1000ms polling)
+        /// <summary>Son geçişler (polling); rol yemekhane/araç/danışma filtresi serviste.</summary>
         [HttpGet]
         public IActionResult LastPasses(int take = 4)
         {
@@ -113,7 +125,7 @@ namespace CeyPASS.Web.Controllers
             {
                 personelId = x.PersonelId,
                 adSoyad = x.AdSoyad,
-                departmanAdi = x.DepartmanAdi,
+                isyeriAdi = x.IsyeriAdi,
                 unvan = x.Unvan,
                 zaman = x.Zaman,
                 terminalAdi = x.TerminalAdi,
@@ -124,6 +136,7 @@ namespace CeyPASS.Web.Controllers
             return Json(dto);
         }
 
+        /// <summary>Son hareket listesi; danışma rolü tam liste görür.</summary>
         [HttpGet]
         public IActionResult LastMoves(int top = 15)
         {
@@ -135,7 +148,7 @@ namespace CeyPASS.Web.Controllers
             {
                 tarih = x.Tarih,
                 adSoyad = x.AdSoyad,
-                departman = x.Departman,
+                isyeri = x.Isyeri,
                 unvan = x.Unvan,
                 cihazAdi = x.CihazAdi,
                 kisiId = x.PersonelId
@@ -144,6 +157,7 @@ namespace CeyPASS.Web.Controllers
             return Json(dto);
         }
 
+        /// <summary>Geçiş satırından personel detay popup verisi.</summary>
         [HttpGet]
         public IActionResult KisiDetay(int kisiId)
         {
@@ -161,14 +175,14 @@ namespace CeyPASS.Web.Controllers
                 ok = true,
                 adSoyad = dto.AdSoyad,
                 unvan = dto.Unvan,
-                departman = dto.Departman,
+                isyeri = dto.Isyeri,
                 fotoBase64 = (dto.Foto != null && dto.Foto.Length > 0) ? Convert.ToBase64String(dto.Foto) : null
             });
         }
 
-        // Misafir Kart (WinForms dialog)
+        /// <summary>Yeni misafir kart atama partial formu.</summary>
         [HttpGet]
-        public IActionResult MisafirKartYeni()
+        public IActionResult MisafirKartYeni(string personelId = null)
         {
             var user = GetUser();
             if (user == null) return Unauthorized();
@@ -176,9 +190,11 @@ namespace CeyPASS.Web.Controllers
 
             var cards = _msvc.GetCardsForNew(user.FirmaId);
             ViewBag.Cards = cards;
+            ViewBag.PreselectPersonelId = personelId;
             return PartialView("_MisafirKartYeni", new MisafirKartYeniModel { GirisSaati = DateTime.Now });
         }
 
+        /// <summary>Misafir kart ataması oluşturur.</summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult MisafirKartYeni(MisafirKartYeniModel model)
@@ -189,7 +205,7 @@ namespace CeyPASS.Web.Controllers
 
             try
             {
-                _msvc.CreateAssignment(user.FirmaId, model.KartId, model.MisafirAdSoyad, model.GirisSaati, model.Aciklama, model.TCKimlikNo, model.ZiyaretEdilenKisi);
+                _msvc.CreateAssignment(user.FirmaId, model.KartId, model.MisafirAdSoyad, model.GirisSaati, model.Aciklama, model.TCKimlikNo, model.ZiyaretEdilenKisi, model.PasaportNo);
                 return Json(new { ok = true, message = "Kayıt başarıyla oluşturuldu." });
             }
             catch (Exception ex)
@@ -198,6 +214,7 @@ namespace CeyPASS.Web.Controllers
             }
         }
 
+        /// <summary>TC ile önceki misafir kaydı ön doldurma.</summary>
         [HttpGet]
         public IActionResult GetMisafirByTc(string tc)
         {
@@ -221,22 +238,26 @@ namespace CeyPASS.Web.Controllers
                 ok = true,
                 misafirAdSoyad = rec.MisafirAdSoyad,
                 ziyaretEdilenKisi = rec.ZiyaretEdilenKisi,
+                pasaportNo = rec.PasaportNo,
                 aciklama = rec.Notlar
             });
         }
 
+        /// <summary>Açık misafir atamalarını güncelleme formu.</summary>
         [HttpGet]
-        public IActionResult MisafirKartGuncelle()
+        public IActionResult MisafirKartGuncelle(int? atamaId = null)
         {
             var user = GetUser();
             if (user == null) return Unauthorized();
             if (CanliIzlemeRoleHelper.HideKartAtama(user?.Rol)) return Forbid();
 
-            var aktifler = _msvc.GetTodayActiveAssignments(DateTime.Now, user.FirmaId);
+            var aktifler = _msvc.GetOpenActiveAssignments(user.FirmaId);
             ViewBag.Assignments = aktifler;
+            ViewBag.PreselectAtamaId = atamaId;
             return PartialView("_MisafirKartGuncelle", new MisafirKartGuncelleModel { CikisSaati = DateTime.Now });
         }
 
+        /// <summary>Misafir kart atamasını günceller (çıkış saati vb.).</summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult MisafirKartGuncelle(MisafirKartGuncelleModel model)
@@ -247,7 +268,7 @@ namespace CeyPASS.Web.Controllers
 
             try
             {
-                _msvc.UpdateAssignment(model.AtamaId, model.MisafirAdSoyad, model.GirisSaati, model.CikisSaati, model.Aciklama, model.TCKimlikNo, model.ZiyaretEdilenKisi);
+                _msvc.UpdateAssignment(model.AtamaId, model.MisafirAdSoyad, model.GirisSaati, model.CikisSaati, model.Aciklama, model.TCKimlikNo, model.ZiyaretEdilenKisi, model.PasaportNo);
                 return Json(new { ok = true, message = "Kayıt güncellendi." });
             }
             catch (Exception ex)
@@ -256,6 +277,7 @@ namespace CeyPASS.Web.Controllers
             }
         }
 
+        /// <summary>Geçmiş ziyaretçi/araç araması (autocomplete).</summary>
         [HttpGet]
         public IActionResult SearchGecmisZiyaretciler(string ad, string tip)
         {
@@ -275,24 +297,29 @@ namespace CeyPASS.Web.Controllers
                 {
                     adSoyad = x.AdSoyad,
                     tcKimlikNo = x.TCKimlikNo,
+                    pasaportNo = x.PasaportNo,
                     ziyaretEdilenKisi = x.ZiyaretEdilenKisi,
                     plaka = x.Plaka,
+                    notlar = x.Notlar,
                     gosterim = x.Gosterim
                 })
             });
         }
 
+        /// <summary>Yeni araç kartı atama partial formu.</summary>
         [HttpGet]
-        public IActionResult AracKartiYeni()
+        public IActionResult AracKartiYeni(string personelId = null)
         {
             var user = GetUser();
             if (user == null) return Unauthorized();
             if (CanliIzlemeRoleHelper.HideKartAtama(user?.Rol)) return Forbid();
 
             ViewBag.Cards = _aracSvc.GetCardsForNew(user.FirmaId);
+            ViewBag.PreselectPersonelId = personelId;
             return PartialView("_AracKartiYeni", new AracKartiYeniModel { GirisSaati = DateTime.Now });
         }
 
+        /// <summary>Araç kart ataması oluşturur.</summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult AracKartiYeni(AracKartiYeniModel model)
@@ -303,7 +330,7 @@ namespace CeyPASS.Web.Controllers
 
             try
             {
-                _aracSvc.CreateAssignment(user.FirmaId, model.KartId, model.AdSoyad, model.GirisSaati, model.Aciklama, model.TCKimlikNo, model.ZiyaretEdilenKisi, model.Plaka);
+                _aracSvc.CreateAssignment(user.FirmaId, model.KartId, model.AdSoyad, model.GirisSaati, model.Aciklama, model.TCKimlikNo, model.ZiyaretEdilenKisi, model.Plaka, model.PasaportNo);
                 return Json(new { ok = true, message = "Kayıt başarıyla oluşturuldu." });
             }
             catch (Exception ex)
@@ -312,6 +339,7 @@ namespace CeyPASS.Web.Controllers
             }
         }
 
+        /// <summary>TC ile önceki araç ziyareti ön doldurma.</summary>
         [HttpGet]
         public IActionResult GetAracByTc(string tc)
         {
@@ -332,21 +360,25 @@ namespace CeyPASS.Web.Controllers
                 adSoyad = rec.MisafirAdSoyad,
                 ziyaretEdilenKisi = rec.ZiyaretEdilenKisi,
                 plaka = rec.Plaka,
+                pasaportNo = rec.PasaportNo,
                 aciklama = rec.Notlar
             });
         }
 
+        /// <summary>Açık araç atamalarını güncelleme formu.</summary>
         [HttpGet]
-        public IActionResult AracKartiGuncelle()
+        public IActionResult AracKartiGuncelle(int? atamaId = null)
         {
             var user = GetUser();
             if (user == null) return Unauthorized();
             if (CanliIzlemeRoleHelper.HideKartAtama(user?.Rol)) return Forbid();
 
-            ViewBag.Assignments = _aracSvc.GetTodayActiveAssignments(DateTime.Now, user.FirmaId);
+            ViewBag.Assignments = _aracSvc.GetOpenActiveAssignments(user.FirmaId);
+            ViewBag.PreselectAtamaId = atamaId;
             return PartialView("_AracKartiGuncelle", new AracKartiGuncelleModel { CikisSaati = DateTime.Now });
         }
 
+        /// <summary>Araç kart atamasını günceller.</summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult AracKartiGuncelle(AracKartiGuncelleModel model)
@@ -357,7 +389,7 @@ namespace CeyPASS.Web.Controllers
 
             try
             {
-                _aracSvc.UpdateAssignment(model.AtamaId, model.AdSoyad, model.GirisSaati, model.CikisSaati, model.Aciklama, model.TCKimlikNo, model.ZiyaretEdilenKisi, model.Plaka);
+                _aracSvc.UpdateAssignment(model.AtamaId, model.AdSoyad, model.GirisSaati, model.CikisSaati, model.Aciklama, model.TCKimlikNo, model.ZiyaretEdilenKisi, model.Plaka, model.PasaportNo);
                 return Json(new { ok = true, message = "Kayıt güncellendi." });
             }
             catch (Exception ex)
@@ -388,6 +420,7 @@ namespace CeyPASS.Web.Controllers
             return _khsvc.GetLastMovesByFirma(top, firmaId);
         }
 
+        // Ana uygulama SessionContext'ten bağımsız canlı izleme oturumu
         private AuthUserDTO GetUser()
         {
             try
@@ -411,6 +444,46 @@ namespace CeyPASS.Web.Controllers
         private void ClearUser()
         {
             HttpContext.Session.Remove(SessionKey);
+        }
+
+        /// <summary>Aktif misafir/araç kart atama listesi (JSON).</summary>
+        [HttpGet]
+        public IActionResult AtamaListe(string tip = "misafir")
+        {
+            var user = GetUser();
+            if (user == null) return Unauthorized();
+            if (CanliIzlemeRoleHelper.HideKartAtama(user?.Rol)) return Forbid();
+            var list = KartAtamaListePresenter.Load(_msvc, _aracSvc, _kartKomutSvc, user.FirmaId, tip);
+            return Json(list);
+        }
+
+        /// <summary>Terminal kart kısıtlama/kaldırma komutunu kuyruğa alır.</summary>
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult KartKomut(string personelId, bool pasif)
+        {
+            var user = GetUser();
+            if (user == null) return Unauthorized();
+            if (CanliIzlemeRoleHelper.HideKartAtama(user?.Rol)) return Forbid();
+            var pid = (personelId ?? "").Trim();
+            if (string.IsNullOrEmpty(pid))
+                return Json(new { ok = false, message = "PersonelId gerekli." });
+            try
+            {
+                if (pasif)
+                    _kartKomutSvc.EnqueuePasif(user.FirmaId, pid, user.KullaniciId);
+                else
+                    _kartKomutSvc.EnqueueAktif(user.FirmaId, pid, user.KullaniciId);
+                return Json(new
+                {
+                    ok = true,
+                    message = pasif ? "Kısıtlama komutu kuyruğa alındı." : "Kısıt kaldırma komutu kuyruğa alındı."
+                });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { ok = false, message = ex.Message });
+            }
         }
 
         private static List<(int Id, string Ad)> ToFirmaOptions(DataTable dt)

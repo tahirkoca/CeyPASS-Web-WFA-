@@ -4,20 +4,25 @@ using CeyPASS.Entities.Concrete;
 using CeyPASS.Entities.Helpers;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace CeyPASS.Business.Services
 {
+    /// <summary>Araç kartı ziyaret atamaları.</summary>
     public class AracKartiService : IAracKartiService
     {
         private readonly IKisiRepository _kisiRepo;
         private readonly IPuantajsizKartAtamaRepository _atamaRepo;
+        private readonly IKisiHareketRepository _hareketRepo;
 
-        public AracKartiService(IKisiRepository kisiRepo, IPuantajsizKartAtamaRepository atamaRepo)
+        public AracKartiService(IKisiRepository kisiRepo, IPuantajsizKartAtamaRepository atamaRepo, IKisiHareketRepository hareketRepo)
         {
             _kisiRepo = kisiRepo;
             _atamaRepo = atamaRepo;
+            _hareketRepo = hareketRepo;
         }
 
+        /// <inheritdoc />
         public List<KisiListItem> GetCardsForNew(int firmaId)
         {
             var tumKartlar = _kisiRepo.GetAktifByFirma(firmaId, null, puantajYapilirMi: false, isyeriId: null, aracKartiMi: true);
@@ -32,17 +37,25 @@ namespace CeyPASS.Business.Services
             return sonuc;
         }
 
+        /// <inheritdoc />
         public List<PuantajsizKartAtama> GetTodayActiveAssignments(DateTime now, int firmaId)
         {
             return _atamaRepo.GetTodayActive(now, firmaId, aracKartiMi: true);
         }
 
-        public int CreateAssignment(int firmaId, string personelId, string adSoyad, DateTime girisSaati, string aciklama, string tcKimlikNo, string ziyaretEdilenKisi, string plaka)
+        /// <inheritdoc />
+        public List<PuantajsizKartAtama> GetOpenActiveAssignments(int firmaId)
+        {
+            return _atamaRepo.GetOpenActive(firmaId, aracKartiMi: true);
+        }
+
+        /// <inheritdoc />
+        public int CreateAssignment(int firmaId, string personelId, string adSoyad, DateTime girisSaati, string aciklama, string tcKimlikNo, string ziyaretEdilenKisi, string plaka, string pasaportNo)
         {
             if (string.IsNullOrWhiteSpace(adSoyad))
                 throw new ArgumentException("Ad soyad boş olamaz.", nameof(adSoyad));
 
-            var tc = TcKimlikHelper.RequireValid(tcKimlikNo);
+            var (tc, pasaport) = TcKimlikHelper.RequireTcOrPasaport(tcKimlikNo, pasaportNo);
 
             if (string.IsNullOrWhiteSpace(plaka))
                 throw new ArgumentException("Plaka giriniz.", nameof(plaka));
@@ -58,6 +71,7 @@ namespace CeyPASS.Business.Services
                 KartId = personelId,
                 MisafirAdSoyad = adSoyad.Trim(),
                 TCKimlikNo = tc,
+                PasaportNo = pasaport,
                 ZiyaretEdilenKisi = string.IsNullOrWhiteSpace(ziyaretEdilenKisi) ? null : ziyaretEdilenKisi.Trim(),
                 Baslangic = girisSaati,
                 Bitis = null,
@@ -66,7 +80,8 @@ namespace CeyPASS.Business.Services
             });
         }
 
-        public void UpdateAssignment(int atamaId, string adSoyad, DateTime girisSaati, DateTime? cikisSaati, string aciklama, string tcKimlikNo, string ziyaretEdilenKisi, string plaka)
+        /// <inheritdoc />
+        public void UpdateAssignment(int atamaId, string adSoyad, DateTime girisSaati, DateTime? cikisSaati, string aciklama, string tcKimlikNo, string ziyaretEdilenKisi, string plaka, string pasaportNo)
         {
             var rec = _atamaRepo.GetById(atamaId);
             if (rec == null)
@@ -78,17 +93,21 @@ namespace CeyPASS.Business.Services
             if (string.IsNullOrWhiteSpace(plaka))
                 throw new ArgumentException("Plaka giriniz.", nameof(plaka));
 
+            var (tc, pasaport) = TcKimlikHelper.RequireTcOrPasaport(tcKimlikNo, pasaportNo);
+
             rec.MisafirAdSoyad = adSoyad.Trim();
             rec.Baslangic = girisSaati;
             rec.Bitis = cikisSaati;
             rec.Notlar = string.IsNullOrWhiteSpace(aciklama) ? "" : aciklama.Trim();
-            rec.TCKimlikNo = TcKimlikHelper.RequireValid(tcKimlikNo);
+            rec.TCKimlikNo = tc;
+            rec.PasaportNo = pasaport;
             rec.ZiyaretEdilenKisi = string.IsNullOrWhiteSpace(ziyaretEdilenKisi) ? null : ziyaretEdilenKisi.Trim();
             rec.Plaka = plaka.Trim().ToUpperInvariant();
 
             _atamaRepo.Update(rec);
         }
 
+        /// <inheritdoc />
         public PuantajsizKartAtama GetBilgisiByTc(string tcKimlikNo)
         {
             if (string.IsNullOrWhiteSpace(tcKimlikNo))
@@ -101,9 +120,33 @@ namespace CeyPASS.Business.Services
             return _atamaRepo.GetSonAtamaByTcKimlikNo(tc);
         }
 
+        /// <inheritdoc />
         public List<GecmisZiyaretciItem> SearchGecmisZiyaretciler(int firmaId, string adFilter)
         {
             return _atamaRepo.GetGecmisZiyaretciler(firmaId, adFilter, ziyaretciMi: null, aracKartiMi: true);
+        }
+
+        /// <inheritdoc />
+        public List<KisiListItem> GetAktifKartlar(int firmaId)
+            => _kisiRepo.GetAktifByFirma(firmaId, null, puantajYapilirMi: false, isyeriId: null, aracKartiMi: true)
+               ?? new List<KisiListItem>();
+
+        /// <inheritdoc />
+        public List<KartAtamaListeItem> GetAtamaListe(int firmaId, IReadOnlyList<KisiListItem>? cachedKartlar = null)
+        {
+            var kartlar = cachedKartlar != null
+                ? cachedKartlar.ToList()
+                : GetAktifKartlar(firmaId);
+            var open = _atamaRepo.GetOpenActive(firmaId, aracKartiMi: true) ?? new List<PuantajsizKartAtama>();
+            var openIds = open
+                .Where(a => !string.IsNullOrWhiteSpace(a.KartId))
+                .Select(a => a.KartId!)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+            var yonler = openIds.Count == 0
+                ? new List<PersonelSonHareketYon>()
+                : _hareketRepo.GetLastGirisMiByPersonelIds(openIds);
+            return KartAtamaListeBuilder.Build(kartlar, open, KartAtamaListeBuilder.ToDictionary(yonler));
         }
     }
 }

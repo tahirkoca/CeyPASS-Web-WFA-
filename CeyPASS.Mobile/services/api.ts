@@ -58,6 +58,11 @@ export function getApiBaseUrl(): string {
   const envBase = process.env.EXPO_PUBLIC_API_BASE_URL;
   if (envBase) return normalizeBaseUrl(envBase);
 
+  // Web dev: HTTP API (app.json localhost HTTPS self-signed olur).
+  if (typeof document !== "undefined") {
+    return `http://localhost:${DEV_API_HTTP_PORT}/api/v1`;
+  }
+
   const extraBase = (Constants as any)?.expoConfig?.extra?.apiBaseUrl as string | undefined;
 
   // Native + extra localhost: use same machine as Metro (Expo Go QR'daki IP) + API HTTP port.
@@ -67,11 +72,6 @@ export function getApiBaseUrl(): string {
   }
 
   if (extraBase) return normalizeBaseUrl(extraBase);
-
-  // Web dev: keep prior behavior.
-  if (typeof document !== "undefined") {
-    return "https://localhost:7061/api/v1";
-  }
 
   const lan = devLanHttpApiBase();
   if (lan) return lan;
@@ -127,6 +127,7 @@ api.interceptors.request.use(async (config) => {
   return config;
 });
 
+/** Ana uygulama JWT girişi, yetkiler ve şifremi unuttum. */
 export const authService = {
   login: async (username: string, password: string) => {
     const response = await api.post("/Auth/login", {
@@ -154,6 +155,7 @@ export const authService = {
   },
 };
 
+/** Dashboard özet verisi (/Dashboard/full). */
 export const dashboardService = {
   getFullDashboard: async () => {
     const response = await api.get("/Dashboard/full");

@@ -1,3 +1,4 @@
+/** Resmi tatil takvimi ve çalışma saati. */
 import React, { useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, Modal, ScrollView, Text, TextInput, TouchableOpacity, View } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
@@ -6,7 +7,8 @@ import { StatusPopup } from "../StatusPopup";
 import { PageHeader } from "../PageHeader";
 import { useHeaderQuickMenu } from "../HeaderQuickMenu";
 import { useNotificationsContext } from "../NotificationsProvider";
-import { ayarlarService, ResmiTatilDTO } from "../../services/ayarlarApi";
+import { ayarlarService, ResmiTatilDTO } from "../../services/ayarlarApi";
+import { toTrLower } from "../../services/turkishText";
 
 function pick<T = any>(obj: any, a: string, b?: string): T | undefined {
   if (!obj) return undefined;
@@ -91,14 +93,14 @@ export function ResmiTatillerScreen(props: { user: any; abilities: any; onOpenMe
   }, []);
 
   const rows = useMemo(() => {
-    const qq = q.trim().toLowerCase();
+    const qq = toTrLower(q).trim();
     const mapped = (items ?? []).map((x) => {
       const tarih = pick<any>(x, "tarih", "Tarih");
       const ad = (pick<string>(x, "ad", "Ad") ?? "").toString();
       const calisma = pick<number | null>(x, "calismaSaati", "CalismaSaati") ?? null;
       return { tarih, ad, calisma };
     });
-    const filtered = !qq ? mapped : mapped.filter((r) => `${fmtDateTR(r.tarih)} ${r.ad}`.toLowerCase().includes(qq));
+    const filtered = !qq ? mapped : mapped.filter((r) => toTrLower(`${fmtDateTR(r.tarih)} ${r.ad}`).includes(qq));
     return filtered.sort((a, b) => String(a.tarih).localeCompare(String(b.tarih)));
   }, [items, q]);
 

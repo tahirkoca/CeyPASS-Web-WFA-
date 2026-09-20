@@ -10,6 +10,7 @@ using System.Linq;
 
 namespace CeyPASS.DataAccess.Repositories
 {
+    /// <summary>Puantaj onay, final veri ve aylık toplu sorgular.</summary>
     public class PuantajRepositoryCore : IPuantajRepository
     {
         private readonly CeyPASSDataConnectionCore _context;
@@ -21,6 +22,7 @@ namespace CeyPASS.DataAccess.Repositories
             _yetkiRepo = yetkiRepo;
         }
 
+        /// <summary>sp_AylikPuantajVeri ile günlük puantaj özet satırlarını okur; onay bilgisi PuantajOnay ile birleştirilir.</summary>
         public List<PuantajGunSatirDTO> SpPuantajAyOzet(int personelId, int yil, int ay)
         {
             var baslangic = new DateTime(yil, ay, 1);
@@ -207,6 +209,7 @@ namespace CeyPASS.DataAccess.Repositories
             return value / 100m;                     // 750 -> 7,5
         }
 
+        /// <summary>Günlük puantaj onay kaydını sp_Puantaj_Onay_Upsert ile yazar/günceller.</summary>
         public void Sp_OnayUpsert(object con, int personelId, DateTime tarih, int onayDurumu, int duzenlenmisFm, string aciklama, int? kullaniciId)
         {
             var sql = "EXEC dbo.sp_Puantaj_Onay_Upsert @p0, @p1, @p2, @p3, @p4, @p5";
@@ -220,6 +223,7 @@ namespace CeyPASS.DataAccess.Repositories
                 new Microsoft.Data.SqlClient.SqlParameter("@p5", kullaniciId ?? (object)DBNull.Value));
         }
 
+        /// <summary>Final puantaj satırını sp_Puantaj_Final_Upsert ile yazar/günceller.</summary>
         public void Sp_FinalUpsert(object con, int personelId, DateTime tarih, string calismaTipi, decimal saat, int? kullaniciId)
         {
             var sql = "EXEC dbo.sp_Puantaj_Final_Upsert @p0, @p1, @p2, @p3, @p4";
@@ -232,6 +236,7 @@ namespace CeyPASS.DataAccess.Repositories
                 new Microsoft.Data.SqlClient.SqlParameter("@p4", kullaniciId ?? (object)DBNull.Value));
         }
 
+        /// <summary>Onay ve final puantaj yazımını tek transaction içinde uygular.</summary>
         public void ApproveAndWriteFinal(int personelId, DateTime tarih, int onayDurumu, int duzenlenmisFm, string aciklama, string calismaTipi, decimal saat, int? kullaniciId)
         {
             using (var tx = _context.Database.BeginTransaction())
@@ -254,6 +259,7 @@ namespace CeyPASS.DataAccess.Repositories
             }
         }
 
+        /// <summary>Yalnızca onay kaydını transaction ile yazar/günceller.</summary>
         public void OnayUpsert(int personelId, DateTime tarih, int onayDurumu, int duzenlenmisFm, string aciklama, int? kullaniciId)
         {
             using (var tx = _context.Database.BeginTransaction())
@@ -272,6 +278,7 @@ namespace CeyPASS.DataAccess.Repositories
             }
         }
 
+        /// <summary>Aktif puantaj tiplerini sp_PuantajTipleri_GetActive ile getirir.</summary>
         public List<PuantajTipDTO> GetPuantajTipleri()
         {
             var sql = "EXEC dbo.sp_PuantajTipleri_GetActive";
@@ -281,6 +288,7 @@ namespace CeyPASS.DataAccess.Repositories
                 .ToList();
         }
 
+        /// <summary>Ana sicil puantajını bağlı hedef sicillere sp_CokluSicileAktar ile kopyalar.</summary>
         public void CokluSicileAktar(int anaKey, int yil, int ay, int? kullaniciId)
         {
             var sql = "EXEC dbo.sp_CokluSicileAktar @p0, @p1, @p2, @p3";
@@ -292,6 +300,7 @@ namespace CeyPASS.DataAccess.Repositories
                 new Microsoft.Data.SqlClient.SqlParameter("@p3", kullaniciId ?? (object)DBNull.Value));
         }
 
+        /// <summary>Ana sicile bağlı aktif hedef sicil sayısını döner.</summary>
         public int GetHedefSicilSayisi(int anaSicilNo)
         {
             return _context.CokluSicilBaglantilari
@@ -299,6 +308,7 @@ namespace CeyPASS.DataAccess.Repositories
                             x.AktifMi);
         }
 
+        /// <summary>Sicilin aktif çoklu sicil ana kaydı olup olmadığını kontrol eder.</summary>
         public bool IsAnaSicil(int sicilNo)
         {
             return _context.CokluSicilBaglantilari
@@ -306,6 +316,7 @@ namespace CeyPASS.DataAccess.Repositories
                           x.AktifMi);
         }
 
+        /// <summary>Sistem ayarı EkKayitGun değerini okur (geçmiş ay ek kayıt penceresi).</summary>
         public int GetEkKayitGun()
         {
             var sql = "EXEC dbo.sp_Ayar_Get @p0";
@@ -322,6 +333,7 @@ namespace CeyPASS.DataAccess.Repositories
             return int.TryParse(val, out var gun) ? gun : 0;
         }
 
+        /// <summary>EkKayitGun sistem ayarını günceller.</summary>
         public void SetEkKayitGun(int gun, int? kullaniciId)
         {
             var sql = "EXEC dbo.sp_Ayar_Set @p0, @p1, @p2";
@@ -332,9 +344,11 @@ namespace CeyPASS.DataAccess.Repositories
                 new Microsoft.Data.SqlClient.SqlParameter("@p2", kullaniciId ?? (object)DBNull.Value));
         }
 
+        /// <summary>Kullanıcının firma/işyeri yetki listesini döner.</summary>
         public List<FirmaIsyeriYetkiDTO> GetKullaniciFirmaIsyeriYetkileri(int kullaniciId)
             => _yetkiRepo.GetYetkiler(kullaniciId);
 
+        /// <summary>Seçilen ay için puantaj yapılacak sicil listesini döner. PuantajYapilirMi, işe giriş-çıkış ay penceresi, aktif CokluSicilBaglantilari (hedef siciller) ve kullanıcı Firma/İşyeri yetkileri birleştirilir; ana sicil çoklu bağlıysa BaseOnly dışlanır.</summary>
         public DataTable GetSicillerAyIcin(int yil, int ay, List<FirmaIsyeriYetkiDTO> yetkiler)
         {
             string yetkilerValues = string.Join(",", yetkiler.Select(y =>
@@ -347,11 +361,12 @@ DECLARE @Ay int = @p1;
 DECLARE @AyBas date = DATEFROMPARTS(@Yil, @Ay, 1);
 DECLARE @AySon date = EOMONTH(@AyBas);
 
--- Geçici tablo ile yetkileri tutuyoruz
+-- Kullanıcının görebileceği firma/işyeri çiftleri (IsyeriId NULL = firmadaki tüm işyerleri)
 DECLARE @Yetkiler TABLE (FirmaId INT, IsyeriId INT NULL);
 INSERT INTO @Yetkiler (FirmaId, IsyeriId)
 VALUES {yetkilerValues};
 
+-- HedefMap: Çoklu sicil bağlantısındaki hedef siciller; puantaj satırı bağlantıdaki firma/işyeri ile listelenir
 ;WITH HedefMap AS (
     SELECT
         c.HedefPersonelId AS SicilNo,
@@ -367,17 +382,18 @@ VALUES {yetkilerValues};
     FROM dbo.CokluSicilBaglantilari c
     JOIN dbo.Kisiler k ON k.TcKimlikNo = c.TCKimlikNo
     WHERE c.AktifMi = 1
-      AND k.PuantajYapilirMi = 1
+      AND k.PuantajYapilirMi = 1  -- Puantajsız / izlenmeyecek personeli dışla
       AND COALESCE(c.IseGirisTarihi, k.IseGirisTarihi) <= @AySon
       AND (COALESCE(c.IstenCikisTarihi, k.IstenCikisTarihi) IS NULL
-           OR COALESCE(c.IstenCikisTarihi, k.IstenCikisTarihi) >= @AyBas)
-      -- YETKİ KONTROLÜ: Firma-İşyeri çifti eşleşmeli VEYA IsyeriId NULL ise tüm işyerleri
+           OR COALESCE(c.IstenCikisTarihi, k.IstenCikisTarihi) >= @AyBas)  -- Seçilen ayda en az bir gün aktif
+      -- Yetki: kullanıcı yalnızca yetkili olduğu firma/işyerindeki bağlantıları görür
       AND EXISTS (
           SELECT 1 FROM @Yetkiler y 
           WHERE y.FirmaId = c.FirmaId 
             AND (y.IsyeriId IS NULL OR y.IsyeriId = c.SirketId)
       )
 ),
+-- BaseOnly: Aktif çoklu sicil hedefi olmayan normal siciller (hedefler HedefMap'te ayrı satır)
 BaseOnly AS (
     SELECT
         k.PersonelId AS SicilNo,
@@ -396,10 +412,10 @@ BaseOnly AS (
             SELECT 1
             FROM dbo.CokluSicilBaglantilari c
             WHERE c.HedefPersonelId = k.PersonelId AND c.AktifMi = 1
-      )
+      )  -- Hedef sicil ana Kisiler satırında tekrar listelenmesin
       AND k.IseGirisTarihi <= @AySon
       AND (k.IstenCikisTarihi IS NULL OR k.IstenCikisTarihi >= @AyBas)
-      -- YETKİ KONTROLÜ
+      -- Yetki: firma/işyeri kullanıcı kapsamı
       AND EXISTS (
           SELECT 1 FROM @Yetkiler y 
           WHERE y.FirmaId = k.FirmaId 
@@ -448,6 +464,7 @@ ORDER BY SicilNo";
             return dt;
         }
 
+        /// <summary>Ay içindeki FinalPuantajVerisi satırlarını yetkiye göre filtreler. Sicilin firma/işyeri bilgisi Kisiler veya aktif CokluSicilBaglantilari üzerinden çözülür; kullanıcı yetkisi dışındaki kayıtlar listelenmez.</summary>
         public DataTable GetVeriGirisleriAyIcin(int yil, int ay, List<FirmaIsyeriYetkiDTO> yetkiler)
         {
             string yetkilerValues = string.Join(",", yetkiler.Select(y =>
@@ -460,6 +477,7 @@ DECLARE @Ay int = @p1;
 DECLARE @AyBas date = DATEFROMPARTS(@Yil, @Ay, 1);
 DECLARE @AySon date = EOMONTH(@AyBas);
 
+-- Toplu veri girişi ekranı: kullanıcı yetkisi dışındaki final satırlar gösterilmez
 DECLARE @Yetkiler TABLE (FirmaId INT, IsyeriId INT NULL);
 INSERT INTO @Yetkiler (FirmaId, IsyeriId)
 VALUES {yetkilerValues};
@@ -473,8 +491,9 @@ VALUES {yetkilerValues};
         f.CalismaTipi,
         f.Saat
     FROM dbo.FinalPuantajVerisi f
-    WHERE f.Tarih >= @AyBas AND f.Tarih <= @AySon
+    WHERE f.Tarih >= @AyBas AND f.Tarih <= @AySon  -- Yalnızca seçilen ay
 ),
+-- Çoklu sicil hedefinde firma/işyeri Kisiler yerine CokluSicilBaglantilari'ndan gelir
 KJoin AS (
     SELECT
         x.SicilNo,
@@ -501,7 +520,7 @@ FROM KJoin
 WHERE EXISTS (
     SELECT 1 FROM @Yetkiler y 
     WHERE y.FirmaId = KJoin.FirmaId 
-      AND (y.IsyeriId IS NULL OR y.IsyeriId = KJoin.IsyeriId)
+      AND (y.IsyeriId IS NULL OR y.IsyeriId = KJoin.IsyeriId)  -- Firma/İşyeri yetki filtresi
 )
 ORDER BY SicilNo, Tarih";
 

@@ -10,6 +10,7 @@ using System.IO;
 
 namespace CeyPASS.Web.Controllers
 {
+    /// <summary>Terminal/cihaz tanim yonetimi.</summary>
     public class CihazController : Controller
     {
         private readonly ICihazService _cihazService;
@@ -27,6 +28,7 @@ namespace CeyPASS.Web.Controllers
             _authorizationService = authorizationService;
         }
 
+        /// <summary>Liste veya ana ekran.</summary>
         public IActionResult Index()
         {
             // Check authorization
@@ -47,6 +49,7 @@ namespace CeyPASS.Web.Controllers
             return View(cihazlar);
         }
 
+        /// <summary>Yeni kayit formu ve kaydetme.</summary>
         [HttpGet]
         public IActionResult Create(string returnUrl = null)
         {
@@ -68,6 +71,7 @@ namespace CeyPASS.Web.Controllers
             return View(model);
         }
 
+        /// <summary>Yeni kayit formu ve kaydetme.</summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult Create(Cihaz cihaz, string returnUrl = null)
@@ -98,6 +102,7 @@ namespace CeyPASS.Web.Controllers
             return View(cihaz);
         }
 
+        /// <summary>Kayit guncelleme.</summary>
         [HttpGet]
         public IActionResult Edit(int id, string returnUrl = null)
         {
@@ -118,6 +123,7 @@ namespace CeyPASS.Web.Controllers
             return View(cihaz);
         }
 
+        /// <summary>Kayit guncelleme.</summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult Edit(Cihaz cihaz, string returnUrl = null)
@@ -148,6 +154,7 @@ namespace CeyPASS.Web.Controllers
             return View(cihaz);
         }
 
+        /// <summary>Kayit silme veya pasiflestirme.</summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult Delete(int id, string returnUrl = null)
@@ -173,6 +180,7 @@ namespace CeyPASS.Web.Controllers
             return RedirectToAction("Index");
         }
 
+        /// <summary>Pasif kaydi tekrar aktif eder.</summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult AktifYap(int id)

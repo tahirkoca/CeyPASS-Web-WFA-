@@ -1,5 +1,6 @@
 namespace CeyPASS.WPF;
 
+/// <summary>Sayfa yardım balonu içeriği (başlık, adımlar, isteğe bağlı pulse hedefleri).</summary>
 public sealed class PageHelpTopic
 {
     public required string Title { get; init; }
@@ -8,6 +9,9 @@ public sealed class PageHelpTopic
     public IReadOnlyList<string> PulseTargetNames { get; init; } = Array.Empty<string>();
 }
 
+/// <summary>
+/// Ekran anahtarları → kullanıcı rehberi metinleri (<see cref="Controls.CeypassHelpTip"/> Topic bağlantısı).
+/// </summary>
 public static class PageHelpCatalog
 {
     private static readonly Dictionary<string, PageHelpTopic> Topics = new(StringComparer.OrdinalIgnoreCase)
@@ -31,9 +35,10 @@ public static class PageHelpCatalog
                 "Güncelle: soldan kişi seçin → Güncelle → düzenleyin → Kaydet.",
                 "İşten Çıkar: seçili aktif personeli çıkış tarihi ile pasife alır (puantaj bayrağı korunur).",
                 "Aktif Et: işten çıkanlar listesinde seçili kişiyi tekrar aktif eder.",
+                "Çoklu Sicil: kayıtlı personelde Puantaj Yapılır ve TC doluysa hedef sicil eşleştirmelerini açar; bağlantı ekleyin/düzenleyin, gerekirse modalde Tümünü pasifleştir kullanın.",
                 "Filtreler: Firma / İşyeri / İşten Çıkanlar / Puantaj Yapılanlar listesini daraltır."
             ],
-            PulseTargetNames = ["BtnEkle", "BtnGuncelle", "BtnIstenCikar", "BtnAktifEt"]
+            PulseTargetNames = ["BtnEkle", "BtnGuncelle", "BtnIstenCikar", "BtnAktifEt", "BtnCokluSicil"]
         },
         ["Departmanlar"] = Crud("Departmanlar", "Departman"),
         ["Firmalar"] = Crud("Firmalar", "Firma"),
@@ -58,7 +63,8 @@ public static class PageHelpCatalog
             Title = "İzinler — işlemler",
             Steps =
             [
-                "Filtrelerle personel / tarih aralığını seçin, listeyi getirin.",
+                "Firma / İşyeri / personel / tarih filtreleriyle listeyi getirin.",
+                "İşyeri filtresi yetkinizdeki işyerleriyle sınırlıdır; Tümü yalnızca yetkili kapsamı gösterir.",
                 "Yeni izin: formu doldurun → Kaydet.",
                 "Düzenleme: satır seçin → güncelleyin → Kaydet / Vazgeç.",
                 "İzin kağıdı / PDF işlemleri seçili kayda göre çalışır."
@@ -100,11 +106,30 @@ public static class PageHelpCatalog
             Title = "Kişi Hareketleri — işlemler",
             Steps =
             [
-                "Firma, kişi ve tarih aralığı seçerek hareketleri getirin.",
+                "Durum (Aktif / İşten Çıkanlar), firma, kişi ve tarih aralığı seçerek hareketleri getirin.",
+                "İşten çıkanlarda Kart Tipi filtresi uygulanmaz; çıkan personelin geçmiş hareketlerine bakabilirsiniz.",
                 "Pasif Hareketler işaretliyken Sil yerine Aktif Et görünür; pasif kaydı tekrar aktif edebilirsiniz.",
                 "Grid’de sıralama / filtre / arama (Ctrl+F) kullanabilirsiniz.",
                 "Yazdır / Excel / PDF için grid menüsünü veya yazdırmayı kullanın."
             ]
+        },
+        // Canlı izleme kart atama: HAZIR/ATANMIŞ/GİRİŞ/ÇIKIŞ durumları ile cihaz kısıt komutları farklı kavramlardır.
+        ["CanliIzlemeKartAtama"] = new PageHelpTopic
+        {
+            Title = "Kart Atamaları — durumlar",
+            Steps =
+            [
+                "HAZIR: Kart boşta; kimseye verilmemiş. Çift tıklayınca yeni atama açılır.",
+                "ATANMIŞ: Kart birine verilmiş; henüz turnikede giriş/çıkış yok.",
+                "GİRİŞ: Atama sonrası son hareket giriş (içeride).",
+                "ÇIKIŞ: Atama sonrası son hareket çıkış.",
+                "ATANMIŞ / GİRİŞ / ÇIKIŞ satırına çift tık → atamayı güncelleyin (Kartı Kısıtla’dan bağımsızdır).",
+                "Satırın sağındaki Kartı Kısıtla / Kart Kısıtı Kaldır: cihaz kuyruğuna komut yazar; atamayı değiştirmez.",
+                "Kısıt kanıtı yoksa kart serbest sayılır. Atanmış+serbest → Kısıtla; kısıtlı → Kısıtı Kaldır; HAZIR+serbest → ikisi kapalı.",
+                "‘Kart durumları’ (? yanı): misafir+araç anlık serbest/kısıtlı listesi (içeride Tümü/Misafir/Araç filtresi); seçerek veya topluca yönetin.",
+                "Üstteki Misafir / Araç seçimi liste tipini değiştirir."
+            ],
+            PulseTargetNames = ["AtamaGrid", "CmbAtamaTip", "BtnKartDurumToplu"]
         },
         ["AdminPanel"] = new PageHelpTopic
         {
@@ -131,6 +156,7 @@ public static class PageHelpCatalog
         PulseTargetNames = ["BtnEkle", "BtnGuncelle", "BtnSil"]
     };
 
+    /// <summary>Topic anahtarına göre rehber; bilinmeyen anahtar için null.</summary>
     public static PageHelpTopic? Get(string? topicKey)
     {
         if (string.IsNullOrWhiteSpace(topicKey)) return null;

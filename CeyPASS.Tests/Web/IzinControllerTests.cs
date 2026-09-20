@@ -13,6 +13,9 @@ using Xunit;
 
 namespace CeyPASS.Tests.Web
 {
+    /// <summary>
+    /// İzin talep/onay MVC uç noktaları.
+    /// </summary>
     public class IzinControllerTests : IDisposable
     {
         private readonly Mock<IKisiIzinService> _izinMock = new();
@@ -37,6 +40,7 @@ namespace CeyPASS.Tests.Web
                 _izinTalepMock.Object,
                 _firmaMock.Object,
                 _puantajMock.Object,
+                Mock.Of<IKisiEkraniLookUpService>(),
                 _sessionMock.Object,
                 _authMock.Object,
                 _cache);
@@ -53,6 +57,9 @@ namespace CeyPASS.Tests.Web
 
         // ─── Index ────────────────────────────────────────────────────────────
 
+        /// <summary>
+        /// Yetkisiz HomeIndexeYonlendirir
+        /// </summary>
         [Fact]
         public void Index_Yetkisiz_HomeIndexeYonlendirir()
         {
@@ -66,6 +73,9 @@ namespace CeyPASS.Tests.Web
             ((string)_sut.TempData["Error"]!).Should().NotBeNullOrEmpty();
         }
 
+        /// <summary>
+        /// Yetkili Goruntumudöner
+        /// </summary>
         [Fact]
         public void Index_Yetkili_GoruntumuDoner()
         {
@@ -74,12 +84,13 @@ namespace CeyPASS.Tests.Web
 
             int totalCount = 0;
             _izinMock.Setup(s => s.GetTumIzinlerPaged(
-                It.IsAny<int>(), It.IsAny<string>(), It.IsAny<int?>(),
+                It.IsAny<int?>(), It.IsAny<string>(), It.IsAny<int?>(),
                 It.IsAny<DateTime>(), It.IsAny<DateTime>(),
-                It.IsAny<int>(), It.IsAny<int>(), out totalCount))
+                It.IsAny<int>(), It.IsAny<int>(), out totalCount,
+                It.IsAny<int?>(), It.IsAny<IReadOnlyList<int>>()))
                 .Returns(new List<KisiIzinListRow>());
 
-            _kisiQueryMock.Setup(q => q.GetAktifKisilerByFirma(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<bool?>(), It.IsAny<int?>(), It.IsAny<IReadOnlyList<int>>(), It.IsAny<bool>())).Returns(new List<KisiListItem>());
+            _kisiQueryMock.Setup(q => q.GetAktifKisilerByFirma(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<bool?>(), It.IsAny<int?>(), It.IsAny<IReadOnlyList<int>>(), It.IsAny<bool>(), It.IsAny<int?>())).Returns(new List<KisiListItem>());
             _izinTipMock.Setup(t => t.GetAktif()).Returns(new List<IzinTip>());
 
             var sonuc = _sut.Index();
@@ -89,6 +100,9 @@ namespace CeyPASS.Tests.Web
 
         // ─── Create GET ───────────────────────────────────────────────────────
 
+        /// <summary>
+        /// GET Yetkisiz IndexeYonlendirir
+        /// </summary>
         [Fact]
         public void Create_GET_Yetkisiz_IndexeYonlendirir()
         {
@@ -103,6 +117,9 @@ namespace CeyPASS.Tests.Web
 
         // ─── Create POST ──────────────────────────────────────────────────────
 
+        /// <summary>
+        /// POST Yetkisiz IndexeYonlendirir
+        /// </summary>
         [Fact]
         public void Create_POST_Yetkisiz_IndexeYonlendirir()
         {
@@ -114,6 +131,9 @@ namespace CeyPASS.Tests.Web
             redirect.ActionName.Should().Be("Index");
         }
 
+        /// <summary>
+        /// POST GeçersizValidasyon Goruntumudöner
+        /// </summary>
         [Fact]
         public void Create_POST_GecersizValidasyon_GoruntumuDoner()
         {
@@ -124,7 +144,7 @@ namespace CeyPASS.Tests.Web
             _puantajMock.Setup(p => p.GetKullaniciFirmaIsyeriYetkileri(It.IsAny<int>()))
                 .Returns(new List<FirmaIsyeriYetkiDTO>());
             _firmaMock.Setup(f => f.GetPuantajFirmalar()).Returns(new List<Firma>());
-            _kisiQueryMock.Setup(q => q.GetAktifKisilerByFirma(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<bool?>(), It.IsAny<int?>(), It.IsAny<IReadOnlyList<int>>(), It.IsAny<bool>())).Returns(new List<KisiListItem>());
+            _kisiQueryMock.Setup(q => q.GetAktifKisilerByFirma(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<bool?>(), It.IsAny<int?>(), It.IsAny<IReadOnlyList<int>>(), It.IsAny<bool>(), It.IsAny<int?>())).Returns(new List<KisiListItem>());
             _izinTipMock.Setup(t => t.GetAktif()).Returns(new List<IzinTip>());
 
             var izin = new KisiIzin { FirmaId = 1, Baslangic = DateTime.Today, Bitis = DateTime.Today };
@@ -136,6 +156,9 @@ namespace CeyPASS.Tests.Web
 
         // ─── Edit GET ─────────────────────────────────────────────────────────
 
+        /// <summary>
+        /// GET Yetkisiz IndexeYonlendirir
+        /// </summary>
         [Fact]
         public void Edit_GET_Yetkisiz_IndexeYonlendirir()
         {
@@ -150,6 +173,9 @@ namespace CeyPASS.Tests.Web
 
         // ─── Edit POST ────────────────────────────────────────────────────────
 
+        /// <summary>
+        /// POST IzinBulunamadi IndexeYonlendirir
+        /// </summary>
         [Fact]
         public void Edit_POST_IzinBulunamadi_IndexeYonlendirir()
         {
@@ -166,6 +192,9 @@ namespace CeyPASS.Tests.Web
 
         // ─── Delete ───────────────────────────────────────────────────────────
 
+        /// <summary>
+        /// Yetkisiz IndexeYonlendirir
+        /// </summary>
         [Fact]
         public void Delete_Yetkisiz_IndexeYonlendirir()
         {
@@ -178,6 +207,9 @@ namespace CeyPASS.Tests.Web
             ((string)_sut.TempData["Error"]!).Should().NotBeNullOrEmpty();
         }
 
+        /// <summary>
+        /// Yetkili ServisBasarili IndexeYonlendirir
+        /// </summary>
         [Fact]
         public void Delete_Yetkili_ServisBasarili_IndexeYonlendirir()
         {
@@ -194,10 +226,13 @@ namespace CeyPASS.Tests.Web
 
         // ─── GetKisiler ───────────────────────────────────────────────────────
 
+        /// <summary>
+        /// FirmaIdVerilir Jsondöner
+        /// </summary>
         [Fact]
         public void GetKisiler_FirmaIdVerilir_JsonDoner()
         {
-            _kisiQueryMock.Setup(q => q.GetAktifKisilerByFirma(2, It.IsAny<string>(), It.IsAny<bool?>(), It.IsAny<int?>(), It.IsAny<IReadOnlyList<int>>(), It.IsAny<bool>()))
+            _kisiQueryMock.Setup(q => q.GetAktifKisilerByFirma(2, It.IsAny<string>(), It.IsAny<bool?>(), It.IsAny<int?>(), It.IsAny<IReadOnlyList<int>>(), It.IsAny<bool>(), It.IsAny<int?>()))
                 .Returns(new List<KisiListItem> { new KisiListItem { PersonelId = "P1", AdSoyad = "Ali Veli" } });
 
             var sonuc = _sut.GetKisiler(2);

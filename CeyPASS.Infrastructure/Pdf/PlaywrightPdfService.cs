@@ -21,6 +21,7 @@ public sealed class PlaywrightPdfService : IPlaywrightPdfService
 
     private IPlaywright? _playwright;
 
+    /// <summary><see cref="PlaywrightPdfOptions"/> ve isteğe bağlı logger ile oluşturur.</summary>
     public PlaywrightPdfService(IOptions<PlaywrightPdfOptions> options, ILogger<PlaywrightPdfService>? log = null)
     {
         _opt = options.Value;
@@ -29,6 +30,7 @@ public sealed class PlaywrightPdfService : IPlaywrightPdfService
         _concurrency = new SemaphoreSlim(n, n);
     }
 
+    /// <inheritdoc />
     public async Task<byte[]> HtmlToPdfAsync(string html, CancellationToken cancellationToken = default)
     {
         await _concurrency.WaitAsync(cancellationToken).ConfigureAwait(false);

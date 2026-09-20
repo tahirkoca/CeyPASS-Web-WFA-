@@ -13,6 +13,9 @@ using Microsoft.AspNetCore.DataProtection;
 
 namespace CeyPASS.Tests.Web
 {
+    /// <summary>
+    /// Giriş, çıkış ve şifre sıfırlama MVC akışları.
+    /// </summary>
     public class AccountControllerTests
     {
         private readonly Mock<IKullaniciService> _kullaniciMock = new();
@@ -48,6 +51,9 @@ namespace CeyPASS.Tests.Web
 
         // ─── Login GET ────────────────────────────────────────────────────────
 
+        /// <summary>
+        /// GET OturumAciksa HomeaYonlendirir
+        /// </summary>
         [Fact]
         public void Login_GET_OturumAciksa_HomeaYonlendirir()
         {
@@ -61,6 +67,9 @@ namespace CeyPASS.Tests.Web
             redirect.ControllerName.Should().Be("Home");
         }
 
+        /// <summary>
+        /// GET OturumYoksa Viewdöner
+        /// </summary>
         [Fact]
         public void Login_GET_OturumYoksa_ViewDoner()
         {
@@ -74,6 +83,9 @@ namespace CeyPASS.Tests.Web
 
         // ─── Login POST ───────────────────────────────────────────────────────
 
+        /// <summary>
+        /// POST boşKimlik HataGosterir
+        /// </summary>
         [Fact]
         public void Login_POST_BosKimlik_HataGosterir()
         {
@@ -83,6 +95,9 @@ namespace CeyPASS.Tests.Web
             ((string)_sut.ViewBag.Error).Should().NotBeNullOrEmpty();
         }
 
+        /// <summary>
+        /// POST YanlisKimlik HataGosterir
+        /// </summary>
         [Fact]
         public void Login_POST_YanlisKimlik_HataGosterir()
         {
@@ -94,6 +109,9 @@ namespace CeyPASS.Tests.Web
             ((string)_sut.ViewBag.Error).Should().NotBeNullOrEmpty();
         }
 
+        /// <summary>
+        /// POST BasariliGiris SessionSetEdilir HomeaYonlendirir
+        /// </summary>
         [Fact]
         public void Login_POST_BasariliGiris_SessionSetEdilir_HomeaYonlendirir()
         {
@@ -119,6 +137,9 @@ namespace CeyPASS.Tests.Web
 
         // ─── Logout ───────────────────────────────────────────────────────────
 
+        /// <summary>
+        /// OturumTemizlenir LoginaYonlendirir
+        /// </summary>
         [Fact]
         public void Logout_OturumTemizlenir_LoginaYonlendirir()
         {
@@ -131,6 +152,9 @@ namespace CeyPASS.Tests.Web
 
         // ─── ForgotPassword GET ───────────────────────────────────────────────
 
+        /// <summary>
+        /// GET OturumAciksa HomeaYonlendirir
+        /// </summary>
         [Fact]
         public void ForgotPassword_GET_OturumAciksa_HomeaYonlendirir()
         {
@@ -145,6 +169,9 @@ namespace CeyPASS.Tests.Web
 
         // ─── ForgotPassword POST ──────────────────────────────────────────────
 
+        /// <summary>
+        /// POST boşKullaniciAdi HataGosterir
+        /// </summary>
         [Fact]
         public void ForgotPassword_POST_BosKullaniciAdi_HataGosterir()
         {
@@ -156,6 +183,9 @@ namespace CeyPASS.Tests.Web
             ((string)_sut.ViewBag.Error).Should().NotBeNullOrEmpty();
         }
 
+        /// <summary>
+        /// POST ServisBasarisiz HataGosterir
+        /// </summary>
         [Fact]
         public void ForgotPassword_POST_ServisBasarisiz_HataGosterir()
         {
@@ -169,6 +199,9 @@ namespace CeyPASS.Tests.Web
             ((string)_sut.ViewBag.Error).Should().NotBeNullOrEmpty();
         }
 
+        /// <summary>
+        /// POST Basarili ConfirmaYonlendirir
+        /// </summary>
         [Fact]
         public void ForgotPassword_POST_Basarili_ConfirmaYonlendirir()
         {
@@ -185,6 +218,9 @@ namespace CeyPASS.Tests.Web
 
         // ─── ForgotPasswordConfirm POST ───────────────────────────────────────
 
+        /// <summary>
+        /// POST Basarili LoginaYonlendirir
+        /// </summary>
         [Fact]
         public void ForgotPasswordConfirm_POST_Basarili_LoginaYonlendirir()
         {

@@ -14,6 +14,8 @@
     var sadecePasif = ViewBag.SadecePasif as bool? ?? false;
     var sadeceYemekhane = ViewBag.SadeceYemekhane as bool? ?? false;
     var kartTipi = ViewBag.KartTipi as string ?? "puantaj";
+    var calismaDurumu = ViewBag.CalismaDurumu as string ?? "aktif";
+    var sadeceIstenCikanlar = calismaDurumu == "cikan";
     var canCreate = ViewBag.CanCreate as bool? ?? false;
     var canUpdate = ViewBag.CanUpdate as bool? ?? false;
     var canDelete = ViewBag.CanDelete as bool? ?? false;
@@ -105,8 +107,24 @@
                             </div>
 
                             <div class="col-12 col-xl-2">
+                                <label for="calismaDurumu" class="form-label">Durum:</label>
+                                <select name="calismaDurumu" id="calismaDurumu" class="form-select" title="Aktif veya işten çıkan personeli listeleyin">
+                                    @if (calismaDurumu == "cikan")
+                                    {
+                                        <option value="aktif">Aktif Çalışanlar</option>
+                                        <option value="cikan" selected="selected">İşten Çıkanlar</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="aktif" selected="selected">Aktif Çalışanlar</option>
+                                        <option value="cikan">İşten Çıkanlar</option>
+                                    }
+                                </select>
+                            </div>
+
+                            <div class="col-12 col-xl-2">
                                 <label for="kartTipi" class="form-label">Kart Tipi:</label>
-                                <select name="kartTipi" id="kartTipi" class="form-select">
+                                <select name="kartTipi" id="kartTipi" class="form-select" @(sadeceIstenCikanlar ? "disabled" : null)>
                                     @if (kartTipi == "puantajsiz")
                                     {
                                         <option value="puantaj">Puantaj Yapılanlar</option>
@@ -118,6 +136,10 @@
                                         <option value="puantajsiz">Puantaj Yapılmayanlar</option>
                                     }
                                 </select>
+                                @if (sadeceIstenCikanlar)
+                                {
+                                    <input type="hidden" name="kartTipi" value="@kartTipi" />
+                                }
                             </div>
 
                             <div class="col-12 col-xl-2">
@@ -179,10 +201,18 @@
                         <div class="row g-4 mt-2">
                             <div class="col-md-12">
                                 <label class="form-label">Personeller:</label>
-                                <div class="border p-2" style="max-height: 200px; overflow-y: auto;">
+                                <div class="input-group mb-2">
+                                    <span class="input-group-text"><i class="bi bi-search"></i></span>
+                                    <input type="text" id="personelAra" class="form-control"
+                                           placeholder="Ad veya Sicil No'ya göre arayabilirsiniz"
+                                           autocomplete="off" />
+                                </div>
+                                <div id="personelListe" class="border p-2" style="max-height: 200px; overflow-y: auto;">
                                     @foreach (var personel in personelList)
                                     {
-                                        <div class="form-check">
+                                        <div class="form-check personel-row"
+                                             data-ad="@CeyPASS.Entities.Helpers.TurkishText.ToLower(personel.Ad)"
+                                             data-sicil="@personel.Id">
                                             <input class="form-check-input personel-checkbox" type="checkbox" 
                                                    name="personelIds" value="@personel.Id" id="personel_@personel.Id"
                                                    @(seciliPersonelIds.Contains(personel.Id) ? "checked" : "") />
@@ -325,7 +355,7 @@
                         <nav aria-label="Kişi hareket sayfalama" class="mt-3">
                             <ul class="pagination justify-content-center flex-wrap mb-0">
                                 <li class="page-item @(currentPage <= 1 ? "disabled" : "")">
-                                    <a class="page-link" href="@Url.Action("Index", new { firmaId = selectedFirmaId, kartTipi, personelIds = string.Join(",", seciliPersonelIds), baslangic = baslangicTarih, bitis = bitisTarih, sadeceAktif, sadecePasif, sadeceYemekhane, page = currentPage - 1, pageSize })" aria-label="Önceki">
+                                    <a class="page-link" href="@Url.Action("Index", new { firmaId = selectedFirmaId, kartTipi, calismaDurumu, personelIds = string.Join(",", seciliPersonelIds), baslangic = baslangicTarih, bitis = bitisTarih, sadeceAktif, sadecePasif, sadeceYemekhane, page = currentPage - 1, pageSize })" aria-label="Önceki">
                                         <span aria-hidden="true">&laquo;</span>
                                     </a>
                                 </li>
@@ -337,7 +367,7 @@
                                     if (start > 1)
                                     {
                                         <li class="page-item">
-                                            <a class="page-link" href="@Url.Action("Index", new { firmaId = selectedFirmaId, kartTipi, personelIds = string.Join(",", seciliPersonelIds), baslangic = baslangicTarih, bitis = bitisTarih, sadeceAktif, sadecePasif, sadeceYemekhane, page = 1, pageSize })">1</a>
+                                            <a class="page-link" href="@Url.Action("Index", new { firmaId = selectedFirmaId, kartTipi, calismaDurumu, personelIds = string.Join(",", seciliPersonelIds), baslangic = baslangicTarih, bitis = bitisTarih, sadeceAktif, sadecePasif, sadeceYemekhane, page = 1, pageSize })">1</a>
                                         </li>
                                         if (start > 2)
                                         {
@@ -348,7 +378,7 @@
                                     for (var p = start; p <= end; p++)
                                     {
                                         <li class="page-item @(p == currentPage ? "active" : "")">
-                                            <a class="page-link" href="@Url.Action("Index", new { firmaId = selectedFirmaId, kartTipi, personelIds = string.Join(",", seciliPersonelIds), baslangic = baslangicTarih, bitis = bitisTarih, sadeceAktif, sadecePasif, sadeceYemekhane, page = p, pageSize })">@p</a>
+                                            <a class="page-link" href="@Url.Action("Index", new { firmaId = selectedFirmaId, kartTipi, calismaDurumu, personelIds = string.Join(",", seciliPersonelIds), baslangic = baslangicTarih, bitis = bitisTarih, sadeceAktif, sadecePasif, sadeceYemekhane, page = p, pageSize })">@p</a>
                                         </li>
                                     }
 
@@ -359,13 +389,13 @@
                                             <li class="page-item disabled"><span class="page-link">…</span></li>
                                         }
                                         <li class="page-item">
-                                            <a class="page-link" href="@Url.Action("Index", new { firmaId = selectedFirmaId, kartTipi, personelIds = string.Join(",", seciliPersonelIds), baslangic = baslangicTarih, bitis = bitisTarih, sadeceAktif, sadecePasif, sadeceYemekhane, page = totalPages, pageSize })">@totalPages</a>
+                                            <a class="page-link" href="@Url.Action("Index", new { firmaId = selectedFirmaId, kartTipi, calismaDurumu, personelIds = string.Join(",", seciliPersonelIds), baslangic = baslangicTarih, bitis = bitisTarih, sadeceAktif, sadecePasif, sadeceYemekhane, page = totalPages, pageSize })">@totalPages</a>
                                         </li>
                                     }
                                 }
 
                                 <li class="page-item @(currentPage >= totalPages ? "disabled" : "")">
-                                    <a class="page-link" href="@Url.Action("Index", new { firmaId = selectedFirmaId, kartTipi, personelIds = string.Join(",", seciliPersonelIds), baslangic = baslangicTarih, bitis = bitisTarih, sadeceAktif, sadecePasif, sadeceYemekhane, page = currentPage + 1, pageSize })" aria-label="Sonraki">
+                                    <a class="page-link" href="@Url.Action("Index", new { firmaId = selectedFirmaId, kartTipi, calismaDurumu, personelIds = string.Join(",", seciliPersonelIds), baslangic = baslangicTarih, bitis = bitisTarih, sadeceAktif, sadecePasif, sadeceYemekhane, page = currentPage + 1, pageSize })" aria-label="Sonraki">
                                         <span aria-hidden="true">&raquo;</span>
                                     </a>
                                 </li>
@@ -491,10 +521,27 @@
 
         if (window.CeyPASS && CeyPASS.filters) {
             CeyPASS.filters.bindForm('kisiHareket', '#filterForm', [
-                'firmaId', 'isyeriId', 'kartTipi', 'baslangic', 'bitis',
+                'firmaId', 'isyeriId', 'calismaDurumu', 'kartTipi', 'baslangic', 'bitis',
                 'pageSize', 'sadeceAktif', 'sadecePasif', 'sadeceYemekhane'
             ]);
         }
+
+        (function () {
+            var ara = document.getElementById('personelAra');
+            var liste = document.getElementById('personelListe');
+            if (!ara || !liste) return;
+            ara.addEventListener('input', function () {
+                var q = (ara.value || '').trim().toLocaleLowerCase('tr');
+                var rows = liste.querySelectorAll('.personel-row');
+                for (var i = 0; i < rows.length; i++) {
+                    var row = rows[i];
+                    var ad = row.getAttribute('data-ad') || '';
+                    var sicil = (row.getAttribute('data-sicil') || '').toString();
+                    var ok = !q || ad.indexOf(q) >= 0 || sicil.indexOf(q) >= 0;
+                    row.style.display = ok ? '' : 'none';
+                }
+            });
+        })();
 
         // Personel checkbox'ları değiştiğinde form'u submit et
         $('.personel-checkbox').change(function() {
@@ -554,6 +601,12 @@
         }
 
         $('#kartTipi').change(function() {
+            $('.personel-checkbox').prop('checked', false);
+            $('#filterForm input[name="personelIds"]').remove();
+            $('#filterForm').submit();
+        });
+
+        $('#calismaDurumu').change(function() {
             $('.personel-checkbox').prop('checked', false);
             $('#filterForm input[name="personelIds"]').remove();
             $('#filterForm').submit();

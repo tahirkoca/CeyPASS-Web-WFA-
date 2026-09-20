@@ -7,6 +7,7 @@ using CeyPASS.WPF.ViewModels;
 
 namespace CeyPASS.WPF.Views;
 
+/// <summary>Rapor filtreleri ve dışa aktarma; dashboard KPI'dan ön doldurma destekler.</summary>
 public partial class RaporlarView : System.Windows.Controls.UserControl
 {
     public RaporlarView()

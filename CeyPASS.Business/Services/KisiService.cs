@@ -8,6 +8,7 @@ using System.Linq;
 
 namespace CeyPASS.Business.Services
 {
+    /// <summary>Personel kayıt ve güncelleme.</summary>
     public class KisiService : IKisiService
     {
         private readonly IKisiRepository _kisiRepo;
@@ -24,6 +25,7 @@ namespace CeyPASS.Business.Services
             _logger = logger;
         }
 
+        /// <inheritdoc />
         public void YeniKisiEkle(Kisi kisi, bool firmaPersoneli, bool puantajYapilabilir, bool yemekHakkiVar, int gunlukYemekLimiti, string puantajsizKartId, string puantajsizKartNo, string puantajsizKartAdi)
         {
             kisi.PuantajYapilirMi = puantajYapilabilir;
@@ -32,6 +34,7 @@ namespace CeyPASS.Business.Services
                 _yemekhaneRepo.InsertLimit(kisi.PersonelId, gunlukYemekLimiti);
         }
 
+        /// <inheritdoc />
         public bool KisiIstenCikar(string personelId, DateTime cikisTarihi, string firmaDisiKartNo)
         {
             try
@@ -46,6 +49,7 @@ namespace CeyPASS.Business.Services
             }
         }
 
+        /// <inheritdoc />
         public bool KisiGuncelle(Kisi kisi, string originalPersonelId, bool firmaPersoneli, bool puantajYapilabilir, bool yemekHakkiVar, int gunlukYemekAdedi, string firmaDisiKartNo, bool fotoDegisti)
         {
             try
@@ -68,11 +72,13 @@ namespace CeyPASS.Business.Services
             }
         }
 
+        /// <inheritdoc />
         public List<Kisi> GetKisilerForPuantaj(int firmaId, int isyeriId, int yil, int ay)
         {
             return _kisiRepo.GetKisilerForPuantaj(firmaId, isyeriId, yil, ay);
         }
 
+        /// <inheritdoc />
         public KisiAdSoyad GetAdSoyad(string personelId)
         {
             return _kisiRepo.GetAdSoyadByPersonelId(personelId);
@@ -97,12 +103,8 @@ namespace CeyPASS.Business.Services
             if (string.IsNullOrWhiteSpace(personelId))
                 return (false, "PersonelId (Sicil No) giriniz.");
 
-            bool puantajsizKartGerekli = (firma && !puantaj) || (!firma && !puantaj && yemek);
-            if (puantajsizKartGerekli)
-            {
-                if (string.IsNullOrWhiteSpace(dto.FirmaDisiKartNo))
-                    return (false, "Firma Dışı Kart No giriniz.");
-            }
+            if (!dto.IsyeriId.HasValue || dto.IsyeriId.Value < 0)
+                return (false, "İşyeri zorunludur.");
 
             if (yemek && dto.YemekAdedi <= 0)
                 return (false, "Yemek hakkı var; günlük yemek adedini giriniz.");
@@ -164,6 +166,7 @@ namespace CeyPASS.Business.Services
             return $"Bu {alan} zaten kayıtlı: {sicil} - {adSoyad}";
         }
 
+        /// <inheritdoc />
         public KisiTekrarAktifSonuc KisiTekrarAktifEt(string personelId, bool puantajYapilirMi)
         {
             if (string.IsNullOrWhiteSpace(personelId))

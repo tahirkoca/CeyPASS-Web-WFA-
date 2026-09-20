@@ -7,10 +7,10 @@ using System.Collections.Generic;
 
 namespace CeyPASS.Business.Services
 {
+    /// <summary>Kişi ekranı lookup (önbellekli).</summary>
     public class KisiEkraniLookupService : IKisiEkraniLookUpService
     {
         private readonly ICalismaStatuRepository _statuRepo;
-        private readonly IDepartmanRepository _departmanRepo;
         private readonly IPozisyonRepository _pozisyonRepo;
         private readonly IIsyeriRepository _isyeriRepo;
         private readonly IFirmaRepository _firmaRepo;
@@ -23,7 +23,6 @@ namespace CeyPASS.Business.Services
 
         public KisiEkraniLookupService(
             ICalismaStatuRepository statuRepo, 
-            IDepartmanRepository departmanRepo, 
             IPozisyonRepository pozisyonRepo, 
             IIsyeriRepository isyeriRepo, 
             IFirmaRepository firmaRepo, 
@@ -31,7 +30,6 @@ namespace CeyPASS.Business.Services
             IMemoryCache cache)
         {
             _statuRepo = statuRepo;
-            _departmanRepo = departmanRepo;
             _pozisyonRepo = pozisyonRepo;
             _isyeriRepo = isyeriRepo;
             _firmaRepo = firmaRepo;
@@ -39,39 +37,39 @@ namespace CeyPASS.Business.Services
             _cache = cache;
         }
 
+        /// <inheritdoc />
         public List<LookupItem> GetCalismaStatuleri(int? firmId = null) 
         {
             var keyStr = firmId.HasValue ? $"statuler_{firmId}" : "statuler";
             return GetCached(keyStr, () => _statuRepo.GetByFirma());
         }
 
-        public List<LookupItem> GetDepartmanlar(int? firmId = null) 
-        {
-            var keyStr = firmId.HasValue ? $"departmanlar_{firmId}" : "departmanlar";
-            return GetCached(keyStr, () => _departmanRepo.GetByFirma());
-        }
-
+        /// <inheritdoc />
         public List<LookupItem> GetPozisyonlar(int? firmId = null) 
         {
             var keyStr = firmId.HasValue ? $"pozisyonlar_{firmId}" : "pozisyonlar";
             return GetCached(keyStr, () => _pozisyonRepo.GetByFirma());
         }
 
+        /// <inheritdoc />
         public List<LookupItem> GetIsyerleri(int firmId) 
         {
             return GetCached($"isyerleri_{firmId}", () => _isyeriRepo.GetByFirma(firmId));
         }
 
+        /// <inheritdoc />
         public List<LookupItem> GetFirma(int firmId) 
         {
             return _firmaRepo.GetSingle(firmId);
         }
 
+        /// <inheritdoc />
         public List<LookupItem> GetBolumler(int firmId) 
         {
             return GetCached($"bolumler_{firmId}", () => _bolumRepo.GetByFirma(firmId));
         }
 
+        /// <inheritdoc />
         public void InvalidateCache()
         {
             if (!_cache.TryGetValue(MasterVerKey, out int ver))

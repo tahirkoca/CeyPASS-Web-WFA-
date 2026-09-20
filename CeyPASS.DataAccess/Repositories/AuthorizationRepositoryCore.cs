@@ -5,6 +5,7 @@ using System.Linq;
 
 namespace CeyPASS.DataAccess.Repositories
 {
+    /// <summary>Sayfa yetkisi kontrolü için veri erişimi.</summary>
     public class AuthorizationRepositoryCore : IAuthorizationRepository
     {
         private readonly CeyPASSDataConnectionCore _context;
@@ -14,6 +15,7 @@ namespace CeyPASS.DataAccess.Repositories
             _context = context;
         }
 
+        /// <summary>Kullanıcının belirtilen sayfa ve yetki tipinde izni olup olmadığını kontrol eder.</summary>
         public bool CheckPermission(int kullaniciId, string sayfaAdi, string yetkiTipi)
         {
             var sql = @"

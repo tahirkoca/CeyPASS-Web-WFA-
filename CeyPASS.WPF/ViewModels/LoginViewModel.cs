@@ -7,6 +7,7 @@ using System.Windows.Input;
 
 namespace CeyPASS.WPF.ViewModels;
 
+/// <summary>Giriş, şifre sıfırlama ve canlı izlemeye geçiş; oturum alanlarını doldurur.</summary>
 public sealed class LoginViewModel : ObservableObject
 {
     private readonly IServiceScopeFactory _scopeFactory;
@@ -70,7 +71,9 @@ public sealed class LoginViewModel : ObservableObject
     public ICommand ForgotPasswordCommand { get; }
     public ICommand LiveMonitorCommand { get; }
 
+    /// <summary>Başarılı girişten sonra ana pencereye geçiş için.</summary>
     public event Action? LoginSucceeded;
+    /// <summary>Canlı izleme giriş penceresini açmak için (ayrı kimlik doğrulama).</summary>
     public event Action? OpenLiveMonitorRequested;
 
     private void Login()

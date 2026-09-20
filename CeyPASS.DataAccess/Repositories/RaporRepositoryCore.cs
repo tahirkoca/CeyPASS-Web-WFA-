@@ -9,6 +9,7 @@ using System.Linq;
 
 namespace CeyPASS.DataAccess.Repositories
 {
+    /// <summary>Rapor tanım ve çalıştırma.</summary>
     public class RaporRepositoryCore : IRaporRepository
     {
         private static readonly ConcurrentDictionary<string, IReadOnlyList<string>> ParameterCache =
@@ -21,6 +22,7 @@ namespace CeyPASS.DataAccess.Repositories
             _context = context;
         }
 
+        /// <summary>Raporlari Getir işlemini gerçekleştirir.</summary>
         public List<RaporTanimi> RaporlariGetir()
         {
             return _context.RaporTanimlari
@@ -37,6 +39,7 @@ namespace CeyPASS.DataAccess.Repositories
                 .ToList();
         }
 
+        /// <summary>Procedure Parameter Names sorgularını getirir.</summary>
         public IReadOnlyList<string> GetProcedureParameterNames(string procedureAdi)
         {
             if (string.IsNullOrWhiteSpace(procedureAdi))
@@ -88,6 +91,7 @@ WHERE p.object_id = OBJECT_ID(@proc)
             return names;
         }
 
+        /// <summary>Raporu Calistir işlemini gerçekleştirir.</summary>
         public DataTable RaporuCalistir(string procedureAdi, Dictionary<string, object> parametreler)
         {
             var dt = new DataTable { TableName = "RaporData" };

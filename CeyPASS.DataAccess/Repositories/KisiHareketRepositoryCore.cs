@@ -9,6 +9,7 @@ using System.Text;
 
 namespace CeyPASS.DataAccess.Repositories
 {
+    /// <summary>KisiHareketler sorguları.</summary>
     public class KisiHareketRepositoryCore : IKisiHareketRepository
     {
         private readonly CeyPASSDataConnectionCore _context;
@@ -18,19 +19,20 @@ namespace CeyPASS.DataAccess.Repositories
             _context = context;
         }
 
+        /// <summary>Last Moves By Firma sorgularını getirir.</summary>
         public List<KisiHareketDTO> GetLastMovesByFirma(int top, int firmaId)
         {
             var sql = @"
 SELECT TOP (@p0)
     KH.Tarih       AS Tarih,
     ISNULL(RTRIM(LTRIM(ISNULL(K.Ad, N'') + N' ' + ISNULL(K.Soyad, N''))), N'') AS AdSoyad,
-    ISNULL(D.DepartmanAdi, N'') AS Departman,
+    ISNULL(I.IsyeriAdi, N'') AS Isyeri,
     ISNULL(P.PozisyonAdi, N'')  AS Unvan,
     ISNULL(C.CihazAdi, N'')     AS CihazAdi,
     KH.PersonelId  AS PersonelId
 FROM KisiHareketler KH
 LEFT JOIN Kisiler         K  ON KH.PersonelId = K.PersonelId
-LEFT JOIN Departmanlar    D  ON K.DepartmanId = D.DepartmanId
+LEFT JOIN Isyerler         I  ON K.IsyeriId = I.IsyeriId AND K.FirmaId = I.FirmaId
 LEFT JOIN Cihazlar        C  ON KH.CihazId    = C.CihazId
 LEFT JOIN Pozisyonlar     P  ON K.PozisyonId  = P.PozisyonId
 WHERE C.FirmaId = @p1 AND C.AnaGirisCikisMi=1
@@ -43,19 +45,20 @@ ORDER BY KH.Tarih DESC";
                 .ToList();
         }
 
+        /// <summary>Last Moves By Firma Yemekhane sorgularını getirir.</summary>
         public List<KisiHareketDTO> GetLastMovesByFirmaYemekhane(int top, int firmaId)
         {
             var sql = @"
 SELECT TOP (@p0)
     KH.Tarih       AS Tarih,
     ISNULL(RTRIM(LTRIM(ISNULL(K.Ad, N'') + N' ' + ISNULL(K.Soyad, N''))), N'') AS AdSoyad,
-    ISNULL(D.DepartmanAdi, N'') AS Departman,
+    ISNULL(I.IsyeriAdi, N'') AS Isyeri,
     ISNULL(P.PozisyonAdi, N'')  AS Unvan,
     ISNULL(C.CihazAdi, N'')     AS CihazAdi,
     KH.PersonelId  AS PersonelId
 FROM KisiHareketler KH
 LEFT JOIN Kisiler         K  ON KH.PersonelId = K.PersonelId
-LEFT JOIN Departmanlar    D  ON K.DepartmanId = D.DepartmanId
+LEFT JOIN Isyerler         I  ON K.IsyeriId = I.IsyeriId AND K.FirmaId = I.FirmaId
 LEFT JOIN Cihazlar        C  ON KH.CihazId    = C.CihazId
 LEFT JOIN Pozisyonlar     P  ON K.PozisyonId  = P.PozisyonId
 WHERE C.FirmaId = @p1
@@ -69,19 +72,20 @@ ORDER BY KH.Tarih DESC";
                 .ToList();
         }
 
+        /// <summary>Last Moves By Firma Arac sorgularını getirir.</summary>
         public List<KisiHareketDTO> GetLastMovesByFirmaArac(int top, int firmaId)
         {
             var sql = @"
 SELECT TOP (@p0)
     KH.Tarih       AS Tarih,
     ISNULL(RTRIM(LTRIM(ISNULL(K.Ad, N'') + N' ' + ISNULL(K.Soyad, N''))), N'') AS AdSoyad,
-    ISNULL(D.DepartmanAdi, N'') AS Departman,
+    ISNULL(I.IsyeriAdi, N'') AS Isyeri,
     ISNULL(P.PozisyonAdi, N'')  AS Unvan,
     ISNULL(C.CihazAdi, N'')     AS CihazAdi,
     KH.PersonelId  AS PersonelId
 FROM KisiHareketler KH
 LEFT JOIN Kisiler         K  ON KH.PersonelId = K.PersonelId
-LEFT JOIN Departmanlar    D  ON K.DepartmanId = D.DepartmanId
+LEFT JOIN Isyerler         I  ON K.IsyeriId = I.IsyeriId AND K.FirmaId = I.FirmaId
 LEFT JOIN Cihazlar        C  ON KH.CihazId    = C.CihazId
 LEFT JOIN Pozisyonlar     P  ON K.PozisyonId  = P.PozisyonId
 WHERE C.FirmaId = @p1 AND C.AracGirisCikisMi=1
@@ -94,6 +98,59 @@ ORDER BY KH.Tarih DESC";
                 .ToList();
         }
 
+        /// <summary>Last Giris Mi By Personel Ids sorgularını getirir.</summary>
+        public List<PersonelSonHareketYon> GetLastGirisMiByPersonelIds(IReadOnlyList<string> personelIds)
+        {
+            if (personelIds == null || personelIds.Count == 0)
+                return new List<PersonelSonHareketYon>();
+
+            var intIds = new List<int>();
+            var seen = new HashSet<int>();
+            foreach (var raw in personelIds)
+            {
+                if (string.IsNullOrWhiteSpace(raw)) continue;
+                if (!int.TryParse(raw.Trim(), out var id)) continue;
+                if (seen.Add(id))
+                    intIds.Add(id);
+            }
+            if (intIds.Count == 0)
+                return new List<PersonelSonHareketYon>();
+
+            var parameters = new List<object>();
+            var inParams = new List<string>(intIds.Count);
+            for (int i = 0; i < intIds.Count; i++)
+            {
+                var pn = "@p" + i;
+                inParams.Add(pn);
+                parameters.Add(new Microsoft.Data.SqlClient.SqlParameter(pn, intIds[i]));
+            }
+
+            var inClause = string.Join(",", inParams);
+            var sql = $@"
+SELECT PersonelId, GirisMi, Tarih
+FROM (
+    SELECT
+        CAST(KH.PersonelId AS nvarchar(50)) AS PersonelId,
+        CASE
+            WHEN KH.Tip = N'Giriş' THEN CAST(1 AS bit)
+            WHEN KH.Tip = N'Yemekhane' THEN CAST(1 AS bit)
+            ELSE CAST(0 AS bit)
+        END AS GirisMi,
+        KH.Tarih AS Tarih,
+        ROW_NUMBER() OVER (PARTITION BY KH.PersonelId ORDER BY KH.Tarih DESC) AS rn
+    FROM KisiHareketler KH
+    INNER JOIN Cihazlar C ON KH.CihazId = C.CihazId
+    WHERE C.AnaGirisCikisMi = 1
+      AND KH.PersonelId IN ({inClause})
+) t
+WHERE rn = 1";
+
+            return _context.Database
+                .SqlQueryRaw<PersonelSonHareketYon>(sql, parameters.ToArray())
+                .ToList();
+        }
+
+        /// <summary>By Persons sorgularını getirir.</summary>
         public DataTable GetByPersons(List<int> personIds, DateTime bas, DateTime bit, bool onlyAktif, bool onlyPasif, bool onlyYemekhane, int firmaId)
         {
             bool sicilSecili = personIds != null && personIds.Count > 0;
@@ -190,6 +247,7 @@ WHERE ");
             return dt;
         }
 
+        /// <summary>By Persons Paged sorgularını getirir.</summary>
         public List<KisiHareketListRow> GetByPersonsPaged(List<int> personIds, DateTime bas, DateTime bit, bool onlyAktif, bool onlyPasif, bool onlyYemekhane, int firmaId, int page, int pageSize, out int totalCount)
         {
             if (page < 1) page = 1;
@@ -284,6 +342,7 @@ SELECT
                 .ToList();
         }
 
+        /// <summary>Insert Manual işlemini ekler.</summary>
         public bool InsertManual(int firmaId, int personelId, DateTime tarih, string tip)
         {
             var entity = new CeyPASS.DataAccess.KisiHareketler
@@ -301,6 +360,7 @@ SELECT
             return _context.SaveChanges() > 0;
         }
 
+        /// <summary>Update Manual işlemini günceller.</summary>
         public bool UpdateManual(int id, DateTime tarih, string tip)
         {
             var entity = _context.KisiHareketler
@@ -317,6 +377,7 @@ SELECT
             return _context.SaveChanges() > 0;
         }
 
+        /// <summary>Pasif Yap işlemini gerçekleştirir.</summary>
         public bool PasifYap(int id)
         {
             var entity = _context.KisiHareketler
@@ -329,6 +390,7 @@ SELECT
             return _context.SaveChanges() > 0;
         }
 
+        /// <summary>Aktif Yap işlemini gerçekleştirir.</summary>
         public bool AktifYap(int id)
         {
             var entity = _context.KisiHareketler
@@ -341,6 +403,7 @@ SELECT
             return _context.SaveChanges() > 0;
         }
 
+        /// <summary>Aktif Kisiler With Sicil sorgularını getirir.</summary>
         public DataTable GetAktifKisilerWithSicil(int firmaId, bool puantajYapilirMi = true)
         {
             var sql = @"

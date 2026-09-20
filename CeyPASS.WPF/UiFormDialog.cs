@@ -12,6 +12,7 @@ namespace CeyPASS.WPF;
 /// </summary>
 public static class UiFormDialog
 {
+    /// <summary>Özel gövde içeren modal form; birincil tıklamada validateOnPrimary çalışabilir.</summary>
     public static bool Show(
         string title,
         FrameworkElement body,

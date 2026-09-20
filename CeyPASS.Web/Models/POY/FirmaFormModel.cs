@@ -1,5 +1,6 @@
 namespace CeyPASS.Web.Models.POY
 {
+    /// <summary>Firma POY form modeli.</summary>
     public class FirmaFormModel
     {
         public int FirmaId { get; set; }

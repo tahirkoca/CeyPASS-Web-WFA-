@@ -1,6 +1,10 @@
+/**
+ * Canlı İzleme: ayrı oturum (firma/kullanıcı/şifre), son geçişler ve CANLI İZLEME rolü için kart atama/kısıt.
+ */
 import React, { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   Image,
   ImageBackground,
   Modal,
@@ -14,9 +18,10 @@ import { LinearGradient } from "expo-linear-gradient";
 import { GlassCard } from "./GlassCard";
 import { CustomInput } from "./CustomInput";
 import { CustomButton } from "./CustomButton";
-import { canliIzlemeAuth, canliIzlemeData, type FirmaOption } from "../services/canliIzlemeApi";
+import { canliIzlemeAuth, canliIzlemeData, canliIzlemeKart, type AtamaListeSatir, type FirmaOption } from "../services/canliIzlemeApi";
 import { LoginBackground } from "../services/preload";
 import { CanliIzlemeKartModal } from "./CanliIzlemeKartModal";
+import { CanliIzlemeKartDurumModal } from "./CanliIzlemeKartDurumModal";
 
 type Props = { onClose: () => void };
 
@@ -24,17 +29,45 @@ type KartModalState = {
   visible: boolean;
   kind: "misafir" | "arac";
   mode: "yeni" | "guncelle";
+  personelId?: string;
+  atamaId?: number | null;
 } | null;
 
-function canShowKartButtons(authUser: any): boolean {
-  const rol = (authUser?.rol ?? authUser?.Rol ?? "").toString();
-  const isYemekhane = rol.toUpperCase() === "YEMEKHANE";
-  const isDanisma =
-    rol.toLocaleUpperCase("tr-TR").includes("DANIŞMA") ||
-    rol.toUpperCase().includes("DANISMA");
-  return !(isYemekhane && !isDanisma);
+/** Oturum kullanıcısı CANLI İZLEME rolünde mi (kart UI ve son hareketler). */
+function isCanliIzlemeRole(authUser: any): boolean {
+  const rol = (authUser?.rol ?? authUser?.Rol ?? "").toString().trim();
+  const u = rol.toLocaleUpperCase("tr-TR");
+  return u === "CANLI İZLEME" || u === "CANLI IZLEME" || rol.toUpperCase() === "CANLI IZLEME";
 }
 
+/** Kart atama satırı durum rengi: HAZIR (turuncu), ATANMIŞ (mavi), GİRİŞ (yeşil), ÇIKIŞ (kırmızı). */
+function atamaDurumColor(text?: string): string {
+  switch ((text || "").toLocaleUpperCase("tr-TR")) {
+    case "HAZIR":
+      return "#E67E22";
+    case "ATANMIŞ":
+      return "#47698A";
+    case "GİRİŞ":
+      return "#2E8B57";
+    case "ÇIKIŞ":
+      return "#B22222";
+    default:
+      return "#475569";
+  }
+}
+
+function canShowKartButtons(authUser: any): boolean {
+  return isCanliIzlemeRole(authUser);
+}
+
+function showHareketListesi(authUser: any): boolean {
+  return isCanliIzlemeRole(authUser);
+}
+
+/**
+ * Tam ekran canlı izleme akışı: login → canlı panel (2 sn poll), kart atama modalı ve kart durumları.
+ * @description Şifre alanında klavye “Bitti” (done) ile `login` tetiklenir.
+ */
 export function CanliIzlemeScreen({ onClose }: Props) {
   const [step, setStep] = useState<"login" | "live">("login");
   const [loading, setLoading] = useState(false);
@@ -64,6 +97,10 @@ export function CanliIzlemeScreen({ onClose }: Props) {
   const [selectedDetail, setSelectedDetail] = useState<any | null>(null);
   const [kartModal, setKartModal] = useState<KartModalState>(null);
   const [kartToast, setKartToast] = useState<string | null>(null);
+  const [atamaTip, setAtamaTip] = useState<"misafir" | "arac">("misafir");
+  const [atamaRows, setAtamaRows] = useState<AtamaListeSatir[]>([]);
+  const [durumOpen, setDurumOpen] = useState(false);
+  const [durumRows, setDurumRows] = useState<AtamaListeSatir[]>([]);
 
   const selectedFirmaName = useMemo(
     () => firmalar.find((f) => f.id === firmaId)?.ad ?? "Firma Seçin",
@@ -149,24 +186,71 @@ export function CanliIzlemeScreen({ onClose }: Props) {
     if (!token) return;
     setRefreshing(true);
     try {
-      const [p, m] = await Promise.all([
-        canliIzlemeData.sonGecisler(token, 4),
-        canliIzlemeData.sonHareketler(token, 10),
-      ]);
+      const p = await canliIzlemeData.sonGecisler(token, 4);
       if (p.success && p.data) setSonGecisler(p.data);
-      if (m.success && m.data) setSonHareketler(m.data);
+
+      if (showHareketListesi(authUser)) {
+        const m = await canliIzlemeData.sonHareketler(token, 10);
+        if (m.success && m.data) setSonHareketler(m.data);
+      } else {
+        setSonHareketler([]);
+      }
     } finally {
       setRefreshing(false);
     }
   };
 
+  const fetchAtama = async (tip: "misafir" | "arac" | "tumu" = atamaTip) => {
+    if (!token || !canShowKartButtons(authUser)) return;
+    const res = await canliIzlemeKart.atamaListe(token, tip);
+    if (res.success && res.data) {
+      if (tip === "tumu") setDurumRows(res.data);
+      else setAtamaRows(res.data);
+    }
+  };
+
+  /** Cihaz kuyruğuna kartKomut yazar; atama kaydını değiştirmez (satır dokunuşu → KartModal). */
+  const enqueueKart = (row: AtamaListeSatir, pasif: boolean) => {
+    if (!token) return;
+    Alert.alert(
+      pasif ? "Kartı Kısıtla" : "Kart Kısıtı Kaldır",
+      pasif ? `“${row.kartAdi}” kısıtlansın mı?` : `“${row.kartAdi}” kısıtı kaldırılsın mı?`,
+      [
+        { text: "Vazgeç", style: "cancel" },
+        {
+          text: pasif ? "Kısıtla" : "Kısıtı kaldır",
+          onPress: async () => {
+            const res = await canliIzlemeKart.kartKomut(token, row.personelId, pasif);
+            if (!res.success) {
+              Alert.alert("Kart", res.message || "Komut yazılamadı.");
+              return;
+            }
+            setKartToast(res.message || "Komut kuyruğa alındı.");
+            setTimeout(() => setKartToast(null), 2500);
+            fetchAtama(atamaTip);
+          },
+        },
+      ]
+    );
+  };
+
   useEffect(() => {
     if (step !== "live" || !token) return;
     fetchLive();
+    // Canlı geçiş/hareket listesi ~2 sn aralıkla yenilenir.
     const t = setInterval(fetchLive, 2000);
     return () => clearInterval(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [step, token]);
+  }, [step, token, authUser]);
+
+  useEffect(() => {
+    if (step !== "live" || !token || !canShowKartButtons(authUser)) return;
+    fetchAtama(atamaTip);
+    // Kart atama listesi de 2 sn poll (canlı panel ile uyumlu).
+    const t = setInterval(() => fetchAtama(atamaTip), 2000);
+    return () => clearInterval(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step, token, authUser, atamaTip]);
 
   const openSelected = async (kisiId: number) => {
     if (!token) return;
@@ -297,6 +381,7 @@ export function CanliIzlemeScreen({ onClose }: Props) {
               </TouchableOpacity>
 
               <View className="mt-4" />
+              {/* Klavye Bitti (done) → onSubmitEditing ile login */}
               <CustomInput
                 label="Şifre"
                 placeholder="Şifrenizi girin"
@@ -304,6 +389,8 @@ export function CanliIzlemeScreen({ onClose }: Props) {
                 onChangeText={setSifre}
                 secureTextEntry
                 icon="lock"
+                returnKeyType="done"
+                onSubmitEditing={login}
               />
 
               <CustomButton title="GİRİŞ YAP" onPress={login} loading={loading} className="mt-2" />
@@ -417,25 +504,92 @@ export function CanliIzlemeScreen({ onClose }: Props) {
           </View>
 
           {canShowKartButtons(authUser) ? (
-            <View className="flex-row flex-wrap justify-between mb-4">
-              {(
-                [
-                  { kind: "misafir" as const, mode: "yeni" as const, label: "Misafir Kart Ver", bg: "#dbeafe", fg: "#1d4ed8" },
-                  { kind: "misafir" as const, mode: "guncelle" as const, label: "Misafir Güncelle", bg: "#e2e8f0", fg: "#334155" },
-                  { kind: "arac" as const, mode: "yeni" as const, label: "Araç Kartı Ver", bg: "#ffedd5", fg: "#c2410c" },
-                  { kind: "arac" as const, mode: "guncelle" as const, label: "Araç Güncelle", bg: "#ffedd5", fg: "#9a3412" },
-                ] as const
-              ).map((b) => (
+            <View className="mb-4">
+              <View className="flex-row items-center justify-between mb-2">
+                <View className="flex-row items-center">
+                  <Text className="text-[15px] font-extrabold text-[#1e293b]">Kart Atamaları</Text>
+                  {/* ? — Kart atama durumları ve kartKomut vs atama yardım metni */}
+                  <TouchableOpacity
+                    className="ml-2 w-6 h-6 rounded-full bg-[#e2e8f0] items-center justify-center"
+                    onPress={() =>
+                      Alert.alert(
+                        "Kart Atamaları — durumlar",
+                        "HAZIR: Kart boşta; kimseye verilmemiş. Dokununca yeni atama açılır.\n" +
+                          "ATANMIŞ: Kart birine verilmiş; henüz turnikede giriş/çıkış yok.\n" +
+                          "GİRİŞ: Atama sonrası son hareket giriş (içeride).\n" +
+                          "ÇIKIŞ: Atama sonrası son hareket çıkış.\n\n" +
+                          "ATANMIŞ / GİRİŞ / ÇIKIŞ satırına dokunun → atamayı güncelleyin (Kartı Kısıtla’dan bağımsızdır).\n" +
+                          "Kartı Kısıtla / Kart Kısıtı Kaldır: cihaz kuyruğuna komut yazar; atamayı değiştirmez.\n" +
+                          "Kısıt kanıtı yoksa kart serbest sayılır. Atanmış+serbest → Kısıtla; kısıtlı → Kısıtı Kaldır; HAZIR+serbest → ikisi kapalı.\n" +
+                          "Kart durumları: misafir+araç anlık serbest/kısıtlı listesi (Tümü/Misafir/Araç); seçerek veya topluca yönetin.\n" +
+                          "Misafir / Araç seçimi liste tipini değiştirir."
+                      )
+                    }
+                  >
+                    <Text className="text-[#334155] font-extrabold text-[12px]">?</Text>
+                  </TouchableOpacity>
+                </View>
                 <TouchableOpacity
-                  key={`${b.kind}-${b.mode}`}
-                  style={{ width: "48%", backgroundColor: b.bg }}
-                  className="mb-2 rounded-xl px-3 py-3"
-                  activeOpacity={0.85}
-                  onPress={() => setKartModal({ visible: true, kind: b.kind, mode: b.mode })}
+                  className="px-3 py-2 rounded-xl bg-[#e2e8f0]"
+                  onPress={async () => {
+                    await fetchAtama("tumu");
+                    setDurumOpen(true);
+                  }}
                 >
-                  <Text style={{ color: b.fg }} className="font-extrabold text-[11px] text-center">
-                    {b.label}
+                  <Text className="text-[#0f172a] font-extrabold text-[11px]">Kart durumları</Text>
+                </TouchableOpacity>
+              </View>
+              <View className="flex-row mb-2">
+                {(["misafir", "arac"] as const).map((t) => (
+                  <TouchableOpacity
+                    key={t}
+                    onPress={() => setAtamaTip(t)}
+                    className="px-3 py-2 rounded-lg mr-2"
+                    style={{ backgroundColor: atamaTip === t ? "#1e293b" : "#e2e8f0" }}
+                  >
+                    <Text style={{ color: atamaTip === t ? "#fff" : "#334155" }} className="font-extrabold text-[11px]">
+                      {t === "misafir" ? "Misafir" : "Araç"}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+              {atamaRows.map((r) => (
+                <TouchableOpacity
+                  key={`${r.tip}-${r.personelId}`}
+                  className="mb-2 p-3 rounded-xl bg-white border border-[#e2e8f0]"
+                  onPress={() =>
+                    setKartModal({
+                      visible: true,
+                      kind: r.tip === "arac" ? "arac" : "misafir",
+                      mode: r.durum === "Hazir" ? "yeni" : "guncelle",
+                      personelId: r.personelId,
+                      atamaId: r.atamaId,
+                    })
+                  }
+                >
+                  <Text className="font-extrabold text-[#0f172a]">{r.kartAdi}</Text>
+                  <Text className="text-[12px]">
+                    <Text className="text-[#475569]">{r.kisiPlaka || "-"} • </Text>
+                    <Text style={{ color: atamaDurumColor(r.durumText), fontWeight: "800" }}>{r.durumText}</Text>
                   </Text>
+                  <View className="flex-row mt-2">
+                    <TouchableOpacity
+                      disabled={!r.canKisitla}
+                      onPress={() => enqueueKart(r, true)}
+                      className="px-2 py-1 rounded-lg mr-2"
+                      style={{ backgroundColor: r.canKisitla ? "#dc2626" : "#fecaca" }}
+                    >
+                      <Text className="text-white font-extrabold text-[10px]">Kartı Kısıtla</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      disabled={!r.canSerbestBirak}
+                      onPress={() => enqueueKart(r, false)}
+                      className="px-2 py-1 rounded-lg"
+                      style={{ backgroundColor: r.canSerbestBirak ? "#16a34a" : "#bbf7d0" }}
+                    >
+                      <Text className="text-white font-extrabold text-[10px]">Kart Kısıtı Kaldır</Text>
+                    </TouchableOpacity>
+                  </View>
                 </TouchableOpacity>
               ))}
             </View>
@@ -487,30 +641,34 @@ export function CanliIzlemeScreen({ onClose }: Props) {
             ))}
           </View>
 
-          <Text className="text-[15px] font-extrabold text-[#1e293b] mt-4 mb-3">Son Hareketler</Text>
-          <View className="bg-white rounded-2xl border border-[#f1f5f9] overflow-hidden">
-            {sonHareketler.map((m, idx) => (
-              <TouchableOpacity
-                key={idx}
-                activeOpacity={0.8}
-                onPress={() => {
-                  const kisiId = Number((m.personelId ?? m.kisiId ?? m.PersonelId) as any);
-                  openSelected(kisiId);
-                }}
-                className="px-4 py-3 border-b border-[#f1f5f9]"
-              >
-                <View className="flex-row items-center justify-between">
-                  <Text className="text-[#1e293b] font-semibold" numberOfLines={1} style={{ flex: 1 }}>
-                    {m.adSoyad}
-                  </Text>
-                  <Text className="text-[#64748b] font-semibold text-[11px] ml-3">{m.cihazAdi}</Text>
-                </View>
-                <Text className="text-[#94a3b8] text-[11px] font-semibold mt-1">
-                  {new Date(m.tarih).toLocaleString("tr-TR")}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+          {showHareketListesi(authUser) ? (
+            <>
+              <Text className="text-[15px] font-extrabold text-[#1e293b] mt-4 mb-3">Son Hareketler</Text>
+              <View className="bg-white rounded-2xl border border-[#f1f5f9] overflow-hidden">
+                {sonHareketler.map((m, idx) => (
+                  <TouchableOpacity
+                    key={idx}
+                    activeOpacity={0.8}
+                    onPress={() => {
+                      const kisiId = Number((m.personelId ?? m.kisiId ?? m.PersonelId) as any);
+                      openSelected(kisiId);
+                    }}
+                    className="px-4 py-3 border-b border-[#f1f5f9]"
+                  >
+                    <View className="flex-row items-center justify-between">
+                      <Text className="text-[#1e293b] font-semibold" numberOfLines={1} style={{ flex: 1 }}>
+                        {m.adSoyad}
+                      </Text>
+                      <Text className="text-[#64748b] font-semibold text-[11px] ml-3">{m.cihazAdi}</Text>
+                    </View>
+                    <Text className="text-[#94a3b8] text-[11px] font-semibold mt-1">
+                      {new Date(m.tarih).toLocaleString("tr-TR")}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </>
+          ) : null}
         </View>
       </ScrollView>
 
@@ -579,8 +737,8 @@ export function CanliIzlemeScreen({ onClose }: Props) {
                         <MaterialCommunityIcons name="sitemap" size={18} color="white" />
                       </View>
                       <View className="flex-1">
-                        <Text className="text-[#64748b] font-semibold text-[11px]">Departman</Text>
-                        <Text className="text-[#334155] font-extrabold">{selectedDetail.departman ?? "-"}</Text>
+                        <Text className="text-[#64748b] font-semibold text-[11px]">İşyeri</Text>
+                        <Text className="text-[#334155] font-extrabold">{selectedDetail.isyeri ?? "-"}</Text>
                       </View>
                     </View>
                   </View>
@@ -599,11 +757,23 @@ export function CanliIzlemeScreen({ onClose }: Props) {
           token={token}
           kind={kartModal.kind}
           mode={kartModal.mode}
+          preselectPersonelId={kartModal.personelId}
+          preselectAtamaId={kartModal.atamaId}
           onClose={() => setKartModal(null)}
           onSaved={(msg) => {
             setKartToast(msg);
             setTimeout(() => setKartToast(null), 3000);
+            fetchAtama(atamaTip);
           }}
+        />
+      ) : null}
+      {token && canShowKartButtons(authUser) ? (
+        <CanliIzlemeKartDurumModal
+          visible={durumOpen}
+          token={token}
+          rows={durumRows}
+          onClose={() => setDurumOpen(false)}
+          onChanged={() => fetchAtama(atamaTip)}
         />
       ) : null}
     </View>

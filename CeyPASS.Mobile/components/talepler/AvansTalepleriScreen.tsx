@@ -1,9 +1,11 @@
+/** Yönetici avans taleplerini onay/red. */
 import React, { useEffect, useMemo, useState } from "react";
 import { Modal, ScrollView, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { PersonelHeader } from "../personel/PersonelHeader";
 import { profilService } from "../../services/profilApi";
-import { StatusPopup } from "../StatusPopup";
+import { StatusPopup } from "../StatusPopup";
+import { toTrLower } from "../../services/turkishText";
 
 function fmtMoney(v: any) {
   const n = typeof v === "number" ? v : Number((v ?? "0").toString().replace(",", "."));
@@ -77,14 +79,14 @@ export function AvansTalepleriScreen(props: { user: any; onOpenMenu?: () => void
   }, []);
 
   const filtered = useMemo(() => {
-    const s = q.trim().toLowerCase();
+    const s = toTrLower(q).trim();
     if (!s) return items;
     return items.filter((t) => {
       const id = (t?.avansId ?? t?.AvansId ?? "").toString();
       const pid = (t?.personelId ?? t?.PersonelId ?? "").toString();
       const pName = (t?.personelAdSoyad ?? t?.PersonelAdSoyad ?? "").toString();
       const durum = (t?.durum ?? t?.Durum ?? "").toString();
-      return id.includes(s) || pid.toLowerCase().includes(s) || pName.toLowerCase().includes(s) || durum.toLowerCase().includes(s);
+      return id.includes(s) || toTrLower(pid).includes(s) || toTrLower(pName).includes(s) || toTrLower(durum).includes(s);
     });
   }, [items, q]);
 

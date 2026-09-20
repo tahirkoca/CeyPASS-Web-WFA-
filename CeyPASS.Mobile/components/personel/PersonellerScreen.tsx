@@ -1,5 +1,6 @@
+/** Personel kartları: arama, CRUD, foto, puantaj bayrakları. */
 import React, { useEffect, useMemo, useState } from "react";
-import { ActivityIndicator, Image, Modal, Platform, ScrollView, Switch, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Alert, Image, Modal, Platform, ScrollView, Switch, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import * as ImagePicker from "expo-image-picker";
@@ -13,6 +14,20 @@ type FirmaItem = { FirmaId?: number; firmaId?: number; FirmaAdi?: string; firmaA
 type CalismaSekliItem = { Id?: number; id?: number; Ad?: string; ad?: string };
 type AktifFirma = { FirmaId?: number; firmaId?: number; FirmaAdi?: string; firmaAdi?: string };
 
+const MISSING = "Belirtilmemiş";
+
+function textOrMissing(v: any): string {
+  const t = s(v).trim();
+  return t ? t : MISSING;
+}
+function dateOrMissing(v: any): string {
+  const d = fmtDateTR(v);
+  return d || MISSING;
+}
+function numberOrMissing(v: any): string {
+  if (v === null || v === undefined || s(v).trim() === "") return MISSING;
+  return s(v);
+}
 function s(v: any): string {
   return (v ?? "").toString();
 }
@@ -45,6 +60,10 @@ function parseCsv(v: any): number[] {
 }
 function joinCsv(ids: number[]) {
   return ids.filter((x) => Number.isFinite(x) && x > 0).join(",");
+}
+function asInt(v: any, fallback = 0): number {
+  const n = Number(v);
+  return Number.isFinite(n) ? Math.trunc(n) : fallback;
 }
 function uniqueById<T>(items: T[], getId: (x: T) => number): T[] {
   const seen = new Set<number>();
@@ -204,6 +223,12 @@ function MultiSelectModal(props: {
   );
 }
 
+function buildCokluSicilDurumText(isAnaSicil: boolean, hedefSayisi: number, isHedefOnly: boolean, hedefBilgi: string) {
+  if (isHedefOnly && hedefBilgi) return hedefBilgi;
+  if (isAnaSicil) return hedefSayisi > 0 ? `Ana sicil · ${hedefSayisi} hedef bağlı` : "Ana sicil · bağlantı yok";
+  return "";
+}
+
 function PersonelFormModal(props: {
   visible: boolean;
   title: string;
@@ -222,12 +247,23 @@ function PersonelFormModal(props: {
   const [ziyaretciMi, setZiyaretciMi] = useState(false);
   const [aracKartiMi, setAracKartiMi] = useState(false);
   const [taseronCalisanMi, setTaseronCalisanMi] = useState(false);
+  const [cokluSicilHedefSayisi, setCokluSicilHedefSayisi] = useState(0);
+  const [isAnaSicil, setIsAnaSicil] = useState(false);
+  const [isHedefSicilOnly, setIsHedefSicilOnly] = useState(false);
+  const [hedefSicilBilgi, setHedefSicilBilgi] = useState("");
+  const [cokluModal, setCokluModal] = useState(false);
+  const [cokluBaglantilar, setCokluBaglantilar] = useState<any[]>([]);
+  const [cokluAdaylar, setCokluAdaylar] = useState<any[]>([]);
+  const [cokluHedefId, setCokluHedefId] = useState("");
+  const [cokluAktarimGun, setCokluAktarimGun] = useState("1");
+  const [cokluAciklama, setCokluAciklama] = useState("");
+  const [cokluAktif, setCokluAktif] = useState(true);
   const [vardiyaModal, setVardiyaModal] = useState(false);
   const [vardiyaIds, setVardiyaIds] = useState<number[]>([]);
   const [fotoBase64, setFotoBase64] = useState<string | null>(null);
   const [fotoDegisti, setFotoDegisti] = useState(false);
   const [dogumDate, setDogumDate] = useState<Date | null>(null);
-  const [iseDate, setIseDate] = useState<Date>(new Date());
+  const [iseDate, setIseDate] = useState<Date | null>(null);
   const [pickerKind, setPickerKind] = useState<null | "dogum" | "ise">(null);
   const [fieldErrors, setFieldErrors] = useState<{ PersonelId?: string; Ad?: string; Soyad?: string }>({});
 
@@ -237,7 +273,6 @@ function PersonelFormModal(props: {
   }, [props.lookups]);
 
   const isyerleri: LookupItem[] = (localLookups?.Isyerleri ?? localLookups?.isyerleri ?? []) as any;
-  const departmanlar: LookupItem[] = (localLookups?.Departmanlar ?? localLookups?.departmanlar ?? []) as any;
   const pozisyonlar: LookupItem[] = (localLookups?.Pozisyonlar ?? localLookups?.pozisyonlar ?? []) as any;
   const bolumler: LookupItem[] = (localLookups?.Bolumler ?? localLookups?.bolumler ?? []) as any;
   const statuler: LookupItem[] = (localLookups?.CalismaStatuleri ?? localLookups?.calismaStatuleri ?? []) as any;
@@ -260,7 +295,6 @@ function PersonelFormModal(props: {
       Email: pick(init, "Email", "email") ?? "",
       FirmaId: pick(init, "FirmaId", "firmaId") ?? 0,
       IsyeriId: pick(init, "IsyeriId", "isyeriId") ?? null,
-      DepartmanId: pick(init, "DepartmanId", "departmanId") ?? null,
       PozisyonId: pick(init, "PozisyonId", "pozisyonId") ?? null,
       BolumId: pick(init, "BolumId", "bolumId") ?? null,
       CalismaStatusu: (() => {
@@ -311,19 +345,75 @@ function PersonelFormModal(props: {
     setFotoBase64(existing ? existing : null);
     setFotoDegisti(false);
     setDogumDate(toDateOrNull(pick(init, "DogumTarihi", "dogumTarihi")));
-    setIseDate(toDateOrNull(pick(init, "IseGirisTarihi", "iseGirisTarihi")) ?? new Date());
+    setIseDate(toDateOrNull(pick(init, "IseGirisTarihi", "iseGirisTarihi")));
     setPickerKind(null);
     setFieldErrors({});
+    const pid = asInt(nextKisi.PersonelId, 0);
+    if (pid > 0) {
+      personelService.cokluSicilListe(pid).then((data) => {
+        const payload = data?.data ?? data;
+        const ozet = payload?.ozet ?? {};
+        const list = payload?.baglantilar ?? [];
+        setIsAnaSicil(!!(ozet.isAnaSicil ?? ozet.IsAnaSicil));
+        setCokluSicilHedefSayisi(Number(ozet.aktifHedefSayisi ?? ozet.AktifHedefSayisi ?? 0));
+        const hedefOnly = !!(ozet.isHedefSicil ?? ozet.IsHedefSicil) && !(ozet.isAnaSicil ?? ozet.IsAnaSicil);
+        setIsHedefSicilOnly(hedefOnly);
+        const anaId = ozet.anaPersonelId ?? ozet.AnaPersonelId;
+        setHedefSicilBilgi(hedefOnly && anaId ? `Hedef sicil — ana: ${anaId}` : "");
+      }).catch(() => {
+        setIsAnaSicil(false);
+        setCokluSicilHedefSayisi(0);
+        setIsHedefSicilOnly(false);
+        setHedefSicilBilgi("");
+      });
+    } else {
+      setIsAnaSicil(false);
+      setCokluSicilHedefSayisi(0);
+      setIsHedefSicilOnly(false);
+      setHedefSicilBilgi("");
+    }
   }, [props.visible, props.initial, statuler.length, aktifFirma]);
 
   const vardiyaLabel = useMemo(() => {
-    if (!vardiyaIds.length) return "Seçilmedi";
+    if (!vardiyaIds.length) return MISSING;
     const uniq = uniqueById(vardiyalar, (v) => pickId(v as any));
     const map = new Map(uniq.map((v) => [pickId(v as any), pickAd(v as any)]));
     const names = vardiyaIds.map((id) => map.get(id)).filter(Boolean);
     return names.slice(0, 3).join(", ") + (names.length > 3 ? ` (+${names.length - 3})` : "");
   }, [vardiyaIds, vardiyalar]);
 
+  const tcKimlikNo = s(pick(kisi, "TcKimlikNo", "tcKimlikNo") ?? "");
+  const personelIdNum = asInt(kisi?.PersonelId, 0);
+  const canOpenCokluSicil = puantajYapilabilir && !isHedefSicilOnly && personelIdNum > 0 && tcKimlikNo.trim().length > 0;
+  const cokluSicilDurumText = buildCokluSicilDurumText(isAnaSicil, cokluSicilHedefSayisi, isHedefSicilOnly, hedefSicilBilgi);
+
+  async function openCokluSicilModal() {
+    const pid = asInt(kisi?.PersonelId, 0);
+    if (!pid) return;
+    const data = await personelService.cokluSicilListe(pid);
+    const payload = data?.data ?? data;
+    setCokluBaglantilar(payload?.baglantilar ?? []);
+    const aday = await personelService.cokluSicilHedefAdaylari(pid);
+    const list = Array.isArray(aday) ? aday : [];
+    setCokluAdaylar(list);
+    const first = list.find((a) => a.secilebilirMi ?? a.SecilebilirMi ?? true);
+    setCokluHedefId(first ? String(first.personelId ?? first.PersonelId) : "");
+    setCokluAktarimGun("1");
+    setCokluAciklama("");
+    setCokluAktif(true);
+    setCokluModal(true);
+  }
+
+  async function refreshCokluSicilState() {
+    const pid = asInt(kisi?.PersonelId, 0);
+    if (pid <= 0) return;
+    const data = await personelService.cokluSicilListe(pid);
+    const payload = data?.data ?? data;
+    const ozet = payload?.ozet ?? {};
+    setIsAnaSicil(!!(ozet.isAnaSicil ?? ozet.IsAnaSicil));
+    setCokluSicilHedefSayisi(Number(ozet.aktifHedefSayisi ?? ozet.AktifHedefSayisi ?? 0));
+    setCokluBaglantilar(payload?.baglantilar ?? []);
+  }
   const selectItems = useMemo(() => {
     const kind = selectModal.kind;
     if (kind === "firma")
@@ -331,13 +421,12 @@ function PersonelFormModal(props: {
         .map((f) => ({ key: String(pickFirmaId(f)), label: pickFirmaAdi(f) }))
         .filter((x) => x.key !== "0" && x.label);
     if (kind === "isyeri") return [{ key: "", label: "-- Seçiniz --" }, ...isyerleri.map((x) => ({ key: String(pickId(x)), label: pickAd(x) }))];
-    if (kind === "departman") return [{ key: "", label: "-- Seçiniz --" }, ...departmanlar.map((x) => ({ key: String(pickId(x)), label: pickAd(x) }))];
     if (kind === "pozisyon") return [{ key: "", label: "-- Seçiniz --" }, ...pozisyonlar.map((x) => ({ key: String(pickId(x)), label: pickAd(x) }))];
     if (kind === "bolum") return [{ key: "", label: "-- Seçiniz --" }, ...bolumler.map((x) => ({ key: String(pickId(x)), label: pickAd(x) }))];
     // Persist DB value as id, show label as name
     if (kind === "statu") return [{ key: "", label: "-- Seçiniz --" }, ...statuler.map((x) => ({ key: String(pickId(x)), label: pickAd(x) })).filter((x) => x.key !== "0" && x.label)];
     return [];
-  }, [selectModal.kind, firmalar, isyerleri, departmanlar, pozisyonlar, bolumler, statuler]);
+  }, [selectModal.kind, firmalar, isyerleri, pozisyonlar, bolumler, statuler]);
 
   function currentLabelFor(kind: string) {
     if (kind === "firma") {
@@ -352,7 +441,6 @@ function PersonelFormModal(props: {
       return it ? pickAd(it) : "-- Seçiniz --";
     };
     if (kind === "isyeri") return get(isyerleri, kisi?.IsyeriId);
-    if (kind === "departman") return get(departmanlar, kisi?.DepartmanId);
     if (kind === "pozisyon") return get(pozisyonlar, kisi?.PozisyonId);
     if (kind === "bolum") return get(bolumler, kisi?.BolumId);
     if (kind === "statu") return s(kisi?.CalismaStatusuText) || "-- Seçiniz --";
@@ -376,7 +464,6 @@ function PersonelFormModal(props: {
       }
     }
     else if (kind === "isyeri") setKisi((p: any) => ({ ...p, IsyeriId: key ? Number(key) : null }));
-    else if (kind === "departman") setKisi((p: any) => ({ ...p, DepartmanId: key ? Number(key) : null }));
     else if (kind === "pozisyon") setKisi((p: any) => ({ ...p, PozisyonId: key ? Number(key) : null }));
     else if (kind === "bolum") setKisi((p: any) => ({ ...p, BolumId: key ? Number(key) : null }));
     else if (kind === "statu") {
@@ -405,12 +492,13 @@ function PersonelFormModal(props: {
   }
 
   async function submit() {
-    const nextErrors: { PersonelId?: string; Ad?: string; Soyad?: string } = {};
+    const nextErrors: { PersonelId?: string; Ad?: string; Soyad?: string; IseGiris?: string } = {};
     if (!s(kisi?.PersonelId).trim()) nextErrors.PersonelId = "Sicil No zorunludur.";
     if (!s(kisi?.Ad).trim()) nextErrors.Ad = "Ad zorunludur.";
     if (!s(kisi?.Soyad).trim()) nextErrors.Soyad = "Soyad zorunludur.";
+    if (!iseDate) nextErrors.IseGiris = "İşe giriş tarihi zorunludur.";
     setFieldErrors(nextErrors);
-    if (nextErrors.PersonelId || nextErrors.Ad || nextErrors.Soyad) return;
+    if (nextErrors.PersonelId || nextErrors.Ad || nextErrors.Soyad || nextErrors.IseGiris) return;
 
     const vardiyaCsvNow = joinCsv(vardiyaIds);
     const dogumIsoNow = dogumDate ? fmtIsoDate(dogumDate) : null;
@@ -431,8 +519,8 @@ function PersonelFormModal(props: {
       FirmaPersoneli: firmaPersoneli,
       PuantajYapilabilir: puantajYapilabilir,
       YemekHakkiVar: yemekHakkiVar,
-      GunlukYemekLimiti: Number(gunlukYemek) || 0,
-      GunlukYemekAdedi: Number(gunlukYemek) || 0,
+      GunlukYemekLimiti: gunlukYemek.trim() ? Number(gunlukYemek) : 0,
+      GunlukYemekAdedi: gunlukYemek.trim() ? Number(gunlukYemek) : 0,
       FirmaDisiKartNo: firmaDisiKartNo,
       ZiyaretciMi: ziyaretciMi,
       AracKartiMi: aracKartiMi,
@@ -446,11 +534,16 @@ function PersonelFormModal(props: {
   return (
     <Modal visible={props.visible} animationType="slide" onRequestClose={props.onClose}>
       <View className="flex-1 bg-[#f8fafc]">
-        <View className="px-5 pt-12 pb-4 bg-white border-b border-[#f1f5f9] flex-row items-center justify-between">
-          <Text className="text-[#1e293b] font-extrabold text-[16px]">{props.title}</Text>
-          <TouchableOpacity onPress={props.onClose} className="p-2">
-            <MaterialCommunityIcons name="close" size={22} color="#64748b" />
-          </TouchableOpacity>
+        <View className="px-5 pt-12 pb-4 bg-white border-b border-[#f1f5f9]">
+          <View className="flex-row items-center justify-between">
+            <Text className="text-[#1e293b] font-extrabold text-[16px]">{props.title}</Text>
+            <TouchableOpacity onPress={props.onClose} className="p-2">
+              <MaterialCommunityIcons name="close" size={22} color="#64748b" />
+            </TouchableOpacity>
+          </View>
+          {cokluSicilDurumText ? (
+            <Text className="text-[#64748b] text-[12px] font-semibold mt-2">{cokluSicilDurumText}</Text>
+          ) : null}
         </View>
         <ScrollView className="flex-1 px-5 py-5" contentContainerStyle={{ paddingBottom: 24 }}>
           {props.errorText ? (
@@ -515,15 +608,23 @@ function PersonelFormModal(props: {
             <TextInput className="bg-[#f8fafc] border border-[#e2e8f0] rounded-2xl px-4 py-3 mb-3" value={s(kisi?.KartNo)} onChangeText={(t) => setKisi((p: any) => ({ ...p, KartNo: t }))} />
 
             <Text className="text-[#64748b] font-semibold mb-2">Doğum Tarihi</Text>
-            <TouchableOpacity className="bg-[#f8fafc] border border-[#e2e8f0] rounded-2xl px-4 py-3 mb-3 flex-row items-center justify-between" onPress={() => setPickerKind("dogum")}>
-              <Text className="text-[#1e293b] font-semibold">{dogumDate ? fmtDateTR(dogumDate) : "Seçilmedi"}</Text>
-              <MaterialCommunityIcons name="calendar" size={18} color="#64748b" />
-            </TouchableOpacity>
+            <View className="flex-row items-center mb-3 gap-2">
+              <TouchableOpacity className="flex-1 bg-[#f8fafc] border border-[#e2e8f0] rounded-2xl px-4 py-3 flex-row items-center justify-between" onPress={() => setPickerKind("dogum")}>
+                <Text className="text-[#1e293b] font-semibold">{dogumDate ? fmtDateTR(dogumDate) : MISSING}</Text>
+                <MaterialCommunityIcons name="calendar" size={18} color="#64748b" />
+              </TouchableOpacity>
+              {dogumDate ? (
+                <TouchableOpacity className="px-3 py-3 rounded-2xl border border-[#e2e8f0] bg-white" onPress={() => setDogumDate(null)}>
+                  <Text className="text-[#64748b] font-semibold text-[12px]">Temizle</Text>
+                </TouchableOpacity>
+              ) : null}
+            </View>
             <Text className="text-[#64748b] font-semibold mb-2">İşe Giriş Tarihi *</Text>
-            <TouchableOpacity className="bg-[#f8fafc] border border-[#e2e8f0] rounded-2xl px-4 py-3 flex-row items-center justify-between" onPress={() => setPickerKind("ise")}>
-              <Text className="text-[#1e293b] font-semibold">{iseDate ? fmtDateTR(iseDate) : "Seçilmedi"}</Text>
+            <TouchableOpacity className={`bg-[#f8fafc] border rounded-2xl px-4 py-3 flex-row items-center justify-between ${fieldErrors.IseGiris ? "border-[#dc2626] mb-1" : "border-[#e2e8f0] mb-3"}`} onPress={() => setPickerKind("ise")}>
+              <Text className="text-[#1e293b] font-semibold">{iseDate ? fmtDateTR(iseDate) : MISSING}</Text>
               <MaterialCommunityIcons name="calendar" size={18} color="#64748b" />
             </TouchableOpacity>
+            {fieldErrors.IseGiris ? <Text className="text-[#dc2626] font-semibold text-[12px] mb-3">{fieldErrors.IseGiris}</Text> : null}
           </View>
 
           <View className="bg-white rounded-3xl border border-[#f1f5f9] p-5 mt-4">
@@ -547,7 +648,6 @@ function PersonelFormModal(props: {
             ) : null}
             {[
               ["isyeri", "İşyeri"],
-              ["departman", "Departman"],
               ["pozisyon", "Pozisyon"],
               ["bolum", "Bölüm"],
               ["statu", "Çalışma Statüsü"],
@@ -574,7 +674,15 @@ function PersonelFormModal(props: {
             <Text className="text-[#1e293b] font-extrabold mb-4">Özel Ayarlar</Text>
             {[
               ["Firma Personeli", firmaPersoneli, setFirmaPersoneli],
-              ["Puantaj Yapılabilir", puantajYapilabilir, setPuantajYapilabilir],
+              ["Puantaj Yapılır", puantajYapilabilir, setPuantajYapilabilir],
+            ].map(([label, val, fn]) => (
+              <View key={label as string} className="flex-row items-center justify-between py-2">
+                <Text className="text-[#1e293b] font-semibold">{label as string}</Text>
+                <Switch value={val as boolean} onValueChange={fn as any} />
+              </View>
+            ))}
+            <View className="h-px bg-[#e2e8f0] my-2" />
+            {[
               ["Yemek Hakkı Var", yemekHakkiVar, setYemekHakkiVar],
               ["Ziyaretçi", ziyaretciMi, setZiyaretciMi],
               ["Araç Kartı", aracKartiMi, setAracKartiMi],
@@ -597,6 +705,15 @@ function PersonelFormModal(props: {
           <TouchableOpacity onPress={props.onClose} className="mt-3 bg-[#f1f5f9] rounded-2xl py-4 items-center">
             <Text className="text-[#334155] font-extrabold">Vazgeç</Text>
           </TouchableOpacity>
+          {personelIdNum > 0 ? (
+            <TouchableOpacity
+              disabled={!canOpenCokluSicil}
+              onPress={openCokluSicilModal}
+              className={`mt-3 rounded-2xl py-4 items-center border ${canOpenCokluSicil ? "bg-white border-[#dc2626]" : "bg-[#e2e8f0] border-[#e2e8f0]"}`}
+            >
+              <Text className={`font-extrabold ${canOpenCokluSicil ? "text-[#dc2626]" : "text-[#94a3b8]"}`}>Çoklu Sicil</Text>
+            </TouchableOpacity>
+          ) : null}
         </ScrollView>
 
         <SelectModal
@@ -615,6 +732,108 @@ function PersonelFormModal(props: {
           onClose={() => setVardiyaModal(false)}
           onChange={setVardiyaIds}
         />
+
+        <Modal transparent visible={cokluModal} animationType="fade" onRequestClose={() => setCokluModal(false)}>
+          <View className="flex-1 bg-black/60 items-center justify-center px-4">
+            <View className="w-full rounded-3xl bg-white p-5 max-h-[80%]">
+              <Text className="text-[15px] font-extrabold text-[#1e293b] mb-3">Çoklu Sicil Eşleştirmeleri</Text>
+              <ScrollView style={{ maxHeight: 220 }}>
+                {(cokluBaglantilar ?? []).length === 0 ? (
+                  <Text className="text-[#64748b] text-[12px] py-2">Alttaki formdan hedef sicil seçip Kaydet ile bağlantı oluşturun.</Text>
+                ) : (cokluBaglantilar ?? []).map((b, idx) => (
+                  <TouchableOpacity
+                    key={`${b.hedefPersonelId ?? b.HedefPersonelId}_${idx}`}
+                    className="py-3 border-b border-[#f1f5f9]"
+                    onPress={() => {
+                      const id = b.hedefPersonelId ?? b.HedefPersonelId;
+                      setCokluHedefId(String(id));
+                      setCokluAktarimGun(String(b.aktarimGunSayisi ?? b.AktarimGunSayisi ?? 1));
+                      setCokluAciklama(String(b.aciklama ?? b.Aciklama ?? ""));
+                      setCokluAktif(!!(b.aktifMi ?? b.AktifMi ?? true));
+                    }}
+                  >
+                    <Text className="font-semibold text-[#1e293b]">{b.hedefPersonelId ?? b.HedefPersonelId} — {b.hedefAdSoyad ?? b.HedefAdSoyad}</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+              <Text className="text-[#64748b] font-semibold mt-3 mb-1">Hedef Sicil</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-2">
+                <View className="flex-row gap-2">
+                  {(cokluAdaylar ?? []).map((a, idx) => {
+                    const id = a.personelId ?? a.PersonelId;
+                    const secilebilir = a.secilebilirMi ?? a.SecilebilirMi ?? true;
+                    const selected = String(id) === cokluHedefId;
+                    return (
+                      <TouchableOpacity
+                        key={`${id}_${idx}`}
+                        disabled={!secilebilir}
+                        onPress={() => setCokluHedefId(String(id))}
+                        className={`px-3 py-2 rounded-xl ${selected ? "bg-[#dc2626]" : secilebilir ? "bg-[#f1f5f9]" : "bg-[#e2e8f0] opacity-60"}`}
+                      >
+                        <Text className={`font-semibold ${selected ? "text-white" : "text-[#334155]"}`}>{id}</Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              </ScrollView>
+              <TextInput className="bg-[#f8fafc] border border-[#e2e8f0] rounded-2xl px-4 py-3 mb-2" keyboardType="numeric" value={cokluAktarimGun} onChangeText={setCokluAktarimGun} placeholder="Aktarım gün" />
+              <TextInput className="bg-[#f8fafc] border border-[#e2e8f0] rounded-2xl px-4 py-3 mb-2" value={cokluAciklama} onChangeText={setCokluAciklama} placeholder="Açıklama" />
+              <View className="flex-row items-center justify-between mb-3">
+                <Text className="text-[#1e293b] font-semibold">Aktif</Text>
+                <Switch value={cokluAktif} onValueChange={setCokluAktif} />
+              </View>
+              <TouchableOpacity
+                onPress={async () => {
+                  const pid = asInt(kisi?.PersonelId, 0);
+                  if (!pid) return;
+                  const aktifSayisi = (cokluBaglantilar ?? []).filter((b) => !!(b.aktifMi ?? b.AktifMi)).length;
+                  if (aktifSayisi <= 0) return;
+                  Alert.alert("Çoklu Sicil", `${aktifSayisi} aktif hedef bağlantı pasifleştirilecek. Devam edilsin mi?`, [
+                    { text: "Vazgeç", style: "cancel" },
+                    {
+                      text: "Pasifleştir",
+                      style: "destructive",
+                      onPress: async () => {
+                        await personelService.cokluSicilPasiflestirTumunu(pid);
+                        await refreshCokluSicilState();
+                      },
+                    },
+                  ]);
+                }}
+                className="bg-[#fee2e2] rounded-2xl py-3 items-center mb-2"
+              >
+                <Text className="text-[#dc2626] font-extrabold">Tümünü pasifleştir</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={async () => {
+                  const pid = asInt(kisi?.PersonelId, 0);
+                  const hedefId = asInt(cokluHedefId, 0);
+                  if (!pid || !hedefId) return;
+                  const aday = (cokluAdaylar ?? []).find((a) => (a.personelId ?? a.PersonelId) === hedefId);
+                  const secilebilir = aday ? (aday.secilebilirMi ?? aday.SecilebilirMi ?? true) : true;
+                  if (!secilebilir) {
+                    Alert.alert("Uyarı", String(aday?.engelMesaji ?? aday?.EngelMesaji ?? "Bu hedef sicil seçilemez."));
+                    return;
+                  }
+                  await personelService.cokluSicilUpsert(pid, {
+                    HedefPersonelId: hedefId,
+                    AktarimGunSayisi: asInt(cokluAktarimGun, 1),
+                    Aciklama: cokluAciklama,
+                    AktifMi: cokluAktif,
+                  });
+                  await refreshCokluSicilState();
+                  setCokluModal(false);
+                }}
+                className="bg-[#dc2626] rounded-2xl py-3 items-center mb-2"
+              >
+                <Text className="text-white font-extrabold">Kaydet</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => setCokluModal(false)} className="bg-[#f1f5f9] rounded-2xl py-3 items-center">
+                <Text className="text-[#334155] font-extrabold">Kapat</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
 
         {pickerKind ? (
           <Modal transparent visible animationType="fade" onRequestClose={() => setPickerKind(null)}>
@@ -686,6 +905,7 @@ export function PersonellerScreen(props: { user: any; abilities?: any; onOpenMen
   const sadeceIstenCikanlar = calismaDurumu === "cikan";
   const [firmaId, setFirmaId] = useState<number | null>(null);
   const [isyeriId, setIsyeriId] = useState<number | null>(null);
+  const [bolumId, setBolumId] = useState<number | null>(null);
   const [q, setQ] = useState("");
   const [pageSize, setPageSize] = useState(20);
   const [page, setPage] = useState(1);
@@ -719,6 +939,7 @@ export function PersonellerScreen(props: { user: any; abilities?: any; onOpenMen
   const [aktifEtPuantaj, setAktifEtPuantaj] = useState(true);
 
   const isyerleri: LookupItem[] = (lookups?.Isyerleri ?? lookups?.isyerleri ?? []) as any;
+  const bolumler: LookupItem[] = (lookups?.Bolumler ?? lookups?.bolumler ?? []) as any;
   const firmalar: FirmaItem[] = (lookups?.Firmalar ?? lookups?.firmalar ?? []) as any;
   const aktifFirma: AktifFirma | null = (lookups?.AktifFirma ?? lookups?.aktifFirma ?? null) as any;
   const vardiyalar: CalismaSekliItem[] = (lookups?.CalismaSekilleri ?? lookups?.calismaSekilleri ?? []) as any;
@@ -747,9 +968,10 @@ export function PersonellerScreen(props: { user: any; abilities?: any; onOpenMen
     return null;
   }
 
-  async function loadList(nextPage = 1, nextPageSize = pageSize, opts?: { manageLoading?: boolean; isyeriIdOverride?: number | null }) {
+  async function loadList(nextPage = 1, nextPageSize = pageSize, opts?: { manageLoading?: boolean; isyeriIdOverride?: number | null; bolumIdOverride?: number | null }) {
     const manageLoading = opts?.manageLoading !== false;
     const listIsyeriId = opts?.isyeriIdOverride !== undefined ? opts.isyeriIdOverride : isyeriId;
+    const listBolumId = opts?.bolumIdOverride !== undefined ? opts.bolumIdOverride : bolumId;
     try {
       if (manageLoading) setLoading(true);
       setError(null);
@@ -757,6 +979,7 @@ export function PersonellerScreen(props: { user: any; abilities?: any; onOpenMen
         search: q || undefined,
         firmaId: firmaId ?? undefined,
         isyeriId: listIsyeriId ?? undefined,
+        bolumId: listBolumId ?? undefined,
         puantajYapilirMi: sadeceIstenCikanlar ? undefined : puantajYapilirMi,
         sadeceIstenCikanlar,
         page: nextPage,
@@ -797,7 +1020,8 @@ export function PersonellerScreen(props: { user: any; abilities?: any; onOpenMen
       const prefs = await pageFilterPrefs.load("Personeller");
       if (prefs) {
         if (typeof prefs.firmaId === "number" && prefs.firmaId > 0) setFirmaId(prefs.firmaId);
-        if (typeof prefs.isyeriId === "number" && prefs.isyeriId > 0) setIsyeriId(prefs.isyeriId);
+        if (typeof prefs.isyeriId === "number" && prefs.isyeriId >= 0) setIsyeriId(prefs.isyeriId);
+        if (typeof prefs.bolumId === "number" && prefs.bolumId > 0) setBolumId(prefs.bolumId);
         if (prefs.boolA === true) setCalismaDurumu("cikan");
         else if (prefs.boolA === false) setCalismaDurumu("aktif");
         if (prefs.boolB === true) setKartTipi("puantaj");
@@ -812,6 +1036,7 @@ export function PersonellerScreen(props: { user: any; abilities?: any; onOpenMen
     void pageFilterPrefs.save("Personeller", {
       firmaId,
       isyeriId,
+      bolumId,
       boolA: calismaDurumu === "cikan",
       boolB: kartTipi === "puantaj",
     });
@@ -820,6 +1045,7 @@ export function PersonellerScreen(props: { user: any; abilities?: any; onOpenMen
       try {
         const data = await loadLookups();
         let effectiveIsyeri = isyeriId;
+        let effectiveBolum = bolumId;
         if (data && isyeriId != null) {
           const list = (data?.Isyerleri ?? data?.isyerleri ?? []) as LookupItem[];
           if (!list.some((x) => pickId(x) === isyeriId)) {
@@ -828,13 +1054,21 @@ export function PersonellerScreen(props: { user: any; abilities?: any; onOpenMen
             return; // next effect run with cleared isyeri
           }
         }
-        await loadList(1, pageSize, { manageLoading: false, isyeriIdOverride: effectiveIsyeri });
+        if (data && bolumId != null) {
+          const list = (data?.Bolumler ?? data?.bolumler ?? []) as LookupItem[];
+          if (!list.some((x) => pickId(x) === bolumId)) {
+            effectiveBolum = null;
+            setBolumId(null);
+            return; // next effect run with cleared bolum
+          }
+        }
+        await loadList(1, pageSize, { manageLoading: false, isyeriIdOverride: effectiveIsyeri, bolumIdOverride: effectiveBolum });
       } finally {
         setLoading(false);
       }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filtersHydrated, kartTipi, calismaDurumu, firmaId, isyeriId, pageSize]);
+  }, [filtersHydrated, kartTipi, calismaDurumu, firmaId, isyeriId, bolumId, pageSize]);
 
   useEffect(() => {
     if (!pendingEditOpen) return;
@@ -904,6 +1138,9 @@ export function PersonellerScreen(props: { user: any; abilities?: any; onOpenMen
     if (filterModal.kind === "isyeri") {
       return [{ key: "", label: "Tümü" }, ...isyerleri.map((x) => ({ key: String(pickId(x)), label: pickAd(x) }))];
     }
+    if (filterModal.kind === "bolum") {
+      return [{ key: "", label: "Tümü" }, ...bolumler.map((x) => ({ key: String(pickId(x)), label: pickAd(x) }))];
+    }
     if (filterModal.kind === "pageSize") {
       return [
         { key: "10", label: "10" },
@@ -913,7 +1150,7 @@ export function PersonellerScreen(props: { user: any; abilities?: any; onOpenMen
       ];
     }
     return [];
-  }, [filterModal.kind, firmalar, isyerleri]);
+  }, [filterModal.kind, firmalar, isyerleri, bolumler]);
 
   function applyFilter(key: string) {
     if (filterModal.kind === "calismaDurumu") {
@@ -931,12 +1168,19 @@ export function PersonellerScreen(props: { user: any; abilities?: any; onOpenMen
     else if (filterModal.kind === "firma") {
       setFirmaId(key ? Number(key) : null);
       setIsyeriId(null);
+      setBolumId(null);
       setDetail(null);
       setDetailVisible(false);
       setEditVisible(false);
     }
     else if (filterModal.kind === "isyeri") {
       setIsyeriId(key ? Number(key) : null);
+      setDetail(null);
+      setDetailVisible(false);
+      setEditVisible(false);
+    }
+    else if (filterModal.kind === "bolum") {
+      setBolumId(key ? Number(key) : null);
       setDetail(null);
       setDetailVisible(false);
       setEditVisible(false);
@@ -1123,6 +1367,12 @@ export function PersonellerScreen(props: { user: any; abilities?: any; onOpenMen
               <MaterialCommunityIcons name="chevron-down" size={20} color="#64748b" />
             </TouchableOpacity>
 
+            <Text className="text-[#64748b] font-semibold mb-2">Bölüm</Text>
+            <TouchableOpacity className="bg-[#f8fafc] border border-[#e2e8f0] rounded-2xl px-4 py-3 flex-row items-center justify-between mb-3" onPress={() => setFilterModal({ kind: "bolum", visible: true })}>
+              <Text className="text-[#1e293b] font-semibold" numberOfLines={1}>{bolumId ? (pickAd(bolumler.find((x) => pickId(x) === bolumId)) || "Tümü") : "Tümü"}</Text>
+              <MaterialCommunityIcons name="chevron-down" size={20} color="#64748b" />
+            </TouchableOpacity>
+
             <Text className="text-[#64748b] font-semibold mb-2">Ara (Ad/Soyad/Sicil)</Text>
             <TextInput className="bg-[#f8fafc] border border-[#e2e8f0] rounded-2xl px-4 py-3 mb-3" value={q} onChangeText={setQ} placeholder="İsim veya sicil no..." placeholderTextColor="#94a3b8" />
 
@@ -1130,7 +1380,7 @@ export function PersonellerScreen(props: { user: any; abilities?: any; onOpenMen
               <TouchableOpacity className="flex-1 bg-[#dc2626] rounded-2xl py-3 items-center mr-2" onPress={() => loadList(1, pageSize)} disabled={loading}>
                 <Text className="text-white font-extrabold">Ara</Text>
               </TouchableOpacity>
-              <TouchableOpacity className="bg-[#f1f5f9] rounded-2xl py-3 px-4 items-center" onPress={() => { setQ(""); setFirmaId(null); setIsyeriId(null); setKartTipi("puantaj"); setCalismaDurumu("aktif"); setPageSize(20); loadList(1, 20); }}>
+              <TouchableOpacity className="bg-[#f1f5f9] rounded-2xl py-3 px-4 items-center" onPress={() => { setQ(""); setFirmaId(null); setIsyeriId(null); setBolumId(null); setKartTipi("puantaj"); setCalismaDurumu("aktif"); setPageSize(20); loadList(1, 20); }}>
                 <Text className="text-[#334155] font-extrabold">Temizle</Text>
               </TouchableOpacity>
             </View>
@@ -1166,8 +1416,8 @@ export function PersonellerScreen(props: { user: any; abilities?: any; onOpenMen
                   return (
                     <TouchableOpacity key={`${pid}_${idx}`} onPress={() => openDetails(pid)} className="border-t border-[#f1f5f9] py-4 flex-row items-center justify-between">
                       <View>
-                        <Text className="text-[#1e293b] font-extrabold">{name || "-"}</Text>
-                        <Text className="text-[#64748b] font-semibold text-[12px]">Sicil: {pid || "-"}</Text>
+                        <Text className="text-[#1e293b] font-extrabold">{textOrMissing(name)}</Text>
+                        <Text className="text-[#64748b] font-semibold text-[12px]">Sicil: {textOrMissing(pid)}</Text>
                       </View>
                       <MaterialCommunityIcons name="chevron-right" size={22} color="#94a3b8" />
                     </TouchableOpacity>
@@ -1235,15 +1485,15 @@ export function PersonellerScreen(props: { user: any; abilities?: any; onOpenMen
                   </View>
                 </View>
                 <View className="bg-white rounded-3xl border border-[#f1f5f9] p-5">
-                  <Text className="text-[#1e293b] font-extrabold mb-2">{(s(pick(detail, "Ad", "ad") ?? "") + " " + s(pick(detail, "Soyad", "soyad") ?? "")).trim() || s(pick(detail, "AdSoyad", "adSoyad") ?? "-")}</Text>
-                  <Text className="text-[#64748b] font-semibold">Sicil No: {s(pick(detail, "PersonelId", "personelId") ?? "") || "-"}</Text>
+                  <Text className="text-[#1e293b] font-extrabold mb-2">{textOrMissing((s(pick(detail, "Ad", "ad") ?? "") + " " + s(pick(detail, "Soyad", "soyad") ?? "")).trim() || s(pick(detail, "AdSoyad", "adSoyad") ?? ""))}</Text>
+                  <Text className="text-[#64748b] font-semibold">Sicil No: {textOrMissing(pick(detail, "PersonelId", "personelId") ?? "")}</Text>
                 </View>
                 <View className="bg-white rounded-3xl border border-[#f1f5f9] p-5 mt-4">
                   <Text className="text-[#1e293b] font-extrabold mb-3">Temel Bilgiler</Text>
-                  <Text className="text-[#334155] font-semibold">TC Kimlik No: {s(pick(detail, "TcKimlikNo", "tcKimlikNo") ?? "") || "-"}</Text>
-                  <Text className="text-[#334155] font-semibold mt-1">Kart No: {s(pick(detail, "KartNo", "kartNo") ?? "") || "-"}</Text>
-                  <Text className="text-[#334155] font-semibold mt-1">Doğum Tarihi: {fmtDateTR(pick(detail, "DogumTarihi", "dogumTarihi")) || "-"}</Text>
-                  <Text className="text-[#334155] font-semibold mt-1">İşe Giriş Tarihi: {fmtDateTR(pick(detail, "IseGirisTarihi", "iseGirisTarihi")) || "-"}</Text>
+                  <Text className="text-[#334155] font-semibold">TC Kimlik No: {textOrMissing(pick(detail, "TcKimlikNo", "tcKimlikNo") ?? "")}</Text>
+                  <Text className="text-[#334155] font-semibold mt-1">Kart No: {textOrMissing(pick(detail, "KartNo", "kartNo") ?? "")}</Text>
+                  <Text className="text-[#334155] font-semibold mt-1">Doğum Tarihi: {dateOrMissing(pick(detail, "DogumTarihi", "dogumTarihi"))}</Text>
+                  <Text className="text-[#334155] font-semibold mt-1">İşe Giriş Tarihi: {dateOrMissing(pick(detail, "IseGirisTarihi", "iseGirisTarihi"))}</Text>
                   {fmtDateTR(pick(detail, "IstenCikisTarihi", "istenCikisTarihi")) ? (
                     <Text className="text-[#dc2626] font-extrabold mt-1">İşten Çıkış Tarihi: {fmtDateTR(pick(detail, "IstenCikisTarihi", "istenCikisTarihi"))}</Text>
                   ) : null}
@@ -1251,17 +1501,16 @@ export function PersonellerScreen(props: { user: any; abilities?: any; onOpenMen
 
                 <View className="bg-white rounded-3xl border border-[#f1f5f9] p-5 mt-4">
                   <Text className="text-[#1e293b] font-extrabold mb-3">İletişim Bilgileri</Text>
-                  <Text className="text-[#334155] font-semibold">Cep Telefonu: {s(pick(detail, "CepTel", "cepTel") ?? "") || "-"}</Text>
-                  <Text className="text-[#334155] font-semibold mt-1">E-posta: {s(pick(detail, "Email", "email") ?? "") || "-"}</Text>
+                  <Text className="text-[#334155] font-semibold">Cep Telefonu: {textOrMissing(pick(detail, "CepTel", "cepTel") ?? "")}</Text>
+                  <Text className="text-[#334155] font-semibold mt-1">E-posta: {textOrMissing(pick(detail, "Email", "email") ?? "")}</Text>
                 </View>
                 <View className="bg-white rounded-3xl border border-[#f1f5f9] p-5 mt-4">
                   <Text className="text-[#1e293b] font-extrabold mb-3">Organizasyon Bilgileri</Text>
-                  <Text className="text-[#334155] font-semibold">Firma: {s(pick(detail, "FirmaAdi", "firmaAdi") ?? "") || "-"}</Text>
-                  <Text className="text-[#334155] font-semibold mt-1">İşyeri: {s(pick(detail, "IsyeriAdi", "isyeriAdi") ?? "") || "-"}</Text>
-                  <Text className="text-[#334155] font-semibold mt-1">Departman: {s(pick(detail, "DepartmanAdi", "departmanAdi") ?? "") || "-"}</Text>
-                  <Text className="text-[#334155] font-semibold mt-1">Pozisyon: {s(pick(detail, "PozisyonAdi", "pozisyonAdi") ?? "") || "-"}</Text>
-                  <Text className="text-[#334155] font-semibold mt-1">Bölüm: {s(pick(detail, "BolumAdi", "bolumAdi") ?? "") || "-"}</Text>
-                  <Text className="text-[#334155] font-semibold mt-1">Çalışma Statüsü: {s(pick(detail, "CalismaStatusuText", "calismaStatusuText") ?? "") || "-"}</Text>
+                  <Text className="text-[#334155] font-semibold">Firma: {textOrMissing(pick(detail, "FirmaAdi", "firmaAdi") ?? "")}</Text>
+                  <Text className="text-[#334155] font-semibold mt-1">İşyeri: {textOrMissing(pick(detail, "IsyeriAdi", "isyeriAdi") ?? "")}</Text>
+                  <Text className="text-[#334155] font-semibold mt-1">Pozisyon: {textOrMissing(pick(detail, "PozisyonAdi", "pozisyonAdi") ?? "")}</Text>
+                  <Text className="text-[#334155] font-semibold mt-1">Bölüm: {textOrMissing(pick(detail, "BolumAdi", "bolumAdi") ?? "")}</Text>
+                  <Text className="text-[#334155] font-semibold mt-1">Çalışma Statüsü: {textOrMissing(pick(detail, "CalismaStatusuText", "calismaStatusuText") ?? "")}</Text>
                 </View>
 
                 <View className="bg-white rounded-3xl border border-[#f1f5f9] p-5 mt-4">
@@ -1269,7 +1518,7 @@ export function PersonellerScreen(props: { user: any; abilities?: any; onOpenMen
                   {(() => {
                     const csv = s(pick(detail, "CalismaSekliCsv", "calismaSekliCsv") ?? "");
                     const ids = parseCsv(csv);
-                    if (!ids.length) return <Text className="text-[#64748b] font-semibold">-</Text>;
+                    if (!ids.length) return <Text className="text-[#64748b] font-semibold">{MISSING}</Text>;
                     const uniq = uniqueById(vardiyalar, (v) => pickId(v as any));
                     const map = new Map(uniq.map((v) => [pickId(v as any), pickAd(v as any)]));
                     const names = ids.map((id) => map.get(id)).filter(Boolean);
@@ -1282,8 +1531,8 @@ export function PersonellerScreen(props: { user: any; abilities?: any; onOpenMen
                   <Text className="text-[#334155] font-semibold">Firma Personeli: {pick(detail, "FirmaPersoneli", "firmaPersoneli") ? "Evet" : "Hayır"}</Text>
                   <Text className="text-[#334155] font-semibold mt-1">Puantaj Yapılabilir: {pick(detail, "PuantajYapilabilir", "puantajYapilabilir") ? "Evet" : "Hayır"}</Text>
                   <Text className="text-[#334155] font-semibold mt-1">Yemek Hakkı Var: {pick(detail, "YemekHakkiVar", "yemekHakkiVar") ? "Evet" : "Hayır"}</Text>
-                  <Text className="text-[#334155] font-semibold mt-1">Günlük Yemek Adedi: {s(pick(detail, "GunlukYemekAdedi", "gunlukYemekAdedi") ?? "") || "0"}</Text>
-                  <Text className="text-[#334155] font-semibold mt-1">Firma Dışı Kart No: {s(pick(detail, "TaseronKartNo", "taseronKartNo") ?? "") || "-"}</Text>
+                  <Text className="text-[#334155] font-semibold mt-1">Günlük Yemek Adedi: {numberOrMissing(pick(detail, "GunlukYemekAdedi", "gunlukYemekAdedi"))}</Text>
+                  <Text className="text-[#334155] font-semibold mt-1">Firma Dışı Kart No: {textOrMissing(pick(detail, "TaseronKartNo", "taseronKartNo") ?? "")}</Text>
                   <Text className="text-[#334155] font-semibold mt-1">Ziyaretçi: {pick(detail, "ZiyaretciMi", "ziyaretciMi") ? "Evet" : "Hayır"}</Text>
                   <Text className="text-[#334155] font-semibold mt-1">Araç Kartı: {pick(detail, "AracKartiMi", "aracKartiMi") ? "Evet" : "Hayır"}</Text>
                   <Text className="text-[#334155] font-semibold mt-1">Taşeron Çalışan: {pick(detail, "TaseronCalisanMi", "taseronCalisanMi") ? "Evet" : "Hayır"}</Text>

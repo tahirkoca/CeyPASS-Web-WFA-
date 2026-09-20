@@ -8,6 +8,7 @@ using System.Windows.Forms;
 
 namespace CeyPASS.WFA.UserControls
 {
+    /// <summary>Departman CRUD listesi ve form ekranı.</summary>
     public partial class ucDepartmanTanimlama : UserControl
     {
         private enum ScreenMode { List, Add, Edit }
@@ -21,6 +22,7 @@ namespace CeyPASS.WFA.UserControls
         private const string PageNameUI = "Departmanlar";
         private readonly WinFormsFieldErrors _fieldErrors;
 
+        /// <summary>Yetki ve alan doğrulama yardımcılarını kurar.</summary>
         public ucDepartmanTanimlama(ISessionContext session,IDepartmanService dsvc,IAuthorizationService auth)
         {
             InitializeComponent();

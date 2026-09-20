@@ -1,3 +1,4 @@
+/** Tanımlı SQL raporları: listele, parametre çalıştır, export. */
 import api, { cachedGet } from "./api";
 
 export type ApiResult<T = any> = {
@@ -30,6 +31,7 @@ export type ReportTable = {
   Rows?: (string | null)[][];
 };
 
+/** Önbellekli rapor tanımları ve procedure çalıştırma. */
 export const raporService = {
   async list(): Promise<ApiResult<RaporTanimi[]>> {
     return await cachedGet<ApiResult<RaporTanimi[]>>("/Rapor/list", {

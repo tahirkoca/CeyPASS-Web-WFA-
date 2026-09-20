@@ -1,3 +1,4 @@
+/** QR turnike okutma (konum/mock bayrakları ile). */
 import api from "./api";
 
 export const mobileQrApi = {

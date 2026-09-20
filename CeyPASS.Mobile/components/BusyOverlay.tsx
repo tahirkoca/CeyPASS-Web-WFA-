@@ -1,3 +1,4 @@
+/** Tam ekran bekleme modalı (uzun API işlemleri). */
 import React from "react";
 import { ActivityIndicator, Modal, Text, View } from "react-native";
 

@@ -17,6 +17,7 @@ using CeyPASS.Web.Services;
 
 namespace CeyPASS.Web.Controllers
 {
+    /// <summary>Izin kagidi PDF/HTML uretimi.</summary>
     public class IzinKagitController : Controller
     {
         private const string PageName = "IzinTalepleri";
@@ -96,6 +97,7 @@ namespace CeyPASS.Web.Controllers
             return "/images/ceyLogo.png";
         }
 
+        /// <summary>Preview islemi.</summary>
         [HttpGet]
         public IActionResult Preview(int talepId)
         {
@@ -110,6 +112,7 @@ namespace CeyPASS.Web.Controllers
             return View(isMazeretSaatlik ? "MazeretSaatlik" : "KlasikGunluk", talep);
         }
 
+        /// <summary>Pdf islemi.</summary>
         [HttpGet]
         public async Task<IActionResult> Pdf(int talepId)
         {
@@ -149,6 +152,7 @@ namespace CeyPASS.Web.Controllers
             return File(bytes, "application/pdf", fileName);
         }
 
+        /// <summary>PreviewFromIzin islemi.</summary>
         [HttpGet]
         public IActionResult PreviewFromIzin(int kisiIzinId)
         {
@@ -162,6 +166,7 @@ namespace CeyPASS.Web.Controllers
             return View(isMazeretSaatlik ? "MazeretSaatlik" : "KlasikGunluk", talep);
         }
 
+        /// <summary>PdfFromIzin islemi.</summary>
         [HttpGet]
         public async Task<IActionResult> PdfFromIzin(int kisiIzinId)
         {

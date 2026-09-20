@@ -8,6 +8,9 @@ using Xunit;
 
 namespace CeyPASS.Tests.Unit
 {
+    /// <summary>
+    /// Sistem log kayıtları: Info/Warn/Error seviyeleri ve istisna mesajının loga yazılması.
+    /// </summary>
     public class SistemLogServiceTests
     {
         private readonly Mock<ISistemLogRepository> _repoMock = new();
@@ -18,6 +21,9 @@ namespace CeyPASS.Tests.Unit
             _sut = new SistemLogService(_repoMock.Object);
         }
 
+        /// <summary>
+        /// DogruIslemTuruVeAlanlarlaInsertçağrılır
+        /// </summary>
         [Fact]
         public void Info_DogruIslemTuruVeAlanlarlaInsertCagrilir()
         {
@@ -36,6 +42,9 @@ namespace CeyPASS.Tests.Unit
             captured.KorelasyonId.Should().Be("CID1");
         }
 
+        /// <summary>
+        /// WarnIslemTuruyleInsertçağrılır
+        /// </summary>
         [Fact]
         public void Warn_WarnIslemTuruyleInsertCagrilir()
         {
@@ -49,6 +58,9 @@ namespace CeyPASS.Tests.Unit
             captured.KullaniciId.Should().BeNull();
         }
 
+        /// <summary>
+        /// Istisna fırlatılırnullOldugunda HataMesajinullOlur
+        /// </summary>
         [Fact]
         public void Error_ExceptionNullOldugunda_HataMesajiNullOlur()
         {
@@ -62,6 +74,9 @@ namespace CeyPASS.Tests.Unit
             captured.HataMesaji.Should().BeNull();
         }
 
+        /// <summary>
+        /// Istisna fırlatılırVerildiginde HataMesajiDoluOlur
+        /// </summary>
         [Fact]
         public void Error_ExceptionVerildiginde_HataMesajiDoluOlur()
         {

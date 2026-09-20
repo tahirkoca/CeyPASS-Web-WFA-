@@ -17,6 +17,7 @@ using System.Windows.Forms;
 
 namespace CeyPASS.WFA.Forms
 {
+    /// <summary>Ana işlem kabuğu — yan menü, sayfa hostu ve durum çubuğu.</summary>
     public partial class islemEkrani : Form
     {
         [DllImport("user32.dll", SetLastError = false)]
@@ -33,6 +34,7 @@ namespace CeyPASS.WFA.Forms
         private string _currentPageKey = "Dashboard";
         private ToolStripStatusLabel? _lblStatusUndo;
 
+        /// <summary>DI scope ile UserControl sayfalarını yükler.</summary>
         public islemEkrani(ISessionContext session, IServiceProvider sp, IAuthorizationService auth)
         {
             InitializeComponent();
@@ -125,10 +127,6 @@ namespace CeyPASS.WFA.Forms
         {
             OpenTUserControl<ucPersonelTanimlama>(islemEkraniPanel, "Personeller");
         }
-        private void btnDepartmanTanimlama_Click(object sender, EventArgs e)
-        {
-            OpenTUserControl<ucDepartmanTanimlama>(islemEkraniPanel, "Departmanlar");
-        }
         private void btnPozisyonTanimlama_Click(object sender, EventArgs e)
         {
             OpenTUserControl<ucPozisyonTanimla>(islemEkraniPanel, "Pozisyonlar");
@@ -214,7 +212,6 @@ namespace CeyPASS.WFA.Forms
         {
             btnAnasayfa.Visible = _auth.ViewAbility("Dashboard");
             btnPersonelTanimlama.Visible = _auth.ViewAbility("Personeller");
-            btnDepartmanTanimlama.Visible = _auth.ViewAbility("Departmanlar");
             btnPozisyonTanimlama.Visible = _auth.ViewAbility("Pozisyonlar");
             btnFirmaTanimlama.Visible = _auth.ViewAbility("Firmalar");
             btnIsyeriTanimlama.Visible = _auth.ViewAbility("Isyerler");
@@ -230,7 +227,7 @@ namespace CeyPASS.WFA.Forms
             btnCihazlarEkrani.Visible = _auth.ViewAbility("Cihazlar");
             btnResmiTatiller.Visible = _auth.ViewAbility("ResmiTatiller");
 
-            lblPOYBaslik.Visible = btnPersonelTanimlama.Visible || btnDepartmanTanimlama.Visible || btnPozisyonTanimlama.Visible || btnFirmaTanimlama.Visible || btnIsyeriTanimlama.Visible || btnIzinler.Visible;
+            lblPOYBaslik.Visible = btnPersonelTanimlama.Visible || btnPozisyonTanimlama.Visible || btnFirmaTanimlama.Visible || btnIsyeriTanimlama.Visible || btnIzinler.Visible;
             lblEOBaslik.Visible = btnKisiHareketlerEkrani.Visible || btnAylikPuantajEkrani.Visible || btnRaporlar.Visible;
             lblVMYBaslik.Visible = calismaStatuleriMenu.Visible || calismaSekilleriMenu.Visible;
             lblAyarlarBaslik.Visible = btnCihazlarEkrani.Visible || btnResmiTatiller.Visible;
@@ -405,6 +402,8 @@ namespace CeyPASS.WFA.Forms
             lblSidebarUserRole.ForeColor = System.Drawing.Color.Gray;
             lblSidebarUserAvatar.ForeColor = System.Drawing.Color.White;
             btnSidebarLogout.ForeColor = System.Drawing.Color.LightGray;
+            btnSidebarLogout.UseVisualStyleBackColor = false;
+            btnSidebarLogout.BackColor = AppTheme.SidebarBackground;
             statusStrip.BackColor = AppTheme.CardBackground;
             lblStatusMessage.ForeColor = AppTheme.TextPrimary;
             lblStatusCount.ForeColor = Color.Gray;

@@ -1,3 +1,4 @@
+/** İşyeri tanımları (firmaya bağlı). */
 import React, { useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, Modal, ScrollView, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
@@ -7,6 +8,7 @@ import { useHeaderQuickMenu } from "../HeaderQuickMenu";
 import { useNotificationsContext } from "../NotificationsProvider";
 import { organizasyonService, IsyeriItem, LookupItem } from "../../services/organizasyonApi";
 import { useUiPrefs } from "../../services/uiPrefs";
+import { toTrLower } from "../../services/turkishText";
 
 function pick<T = any>(obj: any, a: string, b?: string): T | undefined {
   if (!obj) return undefined;
@@ -146,7 +148,7 @@ export function IsyerleriScreen(props: { user: any; abilities: any; onOpenMenu: 
   }, [firmalar]);
 
   const filtered = useMemo(() => {
-    const qq = q.trim().toLowerCase();
+    const qq = toTrLower(q).trim();
     const rows = (items ?? []).map((x) => ({
       firmaId: pick<number>(x, "firmaId", "FirmaId") ?? 0,
       isyeriId: pick<number>(x, "isyeriId", "IsyeriId") ?? 0,
@@ -154,7 +156,7 @@ export function IsyerleriScreen(props: { user: any; abilities: any; onOpenMenu: 
     }));
     if (!qq) return rows.sort((a, b) => a.ad.localeCompare(b.ad, "tr"));
     return rows
-      .filter((r) => `${r.firmaId} ${r.isyeriId} ${r.ad}`.toLowerCase().includes(qq))
+      .filter((r) => toTrLower(`${r.firmaId} ${r.isyeriId} ${r.ad}`).includes(qq))
       .sort((a, b) => a.ad.localeCompare(b.ad, "tr"));
   }, [items, q]);
 
@@ -193,7 +195,7 @@ export function IsyerleriScreen(props: { user: any; abilities: any; onOpenMenu: 
       showPopup("error", "Firma seçiniz.");
       return;
     }
-    if (isyeriId <= 0) {
+    if (isyeriId < 0) {
       showPopup("error", "İşyeri Id geçersiz.");
       return;
     }

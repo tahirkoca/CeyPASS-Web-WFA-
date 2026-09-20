@@ -30,7 +30,6 @@ public partial class AdminPanelView : System.Windows.Controls.UserControl
         TabFirma.Content = new FirmaView();
         TabIsyeri.Content = new IsyeriView();
         TabCihaz.Content = new CihazView(adminPanelMode: true);
-        TabDepartman.Content = new DepartmanView();
         TabPozisyon.Content = new PozisyonView();
         TabResmiTatil.Content = new ResmiTatilView();
         TabCalismaStatu.Content = new CalismaStatuView();

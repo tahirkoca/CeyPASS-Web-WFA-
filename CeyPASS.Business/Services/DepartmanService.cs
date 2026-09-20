@@ -7,6 +7,7 @@ using System.Data;
 
 namespace CeyPASS.Business.Services
 {
+    /// <summary>Departman CRUD.</summary>
     public class DepartmanService:IDepartmanService
     {
         private readonly IDepartmanRepository _repo;
@@ -15,6 +16,7 @@ namespace CeyPASS.Business.Services
         {
             _repo = repo;
         }
+        /// <inheritdoc />
         public List<LookupItem> GetAll(int? firmId = null)
         {
             var dt = _repo.GetAll();
@@ -31,6 +33,7 @@ namespace CeyPASS.Business.Services
             }
             return list;
         }
+        /// <inheritdoc />
         public List<DepartmanListDTO> GetListForAdmin()
         {
             var dt = _repo.GetAll();
@@ -47,6 +50,7 @@ namespace CeyPASS.Business.Services
             }
             return list;
         }
+        /// <inheritdoc />
         public DataRow? GetRowById(int id)
         {
             var dt = _repo.GetAll();
@@ -54,9 +58,13 @@ namespace CeyPASS.Business.Services
                 if (r.Field<int>("DepartmanId") == id) return r;
             return null;
         }
+        /// <inheritdoc />
         public int GetNextId() => _repo.GetNextId();
+        /// <inheritdoc />
         public bool Add(int id, string ad, string aciklama) => _repo.Insert(id, ad, aciklama);
+        /// <inheritdoc />
         public bool Update(int id, string ad, string aciklama) => _repo.Update(id, ad, aciklama);
+        /// <inheritdoc />
         public bool Delete(int id) => _repo.Delete(id);
     }
 }

@@ -1,5 +1,6 @@
 ﻿namespace CeyPASS.Entities.Concrete
 {
+    /// <summary>Ana ekran özet sayaç kartları (gün içi).</summary>
     public class AnaEkranKartlariDashboard
     {
         public int GirisYapan { get; set; }

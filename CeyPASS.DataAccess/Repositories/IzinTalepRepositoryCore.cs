@@ -7,6 +7,7 @@ using System.Linq;
 
 namespace CeyPASS.DataAccess.Repositories
 {
+    /// <summary>İzin talep erişimi.</summary>
     public class IzinTalepRepositoryCore : IIzinTalepRepository
     {
         private readonly CeyPASSDataConnectionCore _context;
@@ -16,6 +17,7 @@ namespace CeyPASS.DataAccess.Repositories
             _context = context;
         }
 
+        /// <summary>Ekle işlemini ekler.</summary>
         public int Ekle(IzinTalep talep)
         {
             var outIdParam = new Microsoft.Data.SqlClient.SqlParameter
@@ -66,24 +68,28 @@ SET {15} = CAST(SCOPE_IDENTITY() as int);";
             return outIdParam.Value != DBNull.Value ? (int)outIdParam.Value : 0;
         }
 
+        /// <summary>Kimliğe göre kaydı getirir.</summary>
         public IzinTalep? GetById(int talepId)
         {
             const string sql = @"SELECT * FROM dbo.IzinTalepleri WHERE TalepId = {0}";
             return _context.Database.SqlQueryRaw<IzinTalep>(sql, talepId).FirstOrDefault();
         }
 
+        /// <summary>By Sonuc Kisi Izin Id sorgularını getirir.</summary>
         public IzinTalep? GetBySonucKisiIzinId(int kisiIzinId)
         {
             const string sql = @"SELECT * FROM dbo.IzinTalepleri WHERE SonucKisiIzinId = {0}";
             return _context.Database.SqlQueryRaw<IzinTalep>(sql, kisiIzinId).FirstOrDefault();
         }
 
+        /// <summary>By Personel sorgularını getirir.</summary>
         public List<IzinTalep> GetByPersonel(string personelId)
         {
             const string sql = @"SELECT * FROM dbo.IzinTalepleri WHERE PersonelId = {0} ORDER BY TalepTarihi DESC";
             return _context.Database.SqlQueryRaw<IzinTalep>(sql, personelId).ToList();
         }
 
+        /// <summary>Ust Yetkili Bekleyenler sorgularını getirir.</summary>
         public List<IzinTalep> GetUstYetkiliBekleyenler(string ustYetkiliPersonelId)
         {
             const string sql = @"
@@ -96,6 +102,7 @@ ORDER BY TalepTarihi DESC";
             return _context.Database.SqlQueryRaw<IzinTalep>(sql, ustYetkiliPersonelId).ToList();
         }
 
+        /// <summary>Ik Bekleyenler sorgularını getirir.</summary>
         public List<IzinTalep> GetIkBekleyenler()
         {
             const string sql = @"
@@ -107,6 +114,7 @@ ORDER BY TalepTarihi DESC";
             return _context.Database.SqlQueryRaw<IzinTalep>(sql).ToList();
         }
 
+        /// <summary>Ust Yetkili Guncelle işlemini gerçekleştirir.</summary>
         public bool UstYetkiliGuncelle(int talepId, IzinOnayDurumu durum, string? aciklama)
         {
             const string sql = @"
@@ -120,6 +128,7 @@ WHERE TalepId = {0}";
             return _context.Database.ExecuteSqlRaw(sql, talepId, (byte)durum, (object?)aciklama) > 0;
         }
 
+        /// <summary>Ik Guncelle işlemini gerçekleştirir.</summary>
         public bool IkGuncelle(int talepId, IzinOnayDurumu durum, int ikKullaniciId, string? aciklama)
         {
             const string sql = @"
@@ -133,12 +142,14 @@ WHERE TalepId = {0}";
             return _context.Database.ExecuteSqlRaw(sql, talepId, (byte)durum, ikKullaniciId, (object?)aciklama) > 0;
         }
 
+        /// <summary>Sonuc Kisi Izin Id değerini ayarlar.</summary>
         public bool SetSonucKisiIzinId(int talepId, int kisiIzinId)
         {
             const string sql = @"UPDATE dbo.IzinTalepleri SET SonucKisiIzinId = {1} WHERE TalepId = {0}";
             return _context.Database.ExecuteSqlRaw(sql, talepId, kisiIzinId) > 0;
         }
 
+        /// <summary>Donus Imzasina Ac işlemini gerçekleştirir.</summary>
         public bool DonusImzasinaAc(int talepId, int ikKullaniciId)
         {
             const string sql = @"
@@ -150,6 +161,7 @@ WHERE TalepId = {0}";
             return _context.Database.ExecuteSqlRaw(sql, talepId, ikKullaniciId) > 0;
         }
 
+        /// <summary>Kullanim Imza At işlemini gerçekleştirir.</summary>
         public bool KullanimImzaAt(int talepId, int personelKullaniciId)
         {
             const string sql = @"

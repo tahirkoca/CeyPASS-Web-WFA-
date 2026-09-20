@@ -18,6 +18,7 @@ using CeyPASS.Api.Services;
 
 namespace CeyPASS.Api.Controllers
 {
+    /// <summary>İzin formu PDF (Razor + Playwright).</summary>
     [Authorize]
     [ApiController]
     [Route("api/v1/[controller]")]
@@ -61,6 +62,8 @@ namespace CeyPASS.Api.Controllers
             _playwrightPdf = playwrightPdf;
         }
 
+        
+        /// <summary>İzin talebinden PDF indirir.</summary>
         [HttpGet("pdf/{talepId}")]
         public async Task<IActionResult> GetPdf(int talepId)
         {
@@ -99,6 +102,8 @@ namespace CeyPASS.Api.Controllers
             return File(bytes, "application/pdf", fileName);
         }
 
+        
+        /// <summary>Onaylı izin kaydından PDF.</summary>
         [HttpGet("pdf-from-izin/{kisiIzinId}")]
         public async Task<IActionResult> GetPdfFromIzin(int kisiIzinId)
         {

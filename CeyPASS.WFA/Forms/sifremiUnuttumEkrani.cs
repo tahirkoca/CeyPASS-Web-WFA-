@@ -5,6 +5,7 @@ using System.Windows.Forms;
 
 namespace CeyPASS.WFA
 {
+    /// <summary>E-posta doğrulama kodu ile şifre sıfırlama ekranı.</summary>
     public partial class sifremiUnuttumEkrani : Form
     {
         [DllImport("user32.dll", CharSet = CharSet.Auto)]
@@ -14,6 +15,7 @@ namespace CeyPASS.WFA
         private readonly ISifreService _ssvc;
         private readonly IEmailService _esvc;
 
+        /// <summary>Önceden bilinen kullanıcı adı ile doğrulama akışını başlatır.</summary>
         public sifremiUnuttumEkrani(string kullaniciAdi, ISifreService ssvc, IEmailService esvc)
         {
             InitializeComponent();

@@ -14,6 +14,7 @@ using System.Globalization;
 
 namespace CeyPASS.Api.Controllers
 {
+    /// <summary>Stored procedure raporları ve export.</summary>
     [Authorize]
     [ApiController]
     [Route("api/v1/[controller]")]
@@ -76,6 +77,8 @@ namespace CeyPASS.Api.Controllers
             public int PageSize { get; set; } = 100;
         }
 
+        
+        /// <summary>Tanımlı rapor listesi.</summary>
         [HttpGet("list")]
         public ActionResult<ApiResult<List<CeyPASS.Entities.Concrete.RaporTanimi>>> GetRaporlar()
         {
@@ -84,6 +87,8 @@ namespace CeyPASS.Api.Controllers
             return Ok(ApiResult<List<CeyPASS.Entities.Concrete.RaporTanimi>>.Ok(raporlar));
         }
 
+        
+        /// <summary>SP parametre adları.</summary>
         [HttpGet("parametreler")]
         public ActionResult<ApiResult<List<string>>> GetParametreler([FromQuery] string procedureAdi)
         {
@@ -94,6 +99,8 @@ namespace CeyPASS.Api.Controllers
             return Ok(ApiResult<List<string>>.Ok(names));
         }
 
+        
+        /// <summary>Rapor filtresi firmalar (yetkili).</summary>
         [HttpGet("firmalar")]
         public ActionResult<ApiResult<List<LookupItem>>> GetFirmalar()
         {
@@ -116,6 +123,8 @@ namespace CeyPASS.Api.Controllers
             return Ok(ApiResult<List<LookupItem>>.Ok(filtered));
         }
 
+        
+        /// <summary>Rapor filtresi cihazlar.</summary>
         [HttpGet("cihazlar")]
         public ActionResult<ApiResult<List<LookupItem>>> GetCihazlar([FromQuery] int? firmaId = null)
         {
@@ -138,6 +147,8 @@ namespace CeyPASS.Api.Controllers
             return Ok(ApiResult<List<LookupItem>>.Ok(items));
         }
 
+        
+        /// <summary>Rapor filtresi işyerleri.</summary>
         [HttpGet("isyerleri")]
         public ActionResult<ApiResult<List<LookupItem>>> GetIsyerleri([FromQuery] int? firmaId = null)
         {
@@ -164,6 +175,8 @@ namespace CeyPASS.Api.Controllers
             return Ok(ApiResult<List<LookupItem>>.Ok(items));
         }
 
+        
+        /// <summary>Raporu çalıştırır (sayfalı tablo).</summary>
         [HttpPost("run")]
         public ActionResult<ApiResult<PagedResponse<ReportTable>>> Run([FromBody] RunReportRequest request)
         {
@@ -274,6 +287,8 @@ namespace CeyPASS.Api.Controllers
             return Ok(ApiResult<PagedResponse<ReportTable>>.Ok(resp));
         }
 
+        
+        /// <summary>Excel/PDF rapor dosyası.</summary>
         [HttpPost("export")]
         public async Task<IActionResult> Export([FromBody] RaporExportRequest request)
         {

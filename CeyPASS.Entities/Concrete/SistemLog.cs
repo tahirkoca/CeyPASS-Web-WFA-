@@ -1,5 +1,6 @@
 ﻿namespace CeyPASS.Entities.Concrete
 {
+    /// <summary>Uygulama audit/diagnostic log kaydı.</summary>
     public class SistemLog
     {
         public int? KullaniciId { get; set; }

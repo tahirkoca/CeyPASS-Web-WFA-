@@ -9,6 +9,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace CeyPASS.WPF.Views;
 
+/// <summary>Ana kabuk: menü yetkileri, sayfa gezinmesi, kenar çubuğu ve kısayol yardım paneli.</summary>
 public partial class MainWindow : CeypassThemedWindow
 {
     private const int SidebarWidthExpanded = 294;
@@ -62,7 +63,6 @@ public partial class MainWindow : CeypassThemedWindow
     private void ApplyMenuVisibility(IAuthorizationService auth)
     {
         SetVisible(BtnDashboard, auth.ViewAbility("Dashboard"));
-        SetVisible(BtnDepartmanlar, auth.ViewAbility("Departmanlar"));
         SetVisible(BtnPersoneller, auth.ViewAbility("Personeller"));
         SetVisible(BtnPozisyonlar, auth.ViewAbility("Pozisyonlar"));
         SetVisible(BtnFirmalar, auth.ViewAbility("Firmalar"));
@@ -80,7 +80,7 @@ public partial class MainWindow : CeypassThemedWindow
         ExpAdmin.Visibility = admin ? Visibility.Visible : Visibility.Collapsed;
         BtnAdmin.Visibility = admin ? Visibility.Visible : Visibility.Collapsed;
 
-        ExpPOY.Visibility = AnyVisible(BtnDepartmanlar, BtnPersoneller, BtnPozisyonlar, BtnFirmalar, BtnIsyerler, BtnIzinler)
+        ExpPOY.Visibility = AnyVisible(BtnPersoneller, BtnPozisyonlar, BtnFirmalar, BtnIsyerler, BtnIzinler)
             ? Visibility.Visible : Visibility.Collapsed;
         ExpEO.Visibility = AnyVisible(BtnKisiHareket, BtnAylikPuantaj, BtnRaporlar)
             ? Visibility.Visible : Visibility.Collapsed;
@@ -110,12 +110,6 @@ public partial class MainWindow : CeypassThemedWindow
         if (tag == "KisiHareketler")
         {
             NavigateToKisiHareket();
-            return;
-        }
-
-        if (tag == "Departmanlar")
-        {
-            NavigateToDepartman();
             return;
         }
 
@@ -231,14 +225,6 @@ public partial class MainWindow : CeypassThemedWindow
         SetPageHeader("Kişi Hareketleri", BtnKisiHareket, "KisiHareketler");
         ContentHost.Content = App.Services.GetRequiredService<KisiHareketView>();
         SetActive(BtnKisiHareket);
-        AfterNavigate();
-    }
-
-    private void NavigateToDepartman()
-    {
-        SetPageHeader("Departman Tanımlama", BtnDepartmanlar, "Departmanlar");
-        ContentHost.Content = App.Services.GetRequiredService<DepartmanView>();
-        SetActive(BtnDepartmanlar);
         AfterNavigate();
     }
 
@@ -484,6 +470,7 @@ public partial class MainWindow : CeypassThemedWindow
         ShortcutPanel.Visibility = Visibility.Visible;
     }
 
+    /// <summary>F1 veya Ctrl+? / Ctrl+/ ile sayfa kısayol paneli; Esc paneli kapatır.</summary>
     private void MainWindow_OnPreviewKeyDown(object sender, KeyEventArgs e)
     {
         if (e.Key == Key.Escape && ShortcutPanel.Visibility == Visibility.Visible)

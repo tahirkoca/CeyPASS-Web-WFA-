@@ -7,6 +7,7 @@ using CeyPASS.Models;
 
 namespace CeyPASS.Api.Controllers
 {
+    /// <summary>Çalışma statüsü lookup CRUD.</summary>
     [Authorize]
     [ApiController]
     [Route("api/v1/[controller]")]
@@ -27,6 +28,8 @@ namespace CeyPASS.Api.Controllers
             _authorizationService = authorizationService;
         }
 
+        
+        /// <summary>Çalışma statüleri listesi.</summary>
         [HttpGet]
         public ActionResult<ApiResult<List<LookupItem>>> Get()
         {
@@ -35,6 +38,8 @@ namespace CeyPASS.Api.Controllers
             return Ok(ApiResult<List<LookupItem>>.Ok(list));
         }
 
+        
+        /// <summary>Yeni statü ekler.</summary>
         [HttpPost]
         public ActionResult<ApiResult<int>> Post([FromBody] CalismaStatuRequest request)
         {
@@ -47,6 +52,8 @@ namespace CeyPASS.Api.Controllers
             return Ok(ApiResult<int>.Ok(0, "Çalışma statüsü başarıyla eklendi."));
         }
 
+        
+        /// <summary>Statü günceller.</summary>
         [HttpPut("{id}")]
         public ActionResult<ApiResult> Put(int id, [FromBody] CalismaStatuRequest request)
         {
@@ -57,6 +64,8 @@ namespace CeyPASS.Api.Controllers
             return ok ? Ok(ApiResult.Ok("Çalışma statüsü güncellendi.")) : BadRequest(ApiResult.Failure("İşlem başarısız."));
         }
 
+        
+        /// <summary>Statü siler.</summary>
         [HttpDelete("{id}")]
         public ActionResult<ApiResult> Delete(int id)
         {

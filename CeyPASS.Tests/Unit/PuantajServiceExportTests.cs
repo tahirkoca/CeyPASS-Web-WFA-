@@ -10,6 +10,10 @@ using Xunit;
 
 namespace CeyPASS.Tests.Unit
 {
+    /// <summary>
+    /// Aylık puantaj dışa aktarımında (<see cref="PuantajService.PrepareMonthlyExport"/>)
+    /// SSK/İşkur eksik neden kodları, FM125 ve AAF fazla çalışma hesaplarının iş kuralları.
+    /// </summary>
     public class PuantajServiceExportTests
     {
         private readonly Mock<IPuantajRepository> _repoMock = new();
@@ -22,6 +26,9 @@ namespace CeyPASS.Tests.Unit
 
         // ─── DataTable yardımcıları ───────────────────────────────────────────
 
+        /// <summary>
+        /// Tek sicil satırı; TcKimlikNo DBNull → denkleştirme grupları atlanır.
+        /// </summary>
         private static DataTable BuildSicillerTable(int sicilNo = 1)
         {
             var dt = new DataTable();
@@ -38,6 +45,9 @@ namespace CeyPASS.Tests.Unit
             return dt;
         }
 
+        /// <summary>
+        /// CalismaTipi/Tarih/Saat satırları; export hesaplamasına girdi oluşturur.
+        /// </summary>
         private static DataTable BuildCalismaSaatleriTable(
             params (int sicilNo, string tip, DateTime tarih, decimal saat)[] rows)
         {
@@ -68,6 +78,9 @@ namespace CeyPASS.Tests.Unit
 
         // ─── HesaplaSskEksikNedeni ─────────────────────────────────────────────
 
+        /// <summary>
+        /// Sadece ücretsiz izin (Üİ) varken SSK eksik nedeni kodu 21 atanır.
+        /// </summary>
         [Fact]
         public void PrepareMonthlyExport_SadeceUcretsizIzin_SskKodu21Doner()
         {
@@ -81,6 +94,9 @@ namespace CeyPASS.Tests.Unit
             result[0].SskEksikNedeni.Should().Be("21");
         }
 
+        /// <summary>
+        /// Üç ardışık rapor (R) günü tek rapor bloğu sayılır; SSK eksik nedeni 1.
+        /// </summary>
         [Fact]
         public void PrepareMonthlyExport_Rapor3ArdisikGun_SskKodu1Doner()
         {
@@ -96,6 +112,9 @@ namespace CeyPASS.Tests.Unit
             result[0].SskEksikNedeni.Should().Be("1");
         }
 
+        /// <summary>
+        /// Yalnızca devre dışı (D) günü varken SSK eksik nedeni 15.
+        /// </summary>
         [Fact]
         public void PrepareMonthlyExport_SadeceDevreDisi_SskKodu15Doner()
         {
@@ -108,6 +127,9 @@ namespace CeyPASS.Tests.Unit
             result[0].SskEksikNedeni.Should().Be("15");
         }
 
+        /// <summary>
+        /// Üİ ile rapor (3 ardışık R) birlikteyken birden fazla SSK nedeni → kod 12.
+        /// </summary>
         [Fact]
         public void PrepareMonthlyExport_UiVeRapor3GunBirlikte_SskKodu12Doner()
         {
@@ -124,6 +146,9 @@ namespace CeyPASS.Tests.Unit
             result[0].SskEksikNedeni.Should().Be("12");
         }
 
+        /// <summary>
+        /// Sadece normal gün (NG) çalışmada SSK eksik nedeni 0 (eksik yok).
+        /// </summary>
         [Fact]
         public void PrepareMonthlyExport_SadeceNormalGun_SskKodu0Doner()
         {
@@ -138,6 +163,9 @@ namespace CeyPASS.Tests.Unit
 
         // ─── HesaplaIskurEksikNedeni ───────────────────────────────────────────
 
+        /// <summary>
+        /// Yalnızca RR (rapor rapor?) gününde İşkur eksik nedeni 1; SSK tarafı da tek neden → 1.
+        /// </summary>
         [Fact]
         public void PrepareMonthlyExport_SadeceRR_IskurKodu1Doner()
         {
@@ -153,6 +181,9 @@ namespace CeyPASS.Tests.Unit
             result[0].SskEksikNedeni.Should().Be("1");
         }
 
+        /// <summary>
+        /// Üİ + en fazla iki tek-gün R varken (rapor bloğu oluşmadan) İşkur eksik nedeni 2.
+        /// </summary>
         [Fact]
         public void PrepareMonthlyExport_UiVe1RGun_IskurKodu2Doner()
         {
@@ -170,6 +201,9 @@ namespace CeyPASS.Tests.Unit
 
         // ─── HesaplaFazlaMesai125 ──────────────────────────────────────────────
 
+        /// <summary>
+        /// Doktor personeli (DokPersoneliMi=1) için FM125 alanı boş bırakılmaz; hesaplanır.
+        /// </summary>
         [Fact]
         public void PrepareMonthlyExport_DokPersoneliMi1_Fm125BosDegilDoner()
         {
@@ -196,6 +230,9 @@ namespace CeyPASS.Tests.Unit
 
         // ─── HesaplaFazlaCalismaSaati ──────────────────────────────────────────
 
+        /// <summary>
+        /// AAF toplam saati günlük eşik (3,75) üzerindeyse fazla çalışma: toplam − (AAF gün × 3,75).
+        /// </summary>
         [Fact]
         public void PrepareMonthlyExport_AafSaatEsikUstunde_FazlaCalismaSaatDogruHesaplanir()
         {

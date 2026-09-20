@@ -1,8 +1,10 @@
+/** Sağ üst hızlı menü: bildirim geçmişi ve şifre değiştirme. */
 import React, { useMemo, useState } from "react";
 import { Modal, ScrollView, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { profilService } from "../services/profilApi";
 import { notificationService } from "../services/notificationApi";
 
+/** PageHeader ile paylaşılan modal state ve API çağrıları. */
 export function useHeaderQuickMenu() {
   const [visible, setVisible] = useState(false);
   const [tab, setTab] = useState<"notif" | "password">("notif");

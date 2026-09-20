@@ -15,6 +15,9 @@ using Xunit;
 
 namespace CeyPASS.Tests.Web
 {
+    /// <summary>
+    /// Kullanıcı profil güncelleme MVC.
+    /// </summary>
     public class ProfilControllerTests
     {
         private readonly Mock<ISessionContext> _sessionMock = new();
@@ -67,7 +70,7 @@ namespace CeyPASS.Tests.Web
                 Fotograf = Array.Empty<byte>()
             });
 
-            _lookupMock.Setup(l => l.GetDepartmanlar(It.IsAny<int?>())).Returns(new List<LookupItem>());
+            _lookupMock.Setup(l => l.GetIsyerleri(It.IsAny<int>())).Returns(new List<LookupItem>());
             _lookupMock.Setup(l => l.GetPozisyonlar(It.IsAny<int?>())).Returns(new List<LookupItem>());
 
             int total = 0;
@@ -85,6 +88,9 @@ namespace CeyPASS.Tests.Web
                 .Returns(new List<KisiHareketListRow>());
         }
 
+        /// <summary>
+        /// YetkiYok HomeaYonlendirir VeTempDataSet
+        /// </summary>
         [Fact]
         public void Izinlerim_YetkiYok_HomeaYonlendirir_VeTempDataSet()
         {
@@ -98,6 +104,9 @@ namespace CeyPASS.Tests.Web
             _sut.TempData["Error"].Should().NotBeNull();
         }
 
+        /// <summary>
+        /// SicilYok HomeaYonlendirir VeTempDataSet
+        /// </summary>
         [Fact]
         public void Izinlerim_SicilYok_HomeaYonlendirir_VeTempDataSet()
         {
@@ -111,6 +120,9 @@ namespace CeyPASS.Tests.Web
             _sut.TempData["Error"].Should().NotBeNull();
         }
 
+        /// <summary>
+        /// YetkiVar Viewdöner ModelMapEdilir
+        /// </summary>
         [Fact]
         public void Izinlerim_YetkiVar_ViewDoner_ModelMapEdilir()
         {
@@ -131,6 +143,9 @@ namespace CeyPASS.Tests.Web
             _kisiIzinlerRepoMock.Verify(r => r.GetByPerson("1001", null, null), Times.Once);
         }
 
+        /// <summary>
+        /// TalepKisiyeAitDegil HataVereddedilirirect
+        /// </summary>
         [Fact]
         public void KullanimImzaAt_TalepKisiyeAitDegil_HataVeRedirect()
         {
@@ -144,6 +159,9 @@ namespace CeyPASS.Tests.Web
             _izinTalepServiceMock.Verify(s => s.KullanimImzaAt(It.IsAny<int>(), It.IsAny<int>()), Times.Never);
         }
 
+        /// <summary>
+        /// TalepKisiyeAit IzinTalepServiceçağrılır VeSuccessSet
+        /// </summary>
         [Fact]
         public void KullanimImzaAt_TalepKisiyeAit_IzinTalepServiceCagrilir_VeSuccessSet()
         {

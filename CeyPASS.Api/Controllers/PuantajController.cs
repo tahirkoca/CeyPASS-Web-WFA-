@@ -10,6 +10,7 @@ using IsyeriItemEntity = CeyPASS.Entities.Concrete.IsyeriItem;
 
 namespace CeyPASS.Api.Controllers
 {
+    /// <summary>Aylık puantaj ekranı API uçları; sayfa yetkisi <c>AylikPuantaj</c> ile kontrol edilir.</summary>
     [Authorize]
     [ApiController]
     [Route("api/v1/[controller]")]
@@ -42,6 +43,7 @@ namespace CeyPASS.Api.Controllers
             _authorizationService = authorizationService;
         }
 
+        /// <summary>Firma/işyeri/personel listeleri ve sayfa aksiyon yetkilerini döner.</summary>
         [HttpGet("lookups")]
         public ActionResult<ApiResult<PuantajLookupsDto>> GetLookups([FromQuery] int? firmaId, [FromQuery] int? isyeriId, [FromQuery] int? yil, [FromQuery] int? ay)
         {
@@ -75,7 +77,7 @@ namespace CeyPASS.Api.Controllers
                     : new List<IsyeriItemEntity>();
 
                 List<PuantajPersonelItemDto> kisiler;
-                if (selectedFirmaId > 0 && selectedIsyeriId.HasValue && selectedIsyeriId.Value > 0)
+            if (selectedFirmaId > 0 && selectedIsyeriId.HasValue && !FirmaIsyeriYetkiHelper.IsIsyeriFilterTumu(selectedIsyeriId))
                 {
                     var kp = _kisiService.GetKisilerForPuantaj(selectedFirmaId, selectedIsyeriId.Value, selectedYil, selectedAy) ?? new List<Kisi>();
                     kisiler = kp.Select(k => new PuantajPersonelItemDto
@@ -125,6 +127,8 @@ namespace CeyPASS.Api.Controllers
             }
         }
 
+        /// <summary>Seçili personelin belirtilen ay puantaj satırlarını getirir.</summary>
+        /// <param name="personelId">Personel sicil numarası.</param>
         [HttpGet("{personelId}")]
         public ActionResult<ApiResult<List<PuantajGunSatirDTO>>> GetAy(int personelId, [FromQuery] int? yil, [FromQuery] int? ay)
         {
@@ -144,6 +148,7 @@ namespace CeyPASS.Api.Controllers
             }
         }
 
+        /// <summary>Gün bazında puantaj onayı (Approve yetkisi gerekir).</summary>
         [HttpPost("onayla")]
         public ActionResult<ApiResult> Onayla([FromBody] PuantajOnayRequest request)
         {
@@ -176,6 +181,7 @@ namespace CeyPASS.Api.Controllers
             }
         }
 
+        /// <summary>Onay bekleyen günü reddeder (Delete yetkisi ile eşleştirilmiş).</summary>
         [HttpPost("reddet")]
         public ActionResult<ApiResult> Reddet([FromBody] PuantajRedRequest request)
         {
@@ -193,6 +199,7 @@ namespace CeyPASS.Api.Controllers
             }
         }
 
+        /// <summary>Puantaj çalışma tipleri listesi.</summary>
         [HttpGet("tipler")]
         public ActionResult<ApiResult<List<PuantajTipDTO>>> GetTipler()
         {
@@ -201,6 +208,7 @@ namespace CeyPASS.Api.Controllers
             return Ok(ApiResult<List<PuantajTipDTO>>.Ok(tipler));
         }
 
+        /// <summary>Personelin tüm ayını tek seferde onaylar.</summary>
         [HttpPost("toplu-onayla")]
         public ActionResult<ApiResult> TopluOnayla([FromBody] PuantajTopluOnayRequest request)
         {
@@ -218,6 +226,7 @@ namespace CeyPASS.Api.Controllers
             }
         }
 
+        /// <summary>FM/saat düzeltmesi; çalışma tipi verilirse FM dakikası yeniden hesaplanır.</summary>
         [HttpPost("duzenle")]
         public ActionResult<ApiResult<PuantajDuzenleResponse>> Duzenle([FromBody] PuantajDuzenleRequest request)
         {
@@ -270,6 +279,7 @@ namespace CeyPASS.Api.Controllers
             }
         }
 
+        /// <summary>Geçmişe ek kayıt izni verilen gün sayısını okur.</summary>
         [HttpGet("ek-kayit-gun")]
         public ActionResult<ApiResult<int>> GetEkKayitGun()
         {
@@ -284,6 +294,7 @@ namespace CeyPASS.Api.Controllers
             }
         }
 
+        /// <summary>Ek kayıt gün limitini günceller.</summary>
         [HttpPost("ek-kayit-gun")]
         public ActionResult<ApiResult> SetEkKayitGun([FromBody] PuantajEkKayitGunRequest request)
         {
@@ -301,6 +312,7 @@ namespace CeyPASS.Api.Controllers
             }
         }
 
+        /// <summary>Onaylı puantajı bağlı çoklu sicil kayıtlarına aktarır.</summary>
         [HttpPost("coklu-sicile-aktar")]
         public ActionResult<ApiResult> CokluSicileAktar([FromBody] PuantajCokluSicilRequest request)
         {
@@ -318,6 +330,8 @@ namespace CeyPASS.Api.Controllers
             }
         }
 
+        /// <summary>Aylık puantaj Excel dosyası üretir (POST gövdesi ile yıl/ay).</summary>
+        /// <returns>application/vnd.openxmlformats-officedocument.spreadsheetml.sheet veya hata JSON.</returns>
         [HttpPost("export-excel")]
         public ActionResult ExportExcel([FromBody] PuantajExportApiRequest request)
         {
@@ -326,6 +340,7 @@ namespace CeyPASS.Api.Controllers
 
             try
             {
+                // Export satırları Web ile aynı: PrepareMonthlyExport kullanıcının firma/işyeri yetkilerine göre filtreler.
                 var yetkiler = _puantajService.GetKullaniciFirmaIsyeriYetkileri(_sessionContext.AktifKullaniciId.Value) ?? new List<FirmaIsyeriYetkiDTO>();
                 var exportRequest = new PuantajExportRequest { Yil = request.Yil, Ay = request.Ay, Yetkiler = yetkiler };
                 var exportData = _puantajService.PrepareMonthlyExport(exportRequest);
@@ -345,6 +360,7 @@ namespace CeyPASS.Api.Controllers
             }
         }
 
+        /// <summary>Aylık puantaj Excel indirme (query string yıl/ay).</summary>
         [HttpGet("export-excel")]
         public ActionResult ExportExcelGet([FromQuery] int yil, [FromQuery] int ay)
         {

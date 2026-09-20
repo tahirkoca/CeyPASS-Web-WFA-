@@ -1,3 +1,4 @@
+/** Personel listesi, detay, foto ve yetkili işlemleri. */
 import api, { cachedGet } from "./api";
 import { invalidate } from "./httpCache";
 
@@ -15,11 +16,13 @@ export type PagedResponse<T = any> = {
   totalPages: number;
 };
 
+/** Sayfalı personel CRUD ve lookup uçları. */
 export const personelService = {
   async list(params: {
     search?: string;
     firmaId?: number | null;
     isyeriId?: number | null;
+    bolumId?: number | null;
     puantajYapilirMi?: boolean;
     sadeceIstenCikanlar?: boolean;
     page?: number;
@@ -69,6 +72,26 @@ export const personelService = {
     const response = await api.post("/Personel/tekrar-aktif-et", request, { timeout: 15000 });
     await invalidate("/Personel");
     await invalidate("/Personel/lookups");
+    return response.data;
+  },
+
+  async cokluSicilListe(personelId: number): Promise<any> {
+    const response = await api.get(`/personel/${personelId}/coklu-sicil`, { timeout: 15000 });
+    return response.data?.data ?? response.data;
+  },
+
+  async cokluSicilHedefAdaylari(personelId: number): Promise<any[]> {
+    const response = await api.get(`/personel/${personelId}/coklu-sicil/hedef-adaylari`, { timeout: 15000 });
+    return response.data?.data ?? response.data ?? [];
+  },
+
+  async cokluSicilUpsert(personelId: number, request: any): Promise<ApiResult<any>> {
+    const response = await api.post(`/personel/${personelId}/coklu-sicil`, request, { timeout: 15000 });
+    return response.data;
+  },
+
+  async cokluSicilPasiflestirTumunu(personelId: number): Promise<ApiResult<any>> {
+    const response = await api.post(`/personel/${personelId}/coklu-sicil/pasiflestir-tumunu`, {}, { timeout: 15000 });
     return response.data;
   },
 };

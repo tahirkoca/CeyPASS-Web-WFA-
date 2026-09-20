@@ -5,6 +5,7 @@ using System.Collections.Generic;
 
 namespace CeyPASS.Business.Services
 {
+    /// <summary>Çalışma şekli CRUD.</summary>
     public class CalismaSekliService : ICalismaSekliService
     {
         private readonly ICalismaSekliRepository _repo;
@@ -13,10 +14,15 @@ namespace CeyPASS.Business.Services
         {
             _repo = repo;
         }
+        /// <inheritdoc />
         public List<CalismaSekli> GetAll(int firmaId, bool includeGlobal = true) => _repo.GetAll(firmaId, includeGlobal);
+        /// <inheritdoc />
         public List<CalismaSekli> GetAllForAdmin() => _repo.GetAllForAdmin();
+        /// <inheritdoc />
         public int Add(CalismaSekli x) => _repo.Insert(x);
+        /// <inheritdoc />
         public bool Update(CalismaSekli x) => _repo.Update(x);
+        /// <inheritdoc />
         public bool Delete(int id, int firmaId) => _repo.Delete(id, firmaId);
     }
 }

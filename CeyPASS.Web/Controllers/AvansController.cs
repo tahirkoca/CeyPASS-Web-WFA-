@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace CeyPASS.Web.Controllers
 {
+    /// <summary>Avans talep/onay ekranlari.</summary>
     public class AvansController : Controller
     {
         private const string PageName = "Avans";
@@ -22,6 +23,7 @@ namespace CeyPASS.Web.Controllers
             _auth = auth;
         }
 
+        /// <summary>Liste veya ana ekran.</summary>
         [HttpGet]
         public IActionResult Index()
         {
@@ -46,6 +48,7 @@ namespace CeyPASS.Web.Controllers
             return View(items);
         }
 
+        /// <summary>Onayla islemi.</summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult Onayla(int id, string? aciklama)
@@ -66,6 +69,7 @@ namespace CeyPASS.Web.Controllers
             return RedirectToAction(nameof(Index));
         }
 
+        /// <summary>Reddet islemi.</summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult Reddet(int id, string? aciklama)

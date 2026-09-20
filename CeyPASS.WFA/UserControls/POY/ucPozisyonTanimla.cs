@@ -8,6 +8,7 @@ using System.Windows.Forms;
 
 namespace CeyPASS.WFA.UserControls
 {
+    /// <summary>Pozisyon/unvan tanım CRUD ekranı.</summary>
     public partial class ucPozisyonTanimla : UserControl
     {
         private readonly ISessionContext _session;
@@ -21,6 +22,7 @@ namespace CeyPASS.WFA.UserControls
         private const string PageNameUI = "Pozisyonlar";
         private readonly WinFormsFieldErrors _fieldErrors;
 
+        /// <summary>Yetki ve alan doğrulama yardımcılarını kurar.</summary>
         public ucPozisyonTanimla(ISessionContext session, IPozisyonService psvc, IAuthorizationService auth)
         {
             InitializeComponent();

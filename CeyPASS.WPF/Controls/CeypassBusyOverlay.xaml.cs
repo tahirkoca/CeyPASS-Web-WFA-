@@ -3,6 +3,7 @@ using System.Windows.Controls;
 
 namespace CeyPASS.WPF.Controls;
 
+/// <summary>Uzun süren ViewModel işlemlerinde tam ekran bekleme katmanı.</summary>
 public partial class CeypassBusyOverlay : UserControl
 {
     public static readonly DependencyProperty IsBusyProperty =

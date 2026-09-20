@@ -4,6 +4,7 @@ using System.Collections.Generic;
 
 namespace CeyPASS.Web.Models.Profil
 {
+    /// <summary>Personel avans listesi view modeli.</summary>
     public class AvanslarimViewModel
     {
         public List<AvansTalep> AktifTalepler { get; set; } = new List<AvansTalep>();

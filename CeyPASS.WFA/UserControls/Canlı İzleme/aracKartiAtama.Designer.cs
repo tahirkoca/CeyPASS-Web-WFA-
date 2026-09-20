@@ -22,6 +22,8 @@ namespace CeyPASS.WFA.UserControls.Canlı_İzleme
             this.txtAdSoyad = new System.Windows.Forms.TextBox();
             this.lblTCKimlikNo = new System.Windows.Forms.Label();
             this.txtTCKimlikNo = new System.Windows.Forms.TextBox();
+            this.lblPasaportNo = new System.Windows.Forms.Label();
+            this.txtPasaportNo = new System.Windows.Forms.TextBox();
             this.lblPlaka = new System.Windows.Forms.Label();
             this.txtPlaka = new System.Windows.Forms.TextBox();
             this.lblKimeGeldigi = new System.Windows.Forms.Label();
@@ -78,22 +80,26 @@ namespace CeyPASS.WFA.UserControls.Canlı_İzleme
             this.tlpForm.Controls.Add(this.txtAdSoyad, 0, 3);
             this.tlpForm.Controls.Add(this.lblTCKimlikNo, 0, 4);
             this.tlpForm.Controls.Add(this.txtTCKimlikNo, 0, 5);
-            this.tlpForm.Controls.Add(this.lblPlaka, 0, 6);
-            this.tlpForm.Controls.Add(this.txtPlaka, 0, 7);
-            this.tlpForm.Controls.Add(this.lblKimeGeldigi, 0, 8);
-            this.tlpForm.Controls.Add(this.txtZiyaretEdilenKisi, 0, 9);
-            this.tlpForm.Controls.Add(this.lblTcBilgi, 0, 10);
-            this.tlpForm.Controls.Add(this.label4, 0, 11);
-            this.tlpForm.Controls.Add(this.dtpGirisSaati, 0, 12);
-            this.tlpForm.Controls.Add(this.label5, 0, 13);
-            this.tlpForm.Controls.Add(this.dtpCikisSaati, 0, 14);
-            this.tlpForm.Controls.Add(this.label6, 0, 15);
-            this.tlpForm.Controls.Add(this.txtAciklama, 0, 16);
+            this.tlpForm.Controls.Add(this.lblPasaportNo, 0, 6);
+            this.tlpForm.Controls.Add(this.txtPasaportNo, 0, 7);
+            this.tlpForm.Controls.Add(this.lblPlaka, 0, 8);
+            this.tlpForm.Controls.Add(this.txtPlaka, 0, 9);
+            this.tlpForm.Controls.Add(this.lblKimeGeldigi, 0, 10);
+            this.tlpForm.Controls.Add(this.txtZiyaretEdilenKisi, 0, 11);
+            this.tlpForm.Controls.Add(this.lblTcBilgi, 0, 12);
+            this.tlpForm.Controls.Add(this.label4, 0, 13);
+            this.tlpForm.Controls.Add(this.dtpGirisSaati, 0, 14);
+            this.tlpForm.Controls.Add(this.label5, 0, 15);
+            this.tlpForm.Controls.Add(this.dtpCikisSaati, 0, 16);
+            this.tlpForm.Controls.Add(this.label6, 0, 17);
+            this.tlpForm.Controls.Add(this.txtAciklama, 0, 18);
             this.tlpForm.Dock = System.Windows.Forms.DockStyle.Fill;
             this.tlpForm.Location = new System.Drawing.Point(0, 50);
             this.tlpForm.Name = "tlpForm";
             this.tlpForm.Padding = new System.Windows.Forms.Padding(20, 10, 20, 0);
-            this.tlpForm.RowCount = 17;
+            this.tlpForm.RowCount = 19;
+            this.tlpForm.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 22F));
+            this.tlpForm.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 35F));
             this.tlpForm.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 22F));
             this.tlpForm.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 35F));
             this.tlpForm.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 22F));
@@ -169,7 +175,7 @@ namespace CeyPASS.WFA.UserControls.Canlı_İzleme
             this.lblTCKimlikNo.Name = "lblTCKimlikNo";
             this.lblTCKimlikNo.Size = new System.Drawing.Size(109, 20);
             this.lblTCKimlikNo.TabIndex = 4;
-            this.lblTCKimlikNo.Text = "T.C. Kimlik No *";
+            this.lblTCKimlikNo.Text = "T.C. Kimlik No";
             // 
             // txtTCKimlikNo
             // 
@@ -182,16 +188,39 @@ namespace CeyPASS.WFA.UserControls.Canlı_İzleme
             this.txtTCKimlikNo.Size = new System.Drawing.Size(654, 30);
             this.txtTCKimlikNo.TabIndex = 5;
             // 
+            // lblPasaportNo
+            // 
+            this.lblPasaportNo.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.lblPasaportNo.AutoSize = true;
+            this.lblPasaportNo.Font = new System.Drawing.Font("Segoe UI Semibold", 9F, System.Drawing.FontStyle.Bold);
+            this.lblPasaportNo.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
+            this.lblPasaportNo.Location = new System.Drawing.Point(23, 183);
+            this.lblPasaportNo.Name = "lblPasaportNo";
+            this.lblPasaportNo.Size = new System.Drawing.Size(90, 20);
+            this.lblPasaportNo.TabIndex = 6;
+            this.lblPasaportNo.Text = "Pasaport No";
+            // 
+            // txtPasaportNo
+            // 
+            this.txtPasaportNo.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.txtPasaportNo.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.txtPasaportNo.Font = new System.Drawing.Font("Segoe UI", 10F);
+            this.txtPasaportNo.Location = new System.Drawing.Point(23, 206);
+            this.txtPasaportNo.MaxLength = 50;
+            this.txtPasaportNo.Name = "txtPasaportNo";
+            this.txtPasaportNo.Size = new System.Drawing.Size(654, 30);
+            this.txtPasaportNo.TabIndex = 7;
+            // 
             // lblPlaka
             // 
             this.lblPlaka.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.lblPlaka.AutoSize = true;
             this.lblPlaka.Font = new System.Drawing.Font("Segoe UI Semibold", 9F, System.Drawing.FontStyle.Bold);
             this.lblPlaka.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
-            this.lblPlaka.Location = new System.Drawing.Point(23, 183);
+            this.lblPlaka.Location = new System.Drawing.Point(23, 240);
             this.lblPlaka.Name = "lblPlaka";
             this.lblPlaka.Size = new System.Drawing.Size(95, 20);
-            this.lblPlaka.TabIndex = 6;
+            this.lblPlaka.TabIndex = 8;
             this.lblPlaka.Text = "Araç Plakası *";
             // 
             // txtPlaka
@@ -199,11 +228,11 @@ namespace CeyPASS.WFA.UserControls.Canlı_İzleme
             this.txtPlaka.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.txtPlaka.Dock = System.Windows.Forms.DockStyle.Fill;
             this.txtPlaka.Font = new System.Drawing.Font("Segoe UI", 10F);
-            this.txtPlaka.Location = new System.Drawing.Point(23, 206);
+            this.txtPlaka.Location = new System.Drawing.Point(23, 263);
             this.txtPlaka.MaxLength = 20;
             this.txtPlaka.Name = "txtPlaka";
             this.txtPlaka.Size = new System.Drawing.Size(654, 30);
-            this.txtPlaka.TabIndex = 7;
+            this.txtPlaka.TabIndex = 9;
             // 
             // lblKimeGeldigi
             // 
@@ -238,7 +267,7 @@ namespace CeyPASS.WFA.UserControls.Canlı_İzleme
             this.lblTcBilgi.Name = "lblTcBilgi";
             this.lblTcBilgi.Size = new System.Drawing.Size(420, 19);
             this.lblTcBilgi.TabIndex = 10;
-            this.lblTcBilgi.Text = "T.C. Kimlik No (11 hane) ve plaka zorunludur; T.C.'yi elle ya da barkodla girebilirsiniz. T.C. girip alandan çıkınca veya Enter'a basınca boş alanlar otomatik doldurulur, dolu alanlar değiştirilmez.";
+            this.lblTcBilgi.Text = "T.C. Kimlik No veya Pasaport No'dan en az biri ve plaka zorunludur. T.C. girildiyse 11 hane olmalıdır. T.C. girip alandan çıkınca veya Enter'a basınca boş alanlar otomatik doldurulur.";
             this.lblTcBilgi.UseMnemonic = false;
             // 
             // label4
@@ -400,6 +429,8 @@ namespace CeyPASS.WFA.UserControls.Canlı_İzleme
         private System.Windows.Forms.TextBox txtAdSoyad;
         private System.Windows.Forms.Label lblTCKimlikNo;
         private System.Windows.Forms.TextBox txtTCKimlikNo;
+        private System.Windows.Forms.Label lblPasaportNo;
+        private System.Windows.Forms.TextBox txtPasaportNo;
         private System.Windows.Forms.Label lblPlaka;
         private System.Windows.Forms.TextBox txtPlaka;
         private System.Windows.Forms.Label lblKimeGeldigi;

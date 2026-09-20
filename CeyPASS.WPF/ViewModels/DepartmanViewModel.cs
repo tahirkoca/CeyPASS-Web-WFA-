@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace CeyPASS.WPF.ViewModels;
 
+/// <summary>Departman tanım CRUD (sayfa: Departmanlar).</summary>
 public sealed class DepartmanViewModel : ObservableObject
 {
     private enum ScreenMode { List, Add, Edit }

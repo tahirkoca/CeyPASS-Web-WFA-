@@ -2,6 +2,7 @@
 
 namespace CeyPASS.Entities.Concrete
 {
+    /// <summary>Personel (sicil) ana kaydı; puantaj ve geçiş kuralları için temel alanlar.</summary>
     public class Kisi
     {
         public string PersonelId { get; set; }
@@ -11,8 +12,7 @@ namespace CeyPASS.Entities.Concrete
         public string TcKimlikNo { get; set; }
         public int? PozisyonId { get; set; }
         public DateTime? DogumTarihi { get; set; }
-        public int? DepartmanId { get; set; }
-        public DateTime IseGirisTarihi { get; set; }
+        public DateTime? IseGirisTarihi { get; set; }
         public DateTime? IstenCikisTarihi { get; set; }
         public string CalismaStatusu { get; set; }
         public int FirmaId { get; set; }             
@@ -23,6 +23,7 @@ namespace CeyPASS.Entities.Concrete
         public byte[] Fotograf { get; set; }
         public DateTime? KayitTarihi { get; set; }
         public string Email { get; set; }
+        /// <summary>false ise puantaj/ devamsızlık hesaplarından hariç tutulur.</summary>
         public bool PuantajYapilirMi { get; set; }
         public bool? ZiyaretciMi { get; set; }
         public bool? AracKartiMi { get; set; }

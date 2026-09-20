@@ -149,6 +149,7 @@ app.MapControllers();
 
 app.Run();
 
+/// <summary>JWT imza anahtarı: ortam değişkeni → yapılandırma → Development varsayılanı.</summary>
 static string ResolveJwtSigningKey(WebApplicationBuilder builder)
 {
     var fromEnv = Environment.GetEnvironmentVariable("Jwt__Key") ?? Environment.GetEnvironmentVariable("JWT__KEY");
@@ -166,6 +167,7 @@ static string ResolveJwtSigningKey(WebApplicationBuilder builder)
         "Production Jwt signing key is not configured. Set environment variable Jwt__Key (or JWT__KEY) or Jwt:Key in appsettings / secrets manager.");
 }
 
+/// <summary>Web ile hizalı repository ve business servis DI kayıtları.</summary>
 void RegisterCeyPassServices(IServiceCollection services)
 {
     // DataAccess Layer
@@ -184,6 +186,7 @@ void RegisterCeyPassServices(IServiceCollection services)
     services.AddTransient<ISistemLogRepository, SistemLogRepositoryCore>();
     services.AddTransient<IMailRepository, MailRepositoryCore>();
     services.AddTransient<ICanliIzlemeRepository, CanliIzlemeRepositoryCore>();
+    services.AddTransient<ICanliIzlemeKartKomutRepository, CanliIzlemeKartKomutRepositoryCore>();
     services.AddTransient<IDashboardRepository, DashboardRepositoryCore>();
     services.AddTransient<IRaporRepository, RaporRepositoryCore>();
     services.AddTransient<IKisiHareketRepository, KisiHareketRepositoryCore>();
@@ -192,6 +195,7 @@ void RegisterCeyPassServices(IServiceCollection services)
     services.AddTransient<IKullaniciFirmaIsyeriYetkiRepository, KullaniciFirmaIsyeriYetkiRepositoryCore>();
     services.AddTransient<IKullaniciFirmaIsyeriYetkiService, KullaniciFirmaIsyeriYetkiService>();
     services.AddTransient<IPuantajRepository, PuantajRepositoryCore>();
+    services.AddTransient<ICokluSicilRepository, CokluSicilRepositoryCore>();
     services.AddTransient<IIzinTalepRepository, IzinTalepRepositoryCore>();
     services.AddTransient<IUstYetkiliRepository, UstYetkiliRepositoryCore>();
     services.AddTransient<IAvansRepository, AvansRepositoryCore>();
@@ -208,6 +212,7 @@ void RegisterCeyPassServices(IServiceCollection services)
     services.AddTransient<ICalismaSekliService, CalismaSekliService>();
     services.AddTransient<ICalismaStatuService, CalismaStatuService>();
     services.AddTransient<ICanliIzlemeService, CanliIzlemeService>();
+    services.AddTransient<ICanliIzlemeKartKomutService, CanliIzlemeKartKomutService>();
     services.AddTransient<ICihazService, CihazService>();
     services.AddTransient<IDashboardService, DashboardService>();
     services.AddTransient<IDepartmanService, DepartmanService>();
@@ -226,6 +231,7 @@ void RegisterCeyPassServices(IServiceCollection services)
     services.AddTransient<IAracKartiService, AracKartiService>();
     services.AddTransient<IPozisyonService, PozisyonService>();
     services.AddTransient<IPuantajService, PuantajService>();
+    services.AddTransient<ICokluSicilService, CokluSicilService>();
     services.AddTransient<IRaporService, RaporService>();
     services.AddTransient<IResmiTatilService, ResmiTatilService>();
     services.AddTransient<ISifreService, SifreService>();

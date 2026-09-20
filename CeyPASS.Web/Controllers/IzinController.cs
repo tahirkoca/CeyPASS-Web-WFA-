@@ -11,6 +11,7 @@ using System.Linq;
 
 namespace CeyPASS.Web.Controllers
 {
+    /// <summary>Personel izin kayitlari ve IK izin talep onay akisi.</summary>
     public class IzinController : Controller
     {
         private readonly IKisiIzinService _kisiIzinService;
@@ -19,6 +20,7 @@ namespace CeyPASS.Web.Controllers
         private readonly IIzinTalepService _izinTalepService;
         private readonly IFirmaService _firmaService;
         private readonly IPuantajService _puantajService;
+        private readonly IKisiEkraniLookUpService _lookupService;
         private readonly ISessionContext _sessionContext;
         private readonly IAuthorizationService _authorizationService;
         private readonly IMemoryCache _cache;
@@ -35,6 +37,7 @@ namespace CeyPASS.Web.Controllers
             IIzinTalepService izinTalepService,
             IFirmaService firmaService,
             IPuantajService puantajService,
+            IKisiEkraniLookUpService lookupService,
             ISessionContext sessionContext,
             IAuthorizationService authorizationService,
             IMemoryCache cache)
@@ -45,14 +48,16 @@ namespace CeyPASS.Web.Controllers
             _izinTalepService = izinTalepService;
             _firmaService = firmaService;
             _puantajService = puantajService;
+            _lookupService = lookupService;
             _sessionContext = sessionContext;
             _authorizationService = authorizationService;
             _cache = cache;
         }
 
-        public IActionResult Index(string personelId = null, int? izinTipId = null, DateTime? baslangic = null, DateTime? bitis = null, int page = 1, int pageSize = DefaultPageSize)
+        /// <summary>İzin listesi; aktif firmaya göre tarih/personel/işyeri filtreleri.</summary>
+        public IActionResult Index(string personelId = null, int? izinTipId = null, int? isyeriId = null, DateTime? baslangic = null, DateTime? bitis = null, int page = 1, int pageSize = DefaultPageSize)
         {
-            // Check authorization
+            // Sayfa yetkisi: Izinler ViewAbility
             if (!_authorizationService.ViewAbility(PageName))
             {
                 TempData["Error"] = "İzinler ekranını görüntüleme yetkiniz yok.";
@@ -69,6 +74,13 @@ namespace CeyPASS.Web.Controllers
             DateTime baslangicTarih = baslangic ?? new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
             DateTime bitisTarih = bitis ?? baslangicTarih.AddMonths(1).AddDays(-1);
 
+            bool isAdmin = _sessionContext.IsAdmin();
+            List<FirmaIsyeriYetkiDTO> yetkiler = null;
+            if (!isAdmin && _sessionContext.AktifKullaniciId.HasValue)
+                yetkiler = _puantajService.GetKullaniciFirmaIsyeriYetkileri((int)_sessionContext.AktifKullaniciId);
+            var (isyeriFilterId, isyeriIdIn) = FirmaIsyeriYetkiHelper.ResolveKisiQueryIsyeriFilter(
+                selectedFirmaId, isyeriId, yetkiler, isAdmin);
+
             // İzinleri yükle (paged + cache)
             int totalCount = 0;
             var verKey = CacheVerPrefix + selectedFirmaId;
@@ -80,7 +92,9 @@ namespace CeyPASS.Web.Controllers
 
             var personelKey = personelId == "ALL" ? "" : (personelId ?? "");
             var izinKey = izinTipId == 0 ? "" : (izinTipId?.ToString() ?? "");
-            var cacheKey = $"izin_{selectedFirmaId}_v{ver}_{personelKey}_{izinKey}_{baslangicTarih:yyyyMMdd}_{bitisTarih:yyyyMMdd}_p{page}_s{pageSize}";
+            var isyeriKey = isyeriFilterId?.ToString()
+                ?? (isyeriIdIn != null ? "in_" + string.Join("_", isyeriIdIn.OrderBy(x => x)) : "all");
+            var cacheKey = $"izin_{selectedFirmaId}_v{ver}_{isyeriKey}_{personelKey}_{izinKey}_{baslangicTarih:yyyyMMdd}_{bitisTarih:yyyyMMdd}_p{page}_s{pageSize}";
             if (!_cache.TryGetValue(cacheKey, out IzinCacheValue cached))
             {
                 var items = _kisiIzinService.GetTumIzinlerPaged(
@@ -91,7 +105,9 @@ namespace CeyPASS.Web.Controllers
                     bitisTarih,
                     page,
                     pageSize,
-                    out totalCount
+                    out totalCount,
+                    isyeriFilterId,
+                    isyeriIdIn
                 );
                 cached = new IzinCacheValue(items, totalCount);
                 _cache.Set(cacheKey, cached, TimeSpan.FromMinutes(2));
@@ -101,11 +117,14 @@ namespace CeyPASS.Web.Controllers
             totalCount = cached.TotalCount;
 
             // Lookup data
-            var kisiler = GetYetkiliKisilerForFirma(selectedFirmaId);
+            var kisiler = GetYetkiliKisilerForFirma(selectedFirmaId, isyeriId);
             var izinTipleri = _izinTipService.GetAktif();
+            var isyerleri = GetYetkiliIsyeriLookups(selectedFirmaId);
 
             ViewBag.Kisiler = kisiler;
             ViewBag.IzinTipleri = izinTipleri;
+            ViewBag.Isyerleri = isyerleri;
+            ViewBag.SelectedIsyeriId = isyeriId;
             ViewBag.SelectedPersonelId = personelId;
             ViewBag.SelectedIzinTipId = izinTipId;
             ViewBag.BaslangicTarih = baslangicTarih;
@@ -121,6 +140,7 @@ namespace CeyPASS.Web.Controllers
             return View(izinler);
         }
 
+        /// <summary>Yeni kayit formu ve kaydetme.</summary>
         [HttpGet]
         public IActionResult Create()
         {
@@ -148,6 +168,7 @@ namespace CeyPASS.Web.Controllers
             return View(model);
         }
 
+        /// <summary>Yeni kayit formu ve kaydetme.</summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult Create(KisiIzin izin, TimeSpan? baslangicSaati, TimeSpan? bitisSaati)
@@ -223,6 +244,7 @@ namespace CeyPASS.Web.Controllers
             }
         }
 
+        /// <summary>Kayit guncelleme.</summary>
         [HttpGet]
         public IActionResult Edit(int id)
         {
@@ -247,6 +269,7 @@ namespace CeyPASS.Web.Controllers
             return View(izin);
         }
 
+        /// <summary>Kayit guncelleme.</summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult Edit(KisiIzin izin, TimeSpan? baslangicSaati, TimeSpan? bitisSaati)
@@ -327,6 +350,7 @@ namespace CeyPASS.Web.Controllers
             return View(izin);
         }
 
+        /// <summary>Kayit silme veya pasiflestirme.</summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult Delete(int id)
@@ -358,6 +382,7 @@ namespace CeyPASS.Web.Controllers
             return RedirectToAction("Index");
         }
 
+        /// <summary>Pasif kaydi tekrar aktif eder.</summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult AktifYap(int id)
@@ -395,6 +420,21 @@ namespace CeyPASS.Web.Controllers
             _cache.Set(key, ver, TimeSpan.FromHours(1));
         }
 
+        /// <summary>Yetkili işyeri lookup listesini döner.</summary>
+        private List<LookupItem> GetYetkiliIsyeriLookups(int firmaId)
+        {
+            bool isAdmin = _sessionContext.IsAdmin();
+            List<FirmaIsyeriYetkiDTO> yetkiler = null;
+            if (!isAdmin && _sessionContext.AktifKullaniciId.HasValue)
+                yetkiler = _puantajService.GetKullaniciFirmaIsyeriYetkileri((int)_sessionContext.AktifKullaniciId);
+            return FirmaIsyeriYetkiHelper.FilterIsyeriLookup(
+                _lookupService.GetIsyerleri(firmaId) ?? new List<LookupItem>(),
+                firmaId,
+                yetkiler,
+                isAdmin);
+        }
+
+        /// <summary>Firmadaki yetkili (ve seçili işyerindeki) aktif personeli döner.</summary>
         private List<KisiListItem> GetYetkiliKisilerForFirma(int firmaId, int? selectedIsyeriId = null)
         {
             bool isAdmin = _sessionContext.IsAdmin();
@@ -417,15 +457,17 @@ namespace CeyPASS.Web.Controllers
             public int TotalCount { get; }
         }
 
+        /// <summary>GetKisiler lookup/JSON verisi; isteğe bağlı işyeri kapsamı.</summary>
         [HttpGet]
-        public IActionResult GetKisiler(int firmaId)
+        public IActionResult GetKisiler(int firmaId, int? isyeriId = null)
         {
-            var kisiler = GetYetkiliKisilerForFirma(firmaId);
+            var kisiler = GetYetkiliKisilerForFirma(firmaId, isyeriId);
             return Json(kisiler.Select(k => new { PersonelId = k.PersonelId, AdSoyad = k.AdSoyad }));
         }
 
         // ─── İzin Talepleri (Onay Mekanizması) ───────────────────────────────
 
+        /// <summary>IK bekleyen izin talepleri listesi.</summary>
         [HttpGet]
         public IActionResult TalepListesi()
         {
@@ -455,6 +497,7 @@ namespace CeyPASS.Web.Controllers
             return View(items);
         }
 
+        /// <summary>Izin talebini onaylar.</summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult TalepOnayla(int talepId, string? aciklama)
@@ -475,6 +518,7 @@ namespace CeyPASS.Web.Controllers
             return RedirectToAction(nameof(TalepListesi));
         }
 
+        /// <summary>Izin talebini reddeder.</summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult TalepReddet(int talepId, string? aciklama)
@@ -495,6 +539,7 @@ namespace CeyPASS.Web.Controllers
             return RedirectToAction(nameof(TalepListesi));
         }
 
+        /// <summary>Izin donus imzasi adimina acar.</summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult DonusImzasinaAc(int talepId)

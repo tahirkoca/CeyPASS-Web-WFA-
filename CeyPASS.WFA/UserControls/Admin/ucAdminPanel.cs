@@ -8,7 +8,7 @@ using System.Windows.Forms;
 namespace CeyPASS.WFA.UserControls.Admin
 {
     /// <summary>
-    /// Web Admin Panel ile aynı sekmeler: Firma, İşyeri, Cihaz, Departman, Pozisyon, Resmi Tatil, Çalışma Statüsü, Vardiya, Güncelleme Bildirimi.
+    /// Web Admin Panel ile aynı sekmeler: Firma, İşyeri, Cihaz, Pozisyon, Resmi Tatil, Çalışma Statüsü, Vardiya, Güncelleme Bildirimi.
     /// Sadece RolId==1 (süper admin) görür.
     /// </summary>
     public partial class ucAdminPanel : UserControl
@@ -16,6 +16,7 @@ namespace CeyPASS.WFA.UserControls.Admin
         private static readonly string PageNameUI = "Admin Panel";
         private readonly IServiceProvider _sp;
 
+        /// <summary>Sekme panellerine ilgili tanım UserControl'lerini yerleştirir.</summary>
         public ucAdminPanel(IServiceProvider sp)
         {
             InitializeComponent();
@@ -32,7 +33,6 @@ namespace CeyPASS.WFA.UserControls.Admin
             ucCihaz.RefreshList();
             HostControl(pnlCihaz, ucCihaz);
 
-            HostControl(pnlDepartman, _sp.GetRequiredService<ucDepartmanTanimlama>());
             HostControl(pnlPozisyon, _sp.GetRequiredService<ucPozisyonTanimla>());
             HostControl(pnlResmiTatil, _sp.GetRequiredService<ucResmiTatiller>());
             HostControl(pnlCalismaStatu, _sp.GetRequiredService<ucCalismaStatuleri>());

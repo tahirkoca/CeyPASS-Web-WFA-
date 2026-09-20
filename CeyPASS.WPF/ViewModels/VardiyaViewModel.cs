@@ -7,6 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace CeyPASS.WPF.ViewModels;
 
+/// <summary>Vardiya saatleri CRUD; yemek penceresi detayı ayrı dialog ile (sayfa: Vardiyalar).</summary>
 public sealed class VardiyaViewModel : ObservableObject
 {
     private enum ScreenMode { List, Add, Edit }

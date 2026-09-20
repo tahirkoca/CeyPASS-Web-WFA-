@@ -5,6 +5,7 @@ using System.Linq;
 
 namespace CeyPASS.Web.Controllers
 {
+    /// <summary>Dashboard ve genel hata sayfasi.</summary>
     public class HomeController : Controller
     {
         private readonly IDashboardService _dashboardService;
@@ -27,6 +28,7 @@ namespace CeyPASS.Web.Controllers
             _puantajService = puantajService;
         }
 
+        /// <summary>Liste veya ana ekran.</summary>
         public IActionResult Index(int? firmaId = null)
         {
             if (_sessionContext.CurrentUser == null)
@@ -78,11 +80,13 @@ namespace CeyPASS.Web.Controllers
                 .ToList();
         }
 
+        /// <summary>Privacy islemi.</summary>
         public IActionResult Privacy()
         {
             return View();
         }
 
+        /// <summary>SetFirma islemi.</summary>
         [HttpGet]
         public IActionResult SetFirma(int firmaId, string? returnUrl = null)
         {

@@ -1,5 +1,6 @@
 using CeyPASS.Business.Abstractions;
 using CeyPASS.Entities.Concrete;
+using CeyPASS.Entities.Helpers;
 using CeyPASS.Infrastructure.Helpers;
 using System;
 using System.Collections.Generic;
@@ -11,6 +12,7 @@ using System.Windows.Forms;
 
 namespace CeyPASS.WFA.UserControls.EO
 {
+    /// <summary>Turnike hareketleri listesi, düzenleme ve puantajsız kart ayrımı.</summary>
     public partial class ucKisiHareketler : UserControl
     {
         private readonly ISessionContext _session;
@@ -28,6 +30,9 @@ namespace CeyPASS.WFA.UserControls.EO
         private readonly WinFormsFieldErrors _fieldErrors;
         private static readonly Color SilButtonColor = Color.FromArgb(220, 53, 69);
         private static readonly Color AktifEtButtonColor = Color.FromArgb(40, 167, 69);
+        private List<LookupItem> _allKisiler = new();
+        private readonly HashSet<int> _checkedPersonIds = new();
+        private bool _suppressKisiEvents;
         private int SelectedFirmaId
         {
             get
@@ -38,7 +43,9 @@ namespace CeyPASS.WFA.UserControls.EO
             }
         }
         private bool PuantajYapilanlarSecili => cmbKartTipi.SelectedIndex != 1;
+        private bool IstenCikanlarSecili => cmbCalismaDurumu.SelectedIndex == 1;
 
+        /// <summary>Firma/işyeri yetkilerine göre filtrelenmiş hareket sorgusu.</summary>
         public ucKisiHareketler(ISessionContext session, IKisiHareketService khsvc, IKisiQueryService kqsvc, IAuthorizationService auth, IFirmaService firmaSvc, IKullaniciFirmaIsyeriYetkiService yetkiSvc, IKisiEkraniLookUpService iklsvc)
         {
             InitializeComponent();
@@ -74,7 +81,11 @@ namespace CeyPASS.WFA.UserControls.EO
             btnHareketGuncelle.Click += (s, e) => UpdateSelected();
             btnHareketSil.Click += (s, e) => SoftDeleteOrActivateSelected();
             chkKisiler.KeyDown += chkKisiler_KeyDown;
+            chkKisiler.ItemCheck += chkKisiler_ItemCheck;
+            if (txtKisiAra != null)
+                txtKisiAra.TextChanged += (_, __) => ApplyKisiFilter();
             cmbKartTipi.SelectedIndexChanged += KartTipiPersistHandler;
+            cmbCalismaDurumu.SelectedIndexChanged += CalismaDurumuPersistHandler;
             cmbIsyeriFilter.SelectedIndexChanged += cmbIsyeriFilter_SelectedIndexChanged;
             chbAktifHareketler.CheckedChanged += (s, e) => ApplySilButtonUi();
             chbPasifHareketler.CheckedChanged += (s, e) => ApplySilButtonUi();
@@ -105,6 +116,12 @@ namespace CeyPASS.WFA.UserControls.EO
                 cmbKartTipi.Items.Add("Puantaj Yapılmayanlar");
                 cmbKartTipi.DropDownStyle = ComboBoxStyle.DropDownList;
                 cmbKartTipi.SelectedIndex = 0;
+                cmbCalismaDurumu.Items.Clear();
+                cmbCalismaDurumu.Items.Add("Aktif Çalışanlar");
+                cmbCalismaDurumu.Items.Add("İşten Çıkanlar");
+                cmbCalismaDurumu.DropDownStyle = ComboBoxStyle.DropDownList;
+                cmbCalismaDurumu.SelectedIndex = 0;
+                ApplyCalismaDurumuUi();
                 _isAdmin = FirmaIsyeriYetkiHelper.IsAdmin(_session.RolId);
                 if (_session.AktifKullaniciId.HasValue)
                     _kullaniciYetkileri = _yetkiSvc.GetYetkiler((int)_session.AktifKullaniciId) ?? new List<FirmaIsyeriYetkiDTO>();
@@ -143,6 +160,8 @@ namespace CeyPASS.WFA.UserControls.EO
             var kart = cmbKartTipi.SelectedItem?.ToString() ?? "";
             if (chbYemekhaneHareketleri.Checked)
                 kart += "|Y";
+            if (IstenCikanlarSecili)
+                kart += "|C";
 
             PageFilterPrefsStore.Save(PageName, new PageFilterPrefs
             {
@@ -174,12 +193,32 @@ namespace CeyPASS.WFA.UserControls.EO
             if (!string.IsNullOrWhiteSpace(prefs.Extra))
             {
                 var extra = prefs.Extra;
-                bool yemek = extra.EndsWith("|Y", StringComparison.Ordinal);
+                bool yemek = false;
+                bool cikan = false;
+                while (true)
+                {
+                    if (extra.EndsWith("|Y", StringComparison.Ordinal))
+                    {
+                        yemek = true;
+                        extra = extra[..^2];
+                        continue;
+                    }
+                    if (extra.EndsWith("|C", StringComparison.Ordinal))
+                    {
+                        cikan = true;
+                        extra = extra[..^2];
+                        continue;
+                    }
+                    break;
+                }
                 chbYemekhaneHareketleri.Checked = yemek;
-                var kart = yemek ? extra[..^2] : extra;
+                cmbCalismaDurumu.SelectedIndexChanged -= CalismaDurumuPersistHandler;
+                cmbCalismaDurumu.SelectedIndex = cikan ? 1 : 0;
+                cmbCalismaDurumu.SelectedIndexChanged += CalismaDurumuPersistHandler;
+                ApplyCalismaDurumuUi();
                 for (int i = 0; i < cmbKartTipi.Items.Count; i++)
                 {
-                    if (string.Equals(cmbKartTipi.Items[i]?.ToString(), kart, StringComparison.OrdinalIgnoreCase))
+                    if (string.Equals(cmbKartTipi.Items[i]?.ToString(), extra, StringComparison.OrdinalIgnoreCase))
                     {
                         cmbKartTipi.SelectedIndexChanged -= KartTipiPersistHandler;
                         cmbKartTipi.SelectedIndex = i;
@@ -194,6 +233,20 @@ namespace CeyPASS.WFA.UserControls.EO
         {
             LoadPersons();
             PersistFilters();
+        }
+
+        /// <summary>Durum değişince UI ve kişi listesini yeniler.</summary>
+        private void CalismaDurumuPersistHandler(object? sender, EventArgs e)
+        {
+            ApplyCalismaDurumuUi();
+            LoadPersons();
+            PersistFilters();
+        }
+
+        /// <summary>İşten çıkanlarda kart tipi combosunu kapatır.</summary>
+        private void ApplyCalismaDurumuUi()
+        {
+            cmbKartTipi.Enabled = !IstenCikanlarSecili;
         }
 
         private void LoadFirmaComboBox()
@@ -275,7 +328,7 @@ namespace CeyPASS.WFA.UserControls.EO
             {
                 var list = _iklsvc.GetIsyerleri(firmaId) ?? new List<LookupItem>();
                 list = FirmaIsyeriYetkiHelper.FilterIsyeriLookup(list, firmaId, _kullaniciYetkileri, _isAdmin);
-                var data = new List<LookupItem> { new LookupItem { Id = 0, Ad = "Tümü" } };
+                var data = new List<LookupItem> { FirmaIsyeriYetkiHelper.CreateIsyeriFilterTumuItem() };
                 data.AddRange(list);
 
                 cmbIsyeriFilter.DropDownStyle = ComboBoxStyle.DropDownList;
@@ -286,10 +339,10 @@ namespace CeyPASS.WFA.UserControls.EO
 
                 var prefs = PageFilterPrefsStore.Load(PageName);
                 var preferredIsyeri = prefs?.IsyeriId;
-                if (preferredIsyeri.HasValue && data.Any(x => x.Id == preferredIsyeri.Value))
+                if (preferredIsyeri.HasValue && preferredIsyeri.Value >= 0 && data.Any(x => x.Id == preferredIsyeri.Value))
                     cmbIsyeriFilter.SelectedValue = preferredIsyeri.Value;
                 else
-                    cmbIsyeriFilter.SelectedValue = 0;
+                    cmbIsyeriFilter.SelectedValue = FirmaIsyeriYetkiHelper.IsyeriFilterTumuId;
             }
             catch (Exception ex)
             {
@@ -312,19 +365,78 @@ namespace CeyPASS.WFA.UserControls.EO
             else if (!int.TryParse(cmbIsyeriFilter.SelectedValue.ToString(), out val))
                 return null;
 
-            return val <= 0 ? (int?)null : val;
+            return FirmaIsyeriYetkiHelper.ToIsyeriQueryFilterId(val);
         }
 
         private void TemizlePersonelSecimi()
         {
+            _checkedPersonIds.Clear();
             if (chkKisiler == null) return;
-            for (int i = 0; i < chkKisiler.Items.Count; i++)
-                chkKisiler.SetItemChecked(i, false);
+            _suppressKisiEvents = true;
+            try
+            {
+                for (int i = 0; i < chkKisiler.Items.Count; i++)
+                    chkKisiler.SetItemChecked(i, false);
+            }
+            finally
+            {
+                _suppressKisiEvents = false;
+            }
+        }
+
+        /// <summary>Filtre sırasında da seçim setini günceller (görünmeyen işaretliler kaybolmasın).</summary>
+        private void chkKisiler_ItemCheck(object sender, ItemCheckEventArgs e)
+        {
+            if (_suppressKisiEvents || chkKisiler == null) return;
+            if (e.Index < 0 || e.Index >= chkKisiler.Items.Count) return;
+            if (chkKisiler.Items[e.Index] is not LookupItem li || li.Id <= 0) return;
+            if (e.NewValue == CheckState.Checked)
+                _checkedPersonIds.Add(li.Id);
+            else
+                _checkedPersonIds.Remove(li.Id);
+        }
+
+        /// <summary>Arama metnine göre sol kişi listesini filtreler (tr-TR); işaretli Id’ler korunur.</summary>
+        private void ApplyKisiFilter()
+        {
+            if (chkKisiler == null || chkKisiler.IsDisposed) return;
+
+            var q = (txtKisiAra?.Text ?? "").Trim();
+            IEnumerable<LookupItem> source = _allKisiler ?? new List<LookupItem>();
+            if (q.Length > 0)
+            {
+                source = source.Where(li =>
+                    TurkishText.ContainsIgnoreCase(li.Ad, q)
+                    || TurkishText.ContainsIgnoreCase(li.Id.ToString(), q));
+            }
+
+            var visible = source.ToList();
+            _suppressKisiEvents = true;
+            chkKisiler.BeginUpdate();
+            try
+            {
+                chkKisiler.DataSource = null;
+                chkKisiler.Items.Clear();
+                chkKisiler.DisplayMember = nameof(LookupItem.Ad);
+                foreach (var li in visible)
+                    chkKisiler.Items.Add(li);
+
+                for (int i = 0; i < chkKisiler.Items.Count; i++)
+                {
+                    if (chkKisiler.Items[i] is LookupItem li && _checkedPersonIds.Contains(li.Id))
+                        chkKisiler.SetItemChecked(i, true);
+                }
+            }
+            finally
+            {
+                chkKisiler.EndUpdate();
+                _suppressKisiEvents = false;
+            }
         }
 
         private string BosListeUyariMesaji(int? seciliIsyeriId)
         {
-            if (seciliIsyeriId.HasValue && seciliIsyeriId.Value > 0)
+            if (seciliIsyeriId.HasValue)
             {
                 var ad = cmbIsyeriFilter?.Text?.Trim();
                 return string.IsNullOrEmpty(ad)
@@ -341,12 +453,13 @@ namespace CeyPASS.WFA.UserControls.EO
 
             using (CeypassBusyPanel.BusyScope(this, "Personeller yükleniyor"))
             {
-                bool puantajYapilir = PuantajYapilanlarSecili;
+                bool cikan = IstenCikanlarSecili;
+                bool? puantajYapilir = cikan ? null : PuantajYapilanlarSecili;
                 var seciliIsyeri = GetSeciliIsyeriFilterId();
                 var (isyeriId, isyeriIdIn) = FirmaIsyeriYetkiHelper.ResolveKisiQueryIsyeriFilter(
                     SelectedFirmaId, seciliIsyeri, _kullaniciYetkileri, _isAdmin);
 
-                var data = _kqsvc.GetAktifKisilerByFirma(SelectedFirmaId, null, puantajYapilir, isyeriId, isyeriIdIn)
+                var data = _kqsvc.GetAktifKisilerByFirma(SelectedFirmaId, null, puantajYapilir, isyeriId, isyeriIdIn, cikan)
                     ?? new List<KisiListItem>();
 
                 var list = new List<LookupItem>();
@@ -359,29 +472,16 @@ namespace CeyPASS.WFA.UserControls.EO
                     list.Add(new LookupItem { Id = id, Ad = k.AdSoyad });
                 }
 
-                chkKisiler.BeginUpdate();
-                try
-                {
-                    chkKisiler.DataSource = null;
-                    chkKisiler.Items.Clear();
-                    chkKisiler.DisplayMember = nameof(LookupItem.Ad);
+                _allKisiler = list;
+                _checkedPersonIds.Clear();
+                ApplyKisiFilter();
 
-                    foreach (var li in list)
-                        chkKisiler.Items.Add(li);
-
-                    if (chkKisiler.Items.Count > 0)
-                        chkKisiler.SelectedIndex = 0;
-                    else
-                        MessageBox.Show(BosListeUyariMesaji(seciliIsyeri), "Bilgi", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                }
-                finally
-                {
-                    chkKisiler.EndUpdate();
-                }
+                if (_allKisiler.Count == 0)
+                    MessageBox.Show(BosListeUyariMesaji(seciliIsyeri), "Bilgi", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
                 chkKisiler.CheckOnClick = true;
                 LogHelper.Info("KisiHareketler", "LoadPeople", "Kişi listesi yüklendi",
-                    detayJson: $"{{\"FirmaId\":{SelectedFirmaId},\"IsyeriId\":{(seciliIsyeri.HasValue ? seciliIsyeri.Value.ToString() : "null")},\"Adet\":{chkKisiler.Items.Count}}}");
+                    detayJson: $"{{\"FirmaId\":{SelectedFirmaId},\"IsyeriId\":{(seciliIsyeri.HasValue ? seciliIsyeri.Value.ToString() : "null")},\"Adet\":{_allKisiler.Count}}}");
             }
         }
         private void LoadGrid()
@@ -441,10 +541,7 @@ namespace CeyPASS.WFA.UserControls.EO
         }
         private List<int> GetCheckedPersonIds()
         {
-            var ids = new List<int>();
-            foreach (var it in chkKisiler.CheckedItems)
-                if (it is LookupItem li) ids.Add(li.Id);
-            return ids;
+            return _checkedPersonIds.Where(id => id > 0).Distinct().ToList();
         }
         private void InitDatePickers()
         {

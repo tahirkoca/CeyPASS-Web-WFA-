@@ -3,6 +3,7 @@ using CeyPASS.Entities.Concrete;
 
 namespace CeyPASS.Business.Services
 {
+    /// <summary>Oturum kullanıcı/firma bağlamı.</summary>
     public class SessionContext : ISessionContext
     {
         private AuthUserDTO _currentUser;
@@ -62,8 +63,10 @@ namespace CeyPASS.Business.Services
         public bool? IsSupervisor { get; set; }
 
         public AuthUserDTO CurrentUser => _currentUser;
+        /// <inheritdoc />
         public bool IsAdmin() => RolId == 1 || RolId == 2;
 
+        /// <inheritdoc />
         public void SetCurrentUser(AuthUserDTO user)
         {
             _currentUser = user;
@@ -73,6 +76,7 @@ namespace CeyPASS.Business.Services
             }
         }
 
+        /// <inheritdoc />
         public void Clear()
         {
             _currentUser = null;

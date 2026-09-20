@@ -2,6 +2,7 @@
 
 namespace CeyPASS.Entities.Concrete
 {
+    /// <summary>Tek personel izin geçmişi satırı.</summary>
     public class KisiIzinByPersonRow
     {
         public int KisiIzinId { get; set; }

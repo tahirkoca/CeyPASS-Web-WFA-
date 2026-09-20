@@ -1,5 +1,6 @@
 ﻿namespace CeyPASS.Entities.Concrete
 {
+    /// <summary>İşyeri seçim listesi için değişmez satır.</summary>
     public class IsyeriItem
     {
         public int FirmaId { get; }

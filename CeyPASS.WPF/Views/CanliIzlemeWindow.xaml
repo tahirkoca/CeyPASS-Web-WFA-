@@ -17,14 +17,13 @@
             <controls:CeypassWindowChrome Variant="Light"/>
         </StackPanel>
     </local:CeypassThemedWindow.HeaderItems>
-    <Grid Margin="8">
+    <Grid x:Name="RootLayout" Margin="8">
         <Grid.RowDefinitions>
-            <RowDefinition Height="1.2*"/>
-            <RowDefinition Height="*"/>
-            <RowDefinition Height="Auto"/>
+            <RowDefinition x:Name="CardsRow" Height="1.2*"/>
+            <RowDefinition x:Name="MovesRowDef" Height="*"/>
         </Grid.RowDefinitions>
 
-        <!-- Son geçenler — WFA KisiKartKontrolu: foto üstte, alt şerit Giriş=SeaGreen / Çıkış=Firebrick -->
+        <!-- Son geçenler -->
         <Border Grid.Row="0" Background="{DynamicResource Brush.Card}" Margin="0,0,0,8" Padding="8">
             <ItemsControl x:Name="LastPassCards">
                 <ItemsControl.ItemsPanel>
@@ -48,46 +47,33 @@
                                     <RowDefinition Height="*"/>
                                     <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="Auto"/>
                                 </Grid.RowDefinitions>
 
-                                <Border Grid.Row="0" Margin="16,14,16,8" Background="Transparent"
-                                        MinHeight="160" MaxHeight="220"
-                                        HorizontalAlignment="Stretch">
+                                <Border Grid.Row="0" Margin="8,8,8,4" Background="Transparent"
+                                        HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                                        ClipToBounds="True">
                                     <Image Source="{Binding Photo}" Stretch="Uniform"
-                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                           HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
                                 </Border>
 
                                 <TextBlock Grid.Row="1" Text="{Binding AdSoyad}"
-                                           FontSize="15" FontWeight="Bold" Foreground="{DynamicResource Brush.TextPrimary}"
+                                           FontSize="18" FontWeight="Bold" Foreground="{DynamicResource Brush.TextPrimary}"
                                            TextAlignment="Center" TextWrapping="Wrap"
                                            HorizontalAlignment="Stretch"
-                                           Margin="12,0,12,4"/>
-                                <TextBlock Grid.Row="2" Text="{Binding Departman}"
-                                           FontSize="12.5" FontStyle="Italic" Foreground="{DynamicResource Brush.TextMuted}"
-                                           TextAlignment="Center" TextWrapping="Wrap"
-                                           HorizontalAlignment="Stretch"
-                                           Margin="12,0,12,2"/>
-                                <TextBlock Grid.Row="3" Text="{Binding Unvan}"
-                                           FontSize="12.5" FontStyle="Italic" Foreground="{DynamicResource Brush.TextMuted}"
-                                           TextAlignment="Center" TextWrapping="Wrap"
-                                           HorizontalAlignment="Stretch"
-                                           Margin="12,0,12,10"/>
+                                           Margin="12,4,12,8"/>
 
-                                <!-- Belirgin Giriş (yeşil) / Çıkış (kırmızı) şeridi -->
-                                <Border Grid.Row="4" Background="{Binding YonBg}" Padding="8,10"
+                                <Border Grid.Row="2" Background="{Binding YonBg}" Padding="10,12"
                                         HorizontalAlignment="Stretch">
                                     <StackPanel HorizontalAlignment="Stretch">
                                         <TextBlock Text="{Binding YonText}"
-                                                   FontSize="16" FontWeight="Bold" Foreground="White"
+                                                   FontSize="18" FontWeight="Bold" Foreground="White"
                                                    TextAlignment="Center" HorizontalAlignment="Stretch"
                                                    Margin="0,0,0,4"/>
                                         <TextBlock Text="{Binding ZamanText}"
-                                                   FontSize="13" Foreground="White"
+                                                   FontSize="14" Foreground="White"
                                                    TextAlignment="Center" HorizontalAlignment="Stretch"/>
                                         <TextBlock Text="{Binding Terminal}"
-                                                   FontSize="13" Foreground="White"
+                                                   FontSize="14" Foreground="White"
                                                    TextAlignment="Center" HorizontalAlignment="Stretch"
                                                    Margin="0,2,0,0" TextWrapping="Wrap"/>
                                     </StackPanel>
@@ -99,71 +85,126 @@
             </ItemsControl>
         </Border>
 
-        <!-- Hareketler + seçili kişi (WFA: ortalı) -->
-        <Grid Grid.Row="1" Margin="0,0,0,8">
+        <!-- Sol: Son hareketler | Sağ: Atama listesi -->
+        <Grid x:Name="HareketPanel" Grid.Row="1" Margin="0,0,0,0">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="2*"/>
+                <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
 
-            <Border Grid.Column="0" Background="{DynamicResource Brush.Card}" Margin="0,0,8,0" Padding="4">
-                <dxg:GridControl x:Name="HareketGrid"
-                                 AutoGenerateColumns="AddNew"
-                                 SelectedItemChanged="HareketGrid_OnSelectedItemChanged">
-                    <dxg:GridControl.View>
-                        <dxg:TableView Style="{StaticResource CeypassTableView}" AutoWidth="True"/>
-                    </dxg:GridControl.View>
-                </dxg:GridControl>
-            </Border>
-
-            <Border Grid.Column="1" Background="{DynamicResource Brush.Card}" Padding="12">
+            <Border Grid.Column="0" Background="{DynamicResource Brush.Card}" Margin="0,0,4,0" Padding="4">
                 <Grid>
                     <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
+                    <TextBlock Grid.Row="0" Text="Son Hareketler" FontWeight="SemiBold" FontSize="14"
+                               Foreground="{DynamicResource Brush.TextPrimary}" Margin="6,4,6,6"/>
+                    <dxg:GridControl x:Name="HareketGrid" Grid.Row="1"
+                                     AutoGenerateColumns="AddNew"
+                                     SelectedItemChanged="HareketGrid_OnSelectedItemChanged">
+                        <dxg:GridControl.View>
+                            <dxg:TableView Style="{StaticResource CeypassTableView}" AutoWidth="True"
+                                           ShowAutoFilterRow="False"/>
+                        </dxg:GridControl.View>
+                    </dxg:GridControl>
+                </Grid>
+            </Border>
 
-                    <Border Grid.Row="0" Background="Transparent" Margin="0,0,0,10"
-                            MinHeight="180" HorizontalAlignment="Stretch">
-                        <Image x:Name="ImgSecili" Stretch="Uniform"
-                               HorizontalAlignment="Center" VerticalAlignment="Center"
-                               Margin="8"/>
-                    </Border>
-
-                    <TextBlock Grid.Row="1" x:Name="LblSeciliAd" Text="-"
-                               FontSize="16" FontWeight="Bold" Foreground="{DynamicResource Brush.TextPrimary}"
-                               TextAlignment="Center" TextWrapping="Wrap"
-                               HorizontalAlignment="Stretch" Margin="8,0,8,8"/>
-                    <TextBlock Grid.Row="2" x:Name="LblSeciliDepartman" Text="-"
-                               FontSize="13.5" FontStyle="Italic" Foreground="{DynamicResource Brush.TextMuted}"
-                               TextAlignment="Center" TextWrapping="Wrap"
-                               HorizontalAlignment="Stretch" Margin="8,0,8,6"/>
-                    <TextBlock Grid.Row="3" x:Name="LblSeciliUnvan" Text="-"
-                               FontSize="13.5" FontStyle="Italic" Foreground="{DynamicResource Brush.TextMuted}"
-                               TextAlignment="Center" TextWrapping="Wrap"
-                               HorizontalAlignment="Stretch" Margin="8,0,8,4"/>
+            <Border Grid.Column="1" Background="{DynamicResource Brush.Card}" Margin="4,0,0,0" Padding="4">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <DockPanel Grid.Row="0" Margin="6,4,6,6" LastChildFill="False">
+                        <TextBlock Text="Kart Atamaları" FontWeight="SemiBold" FontSize="14"
+                                   Foreground="{DynamicResource Brush.TextPrimary}"
+                                   VerticalAlignment="Center" DockPanel.Dock="Left"
+                                   Margin="0,0,6,0"/>
+                        <controls:CeypassHelpTip Topic="CanliIzlemeKartAtama"
+                                                 DockPanel.Dock="Left"
+                                                 VerticalAlignment="Center"
+                                                 Margin="0,0,8,0"/>
+                        <Button x:Name="BtnKartDurumToplu"
+                                Content="Kart durumları"
+                                Padding="10,3"
+                                Margin="0,0,8,0"
+                                DockPanel.Dock="Left"
+                                VerticalAlignment="Center"
+                                Style="{StaticResource SecondaryBtn}"
+                                Click="BtnKartDurumToplu_OnClick"
+                                ToolTip="Kartların serbest/kısıtlı durumunu görüntüle ve toplu yönet"/>
+                        <ComboBox x:Name="CmbAtamaTip"
+                                  Width="160"
+                                  DockPanel.Dock="Right"
+                                  VerticalAlignment="Center"
+                                  SelectionChanged="CmbAtamaTip_OnSelectionChanged"/>
+                    </DockPanel>
+                    <dxg:GridControl x:Name="AtamaGrid" Grid.Row="1"
+                                     AutoGenerateColumns="None"
+                                     MouseDoubleClick="AtamaGrid_OnMouseDoubleClick">
+                        <dxg:GridControl.Columns>
+                            <dxg:GridColumn FieldName="KartAdi" Header="Kart" Width="*" MinWidth="140"/>
+                            <dxg:GridColumn FieldName="MisafirAdSoyad" Header="Kişi / Plaka" Width="*" MinWidth="140"/>
+                            <dxg:GridColumn FieldName="DurumText" Header="Durum" Width="100" FixedWidth="True"
+                                            HorizontalHeaderContentAlignment="Center"/>
+                            <dxg:GridColumn Header="İşlem" Width="260" FixedWidth="True"
+                                            HorizontalHeaderContentAlignment="Center">
+                                <dxg:GridColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="2,0">
+                                            <Button Content="Kartı Kısıtla" Padding="8,3" Margin="0,0,4,0"
+                                                    Style="{StaticResource DangerBtn}"
+                                                    IsEnabled="{Binding RowData.Row.CanPasifEt}"
+                                                    Tag="{Binding RowData.Row}"
+                                                    Click="BtnSatirKartPasif_OnClick"/>
+                                            <Button Content="Kart Kısıtı Kaldır" Padding="8,3"
+                                                    Style="{StaticResource SuccessBtn}"
+                                                    IsEnabled="{Binding RowData.Row.CanAktifEt}"
+                                                    Tag="{Binding RowData.Row}"
+                                                    Click="BtnSatirKartAktif_OnClick"/>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </dxg:GridColumn.CellTemplate>
+                            </dxg:GridColumn>
+                        </dxg:GridControl.Columns>
+                        <dxg:GridControl.View>
+                            <dxg:TableView x:Name="AtamaTableView"
+                                           Style="{StaticResource CeypassTableView}"
+                                           AutoWidth="True"
+                                           AllowEditing="False"
+                                           ShowGroupPanel="False"
+                                           ShowAutoFilterRow="False"
+                                           NavigationStyle="Row"
+                                           RowDoubleClick="AtamaTableView_OnRowDoubleClick">
+                                <dxg:TableView.FormatConditions>
+                                    <dxg:FormatCondition FieldName="DurumText" Expression="[DurumText] = 'HAZIR'">
+                                        <dxg:FormatCondition.Format>
+                                            <dx:Format Background="#E67E22" Foreground="White"/>
+                                        </dxg:FormatCondition.Format>
+                                    </dxg:FormatCondition>
+                                    <dxg:FormatCondition FieldName="DurumText" Expression="[DurumText] = 'ATANMIŞ'">
+                                        <dxg:FormatCondition.Format>
+                                            <dx:Format Background="#47698A" Foreground="White"/>
+                                        </dxg:FormatCondition.Format>
+                                    </dxg:FormatCondition>
+                                    <dxg:FormatCondition FieldName="DurumText" Expression="[DurumText] = 'GİRİŞ'">
+                                        <dxg:FormatCondition.Format>
+                                            <dx:Format Background="#2E8B57" Foreground="White"/>
+                                        </dxg:FormatCondition.Format>
+                                    </dxg:FormatCondition>
+                                    <dxg:FormatCondition FieldName="DurumText" Expression="[DurumText] = 'ÇIKIŞ'">
+                                        <dxg:FormatCondition.Format>
+                                            <dx:Format Background="#B22222" Foreground="White"/>
+                                        </dxg:FormatCondition.Format>
+                                    </dxg:FormatCondition>
+                                </dxg:TableView.FormatConditions>
+                            </dxg:TableView>
+                        </dxg:GridControl.View>
+                    </dxg:GridControl>
                 </Grid>
             </Border>
         </Grid>
-
-        <!-- Kart butonları -->
-        <Border x:Name="KartButonlariPanel" Grid.Row="2" Background="{DynamicResource Brush.Card}" Padding="10,8">
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                <Button x:Name="BtnKisiyeKartAta" Content="Kişiye Kart Ata" Width="160" Height="36" Margin="0,0,8,0"
-                        Style="{StaticResource PrimaryBtn}"
-                        Click="BtnKisiyeKartAta_OnClick"/>
-                <Button x:Name="BtnAtananKartGuncelle" Content="Atanan Kartı Güncelle" Width="180" Height="36" Margin="0,0,8,0"
-                        Style="{StaticResource PrimaryBtn}"
-                        Click="BtnAtananKartGuncelle_OnClick"/>
-                <Button x:Name="BtnAracKartiVer" Content="Araç Kartı Ver" Width="150" Height="36" Margin="0,0,8,0"
-                        Style="{StaticResource SuccessBtn}"
-                        Click="BtnAracKartiVer_OnClick"/>
-                <Button x:Name="BtnAracKartiGuncelle" Content="Araç Kartı Güncelle" Width="170" Height="36"
-                        Style="{StaticResource SuccessBtn}"
-                        Click="BtnAracKartiGuncelle_OnClick"/>
-            </StackPanel>
-        </Border>
     </Grid>
 </local:CeypassThemedWindow>

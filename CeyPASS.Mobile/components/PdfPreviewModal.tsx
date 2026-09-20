@@ -1,3 +1,4 @@
+/** İndirilen PDF önizleme ve paylaşım. */
 import React, { useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, Modal, Platform, Text, TouchableOpacity, View } from "react-native";
 import * as FileSystem from "expo-file-system/legacy";

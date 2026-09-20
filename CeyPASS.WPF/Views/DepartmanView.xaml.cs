@@ -2,6 +2,7 @@ using CeyPASS.WPF.ViewModels;
 
 namespace CeyPASS.WPF.Views;
 
+/// <summary>Departman tanımlama.</summary>
 public partial class DepartmanView : System.Windows.Controls.UserControl
 {
     public DepartmanView()

@@ -1,6 +1,9 @@
 using System.Collections.ObjectModel;
 using System.IO;
+using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
@@ -8,23 +11,46 @@ using CeyPASS.Business.Abstractions;
 using CeyPASS.Entities.Concrete;
 using CeyPASS.Infrastructure.Helpers;
 using DevExpress.Xpf.Grid;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace CeyPASS.WPF.Views;
 
+/// <summary>Canlı geçiş kartları, hareket listesi ve misafir/araç kart atama (role göre görünürlük).</summary>
 public partial class CanliIzlemeWindow : CeypassThemedWindow
 {
+    private sealed class AtamaTipItem
+    {
+        public string Key { get; init; } = "";
+        public string Label { get; init; } = "";
+        public override string ToString() => Label;
+    }
+
     private readonly ISessionContext _session;
     private readonly ICanliIzlemeService _svc;
     private readonly IKisiHareketService _khsvc;
-    private readonly IKisiDetayService _kisiDetaySvc;
     private readonly IMisafirKartService _misafirSvc;
     private readonly IAracKartiService _aracSvc;
+    private readonly ICanliIzlemeKartKomutService _kartKomutSvc;
+    private readonly IServiceScopeFactory _scopeFactory;
     private readonly DispatcherTimer _timer;
     private readonly ObservableCollection<PassCardVm> _cards = new();
+    private readonly ObservableCollection<AtamaRowVm> _atamaRows = new();
     private int? _seciliKisiId;
     private string? _seciliRowKey;
     private string[] _lastHareketKeys = Array.Empty<string>();
+    private string[] _lastAtamaKeys = Array.Empty<string>();
     private bool _refreshingGrid;
+    private bool _atamaTipReady;
+    private bool _atamaRefreshInFlight;
+    private bool _pendingAtamaRefresh;
+    private bool _pendingAtamaForce;
+    private DateTime _lastAtamaRefreshUtc = DateTime.MinValue;
+    private List<KisiListItem>? _misafirKartCache;
+    private DateTime _misafirKartCacheUtc = DateTime.MinValue;
+    private List<KisiListItem>? _aracKartCache;
+    private DateTime _aracKartCacheUtc = DateTime.MinValue;
+    private const int AtamaRefreshIntervalSeconds = 1;
+    private const int AtamaKartCacheSeconds = 5;
 
     public CanliIzlemeWindow(
         ISessionContext session,
@@ -32,19 +58,33 @@ public partial class CanliIzlemeWindow : CeypassThemedWindow
         IKisiHareketService khsvc,
         IKisiDetayService kisiDetaySvc,
         IMisafirKartService misafirSvc,
-        IAracKartiService aracSvc)
+        IAracKartiService aracSvc,
+        ICanliIzlemeKartKomutService kartKomutSvc,
+        IServiceScopeFactory scopeFactory)
     {
         InitializeComponent();
         _session = session;
         _svc = svc;
         _khsvc = khsvc;
-        _kisiDetaySvc = kisiDetaySvc;
+        _ = kisiDetaySvc;
         _misafirSvc = misafirSvc;
         _aracSvc = aracSvc;
+        _kartKomutSvc = kartKomutSvc;
+        _scopeFactory = scopeFactory;
 
         for (var i = 0; i < 4; i++)
             _cards.Add(PassCardVm.Empty());
         LastPassCards.ItemsSource = _cards;
+        AtamaGrid.ItemsSource = _atamaRows;
+
+        CmbAtamaTip.ItemsSource = new[]
+        {
+            new AtamaTipItem { Key = "misafir", Label = "Misafir / Ziyaretçi" },
+            new AtamaTipItem { Key = "arac", Label = "Araç" }
+        };
+        CmbAtamaTip.DisplayMemberPath = nameof(AtamaTipItem.Label);
+        CmbAtamaTip.SelectedIndex = 0;
+        _atamaTipReady = true;
 
         Loaded += (_, _) =>
         {
@@ -59,15 +99,33 @@ public partial class CanliIzlemeWindow : CeypassThemedWindow
 
     private void ApplyRoleVisibility()
     {
-        if (CanliIzlemeRoleHelper.HideKartAtama(_session.RolAdi))
-            KartButonlariPanel.Visibility = Visibility.Collapsed;
+        var showList = CanliIzlemeRoleHelper.ShowHareketListesi(_session.RolAdi);
+
+        HareketPanel.Visibility = showList ? Visibility.Visible : Visibility.Collapsed;
+
+        if (!showList)
+        {
+            CardsRow.Height = new GridLength(1, GridUnitType.Star);
+            MovesRowDef.Height = new GridLength(0);
+        }
+        else
+        {
+            CardsRow.Height = new GridLength(1.2, GridUnitType.Star);
+            MovesRowDef.Height = new GridLength(1, GridUnitType.Star);
+        }
     }
 
     private void RefreshAll()
     {
         if (!_session.AktifFirmaId.HasValue) return;
         RefreshLastPasses();
-        RefreshHareketler();
+        if (CanliIzlemeRoleHelper.ShowHareketListesi(_session.RolAdi))
+        {
+            RefreshHareketler();
+            var due = (DateTime.UtcNow - _lastAtamaRefreshUtc).TotalSeconds >= AtamaRefreshIntervalSeconds;
+            if (due)
+                RefreshAtamaListe(force: false);
+        }
     }
 
     private void RefreshLastPasses()
@@ -94,7 +152,6 @@ public partial class CanliIzlemeWindow : CeypassThemedWindow
         }
         catch
         {
-            // Canlı ekranda timer hatalarını sessizce yut; bir sonraki tick dener
         }
     }
 
@@ -125,8 +182,6 @@ public partial class CanliIzlemeWindow : CeypassThemedWindow
                 {
                     Tarih = x.Tarih,
                     AdSoyad = x.AdSoyad,
-                    Departman = x.Departman,
-                    Unvan = x.Unvan,
                     Turnike = x.CihazAdi,
                     KisiId = x.PersonelId,
                     RowKey = rowKey
@@ -148,15 +203,10 @@ public partial class CanliIzlemeWindow : CeypassThemedWindow
                 HareketGrid.ItemsSource = rows;
                 HideInternalColumns();
 
-                // Aynı kişi birden fazla satırdaysa KisiId ile FirstOrDefault kullanma —
-                // seçilen hareketin RowKey'i ile geri yükle.
                 if (!string.IsNullOrEmpty(_seciliRowKey))
                 {
                     var match = rows.FirstOrDefault(r => r.RowKey == _seciliRowKey);
-                    if (match != null)
-                        HareketGrid.SelectedItem = match;
-                    else
-                        HareketGrid.SelectedItem = null; // hareket listeden düştü; ilk KisiId satırına sıçrama
+                    HareketGrid.SelectedItem = match;
                 }
             }
             finally
@@ -166,8 +216,174 @@ public partial class CanliIzlemeWindow : CeypassThemedWindow
         }
         catch
         {
-            // timer tick
         }
+    }
+
+    private bool IsAracAtamaTip()
+        => CmbAtamaTip.SelectedItem is AtamaTipItem t
+           && string.Equals(t.Key, "arac", StringComparison.OrdinalIgnoreCase);
+
+    private string CurrentAtamaTipKey()
+        => IsAracAtamaTip() ? "arac" : "misafir";
+
+    private void InvalidateAtamaKartCacheForCurrentTip()
+    {
+        if (IsAracAtamaTip())
+        {
+            _aracKartCache = null;
+            _aracKartCacheUtc = DateTime.MinValue;
+        }
+        else
+        {
+            _misafirKartCache = null;
+            _misafirKartCacheUtc = DateTime.MinValue;
+        }
+    }
+
+    private IReadOnlyList<KisiListItem>? TryGetTipKartCache(string tipKey)
+    {
+        if (string.Equals(tipKey, "arac", StringComparison.Ordinal))
+        {
+            if (_aracKartCache != null
+                && (DateTime.UtcNow - _aracKartCacheUtc).TotalSeconds < AtamaKartCacheSeconds)
+                return _aracKartCache;
+            return null;
+        }
+
+        if (_misafirKartCache != null
+            && (DateTime.UtcNow - _misafirKartCacheUtc).TotalSeconds < AtamaKartCacheSeconds)
+            return _misafirKartCache;
+        return null;
+    }
+
+    private void StoreTipKartCache(string tipKey, List<KisiListItem> kartlar)
+    {
+        if (string.Equals(tipKey, "arac", StringComparison.Ordinal))
+        {
+            _aracKartCache = kartlar;
+            _aracKartCacheUtc = DateTime.UtcNow;
+        }
+        else
+        {
+            _misafirKartCache = kartlar;
+            _misafirKartCacheUtc = DateTime.UtcNow;
+        }
+    }
+
+    private void DrainPendingAtamaRefresh()
+    {
+        if (!_pendingAtamaRefresh) return;
+        var force = _pendingAtamaForce;
+        _pendingAtamaRefresh = false;
+        _pendingAtamaForce = false;
+        RefreshAtamaListe(force: force, invalidateKartCache: false);
+    }
+
+    private void RefreshAtamaListe(bool force = true, bool invalidateKartCache = false)
+    {
+        if (!_session.AktifFirmaId.HasValue) return;
+
+        if (invalidateKartCache)
+            InvalidateAtamaKartCacheForCurrentTip();
+
+        if (_atamaRefreshInFlight)
+        {
+            _pendingAtamaRefresh = true;
+            _pendingAtamaForce |= force;
+            return;
+        }
+
+        var firmaId = _session.AktifFirmaId.Value;
+        var isArac = IsAracAtamaTip();
+        var tipKey = isArac ? "arac" : "misafir";
+        var cachedKartlar = TryGetTipKartCache(tipKey);
+
+        _atamaRefreshInFlight = true;
+        _lastAtamaRefreshUtc = DateTime.UtcNow;
+
+        _ = Task.Run(() =>
+        {
+            try
+            {
+                using var scope = _scopeFactory.CreateScope();
+                var misafirSvc = scope.ServiceProvider.GetRequiredService<IMisafirKartService>();
+                var aracSvc = scope.ServiceProvider.GetRequiredService<IAracKartiService>();
+                var kartKomutSvc = scope.ServiceProvider.GetRequiredService<ICanliIzlemeKartKomutService>();
+
+                List<KisiListItem>? kartlarForCache = null;
+                IReadOnlyList<KisiListItem>? kartlarArg = cachedKartlar;
+                if (kartlarArg == null)
+                {
+                    kartlarForCache = isArac
+                        ? aracSvc.GetAktifKartlar(firmaId)
+                        : misafirSvc.GetAktifKartlar(firmaId);
+                    kartlarArg = kartlarForCache;
+                }
+
+                var list = isArac
+                    ? aracSvc.GetAtamaListe(firmaId, kartlarArg)
+                    : misafirSvc.GetAtamaListe(firmaId, kartlarArg);
+
+                var aktifMap = kartKomutSvc.GetCihazdaAktifMap(
+                    firmaId,
+                    list.Select(x => x.PersonelId));
+
+                Dispatcher.Invoke(() =>
+                {
+                    try
+                    {
+                        if (!string.Equals(CurrentAtamaTipKey(), tipKey, StringComparison.Ordinal))
+                        {
+                            _pendingAtamaRefresh = true;
+                            _pendingAtamaForce = true;
+                            return;
+                        }
+
+                        if (kartlarForCache != null)
+                            StoreTipKartCache(tipKey, kartlarForCache);
+
+                        var keys = list.Select(x =>
+                        {
+                            var pid = x.PersonelId ?? "";
+                            var aktif = !aktifMap.TryGetValue(pid, out var a) || a;
+                            return $"{tipKey}|{pid}|{x.Durum}|{x.AtamaId}|{x.MisafirAdSoyad}|{x.KartAdi}|{x.Plaka}|{aktif}";
+                        }).ToArray();
+                        if (!force && keys.Length == _lastAtamaKeys.Length && keys.SequenceEqual(_lastAtamaKeys))
+                            return;
+                        _lastAtamaKeys = keys;
+
+                        _atamaRows.Clear();
+                        foreach (var x in list)
+                        {
+                            var pid = x.PersonelId ?? "";
+                            var cihazdaAktif = !aktifMap.TryGetValue(pid, out var a) || a;
+                            _atamaRows.Add(AtamaRowVm.From(x, cihazdaAktif));
+                        }
+                    }
+                    finally
+                    {
+                        _atamaRefreshInFlight = false;
+                        DrainPendingAtamaRefresh();
+                    }
+                });
+            }
+            catch
+            {
+                Dispatcher.Invoke(() =>
+                {
+                    _atamaRefreshInFlight = false;
+                    DrainPendingAtamaRefresh();
+                });
+            }
+        });
+    }
+
+    private void CmbAtamaTip_OnSelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (!_atamaTipReady) return;
+        _lastAtamaKeys = Array.Empty<string>();
+        if (_session.AktifFirmaId.HasValue && CanliIzlemeRoleHelper.ShowHareketListesi(_session.RolAdi))
+            RefreshAtamaListe(force: true, invalidateKartCache: false);
     }
 
     private void HideInternalColumns()
@@ -184,45 +400,106 @@ public partial class CanliIzlemeWindow : CeypassThemedWindow
         if (e.NewItem is not HareketRow row) return;
         _seciliKisiId = row.KisiId;
         _seciliRowKey = row.RowKey;
-        LoadKisiDetay(row.KisiId);
     }
 
-    private void LoadKisiDetay(int kisiId)
+    /// <summary>Çift tık: Hazır satırda yeni atama, diğer durumlarda güncelleme diyaloğu.</summary>
+    private void AtamaGrid_OnMouseDoubleClick(object sender, MouseButtonEventArgs e)
+        => OpenAtamaFromSelection();
+
+    private void AtamaTableView_OnRowDoubleClick(object sender, RowDoubleClickEventArgs e)
+        => OpenAtamaFromSelection();
+
+    private void BtnSatirKartPasif_OnClick(object sender, RoutedEventArgs e)
     {
+        if (sender is Button { Tag: AtamaRowVm row })
+            EnqueueKartKomut(row, pasif: true);
+    }
+
+    private void BtnSatirKartAktif_OnClick(object sender, RoutedEventArgs e)
+    {
+        if (sender is Button { Tag: AtamaRowVm row })
+            EnqueueKartKomut(row, pasif: false);
+    }
+
+    private void BtnKartDurumToplu_OnClick(object sender, RoutedEventArgs e)
+    {
+        var firmaId = RequireFirmaId();
+        if (firmaId == null) return;
+
+        var changed = KartDurumTopluDialog.Show(
+            this,
+            _session,
+            _misafirSvc,
+            _aracSvc,
+            _kartKomutSvc);
+
+        if (!changed) return;
+        _lastAtamaKeys = Array.Empty<string>();
+        RefreshAtamaListe(force: true, invalidateKartCache: true);
+    }
+
+    private void EnqueueKartKomut(AtamaRowVm row, bool pasif)
+    {
+        var firmaId = RequireFirmaId();
+        if (firmaId == null) return;
+
+        var baslik = pasif ? "Kartı Kısıtla" : "Kart Kısıtı Kaldır";
+        var onay = pasif
+            ? $"“{row.KartAdi}” kartı cihazlarda kısıtlansın mı?"
+            : $"“{row.KartAdi}” kartındaki kısıt kaldırılsın mı?";
+        if (!UiDialog.Confirm(onay, baslik, this, yesText: pasif ? "Kısıtla" : "Kısıtı kaldır", noText: "Vazgeç"))
+            return;
+
         try
         {
-            var dto = _kisiDetaySvc.GetDetay(kisiId);
-            if (dto == null)
-            {
-                LblSeciliAd.Text = "-";
-                LblSeciliUnvan.Text = "-";
-                LblSeciliDepartman.Text = "-";
-                ImgSecili.Source = LoadUnknown();
-                return;
-            }
+            if (pasif)
+                _kartKomutSvc.EnqueuePasif(firmaId.Value, row.PersonelId, _session.AktifKullaniciId);
+            else
+                _kartKomutSvc.EnqueueAktif(firmaId.Value, row.PersonelId, _session.AktifKullaniciId);
 
-            LblSeciliAd.Text = dto.AdSoyad ?? "-";
-            LblSeciliUnvan.Text = dto.Unvan ?? "-";
-            LblSeciliDepartman.Text = dto.Departman ?? "-";
-            ImgSecili.Source = BytesToImage(dto.Foto) ?? LoadUnknown();
+            UiDialog.Success(
+                pasif ? "Kısıtlama komutu kuyruğa alındı." : "Kısıt kaldırma komutu kuyruğa alındı.",
+                baslik,
+                this);
+            _lastAtamaKeys = Array.Empty<string>();
+            RefreshAtamaListe(force: true, invalidateKartCache: true);
         }
         catch (Exception ex)
         {
-            UiDialog.Error("Kişi detayları alınamadı: " + ex.Message, "Hata", this);
+            UiDialog.Error(ex.Message, baslik, this);
         }
     }
 
-    private void BtnKisiyeKartAta_OnClick(object sender, RoutedEventArgs e)
-        => OpenMisafirYeni();
+    private void OpenAtamaFromSelection()
+    {
+        if (AtamaGrid.SelectedItem is not AtamaRowVm row) return;
+        var firmaId = RequireFirmaId();
+        if (firmaId == null) return;
 
-    private void BtnAtananKartGuncelle_OnClick(object sender, RoutedEventArgs e)
-        => OpenMisafirGuncelle();
+        var isArac = IsAracAtamaTip();
+        if (row.Durum == KartAtamaListeDurum.Hazir)
+        {
+            if (isArac)
+                AracKartiAtamaDialog.ShowYeni(this, _session, _aracSvc, firmaId.Value, row.PersonelId);
+            else
+                MisafirKartAtamaDialog.ShowYeni(this, _session, _misafirSvc, firmaId.Value, row.PersonelId);
+        }
+        else
+        {
+            if (!row.AtamaId.HasValue)
+            {
+                UiDialog.Warning("Atama kaydı bulunamadı.", "Canlı İzleme", this);
+                return;
+            }
+            if (isArac)
+                AracKartiAtamaDialog.ShowGuncelle(this, _session, _aracSvc, firmaId.Value, row.AtamaId);
+            else
+                MisafirKartAtamaDialog.ShowGuncelle(this, _session, _misafirSvc, firmaId.Value, row.AtamaId);
+        }
 
-    private void BtnAracKartiVer_OnClick(object sender, RoutedEventArgs e)
-        => OpenAracYeni();
-
-    private void BtnAracKartiGuncelle_OnClick(object sender, RoutedEventArgs e)
-        => OpenAracGuncelle();
+        _lastAtamaKeys = Array.Empty<string>();
+        RefreshAtamaListe(force: true, invalidateKartCache: true);
+    }
 
     private int? RequireFirmaId()
     {
@@ -232,34 +509,6 @@ public partial class CanliIzlemeWindow : CeypassThemedWindow
             return null;
         }
         return _session.AktifFirmaId.Value;
-    }
-
-    private void OpenMisafirYeni()
-    {
-        var firmaId = RequireFirmaId();
-        if (firmaId == null) return;
-        MisafirKartAtamaDialog.ShowYeni(this, _session, _misafirSvc, firmaId.Value);
-    }
-
-    private void OpenMisafirGuncelle()
-    {
-        var firmaId = RequireFirmaId();
-        if (firmaId == null) return;
-        MisafirKartAtamaDialog.ShowGuncelle(this, _session, _misafirSvc, firmaId.Value);
-    }
-
-    private void OpenAracYeni()
-    {
-        var firmaId = RequireFirmaId();
-        if (firmaId == null) return;
-        AracKartiAtamaDialog.ShowYeni(this, _session, _aracSvc, firmaId.Value);
-    }
-
-    private void OpenAracGuncelle()
-    {
-        var firmaId = RequireFirmaId();
-        if (firmaId == null) return;
-        AracKartiAtamaDialog.ShowGuncelle(this, _session, _aracSvc, firmaId.Value);
     }
 
     private void Window_OnClosing(object? sender, System.ComponentModel.CancelEventArgs e)
@@ -295,8 +544,6 @@ public partial class CanliIzlemeWindow : CeypassThemedWindow
     {
         public DateTime Tarih { get; set; }
         public string? AdSoyad { get; set; }
-        public string? Departman { get; set; }
-        public string? Unvan { get; set; }
         public string? Turnike { get; set; }
         public int KisiId { get; set; }
         public string RowKey { get; set; } = "";
@@ -305,11 +552,54 @@ public partial class CanliIzlemeWindow : CeypassThemedWindow
             => $"{tarih:O}|{kisiId}|{turnike ?? ""}";
     }
 
+    private sealed class AtamaRowVm
+    {
+        public string PersonelId { get; init; } = "";
+        public string KartAdi { get; init; } = "";
+        public string? MisafirAdSoyad { get; init; }
+        public int? AtamaId { get; init; }
+        public KartAtamaListeDurum Durum { get; init; }
+        public string DurumText { get; init; } = "";
+        public Brush DurumBg { get; init; } = Brushes.Gray;
+        public bool CanPasifEt { get; init; }
+        public bool CanAktifEt { get; init; }
+
+        public static AtamaRowVm From(KartAtamaListeItem x, bool cihazdaAktif)
+        {
+            string? kisi = x.MisafirAdSoyad;
+            if (!string.IsNullOrWhiteSpace(x.Plaka))
+            {
+                kisi = string.IsNullOrWhiteSpace(kisi)
+                    ? x.Plaka.Trim()
+                    : $"{kisi.Trim()} ({x.Plaka.Trim()})";
+            }
+
+            bool atanmis = x.Durum != KartAtamaListeDurum.Hazir;
+            return new AtamaRowVm
+            {
+                PersonelId = x.PersonelId,
+                KartAdi = x.KartAdi,
+                MisafirAdSoyad = kisi,
+                AtamaId = x.AtamaId,
+                Durum = x.Durum,
+                DurumText = x.DurumText,
+                DurumBg = x.Durum switch
+                {
+                    KartAtamaListeDurum.Hazir => new SolidColorBrush(Color.FromRgb(0xE6, 0x7E, 0x22)),
+                    KartAtamaListeDurum.Atanmis => new SolidColorBrush(Color.FromRgb(0x47, 0x69, 0x8A)),
+                    KartAtamaListeDurum.Giris => new SolidColorBrush(Color.FromRgb(0x2E, 0x8B, 0x57)),
+                    KartAtamaListeDurum.Cikis => new SolidColorBrush(Color.FromRgb(0xB2, 0x22, 0x22)),
+                    _ => Brushes.Gray
+                },
+                CanPasifEt = atanmis && cihazdaAktif,
+                CanAktifEt = !cihazdaAktif
+            };
+        }
+    }
+
     private sealed class PassCardVm : ObservableObject
     {
         private string _adSoyad = "-";
-        private string _departman = "";
-        private string _unvan = "";
         private string _zamanText = "";
         private string _terminal = "";
         private string _yonText = "";
@@ -317,8 +607,6 @@ public partial class CanliIzlemeWindow : CeypassThemedWindow
         private ImageSource? _photo;
 
         public string AdSoyad { get => _adSoyad; set => SetProperty(ref _adSoyad, value); }
-        public string Departman { get => _departman; set => SetProperty(ref _departman, value); }
-        public string Unvan { get => _unvan; set => SetProperty(ref _unvan, value); }
         public string ZamanText { get => _zamanText; set => SetProperty(ref _zamanText, value); }
         public string Terminal { get => _terminal; set => SetProperty(ref _terminal, value); }
         public string YonText { get => _yonText; set => SetProperty(ref _yonText, value); }
@@ -335,8 +623,6 @@ public partial class CanliIzlemeWindow : CeypassThemedWindow
         public void Clear()
         {
             AdSoyad = "-";
-            Departman = "";
-            Unvan = "";
             ZamanText = "";
             Terminal = "";
             YonText = "";
@@ -347,15 +633,12 @@ public partial class CanliIzlemeWindow : CeypassThemedWindow
         public void Apply(LastPassDTO p)
         {
             AdSoyad = p.AdSoyad ?? "-";
-            Departman = p.DepartmanAdi ?? "";
-            Unvan = p.Unvan ?? "";
             ZamanText = p.Zaman.ToString("dd.MM.yyyy HH:mm:ss");
             Terminal = p.TerminalAdi ?? "";
-            // WFA: SeaGreen / Firebrick
             YonText = p.GirisMi ? "GİRİŞ" : "ÇIKIŞ";
             YonBg = new SolidColorBrush(p.GirisMi
-                ? Color.FromRgb(0x2E, 0x8B, 0x57)   // SeaGreen
-                : Color.FromRgb(0xB2, 0x22, 0x22)); // Firebrick
+                ? Color.FromRgb(0x2E, 0x8B, 0x57)
+                : Color.FromRgb(0xB2, 0x22, 0x22));
             Photo = BytesToImage(p.Foto) ?? LoadUnknown();
         }
     }

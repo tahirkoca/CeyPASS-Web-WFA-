@@ -5,7 +5,7 @@
 
 @if (!items.Any())
 {
-    <div class="alert alert-info mb-0">Bugün aktif araç kartı ataması bulunamadı.</div>
+    <div class="alert alert-info mb-0">Açık araç kartı ataması bulunamadı.</div>
 }
 else
 {
@@ -21,6 +21,7 @@ else
                         <option value="@a.AtamaId"
                                 data-ad="@a.MisafirAdSoyad"
                                 data-tc="@(a.TCKimlikNo ?? "")"
+                                data-pasaport="@(a.PasaportNo ?? "")"
                                 data-plaka="@(a.Plaka ?? "")"
                                 data-ziyaret="@(a.ZiyaretEdilenKisi ?? "")"
                                 data-aciklama="@a.Notlar"
@@ -46,8 +47,12 @@ else
                 <input class="form-control" name="AdSoyad" id="AdSoyadAracG" required />
             </div>
             <div class="col-md-6">
-                <label class="form-label">T.C. Kimlik No *</label>
+                <label class="form-label">T.C. Kimlik No</label>
                 <input class="form-control" name="TCKimlikNo" id="TCKimlikNoAracG" maxlength="11" />
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Pasaport No</label>
+                <input class="form-control" name="PasaportNo" id="PasaportNoAracG" maxlength="50" />
             </div>
             <div class="col-md-6">
                 <label class="form-label">Araç Plakası *</label>
@@ -76,6 +81,7 @@ else
             const giris = document.getElementById('GirisSaatiAracG');
             const ad = document.getElementById('AdSoyadAracG');
             const tcInput = document.getElementById('TCKimlikNoAracG');
+            const pasaportInput = document.getElementById('PasaportNoAracG');
             const plakaInput = document.getElementById('PlakaAracG');
             const ziyaretInput = document.getElementById('ZiyaretEdilenKisiAracG');
             const aciklama = document.getElementById('AciklamaAracG');
@@ -96,6 +102,7 @@ else
                 atamaId.value = opt.value;
                 ad.value = opt.getAttribute('data-ad') || '';
                 showMaskedTc(opt.getAttribute('data-tc') || '');
+                if (pasaportInput) pasaportInput.value = opt.getAttribute('data-pasaport') || '';
                 if (plakaInput) plakaInput.value = opt.getAttribute('data-plaka') || '';
                 if (ziyaretInput) ziyaretInput.value = opt.getAttribute('data-ziyaret') || '';
                 aciklama.value = opt.getAttribute('data-aciklama') || '';
@@ -112,16 +119,28 @@ else
             }
 
             select.addEventListener('change', applyFromOption);
+            const preAtama = '@(ViewBag.PreselectAtamaId)';
+            if (preAtama) {
+                select.value = preAtama;
+                applyFromOption();
+            }
             applyFromOption();
 
             form.addEventListener('submit', async function (e) {
                 e.preventDefault();
+                let tcToSave = null;
                 try {
-                    if (tcInput) tcInput.value = Tc.resolveForSave(tcInput.value, tamTc);
+                    if (tcInput) tcToSave = Tc.resolveTcOptionalForSave(tcInput.value, tamTc);
                 } catch (err) {
                     toastr.error(err.message || 'T.C. Kimlik No geçersiz.');
                     return;
                 }
+                const pasaportVal = (pasaportInput?.value || '').trim();
+                if (!tcToSave && !pasaportVal) {
+                    toastr.error('T.C. Kimlik No veya Pasaport No giriniz.');
+                    return;
+                }
+                if (tcInput) tcInput.value = tcToSave || '';
                 if (plakaInput && !(plakaInput.value || '').trim()) {
                     toastr.error('Plaka giriniz.');
                     return;

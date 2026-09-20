@@ -22,8 +22,6 @@ namespace CeyPASS.WFA.UserControls.Admin
             this.pnlIsyeri = new System.Windows.Forms.Panel();
             this.tabCihaz = new System.Windows.Forms.TabPage();
             this.pnlCihaz = new System.Windows.Forms.Panel();
-            this.tabDepartman = new System.Windows.Forms.TabPage();
-            this.pnlDepartman = new System.Windows.Forms.Panel();
             this.tabPozisyon = new System.Windows.Forms.TabPage();
             this.pnlPozisyon = new System.Windows.Forms.Panel();
             this.tabResmiTatil = new System.Windows.Forms.TabPage();
@@ -38,7 +36,6 @@ namespace CeyPASS.WFA.UserControls.Admin
             this.tabFirma.SuspendLayout();
             this.tabIsyeri.SuspendLayout();
             this.tabCihaz.SuspendLayout();
-            this.tabDepartman.SuspendLayout();
             this.tabPozisyon.SuspendLayout();
             this.tabResmiTatil.SuspendLayout();
             this.tabCalismaStatu.SuspendLayout();
@@ -51,7 +48,6 @@ namespace CeyPASS.WFA.UserControls.Admin
             this.tabAdmin.Controls.Add(this.tabFirma);
             this.tabAdmin.Controls.Add(this.tabIsyeri);
             this.tabAdmin.Controls.Add(this.tabCihaz);
-            this.tabAdmin.Controls.Add(this.tabDepartman);
             this.tabAdmin.Controls.Add(this.tabPozisyon);
             this.tabAdmin.Controls.Add(this.tabResmiTatil);
             this.tabAdmin.Controls.Add(this.tabCalismaStatu);
@@ -121,25 +117,6 @@ namespace CeyPASS.WFA.UserControls.Admin
             this.pnlCihaz.Name = "pnlCihaz";
             this.pnlCihaz.Size = new System.Drawing.Size(786, 564);
             this.pnlCihaz.TabIndex = 0;
-            //
-            // tabDepartman
-            //
-            this.tabDepartman.Controls.Add(this.pnlDepartman);
-            this.tabDepartman.Location = new System.Drawing.Point(4, 26);
-            this.tabDepartman.Name = "tabDepartman";
-            this.tabDepartman.Padding = new System.Windows.Forms.Padding(3);
-            this.tabDepartman.Size = new System.Drawing.Size(792, 570);
-            this.tabDepartman.TabIndex = 3;
-            this.tabDepartman.Text = "Departman";
-            this.tabDepartman.UseVisualStyleBackColor = true;
-            //
-            // pnlDepartman
-            //
-            this.pnlDepartman.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.pnlDepartman.Location = new System.Drawing.Point(3, 3);
-            this.pnlDepartman.Name = "pnlDepartman";
-            this.pnlDepartman.Size = new System.Drawing.Size(786, 564);
-            this.pnlDepartman.TabIndex = 0;
             //
             // tabPozisyon
             //
@@ -248,7 +225,6 @@ namespace CeyPASS.WFA.UserControls.Admin
             this.tabFirma.ResumeLayout(false);
             this.tabIsyeri.ResumeLayout(false);
             this.tabCihaz.ResumeLayout(false);
-            this.tabDepartman.ResumeLayout(false);
             this.tabPozisyon.ResumeLayout(false);
             this.tabResmiTatil.ResumeLayout(false);
             this.tabCalismaStatu.ResumeLayout(false);
@@ -266,8 +242,6 @@ namespace CeyPASS.WFA.UserControls.Admin
         private System.Windows.Forms.Panel pnlIsyeri;
         private System.Windows.Forms.TabPage tabCihaz;
         private System.Windows.Forms.Panel pnlCihaz;
-        private System.Windows.Forms.TabPage tabDepartman;
-        private System.Windows.Forms.Panel pnlDepartman;
         private System.Windows.Forms.TabPage tabPozisyon;
         private System.Windows.Forms.Panel pnlPozisyon;
         private System.Windows.Forms.TabPage tabResmiTatil;

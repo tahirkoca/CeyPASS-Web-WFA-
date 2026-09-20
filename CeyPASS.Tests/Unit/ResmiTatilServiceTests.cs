@@ -7,6 +7,9 @@ using Xunit;
 
 namespace CeyPASS.Tests.Unit
 {
+    /// <summary>
+    /// Resmi tatil doldurma (sabit), tekil kayıt validasyonu ve repository delegasyonu.
+    /// </summary>
     public class ResmiTatilServiceTests
     {
         private readonly Mock<IResmiTatilRepository> _repoMock = new();
@@ -19,6 +22,9 @@ namespace CeyPASS.Tests.Unit
 
         // ─── DoldurSabit ──────────────────────────────────────────────────────
 
+        /// <summary>
+        /// BitisYiliBastandanKucuk istisna fırlatılır
+        /// </summary>
         [Fact]
         public void DoldurSabit_BitisYiliBastandanKucuk_Exception()
         {
@@ -27,6 +33,9 @@ namespace CeyPASS.Tests.Unit
             act.Should().Throw<ArgumentException>().WithMessage("*küçük olamaz*");
         }
 
+        /// <summary>
+        /// GeçerliYillar Repoçağrılır
+        /// </summary>
         [Fact]
         public void DoldurSabit_GecerliYillar_RepoCagrilir()
         {
@@ -37,6 +46,9 @@ namespace CeyPASS.Tests.Unit
 
         // ─── KaydetTekil ──────────────────────────────────────────────────────
 
+        /// <summary>
+        /// Adboş istisna fırlatılır
+        /// </summary>
         [Fact]
         public void KaydetTekil_AdBos_Exception()
         {
@@ -45,6 +57,9 @@ namespace CeyPASS.Tests.Unit
             act.Should().Throw<ArgumentException>().WithMessage("*boş olamaz*");
         }
 
+        /// <summary>
+        /// NegatifCalismaSaati istisna fırlatılır
+        /// </summary>
         [Fact]
         public void KaydetTekil_NegatifCalismaSaati_Exception()
         {
@@ -53,6 +68,9 @@ namespace CeyPASS.Tests.Unit
             act.Should().Throw<ArgumentException>().WithMessage("*negatif olamaz*");
         }
 
+        /// <summary>
+        /// GeçerliAdVeSaati Repoçağrılır
+        /// </summary>
         [Fact]
         public void KaydetTekil_GecerliAdVeSaati_RepoCagrilir()
         {

@@ -2,6 +2,7 @@ using System;
 
 namespace CeyPASS.Entities.Concrete
 {
+    /// <summary>Personel kısa liste öğesi (combo/autocomplete).</summary>
     public class KisiListItem
     {
         public string PersonelId { get; set; } = "";

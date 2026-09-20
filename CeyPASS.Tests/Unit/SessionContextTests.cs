@@ -7,6 +7,10 @@ using Xunit;
 
 namespace CeyPASS.Tests.Unit
 {
+    /// <summary>
+    /// Web oturum bağlamında giriş yapan kullanıcı, aktif kullanıcı/firma kimlikleri ve temizleme.
+    /// HttpContext null iken yalnızca bellek içi durum test edilir.
+    /// </summary>
     public class SessionContextTests
     {
         // Null HttpContext → LoadFromSession and SaveToSession are no-ops.
@@ -20,12 +24,18 @@ namespace CeyPASS.Tests.Unit
             _sut = new SessionContext(mockAccessor.Object);
         }
 
+        /// <summary>
+        /// Oturum açılmadan CurrentUser null.
+        /// </summary>
         [Fact]
         public void CurrentUser_BaslangictaNullDoner()
         {
             _sut.CurrentUser.Should().BeNull();
         }
 
+        /// <summary>
+        /// SetCurrentUser sonrası CurrentUser aynı kullanıcıyı taşır.
+        /// </summary>
         [Fact]
         public void SetCurrentUser_SonraCurrentUserDolu()
         {
@@ -37,6 +47,9 @@ namespace CeyPASS.Tests.Unit
             _sut.CurrentUser.KullaniciId.Should().Be(5);
         }
 
+        /// <summary>
+        /// AktifKullaniciId, oturumdaki kullanıcının KullaniciId değeridir.
+        /// </summary>
         [Fact]
         public void AktifKullaniciId_CurrentUserDoluyken_UserIdDoner()
         {
@@ -45,6 +58,9 @@ namespace CeyPASS.Tests.Unit
             _sut.AktifKullaniciId.Should().Be(7);
         }
 
+        /// <summary>
+        /// AktifFirmaId, oturumdaki kullanıcının FirmaId değeridir.
+        /// </summary>
         [Fact]
         public void AktifFirmaId_CurrentUserDoluyken_FirmaIdDoner()
         {
@@ -53,6 +69,9 @@ namespace CeyPASS.Tests.Unit
             _sut.AktifFirmaId.Should().Be(3);
         }
 
+        /// <summary>
+        /// Clear tüm oturum kimliklerini sıfırlar.
+        /// </summary>
         [Fact]
         public void Clear_SonraCurrentUserVeAktifIdNullDoner()
         {

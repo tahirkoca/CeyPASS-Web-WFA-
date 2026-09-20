@@ -5,7 +5,7 @@
 
 @if (!items.Any())
 {
-    <div class="alert alert-info mb-0">Bugün aktif misafir kart ataması bulunamadı.</div>
+    <div class="alert alert-info mb-0">Açık misafir kart ataması bulunamadı.</div>
 }
 else
 {
@@ -21,6 +21,7 @@ else
                         <option value="@a.AtamaId"
                                 data-misafir="@a.MisafirAdSoyad"
                                 data-tc="@(a.TCKimlikNo ?? "")"
+                                data-pasaport="@(a.PasaportNo ?? "")"
                                 data-ziyaret="@(a.ZiyaretEdilenKisi ?? "")"
                                 data-aciklama="@a.Notlar"
                                 data-giris="@a.Baslangic.ToString("yyyy-MM-ddTHH:mm")">
@@ -45,8 +46,12 @@ else
                 <input class="form-control" name="MisafirAdSoyad" id="MisafirAdSoyad" required />
             </div>
             <div class="col-md-6">
-                <label class="form-label">T.C. Kimlik No *</label>
+                <label class="form-label">T.C. Kimlik No</label>
                 <input class="form-control" name="TCKimlikNo" id="TCKimlikNo" maxlength="11" />
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Pasaport No</label>
+                <input class="form-control" name="PasaportNo" id="PasaportNo" maxlength="50" />
             </div>
             <div class="col-md-6">
                 <label class="form-label">Kime Geldiği</label>
@@ -71,6 +76,7 @@ else
             const giris = document.getElementById('GirisSaati');
             const misafir = document.getElementById('MisafirAdSoyad');
             const tcInput = document.getElementById('TCKimlikNo');
+            const pasaportInput = document.getElementById('PasaportNo');
             const ziyaretInput = document.getElementById('ZiyaretEdilenKisi');
             const aciklama = document.getElementById('Aciklama');
             const Tc = window.TcKimlik;
@@ -90,6 +96,7 @@ else
                 atamaId.value = opt.value;
                 misafir.value = opt.getAttribute('data-misafir') || opt.dataset?.misafir || '';
                 showMaskedTc(opt.getAttribute('data-tc') || opt.dataset?.tc || '');
+                if (pasaportInput) pasaportInput.value = opt.getAttribute('data-pasaport') || opt.dataset?.pasaport || '';
                 if (ziyaretInput) ziyaretInput.value = opt.getAttribute('data-ziyaret') || opt.dataset?.ziyaret || '';
                 aciklama.value = opt.getAttribute('data-aciklama') || opt.dataset?.aciklama || '';
                 var girisVal = opt.getAttribute('data-giris') || opt.dataset?.giris || '';
@@ -106,16 +113,28 @@ else
             }
 
             select.addEventListener('change', applyFromOption);
+            const preAtama = '@(ViewBag.PreselectAtamaId)';
+            if (preAtama) {
+                select.value = preAtama;
+                applyFromOption();
+            }
             applyFromOption();
 
             form.addEventListener('submit', async function (e) {
                 e.preventDefault();
+                let tcToSave = null;
                 try {
-                    if (tcInput) tcInput.value = Tc.resolveForSave(tcInput.value, tamTc);
+                    if (tcInput) tcToSave = Tc.resolveTcOptionalForSave(tcInput.value, tamTc);
                 } catch (err) {
                     toastr.error(err.message || 'T.C. Kimlik No geçersiz.');
                     return;
                 }
+                const pasaportVal = (pasaportInput?.value || '').trim();
+                if (!tcToSave && !pasaportVal) {
+                    toastr.error('T.C. Kimlik No veya Pasaport No giriniz.');
+                    return;
+                }
+                if (tcInput) tcInput.value = tcToSave || '';
                 const fd = new FormData(form);
                 const res = await fetch(form.action, { method: 'POST', body: fd });
                 const data = await res.json();

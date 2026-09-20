@@ -7,6 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace CeyPASS.WPF.ViewModels;
 
+/// <summary>Turnike/cihaz tanım CRUD (sayfa: Cihazlar).</summary>
 public sealed class CihazViewModel : ObservableObject
 {
     private enum ScreenMode { List, Add, Edit }

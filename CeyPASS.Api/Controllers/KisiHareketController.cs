@@ -11,6 +11,7 @@ using System.Collections.Generic;
 
 namespace CeyPASS.Api.Controllers
 {
+    /// <summary>Geçiş hareketleri listesi ve manuel kayıt.</summary>
     [Authorize]
     [ApiController]
     [Route("api/v1/[controller]")]
@@ -58,6 +59,8 @@ namespace CeyPASS.Api.Controllers
             _firmaService = firmaService;
         }
 
+        
+        /// <summary>Sayfalı hareket listesi.</summary>
         [HttpGet]
         public ActionResult<ApiResult<PagedResponse<KisiHareketListRow>>> Get(
             [FromQuery] int? firmaId,
@@ -125,8 +128,10 @@ namespace CeyPASS.Api.Controllers
             return Ok(ApiResult<PagedResponse<KisiHareketListRow>>.Ok(resp));
         }
 
+        
+        /// <summary>Filtre lookup (personel/işyeri).</summary>
         [HttpGet("lookups")]
-        public ActionResult<ApiResult<object>> Lookups([FromQuery] int? firmaId, [FromQuery] string? kartTipi, [FromQuery] int? isyeriId = null)
+        public ActionResult<ApiResult<object>> Lookups([FromQuery] int? firmaId, [FromQuery] string? kartTipi, [FromQuery] int? isyeriId = null, [FromQuery] string? calismaDurumu = null)
         {
             if (!_authorizationService.ViewAbility(PageName)) return Forbid();
 
@@ -140,10 +145,11 @@ namespace CeyPASS.Api.Controllers
             if (!isAdmin && _sessionContext.AktifKullaniciId.HasValue)
                 yetkiler = _puantajService.GetKullaniciFirmaIsyeriYetkileri((int)_sessionContext.AktifKullaniciId);
 
-            bool puantajYapilir = kartTipi != "puantajsiz";
+            bool sadeceIstenCikanlar = string.Equals(calismaDurumu, "cikan", StringComparison.OrdinalIgnoreCase);
+            bool? puantajYapilir = sadeceIstenCikanlar ? null : kartTipi != "puantajsiz";
             var (single, idIn) = FirmaIsyeriYetkiHelper.ResolveKisiQueryIsyeriFilter(
                 effectiveFirmaId, isyeriId, yetkiler, isAdmin);
-            var kisiler = _kisiQueryService.GetAktifKisilerByFirma(effectiveFirmaId, null, puantajYapilir, single, idIn)
+            var kisiler = _kisiQueryService.GetAktifKisilerByFirma(effectiveFirmaId, null, puantajYapilir, single, idIn, sadeceIstenCikanlar)
                 ?? new List<KisiListItem>();
             var list = new List<PersonelLookupItem>();
             foreach (var k in kisiler)
@@ -175,6 +181,8 @@ namespace CeyPASS.Api.Controllers
             }));
         }
 
+        
+        /// <summary>Manuel hareket ekler.</summary>
         [HttpPost("ekle")]
         public ActionResult<ApiResult> Post([FromBody] HareketEkleRequest request)
         {
@@ -188,6 +196,8 @@ namespace CeyPASS.Api.Controllers
             return success ? Ok(ApiResult.Ok("Hareket başarıyla eklendi.")) : BadRequest(ApiResult.Failure("Hareket eklenemedi."));
         }
 
+        
+        /// <summary>Manuel hareket günceller.</summary>
         [HttpPut("{id}")]
         public ActionResult<ApiResult> Update(int id, [FromBody] HareketGuncelleRequest request)
         {
@@ -197,6 +207,8 @@ namespace CeyPASS.Api.Controllers
             return success ? Ok(ApiResult.Ok("Hareket başarıyla güncellendi.")) : BadRequest(ApiResult.Failure("Hareket güncellenemedi."));
         }
 
+        
+        /// <summary>Hareketi pasifleştirir.</summary>
         [HttpDelete("{id}")]
         public ActionResult<ApiResult> Delete(int id)
         {
@@ -206,6 +218,8 @@ namespace CeyPASS.Api.Controllers
             return success ? Ok(ApiResult.Ok("Hareket pasif yapıldı.")) : BadRequest(ApiResult.Failure("İşlem başarısız."));
         }
 
+        
+        /// <summary>Pasif hareketi tekrar aktif eder.</summary>
         [HttpPost("{id}/aktif")]
         public ActionResult<ApiResult> Aktif(int id)
         {

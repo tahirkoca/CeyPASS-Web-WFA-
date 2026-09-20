@@ -10,6 +10,7 @@ using System.IO;
 
 namespace CeyPASS.Web.Controllers
 {
+    /// <summary>Aylık puantaj listeleme, onay/red/düzenleme ve Excel dışa aktarma.</summary>
     public class PuantajController : Controller
     {
         private readonly IPuantajService _puantajService;
@@ -19,6 +20,7 @@ namespace CeyPASS.Web.Controllers
         private readonly IKisiQueryService _kisiQueryService;
         private readonly ISessionContext _sessionContext;
         private readonly IAuthorizationService _authorizationService;
+        private readonly ICokluSicilService _cokluSicilService;
         private const string PageName = "AylikPuantaj";
 
         public PuantajController(
@@ -28,7 +30,8 @@ namespace CeyPASS.Web.Controllers
             IKisiService kisiService,
             IKisiQueryService kisiQueryService,
             ISessionContext sessionContext,
-            IAuthorizationService authorizationService)
+            IAuthorizationService authorizationService,
+            ICokluSicilService cokluSicilService)
         {
             _puantajService = puantajService;
             _firmaService = firmaService;
@@ -37,11 +40,13 @@ namespace CeyPASS.Web.Controllers
             _kisiQueryService = kisiQueryService;
             _sessionContext = sessionContext;
             _authorizationService = authorizationService;
+            _cokluSicilService = cokluSicilService;
         }
 
+        /// <summary>Puantaj ekranı; firma/işyeri yetkisine göre filtreler ve günlük satırları yükler.</summary>
         public IActionResult Index(int? yil = null, int? ay = null, int? firmaId = null, int? isyeriId = null, string personelId = null)
         {
-            // Check authorization
+            // Sayfa yetkisi: AylikPuantaj ViewAbility
             if (!_authorizationService.ViewAbility(PageName))
             {
                 TempData["Error"] = "Aylık Puantaj ekranını görüntüleme yetkiniz yok.";
@@ -104,6 +109,7 @@ namespace CeyPASS.Web.Controllers
             return View(puantajGunleri);
         }
 
+        /// <summary>Aylık puantajı Excel olarak indirir; export yetkisi ve kullanıcı firma/işyeri kapsamı uygulanır.</summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult ExportExcel(int yil, int ay)
@@ -148,6 +154,7 @@ namespace CeyPASS.Web.Controllers
             }
         }
 
+        /// <summary>Tek gün puantaj onayı; AJAX isteklerinde JSON döner.</summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult Onayla(int personelId, DateTime tarih, int duzenlenmisFm, string aciklama, string calismaTipi, string saat)
@@ -186,6 +193,7 @@ namespace CeyPASS.Web.Controllers
             return RedirectToAction("Index");
         }
 
+        /// <summary>Seçili personelin ilgili ayının tüm günlerini toplu onaylar.</summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult TopluOnayla(int personelId, int yil, int ay)
@@ -215,6 +223,7 @@ namespace CeyPASS.Web.Controllers
             return RedirectToAction("Index");
         }
 
+        /// <summary>Puantaj kaydını reddeder (Delete yetkisi).</summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult Reddet(int personelId, DateTime tarih, string aciklama)
@@ -244,6 +253,7 @@ namespace CeyPASS.Web.Controllers
             return RedirectToAction("Index");
         }
 
+        /// <summary>Puantaj düzeltmesi; çalışma tipi+saat varsa FM dakikası yeniden hesaplanır.</summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult Duzenle(int personelId, DateTime tarih, int duzenlenmisFm, string aciklama, string calismaTipi = null, string saat = null)
@@ -303,6 +313,7 @@ namespace CeyPASS.Web.Controllers
             return RedirectToAction("Index");
         }
 
+        /// <summary>Geçmişe puantaj girişi için izin verilen ek gün sayısını ayarlar.</summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult SetEkKayitGun(int gun)
@@ -326,6 +337,7 @@ namespace CeyPASS.Web.Controllers
             return RedirectToAction("Index");
         }
 
+        /// <summary>Ana sicilden bağlı sicillere aylık puantaj aktarımı.</summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult CokluSicileAktar(int personelId, int yil, int ay)
@@ -349,6 +361,17 @@ namespace CeyPASS.Web.Controllers
             return RedirectToAction("Index", new { yil, ay, personelId });
         }
 
+        /// <summary>Çoklu sicil özet bilgisini JSON döner.</summary>
+        [HttpGet]
+        public IActionResult GetCokluSicilOzet(int personelId)
+        {
+            if (!_authorizationService.ViewAbility(PageName)) return Forbid();
+            if (personelId <= 0) return Json(new { isAnaSicil = false, aktifHedefSayisi = 0 });
+            var ozet = _cokluSicilService.GetOzet(personelId);
+            return Json(new { isAnaSicil = ozet.IsAnaSicil, aktifHedefSayisi = ozet.AktifHedefSayisi });
+        }
+
+        /// <summary>Yetkili işyeri listesi (cascade dropdown).</summary>
         [HttpGet]
         public IActionResult GetIsyerleri(int firmaId)
         {
@@ -358,6 +381,7 @@ namespace CeyPASS.Web.Controllers
             return Json(isyerleri.Select(i => new { Id = i.IsyeriId, Ad = i.Ad }));
         }
 
+        /// <summary>Puantaj dönemine göre yetkili personel listesi.</summary>
         [HttpGet]
         public IActionResult GetKisiler(int firmaId, int? isyeriId, int? yil, int? ay)
         {
@@ -396,7 +420,7 @@ namespace CeyPASS.Web.Controllers
             List<FirmaIsyeriYetkiDTO> yetkiler,
             bool isAdmin)
         {
-            if (selectedIsyeriId.HasValue && selectedIsyeriId.Value > 0)
+            if (selectedIsyeriId.HasValue && !FirmaIsyeriYetkiHelper.IsIsyeriFilterTumu(selectedIsyeriId))
             {
                 var kp = _kisiService.GetKisilerForPuantaj(firmaId, selectedIsyeriId.Value, yil, ay);
                 return kp.Select(k => new KisiListItem

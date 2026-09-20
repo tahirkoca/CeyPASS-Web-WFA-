@@ -4,17 +4,17 @@
 
 <a name="turkce"></a>
 
-# 🇹🇷 CeyPASS (Web, WFA & Mobil)
+# 🇹🇷 CeyPASS (Web, WFA, WPF & Mobil)
 
-![CeyPASS](./CeyPASS.WFA/Resources/CeyPass%20200.png)
+![CeyPASS](./CeyPASS.WPF/Assets/CeyPass200.png)
 
 **CeyPASS**, Cey Holding için geliştirilmiş kapsamlı bir **Personel Devam Kontrol Sistemidir (PDKS)**.
-Proje, tek bir merkezi sisteme bağlı çalışan modern bir **Web arayüzü**, güçlü bir **Masaüstü (Windows Forms) uygulaması** ve **iOS/Android üzerinde Expo ile geliştirilmiş mobil istemci** (`CeyPASS.Mobile`) içerir.
-Web ve masaüstü **birebir aynı yeteneklere** yakın bir parite hedefler; mobil uygulama **CeyPASS.Api** REST API’si üzerinden aynı veri ve iş kurallarına bağlanır.
+Proje, tek bir merkezi sisteme bağlı çalışan modern bir **Web arayüzü**, **Windows Forms (WFA)** ve **WPF** masaüstü istemcileri ile **iOS/Android üzerinde Expo ile geliştirilmiş mobil istemci** (`CeyPASS.Mobile`) içerir; tüm istemciler ortak iş mantığına (`CeyPASS.Business`) ve REST **`CeyPASS.Api`** katmanına bağlanır.
+Web, WFA ve WPF **birebir aynı yeteneklere** yakın bir parite hedefler; mobil uygulama API üzerinden aynı veri ve iş kurallarını kullanır. Güncel masaüstü arayüzü **WPF**’tir (`docs/kilavuz/` ekran görüntüleri WPF’ten alınır).
 
 ## 🚀 Özellikler
 
-Hem Web hem de Masaüstü üzerinden aşağıdaki tüm işlemleri yapabilirsiniz:
+Hem Web hem de masaüstü (WFA / WPF) üzerinden aşağıdaki tüm işlemleri yapabilirsiniz:
 
 *   **Personel Yönetimi:** Detaylı özlük dosyaları, işe giriş-çıkış işlemleri.
 *   **İzin İşlemleri:** İzin talebi, onayı ve takibi.
@@ -35,11 +35,19 @@ Hem Web hem de Masaüstü üzerinden aşağıdaki tüm işlemleri yapabilirsiniz
 
 Proje, **Business, DataAccess, Entities ve Infrastructure** katmanlarından oluşan **Nx Katmanlı Mimari (N-Layered Architecture)** üzerine inşa edilmiştir. Bu sayede tüm iş mantığı ortaktır.
 
-*   **Core:** .NET Core / .NET Framework
-*   **Arayüz Katmanları:** ASP.NET Core MVC & Windows Forms
+*   **Core:** .NET 8
+*   **Arayüz katmanları:** ASP.NET Core MVC (Web), Windows Forms (WFA), WPF (DevExpress), Expo / React Native (Mobile)
+*   **API:** ASP.NET Core Web API, JWT, Swagger (`api/v1`)
 *   **Veritabanı:** Microsoft SQL Server (Entity Framework Core)
-*   **Gerçek Zamanlı İletişim:** SignalR
-*   **Ortak Yapı:** Dependency Injection, Repository Pattern
+*   **Gerçek zamanlı iletişim:** SignalR
+*   **Ortak yapı:** Dependency Injection, Repository Pattern, katmanlı mimari (Business, DataAccess, Entities, Infrastructure)
+
+## 📚 Dokümantasyon
+
+| Doküman | Hedef kitle | Kaynak | PDF çıktısı |
+|---------|-------------|--------|-------------|
+| [Kullanıcı Kılavuzu](docs/Kullanici-Kilavuzu.md) | İK, puantaj, idari işler | `docs/kilavuz/` (Web / WPF / Mobil) | `docs/output/Kullanici-Kilavuzu.pdf` |
+| [Teknik Doküman](docs/Teknik-Dokuman.md) | Yazılım geliştiriciler, sistem yöneticileri | Mimari, katmanlar, yapılandırma | `docs/output/Teknik-Dokuman.pdf` |
 
 <a name="gelistirici-kurulumu"></a>
 
@@ -47,7 +55,7 @@ Proje, **Business, DataAccess, Entities ve Infrastructure** katmanlarından olu�
 
 ### Önkoşullar
 
-*   **Windows** (WFA ve önerilen geliştirme ortamı; Web/API diğer işletim sistemlerinde de derlenebilir)
+*   **Windows** (WFA, WPF ve önerilen geliştirme ortamı; Web/API diğer işletim sistemlerinde de derlenebilir)
 *   [.NET 8 SDK](https://dotnet.microsoft.com/download)
 *   [Node.js](https://nodejs.org/) LTS (`CeyPASS.Mobile` / Expo için)
 *   Erişebildiğiniz bir **Microsoft SQL Server** (şema kurulumu için)
@@ -57,11 +65,11 @@ Proje, **Business, DataAccess, Entities ve Infrastructure** katmanlarından olu�
 1.  SQL Server’da `database/CeyPASSDBScript.sql` dosyasını çalıştırın.
 2.  `CeyPASS` veritabanının oluştuğundan emin olun.
 
-### .NET yapılandırması (Api, Web, WFA)
+### .NET yapılandırması (Api, Web, WFA, WPF)
 
 Repodaki `appsettings.json` dosyalarında veritabanı için **şablon** (`YOUR_SERVER`, `YOUR_USER`, `YOUR_PASSWORD`) bulunur. Yerelde çalıştırmak için:
 
-1.  İlgili projede `appsettings.Local.json.example` dosyasını **`appsettings.Local.json`** adıyla kopyalayın (`CeyPASS.Api`, `CeyPASS.Web`, `CeyPASS.WFA`).
+1.  İlgili projede `appsettings.Local.json.example` dosyasını **`appsettings.Local.json`** adıyla kopyalayın (`CeyPASS.Api`, `CeyPASS.Web`, `CeyPASS.WFA`, `CeyPASS.WPF`).
 2.  `ConnectionStrings:DefaultConnection` değerini kendi sunucunuza göre doldurun.
 3.  Bu dosya **`.gitignore`** ile dışlanır; parolalar GitHub’a gitmez.
 
@@ -92,6 +100,16 @@ Tarayıcı adresi için Visual Studio veya [`CeyPASS.Web/Properties/launchSettin
 ### CeyPASS.WFA
 
 Visual Studio’da **CeyPASS.WFA** başlangıç projesi olarak ayarlanıp çalıştırılır. `appsettings.json` çıktı klasörüne kopyalanır; `appsettings.Local.json` proje kökünde varsa birlikte yüklenir.
+
+### CeyPASS.WPF
+
+Güncel masaüstü arayüzü (DevExpress WPF, MVVM):
+
+```bash
+dotnet run --project CeyPASS.WPF/CeyPASS.WPF.csproj
+```
+
+`appsettings.json` çıktı klasörüne kopyalanır; bağlantı dizesi WFA ile aynı mantıkta (`appsettings.Local.json` veya ortam değişkeni). Dağıtım paketi GitHub Actions ile üretilir (aşağıya bakın).
 
 ### CeyPASS.Mobile (Expo)
 
@@ -152,11 +170,12 @@ dotnet test CeyPASS.Tests/CeyPASS.Tests.csproj
 
 ## 🔁 CI/CD Entegrasyonu
 
-Bu depo, GitHub Actions tabanlı bir **CI/CD hattına** sahiptir:
+Bu depo, GitHub Actions tabanlı bir **CI/CD hattına** sahiptir ([`.github/workflows/ci-cd.yml`](.github/workflows/ci-cd.yml)):
 
-*   Her push/pull request sonrasında Web ve WFA projeleri için otomatik **build & temel kontroller** çalıştırılır.
-*   Ana dala yapılan onaylı commit'lerde, web uygulaması için **publish artifact'leri**, Windows Forms uygulaması için ise AutoUpdater.NET ile uyumlu **güncelleme paketleri** üretilip CI çıktıları olarak saklanır.
-*   Sürüm süreci, GitHub Releases üzerinden yönetilecek şekilde kurgulanmıştır; böylece WFA istemcileri yeni sürümleri doğrudan bu pipeline ile dağıtılan paketlerden alabilir.
+*   `main` dalına push sonrası **CeyPASS.WPF** Release derlemesi (`win-x86`, self-contained) yapılır.
+*   Çıktı **`CeyPASS-{sürüm}.zip`** olarak paketlenir; kurulum kısayolu uyumu için yürütülebilir dosya adı **`CeyPASS.WFA.exe`** olarak yeniden adlandırılır.
+*   **`update.xml`** üretilir; AutoUpdater.NET ile masaüstü güncellemesi bu paketten yapılabilir.
+*   Web ve WFA projeleri için ek build adımları ihtiyaç halinde genişletilebilir.
 
 ## 📞 İletişim
 
@@ -168,17 +187,17 @@ Bu depo, GitHub Actions tabanlı bir **CI/CD hattına** sahiptir:
 
 <a name="english"></a>
 
-# 🇺🇸 CeyPASS (Web, WFA & Mobile)
+# 🇺🇸 CeyPASS (Web, WFA, WPF & Mobile)
 
-![CeyPASS](./CeyPASS.WFA/Resources/CeyPass%20200.png)
+![CeyPASS](./CeyPASS.WPF/Assets/CeyPass200.png)
 
 **CeyPASS** is a comprehensive **Personnel Attendance Control System (PDKS)** developed for Cey Holding.
-The solution includes a modern **Web interface**, a **Windows Forms desktop client**, and a **mobile client** built with **Expo** (`CeyPASS.Mobile`) for iOS/Android.
-Web and desktop target **feature parity**; the mobile app talks to the same business rules through the **`CeyPASS.Api`** REST API.
+The solution includes a modern **Web interface**, **Windows Forms (WFA)** and **WPF** desktop clients, and a **mobile client** built with **Expo** (`CeyPASS.Mobile`) for iOS/Android—all sharing **`CeyPASS.Business`** and the **`CeyPASS.Api`** REST layer.
+Web, WFA, and WPF target **feature parity**; the mobile app uses the same data and business rules through the API. The current desktop UI is **WPF** (user-guide screenshots under `docs/kilavuz/` are taken from WPF).
 
 ## 🚀 Features
 
-You can perform all the following operations via both Web and Desktop:
+You can perform all the following operations via Web and desktop (WFA / WPF):
 
 *   **Personnel Management:** Detailed personnel files, onboarding/offboarding processes.
 *   **Leave Management:** Leave request, approval, and tracking.
@@ -199,11 +218,19 @@ You can perform all the following operations via both Web and Desktop:
 
 The project is built on **Nx Layered Architecture (N-Layered Architecture)** consisting of **Business, DataAccess, Entities, and Infrastructure** layers. This ensures all business logic is shared.
 
-*   **Core:** .NET Core / .NET Framework
-*   **UI Layers:** ASP.NET Core MVC & Windows Forms
+*   **Core:** .NET 8
+*   **UI layers:** ASP.NET Core MVC (Web), Windows Forms (WFA), WPF (DevExpress), Expo / React Native (Mobile)
+*   **API:** ASP.NET Core Web API, JWT, Swagger (`api/v1`)
 *   **Database:** Microsoft SQL Server (Entity Framework Core)
 *   **Real-time:** SignalR
-*   **Shared Logic:** Dependency Injection, Repository Pattern
+*   **Shared logic:** Dependency Injection, Repository Pattern, layered architecture (Business, DataAccess, Entities, Infrastructure)
+
+## 📚 Documentation
+
+| Document | Audience | Source | PDF output |
+|----------|----------|--------|------------|
+| [User Guide (TR)](docs/Kullanici-Kilavuzu.md) | HR, attendance, admin staff | `docs/kilavuz/` (Web / WPF / Mobile) | `docs/output/Kullanici-Kilavuzu.pdf` |
+| [Technical Document (TR)](docs/Teknik-Dokuman.md) | Developers, system administrators | Architecture, layers, deployment | `docs/output/Teknik-Dokuman.pdf` |
 
 <a name="developer-setup"></a>
 
@@ -211,7 +238,7 @@ The project is built on **Nx Layered Architecture (N-Layered Architecture)** con
 
 ### Prerequisites
 
-*   **Windows** is the recommended dev environment (WFA); Web/API can be built on other OSes.
+*   **Windows** is the recommended dev environment (WFA, WPF); Web/API can be built on other OSes.
 *   [.NET 8 SDK](https://dotnet.microsoft.com/download)
 *   [Node.js](https://nodejs.org/) LTS (for `CeyPASS.Mobile` / Expo)
 *   A reachable **Microsoft SQL Server** instance (for schema setup)
@@ -221,11 +248,11 @@ The project is built on **Nx Layered Architecture (N-Layered Architecture)** con
 1.  Run `database/CeyPASSDBScript.sql` on your SQL Server.
 2.  Ensure the `CeyPASS` database exists.
 
-### .NET configuration (Api, Web, WFA)
+### .NET configuration (Api, Web, WFA, WPF)
 
 Committed `appsettings.json` files contain **template** placeholders (`YOUR_SERVER`, etc.). To run locally:
 
-1.  Copy `appsettings.Local.json.example` to **`appsettings.Local.json`** in each project (`CeyPASS.Api`, `CeyPASS.Web`, `CeyPASS.WFA`).
+1.  Copy `appsettings.Local.json.example` to **`appsettings.Local.json`** in each project (`CeyPASS.Api`, `CeyPASS.Web`, `CeyPASS.WFA`, `CeyPASS.WPF`).
 2.  Fill in `ConnectionStrings:DefaultConnection`.
 3.  That file is **gitignored** and will not be pushed to GitHub.
 
@@ -256,6 +283,16 @@ Check Visual Studio or [`CeyPASS.Web/Properties/launchSettings.json`](CeyPASS.We
 ### CeyPASS.WFA
 
 Run **CeyPASS.WFA** as the startup project in Visual Studio. `appsettings.json` is copied to the output folder; `appsettings.Local.json` if present in the project folder is merged in.
+
+### CeyPASS.WPF
+
+Current desktop UI (DevExpress WPF, MVVM):
+
+```bash
+dotnet run --project CeyPASS.WPF/CeyPASS.WPF.csproj
+```
+
+`appsettings.json` is copied to the output folder; connection strings follow the same rules as WFA (`appsettings.Local.json` or environment variables). Release packages are produced via GitHub Actions (see below).
 
 ### CeyPASS.Mobile (Expo)
 
@@ -316,11 +353,12 @@ dotnet test CeyPASS.Tests/CeyPASS.Tests.csproj
 
 ## 🔁 CI/CD Integration
 
-This repository includes a GitHub Actions–based **CI/CD pipeline**:
+This repository includes a GitHub Actions **CI/CD pipeline** ([`.github/workflows/ci-cd.yml`](.github/workflows/ci-cd.yml)):
 
-*   On every push / pull request, Web and WFA projects are automatically **built and sanity-checked**.
-*   For approved commits to the main branch, the pipeline produces **publish artifacts** for the web app and **update packages** compatible with AutoUpdater.NET for the Windows Forms app.
-*   The release flow is designed to work with **GitHub Releases**, so WFA clients can consume new versions directly from the artifacts generated by this pipeline.
+*   On push to `main`, **CeyPASS.WPF** is published as a Release build (`win-x86`, self-contained).
+*   Output is packaged as **`CeyPASS-{version}.zip`**; the executable is renamed to **`CeyPASS.WFA.exe`** for shortcut/installer compatibility.
+*   An **`update.xml`** file is generated for AutoUpdater.NET desktop updates.
+*   Additional Web/WFA build steps can be added as needed.
 
 ## 📞 Contact
 

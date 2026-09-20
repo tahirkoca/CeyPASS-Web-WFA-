@@ -1,3 +1,6 @@
+/**
+ * Misafir/araç kart ataması: yeni (HAZIR kart) veya güncelle (aktif atama); API `canliIzlemeKart`.
+ */
 import React, { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
@@ -16,7 +19,7 @@ import {
   type KartAtamaItem,
   type KartListItem,
 } from "../services/canliIzlemeApi";
-import { gosterim, looksMasked, mask, resolveForSave } from "../utils/tcKimlik";
+import { gosterim, looksMasked, mask, resolveTcOptionalForSave } from "../utils/tcKimlik";
 
 type Kind = "misafir" | "arac";
 type Mode = "yeni" | "guncelle";
@@ -26,6 +29,8 @@ type Props = {
   token: string;
   kind: Kind;
   mode: Mode;
+  preselectPersonelId?: string;
+  preselectAtamaId?: number | null;
   onClose: () => void;
   onSaved: (message: string) => void;
 };
@@ -35,7 +40,10 @@ function toIsoLocal(d: Date) {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}:00`;
 }
 
-export function CanliIzlemeKartModal({ visible, token, kind, mode, onClose, onSaved }: Props) {
+/**
+ * Kart atama formu (create/update); kısıt komutu burada değil — ekranda kartKomut.
+ */
+export function CanliIzlemeKartModal({ visible, token, kind, mode, preselectPersonelId, preselectAtamaId, onClose, onSaved }: Props) {
   const title =
     mode === "yeni"
       ? kind === "misafir"
@@ -59,6 +67,7 @@ export function CanliIzlemeKartModal({ visible, token, kind, mode, onClose, onSa
   const [adSoyad, setAdSoyad] = useState("");
   const [tc, setTc] = useState("");
   const [tamTc, setTamTc] = useState<string | null>(null);
+  const [pasaport, setPasaport] = useState("");
   const [plaka, setPlaka] = useState("");
   const [kimeGeldigi, setKimeGeldigi] = useState("");
   const [aciklama, setAciklama] = useState("");
@@ -97,6 +106,7 @@ export function CanliIzlemeKartModal({ visible, token, kind, mode, onClose, onSa
     setAdSoyad("");
     setTc("");
     setTamTc(null);
+    setPasaport("");
     setPlaka("");
     setKimeGeldigi("");
     setAciklama("");
@@ -112,13 +122,21 @@ export function CanliIzlemeKartModal({ visible, token, kind, mode, onClose, onSa
           const [cRes] = await Promise.all([canliIzlemeKart.kartlar(token, kind), loadGecmis("")]);
           if (cRes.success && cRes.data) {
             setCards(cRes.data);
-            if (cRes.data.length > 0) setPersonelId(cRes.data[0].personelId);
+            const hit = preselectPersonelId
+              ? cRes.data.find((c) => c.personelId === preselectPersonelId)
+              : undefined;
+            if (hit) setPersonelId(hit.personelId);
+            else if (cRes.data.length > 0) setPersonelId(cRes.data[0].personelId);
           } else setCards([]);
         } else {
           const res = await canliIzlemeKart.aktif(token, kind);
           if (res.success && res.data) {
             setAktifler(res.data);
-            if (res.data.length > 0) applyAtama(res.data[0]);
+            const hit = preselectAtamaId
+              ? res.data.find((a) => a.atamaId === preselectAtamaId)
+              : undefined;
+            if (hit) applyAtama(hit);
+            else if (res.data.length > 0) applyAtama(res.data[0]);
             else setAtamaId(null);
           } else setAktifler([]);
         }
@@ -129,7 +147,7 @@ export function CanliIzlemeKartModal({ visible, token, kind, mode, onClose, onSa
       }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [visible, kind, mode, token]);
+  }, [visible, kind, mode, token, preselectPersonelId, preselectAtamaId]);
 
   useEffect(() => {
     if (!visible || mode !== "yeni") return;
@@ -157,6 +175,7 @@ export function CanliIzlemeKartModal({ visible, token, kind, mode, onClose, onSa
     setAtamaId(a.atamaId);
     setAdSoyad(a.adSoyad || "");
     showMaskedTc(a.tcKimlikNo);
+    setPasaport(a.pasaportNo || "");
     setPlaka(a.plaka || "");
     setKimeGeldigi(a.ziyaretEdilenKisi || "");
     setAciklama(a.notlar || "");
@@ -172,6 +191,8 @@ export function CanliIzlemeKartModal({ visible, token, kind, mode, onClose, onSa
       if (res.data.adSoyad && !adSoyad.trim()) setAdSoyad(res.data.adSoyad);
       if (res.data.ziyaretEdilenKisi && !kimeGeldigi.trim()) setKimeGeldigi(res.data.ziyaretEdilenKisi);
       if (res.data.plaka && !plaka.trim()) setPlaka(res.data.plaka);
+      if (res.data.pasaportNo && !pasaport.trim()) setPasaport(res.data.pasaportNo);
+      if (res.data.aciklama && !aciklama.trim()) setAciklama(res.data.aciklama);
     } catch {
       /* sessiz */
     }
@@ -180,8 +201,10 @@ export function CanliIzlemeKartModal({ visible, token, kind, mode, onClose, onSa
   const selectGecmis = (item: GecmisZiyaretci) => {
     setAdSoyad(item.adSoyad || "");
     showMaskedTc(item.tcKimlikNo);
+    setPasaport(item.pasaportNo || "");
     setPlaka(item.plaka || "");
     setKimeGeldigi(item.ziyaretEdilenKisi || "");
+    setAciklama(item.notlar || "");
     setGirisSaati(toIsoLocal(new Date()));
   };
 
@@ -191,11 +214,16 @@ export function CanliIzlemeKartModal({ visible, token, kind, mode, onClose, onSa
       setError("Ad soyad zorunludur.");
       return;
     }
-    let tcToSave: string;
+    let tcToSave: string | null;
     try {
-      tcToSave = resolveForSave(tc, tamTc);
+      tcToSave = resolveTcOptionalForSave(tc, tamTc);
     } catch (e: any) {
       setError(e?.message ?? "T.C. Kimlik No geçersiz.");
+      return;
+    }
+    const pasaportVal = pasaport.trim();
+    if (!tcToSave && !pasaportVal) {
+      setError("T.C. Kimlik No veya Pasaport No giriniz.");
       return;
     }
     if (kind === "arac" && !plaka.trim()) {
@@ -214,7 +242,8 @@ export function CanliIzlemeKartModal({ visible, token, kind, mode, onClose, onSa
           adSoyad: adSoyad.trim(),
           girisSaati,
           aciklama,
-          tcKimlikNo: tcToSave,
+          tcKimlikNo: tcToSave || undefined,
+          pasaportNo: pasaportVal || undefined,
           ziyaretEdilenKisi: kimeGeldigi.trim() || undefined,
           plaka: kind === "arac" ? plaka.trim() : undefined,
         });
@@ -234,7 +263,8 @@ export function CanliIzlemeKartModal({ visible, token, kind, mode, onClose, onSa
           girisSaati,
           cikisSaati,
           aciklama,
-          tcKimlikNo: tcToSave,
+          tcKimlikNo: tcToSave || undefined,
+          pasaportNo: pasaportVal || undefined,
           ziyaretEdilenKisi: kimeGeldigi.trim() || undefined,
           plaka: kind === "arac" ? plaka.trim() : undefined,
         });
@@ -362,7 +392,7 @@ export function CanliIzlemeKartModal({ visible, token, kind, mode, onClose, onSa
                   <Text className="text-[12px] font-semibold text-[#64748b] mb-1">Atama</Text>
                   {aktifler.length === 0 ? (
                     <Text className="text-[#64748b] font-semibold text-[12px] mb-2">
-                      Bugün aktif atama bulunamadı.
+                      Açık atama bulunamadı.
                     </Text>
                   ) : (
                     <TouchableOpacity
@@ -379,12 +409,18 @@ export function CanliIzlemeKartModal({ visible, token, kind, mode, onClose, onSa
               )}
 
               <Field
-                label="T.C. Kimlik No *"
+                label="T.C. Kimlik No"
                 value={tc}
                 onChangeText={onTcChange}
                 placeholder="11 hane"
                 onBlur={tryFillByTc}
                 maxLength={11}
+              />
+              <Field
+                label="Pasaport No"
+                value={pasaport}
+                onChangeText={setPasaport}
+                maxLength={50}
               />
               {kind === "arac" ? (
                 <Field label="Araç Plakası *" value={plaka} onChangeText={setPlaka} placeholder="Plaka giriniz" maxLength={20} />

@@ -2,6 +2,7 @@
 
 namespace CeyPASS.Entities.Concrete
 {
+    /// <summary>Resmi tatil günü; puantajda çalışma saati katsayısı için.</summary>
     public class ResmiTatilDTO
     {
         public DateTime Tarih { get; set; }

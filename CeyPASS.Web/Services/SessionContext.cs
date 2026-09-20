@@ -5,9 +5,7 @@ using System.Text.Json;
 
 namespace CeyPASS.Web.Services
 {
-    /// <summary>
-    /// ASP.NET Core için SessionContext implementasyonu
-    /// </summary>
+    /// <summary>HTTP session üzerinden oturum kullanıcısı ve aktif firma bilgisi.</summary>
     public class SessionContext : ISessionContext
     {
         private readonly IHttpContextAccessor _httpContextAccessor;
@@ -19,6 +17,7 @@ namespace CeyPASS.Web.Services
             LoadFromSession();
         }
 
+        // Her istekte CurrentUser JSON session'dan yüklenir
         private void LoadFromSession()
         {
             var session = _httpContextAccessor?.HttpContext?.Session;
@@ -144,6 +143,7 @@ namespace CeyPASS.Web.Services
 
         public bool IsAdmin() => RolId == 1 || RolId == 2;
 
+        /// <summary>SetCurrentUser islemi.</summary>
         public void SetCurrentUser(AuthUserDTO user)
         {
             _currentUser = user;
@@ -151,6 +151,7 @@ namespace CeyPASS.Web.Services
             SaveToSession();
         }
 
+        /// <summary>Clear islemi.</summary>
         public void Clear()
         {
             _currentUser = null;

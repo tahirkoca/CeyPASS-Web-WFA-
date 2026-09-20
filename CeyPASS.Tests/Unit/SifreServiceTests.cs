@@ -8,6 +8,9 @@ using Xunit;
 
 namespace CeyPASS.Tests.Unit
 {
+    /// <summary>
+    /// Şifre sıfırlama, hash ve doğrulama kuralları.
+    /// </summary>
     public class SifreServiceTests
     {
         private readonly Mock<IKullaniciRepository> _repoMock = new();
@@ -31,6 +34,9 @@ namespace CeyPASS.Tests.Unit
 
         // ─── SifreSifirlamaTamamla ────────────────────────────────────────────
 
+        /// <summary>
+        /// GirilenKodboş Hataverir
+        /// </summary>
         [Fact]
         public void SifreSifirlamaTamamla_GirilenKodBos_HataVerir()
         {
@@ -39,6 +45,9 @@ namespace CeyPASS.Tests.Unit
             sonuc.HataMesaji.Should().NotBeNullOrWhiteSpace();
         }
 
+        /// <summary>
+        /// YeniSifreboş Hataverir
+        /// </summary>
         [Fact]
         public void SifreSifirlamaTamamla_YeniSifreBos_HataVerir()
         {
@@ -47,6 +56,9 @@ namespace CeyPASS.Tests.Unit
             sonuc.HataMesaji.Should().NotBeNullOrWhiteSpace();
         }
 
+        /// <summary>
+        /// SifreAltialtiKarakter Hataverir
+        /// </summary>
         [Fact]
         public void SifreSifirlamaTamamla_SifreAltialtiKarakter_HataVerir()
         {
@@ -55,6 +67,9 @@ namespace CeyPASS.Tests.Unit
             sonuc.HataMesaji.Should().NotBeNullOrWhiteSpace();
         }
 
+        /// <summary>
+        /// SifrelerEslesmez Hataverir
+        /// </summary>
         [Fact]
         public void SifreSifirlamaTamamla_SifrelerEslesmez_HataVerir()
         {
@@ -63,6 +78,9 @@ namespace CeyPASS.Tests.Unit
             sonuc.HataMesaji.Should().NotBeNullOrWhiteSpace();
         }
 
+        /// <summary>
+        /// KullaniciBulunamaz Hataverir
+        /// </summary>
         [Fact]
         public void SifreSifirlamaTamamla_KullaniciBulunamaz_HataVerir()
         {
@@ -73,6 +91,9 @@ namespace CeyPASS.Tests.Unit
             sonuc.HataMesaji.Should().NotBeNullOrWhiteSpace();
         }
 
+        /// <summary>
+        /// KodEslesmez Hataverir
+        /// </summary>
         [Fact]
         public void SifreSifirlamaTamamla_KodEslesmez_HataVerir()
         {
@@ -85,6 +106,9 @@ namespace CeyPASS.Tests.Unit
             sonuc.HataMesaji.Should().NotBeNullOrWhiteSpace();
         }
 
+        /// <summary>
+        /// TumKosullarSaglanir Sifresıfırlanir
+        /// </summary>
         [Fact]
         public void SifreSifirlamaTamamla_TumKosullarSaglanir_SifreSifirlanir()
         {
@@ -100,6 +124,9 @@ namespace CeyPASS.Tests.Unit
             _repoMock.Verify(r => r.KurtarmaKodunuTemizle(1), Times.Once);
         }
 
+        /// <summary>
+        /// SifreGuncelleFalse Basarisizdöner
+        /// </summary>
         [Fact]
         public void SifreSifirlamaTamamla_SifreGuncelleFalse_BasarisizDoner()
         {
@@ -117,6 +144,9 @@ namespace CeyPASS.Tests.Unit
 
         // ─── SifreSifirlamaBaslat ─────────────────────────────────────────────
 
+        /// <summary>
+        /// KullaniciBulunamaz Hataverir
+        /// </summary>
         [Fact]
         public void SifreSifirlamaBaslat_KullaniciBulunamaz_HataVerir()
         {
@@ -127,6 +157,9 @@ namespace CeyPASS.Tests.Unit
             sonuc.HataMesaji.Should().NotBeNullOrWhiteSpace();
         }
 
+        /// <summary>
+        /// EmailYok Hataverir
+        /// </summary>
         [Fact]
         public void SifreSifirlamaBaslat_EmailYok_HataVerir()
         {
@@ -138,6 +171,9 @@ namespace CeyPASS.Tests.Unit
             sonuc.HataMesaji.Should().NotBeNullOrWhiteSpace();
         }
 
+        /// <summary>
+        /// GeçerliKullanici KodGonderilir Basarilidöner
+        /// </summary>
         [Fact]
         public void SifreSifirlamaBaslat_GecerliKullanici_KodGonderilir_BasariliDoner()
         {

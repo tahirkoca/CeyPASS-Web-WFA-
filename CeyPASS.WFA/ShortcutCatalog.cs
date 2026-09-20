@@ -1,5 +1,6 @@
 namespace CeyPASS.WFA;
 
+/// <summary>Klavye kısayolu tanımı.</summary>
 public readonly record struct ShortcutItem(string Keys, string Description);
 
 /// <summary>
@@ -7,12 +8,14 @@ public readonly record struct ShortcutItem(string Keys, string Description);
 /// </summary>
 internal static class ShortcutCatalog
 {
+    /// <summary>Tüm sayfalarda geçerli kısayollar.</summary>
     public static IReadOnlyList<ShortcutItem> Global { get; } =
     [
         new("Ctrl+/ veya F1", "Bu kısayol listesini aç"),
         new("Esc", "Diyalog / paneli kapat")
     ];
 
+    /// <summary>Sayfa anahtarına göre ek kısayolları birleştirir.</summary>
     public static IReadOnlyList<ShortcutItem> ForPage(string? pageKey)
     {
         var list = new List<ShortcutItem>(Global);

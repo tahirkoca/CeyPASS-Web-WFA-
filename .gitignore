@@ -183,3 +183,7 @@ CeyPASS.Mobile/.env.*
 # Docs screenshot capture (Playwright)
 docs/scripts/node_modules/
 docs/scripts/package-lock.json
+
+# Kılavuz PDF çıktısı
+docs/output/*.pdf
+docs/output/*-birlesik.md

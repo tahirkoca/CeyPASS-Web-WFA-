@@ -5,6 +5,7 @@ using System.Collections.Generic;
 
 namespace CeyPASS.Business.Services
 {
+    /// <summary>İzin tipi sorguları.</summary>
     public class IzinTipService:IIzinTipService
     {
         private readonly IIzinTipRepository _repo;
@@ -13,7 +14,9 @@ namespace CeyPASS.Business.Services
         {
             _repo = repo;
         }
+        /// <inheritdoc />
         public List<IzinTip> GetAktif() => _repo.GetAktifIzinTipleri();
+        /// <inheritdoc />
         public int? GetSaatlikIzinTipId() => _repo.GetSaatlikKullanilabilirTipId();
     }
 }

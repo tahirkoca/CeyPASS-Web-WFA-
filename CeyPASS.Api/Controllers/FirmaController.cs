@@ -7,6 +7,7 @@ using CeyPASS.Models;
 
 namespace CeyPASS.Api.Controllers
 {
+    /// <summary>Firma master verisi (Firmalar sayfası).</summary>
     [Authorize]
     [ApiController]
     [Route("api/v1/[controller]")]
@@ -22,6 +23,8 @@ namespace CeyPASS.Api.Controllers
             _authorizationService = authorizationService;
         }
 
+        
+        /// <summary>Firma listesi.</summary>
         [HttpGet]
         public ActionResult<ApiResult<List<FirmaRow>>> Get()
         {
@@ -36,6 +39,8 @@ namespace CeyPASS.Api.Controllers
             return Ok(ApiResult<List<FirmaRow>>.Ok(rows));
         }
 
+        
+        /// <summary>Yeni firma için önerilen Id.</summary>
         [HttpGet("nextId")]
         public ActionResult<ApiResult<int>> NextId()
         {
@@ -44,6 +49,8 @@ namespace CeyPASS.Api.Controllers
             return Ok(ApiResult<int>.Ok(id));
         }
 
+        
+        /// <summary>Firma ekler.</summary>
         [HttpPost]
         public ActionResult<ApiResult<int>> Post([FromBody] FirmaUpsertRequest request)
         {
@@ -63,6 +70,8 @@ namespace CeyPASS.Api.Controllers
             return Ok(ApiResult<int>.Ok(id, "Firma kaydedildi."));
         }
 
+        
+        /// <summary>Firma günceller.</summary>
         [HttpPut("{id}")]
         public ActionResult<ApiResult> Put(int id, [FromBody] FirmaUpsertRequest request)
         {
@@ -79,6 +88,8 @@ namespace CeyPASS.Api.Controllers
             return Ok(ApiResult.Ok("Firma güncellendi."));
         }
 
+        
+        /// <summary>Firma siler.</summary>
         [HttpDelete("{id}")]
         public ActionResult<ApiResult> Delete(int id)
         {

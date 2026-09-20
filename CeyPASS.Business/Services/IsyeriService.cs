@@ -6,6 +6,7 @@ using System.Data;
 
 namespace CeyPASS.Business.Services
 {
+    /// <summary>İşyeri tanım işlemleri.</summary>
     public class IsyeriService:IIsyeriService
     {
         private readonly IIsyeriRepository _repo;
@@ -14,7 +15,9 @@ namespace CeyPASS.Business.Services
         {
             _repo = repo;
         }
+        /// <inheritdoc />
         public DataTable GetAll() => _repo.GetAll();
+        /// <inheritdoc />
         public List<IsyeriItem> GetListForAdmin()
         {
             var dt = _repo.GetAll();
@@ -29,9 +32,13 @@ namespace CeyPASS.Business.Services
             }
             return list;
         }
+        /// <inheritdoc />
         public List<IsyeriItem> GetIsyerleriByFirma(int firmaId)=>_repo.GetIsyerleriByFirma(firmaId);            
+        /// <inheritdoc />
         public bool AddManual(int firmaId, int isyeriId, string ad)=> _repo.InsertManual(firmaId, isyeriId, ad);
+        /// <inheritdoc />
         public bool Update(int firmaId, int isyeriId, string ad)=> _repo.Update(firmaId, isyeriId, ad);
+        /// <inheritdoc />
         public bool Delete(int firmaId, int isyeriId)=> _repo.Delete(firmaId, isyeriId);
     }
 }

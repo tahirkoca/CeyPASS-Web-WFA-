@@ -1,3 +1,4 @@
+/** Uygulama içi bildirim geçmişi ve okundu işaretleme. */
 import api from "./api";
 
 export type ApiResult<T> = { success: boolean; message?: string; data?: T };
@@ -19,6 +20,7 @@ export type NotificationHistoryResponse = {
   pageSize: number;
 };
 
+/** Okunmamış sayacı, sayfalı history, tek/toplu okundu. */
 export const notificationService = {
   async unreadCount(): Promise<ApiResult<number>> {
     const res = await api.get("/Notification/unread-count");

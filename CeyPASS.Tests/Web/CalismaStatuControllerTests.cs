@@ -10,6 +10,9 @@ using Xunit;
 
 namespace CeyPASS.Tests.Web
 {
+    /// <summary>
+    /// Çalışma statüsü tanım MVC.
+    /// </summary>
     public class CalismaStatuControllerTests
     {
         private readonly Mock<ICalismaStatuService> _statuMock = new();
@@ -29,6 +32,9 @@ namespace CeyPASS.Tests.Web
 
         // ─── Create POST ──────────────────────────────────────────────────────
 
+        /// <summary>
+        /// POST Yetkisiz IndexeYonlendirir
+        /// </summary>
         [Fact]
         public void Create_POST_Yetkisiz_IndexeYonlendirir()
         {
@@ -41,6 +47,9 @@ namespace CeyPASS.Tests.Web
             ((string)_sut.TempData["Error"]!).Should().NotBeNullOrEmpty();
         }
 
+        /// <summary>
+        /// POST boşAd TempDataHataVereddedilirirect
+        /// </summary>
         [Fact]
         public void Create_POST_BosAd_TempDataHataVeRedirect()
         {
@@ -56,6 +65,9 @@ namespace CeyPASS.Tests.Web
 
         // ─── Index ────────────────────────────────────────────────────────────
 
+        /// <summary>
+        /// Yetkisiz HomeIndexeYonlendirir
+        /// </summary>
         [Fact]
         public void Index_Yetkisiz_HomeIndexeYonlendirir()
         {
@@ -71,6 +83,9 @@ namespace CeyPASS.Tests.Web
 
         // ─── Update ───────────────────────────────────────────────────────────
 
+        /// <summary>
+        /// Yetkisiz IndexeYonlendirir
+        /// </summary>
         [Fact]
         public void Update_Yetkisiz_IndexeYonlendirir()
         {
@@ -83,6 +98,9 @@ namespace CeyPASS.Tests.Web
             ((string)_sut.TempData["Error"]!).Should().NotBeNullOrEmpty();
         }
 
+        /// <summary>
+        /// BoşAd IndexeYonlendirir
+        /// </summary>
         [Fact]
         public void Update_BosAd_IndexeYonlendirir()
         {
@@ -98,6 +116,9 @@ namespace CeyPASS.Tests.Web
 
         // ─── Delete ───────────────────────────────────────────────────────────
 
+        /// <summary>
+        /// Yetkisiz IndexeYonlendirir
+        /// </summary>
         [Fact]
         public void Delete_Yetkisiz_IndexeYonlendirir()
         {

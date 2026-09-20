@@ -1,3 +1,6 @@
+/**
+ * CeyPASS Mobile kök: oturum, yan menü, yetkiye göre ekran yönlendirme, splash.
+ */
 import "./global.css";
 import React, { useEffect, useMemo, useState } from 'react';
 import {
@@ -36,7 +39,6 @@ import { IzinlerScreen } from './components/kurumsal/IzinlerScreen';
 import { RaporlarScreen } from './components/kurumsal/RaporlarScreen';
 import { FirmalarScreen } from './components/kurumsal/FirmalarScreen';
 import { IsyerleriScreen } from './components/kurumsal/IsyerleriScreen';
-import { DepartmanlarScreen } from './components/kurumsal/DepartmanlarScreen';
 import { PozisyonlarScreen } from './components/kurumsal/PozisyonlarScreen';
 import { PuantajScreen } from './components/puantaj/PuantajScreen';
 import { VardiyalarScreen } from './components/ayarlar/VardiyalarScreen';
@@ -75,7 +77,6 @@ const PAGE_TITLES: Record<string, string> = {
   puantaj: "Puantaj",
   firmalar: "Firmalar",
   isyerleri: "İşyerleri",
-  departmanlar: "Departmanlar",
   pozisyonlar: "Pozisyonlar",
   vardiyalar: "Vardiyalar",
   calismaStatuleri: "Çalışma Statüleri",
@@ -118,7 +119,6 @@ function LoggedInShell(props: {
     if (key === "puantaj") return !!canView("AylikPuantaj");
     if (key === "firmalar") return !!canView("Firmalar");
     if (key === "isyerleri") return !!canView("Isyerler");
-    if (key === "departmanlar") return !!canView("Departmanlar");
     if (key === "pozisyonlar") return !!canView("Pozisyonlar");
     if (key === "vardiyalar") return !!canView("Vardiyalar");
     if (key === "calismaStatuleri") return !!canView("CalismaStatuleri");
@@ -187,8 +187,6 @@ function LoggedInShell(props: {
             <FirmalarScreen user={userData} abilities={abilities} onOpenMenu={() => setMenuVisible(true)} />
           ) : safePage === "isyerleri" ? (
             <IsyerleriScreen user={userData} abilities={abilities} onOpenMenu={() => setMenuVisible(true)} />
-          ) : safePage === "departmanlar" ? (
-            <DepartmanlarScreen user={userData} abilities={abilities} onOpenMenu={() => setMenuVisible(true)} />
           ) : safePage === "pozisyonlar" ? (
             <PozisyonlarScreen user={userData} abilities={abilities} onOpenMenu={() => setMenuVisible(true)} />
           ) : safePage === "vardiyalar" ? (
@@ -261,6 +259,7 @@ function LoggedInShell(props: {
   );
 }
 
+/** Giriş formu veya oturum açıkken `AppShell` (Dashboard + modüller). */
 export default function App() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -288,7 +287,6 @@ export default function App() {
     | "puantaj"
     | "firmalar"
     | "isyerleri"
-    | "departmanlar"
     | "pozisyonlar"
     | "vardiyalar"
     | "calismaStatuleri"
@@ -329,33 +327,34 @@ export default function App() {
         setBootReady(false);
         setBootStatus("checking");
         setBootMessage(null);
+
         // Reachability to API:
         // - Any HTTP response (even 401/403/404) means we're online.
         // - Only network/timeout should be treated as offline.
         getApiBaseUrl(); // validates config & primes baseURL via interceptor
         try {
-          await api.get("/Auth/abilities", { timeout: 4500 });
+          await api.get("/Auth/abilities", { timeout: 4500, validateStatus: () => true });
         } catch (e: any) {
-          // If server responded, we are online (auth may be missing).
           if (!e?.response) throw e;
         }
         if (!alive) return;
         // Preload background image so transitions don't flash.
         preloadLoginBackground();
 
-        const s = await loadSession();
-        if (!alive) return;
-        if (s) {
-          setUsername(s.username ?? "");
-          setRememberMe(true);
-          setUserData(s.user);
-          setAbilities(s.abilities ?? null);
-          setAuthToken(s.token);
-          setIsLoggedIn(true);
-        }
+        try {
+          const s = await loadSession();
+          if (!alive) return;
+          if (s) {
+            setUsername(s.username ?? "");
+            setRememberMe(true);
+            setUserData(s.user);
+            setAbilities(s.abilities ?? null);
+            setAuthToken(s.token);
+            setIsLoggedIn(true);
+          }
+        } catch { /* web secure store */ }
         setBootStatus("online");
         setBootMessage(null);
-        // keep splash visible briefly so logo animation can be seen
         readyTimer = setTimeout(() => {
           if (!alive) return;
           setBootReady(true);
@@ -377,7 +376,6 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    // Configure push behavior (foreground notifications)
     Notifications.setNotificationHandler({
       handleNotification: async () => ({
         shouldShowAlert: true,
@@ -440,7 +438,7 @@ export default function App() {
                 setBootMessage(null);
                 getApiBaseUrl();
                 try {
-                  await api.get("/Auth/abilities", { timeout: 4500 });
+                  await api.get("/Auth/abilities", { timeout: 4500, validateStatus: () => true });
                 } catch (e: any) {
                   if (!e?.response) throw e;
                 }
@@ -507,6 +505,7 @@ export default function App() {
         } else {
           await clearSession();
         }
+
         showPopup('success', `Hoş geldiniz, ${response.data.user.adSoyad}`);
 
         // Popup kapandıktan sonra Dashboard'a geç

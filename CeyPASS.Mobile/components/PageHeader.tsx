@@ -1,3 +1,4 @@
+/** Standart ekran üst çubuğu (menü, başlık, sağ aksiyonlar). */
 import React from "react";
 import { Text, TouchableOpacity, View } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";

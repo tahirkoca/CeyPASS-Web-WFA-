@@ -7,6 +7,7 @@ using CeyPASS.Models;
 
 namespace CeyPASS.Api.Controllers
 {
+    /// <summary>Resmi tatil takvimi.</summary>
     [Authorize]
     [ApiController]
     [Route("api/v1/[controller]")]
@@ -24,6 +25,8 @@ namespace CeyPASS.Api.Controllers
             _authorizationService = authorizationService;
         }
 
+        
+        /// <summary>Yıla göre resmi tatiller.</summary>
         [HttpGet]
         public ActionResult<ApiResult<List<ResmiTatilDTO>>> Get([FromQuery] int? yil)
         {
@@ -34,6 +37,8 @@ namespace CeyPASS.Api.Controllers
             return Ok(ApiResult<List<ResmiTatilDTO>>.Ok(list));
         }
 
+        
+        /// <summary>Tekil tatil ekler/günceller.</summary>
         [HttpPost]
         public ActionResult<ApiResult> Post([FromBody] ResmiTatilSaveRequest request)
         {
@@ -50,6 +55,8 @@ namespace CeyPASS.Api.Controllers
             }
         }
 
+        
+        /// <summary>Sabit tatilleri yıl aralığına doldurur.</summary>
         [HttpPost("doldur-sabit")]
         public ActionResult<ApiResult> DoldurSabit([FromBody] ResmiTatilDoldurSabitRequest request)
         {

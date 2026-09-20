@@ -8,6 +8,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace CeyPASS.WPF.ViewModels;
 
+/// <summary>Rapor parametresinde çoklu seçim (işyeri/cihaz) satırı.</summary>
 public sealed class RaporCheckItem : ObservableObject
 {
     private bool _isChecked;
@@ -21,6 +22,9 @@ public sealed class RaporCheckItem : ObservableObject
     }
 }
 
+/// <summary>
+/// Dinamik rapor parametreleri ve grid; dashboard KPI geçişinde tür/tarih ön doldurulabilir.
+/// </summary>
 public sealed class RaporlarViewModel : ObservableObject
 {
     private const string PageName = "Raporlar";
@@ -370,12 +374,12 @@ public sealed class RaporlarViewModel : ObservableObject
             list = FirmaIsyeriYetkiHelper.FilterIsyeriLookup(list, firmaId, yetkiler, _isAdmin);
 
             MultiSelectItems.Clear();
-            foreach (var iy in list.Where(x => x.Id > 0))
+            foreach (var iy in list.Where(x => x.Id >= 0))
             {
                 MultiSelectItems.Add(new RaporCheckItem
                 {
                     Id = iy.Id,
-                    Ad = iy.Ad ?? $"İşyeri {iy.Id}",
+                    Ad = string.IsNullOrWhiteSpace(iy.Ad) ? $"İşyeri {iy.Id}" : iy.Ad,
                     Tag = iy
                 });
             }
@@ -499,7 +503,7 @@ public sealed class RaporlarViewModel : ObservableObject
         var yetkiSvc = sp.GetRequiredService<IKullaniciFirmaIsyeriYetkiService>();
         var firmaIsyeriIds = kq.GetFirmayaAitIsyeriIdleri(firmaId) ?? new List<int>();
         var maxCsv = yetkiSvc.BuildIsyeriIdListCsv(firmaId, yetkiler, isAdmin, firmaIsyeriIds);
-        var selectedIds = MultiSelectItems.Where(x => x.IsChecked).Select(x => x.Id).Where(id => id > 0).Distinct().ToList();
+        var selectedIds = MultiSelectItems.Where(x => x.IsChecked).Select(x => x.Id).Where(id => id >= 0).Distinct().ToList();
         var (csv, status) = FirmaIsyeriYetkiHelper.ResolveRaporIsyeriIdListCsv(
             firmaId, selectedIds, maxCsv, yetkiler, isAdmin);
 

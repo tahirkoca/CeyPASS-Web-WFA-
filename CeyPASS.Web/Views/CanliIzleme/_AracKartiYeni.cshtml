@@ -1,6 +1,7 @@
 @model CeyPASS.Web.Models.CanliIzleme.AracKartiYeniModel
 @{
     var cards = ViewBag.Cards as List<CeyPASS.Entities.Concrete.KisiListItem> ?? new List<CeyPASS.Entities.Concrete.KisiListItem>();
+    var preKart = ViewBag.PreselectPersonelId as string;
 }
 
 <form id="aracYeniForm" method="post" asp-controller="CanliIzleme" asp-action="AracKartiYeni">
@@ -12,7 +13,7 @@
             <input type="text" class="form-control mb-2" id="gecmisAraArac" placeholder="İsim veya plaka ara..." autocomplete="off" />
             <select id="gecmisListeArac" class="form-select" size="12" style="min-height: 280px;">
             </select>
-            <div class="form-text">Listeden seçince Ad Soyad, T.C., Plaka ve Kime Geldiği dolar.</div>
+            <div class="form-text">Listeden seçince Ad Soyad, T.C., Pasaport, Plaka ve Kime Geldiği dolar.</div>
         </div>
         <div class="col-md-8">
             <div class="row g-3">
@@ -22,7 +23,14 @@
                         <option value="">-- Seçiniz --</option>
                         @foreach (var c in cards)
                         {
-                            <option value="@c.PersonelId">@c.AdSoyad</option>
+                            if (!string.IsNullOrWhiteSpace(preKart) && string.Equals(c.PersonelId, preKart, StringComparison.OrdinalIgnoreCase))
+                            {
+                                <option value="@c.PersonelId" selected>@c.AdSoyad</option>
+                            }
+                            else
+                            {
+                                <option value="@c.PersonelId">@c.AdSoyad</option>
+                            }
                         }
                     </select>
                 </div>
@@ -32,8 +40,12 @@
                            value="@Model.GirisSaati.ToString("yyyy-MM-ddTHH:mm")" required />
                 </div>
                 <div class="col-md-6">
-                    <label class="form-label">T.C. Kimlik No *</label>
+                    <label class="form-label">T.C. Kimlik No</label>
                     <input class="form-control" name="TCKimlikNo" id="TCKimlikNoArac" maxlength="11" />
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Pasaport No</label>
+                    <input class="form-control" name="PasaportNo" id="PasaportNoArac" maxlength="50" />
                 </div>
                 <div class="col-md-6">
                     <label class="form-label">Araç Plakası *</label>
@@ -45,7 +57,7 @@
                 </div>
                 <div class="col-12">
                     <p class="form-text text-muted small mb-0">
-                        T.C. Kimlik No (11 hane) ve plaka zorunludur. T.C. girip alandan çıkınca veya Enter'a basınca boş alanlar otomatik doldurulur.
+                        T.C. veya Pasaport'tan en az biri zorunlu; T.C. girildiyse 11 hane. Plaka zorunludur. T.C. girip alandan çıkınca veya Enter'a basınca boş alanlar otomatik doldurulur.
                         Geçmiş listeden seçim alanları doğrudan yazar.
                     </p>
                 </div>
@@ -55,7 +67,7 @@
                 </div>
                 <div class="col-md-12">
                     <label class="form-label">Açıklama</label>
-                    <textarea class="form-control" name="Aciklama" rows="3"></textarea>
+                    <textarea class="form-control" name="Aciklama" id="AciklamaArac" rows="3"></textarea>
                 </div>
                 <div class="col-12 d-flex justify-content-end gap-2">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
@@ -70,8 +82,10 @@
     (function () {
         const form = document.getElementById('aracYeniForm');
         const tcInput = document.getElementById('TCKimlikNoArac');
+        const pasaportInput = document.getElementById('PasaportNoArac');
         const adInput = document.getElementById('AdSoyadArac');
         const kimeGeldigiInput = document.getElementById('ZiyaretEdilenKisiArac');
+        const aciklamaInput = document.getElementById('AciklamaArac');
         const plakaInput = document.getElementById('PlakaArac');
         const girisInput = document.getElementById('GirisSaatiArac');
         const gecmisAra = document.getElementById('gecmisAraArac');
@@ -120,8 +134,10 @@
                 if (!it) return;
                 adInput.value = it.adSoyad || '';
                 showMaskedTc(it.tcKimlikNo);
+                if (pasaportInput) pasaportInput.value = it.pasaportNo || '';
                 if (plakaInput) plakaInput.value = it.plaka || '';
                 kimeGeldigiInput.value = it.ziyaretEdilenKisi || '';
+                if (aciklamaInput) aciklamaInput.value = it.notlar || '';
                 if (girisInput) girisInput.value = toLocalInputValue(new Date());
             });
         }
@@ -139,6 +155,8 @@
                 if (data.adSoyad && !adInput.value.trim()) adInput.value = data.adSoyad;
                 if (data.ziyaretEdilenKisi && !kimeGeldigiInput.value.trim()) kimeGeldigiInput.value = data.ziyaretEdilenKisi;
                 if (data.plaka && plakaInput && !plakaInput.value.trim()) plakaInput.value = data.plaka;
+                if (data.pasaportNo && pasaportInput && !pasaportInput.value.trim()) pasaportInput.value = data.pasaportNo;
+                if (data.aciklama && aciklamaInput && !aciklamaInput.value.trim()) aciklamaInput.value = data.aciklama;
             } catch (e) { }
         }
 
@@ -160,12 +178,19 @@
 
         form.addEventListener('submit', async function (e) {
             e.preventDefault();
+            let tcToSave = null;
             try {
-                tcInput.value = Tc.resolveForSave(tcInput.value, tamTc);
+                tcToSave = Tc.resolveTcOptionalForSave(tcInput.value, tamTc);
             } catch (err) {
                 toastr.error(err.message || 'T.C. Kimlik No geçersiz.');
                 return;
             }
+            const pasaportVal = (pasaportInput?.value || '').trim();
+            if (!tcToSave && !pasaportVal) {
+                toastr.error('T.C. Kimlik No veya Pasaport No giriniz.');
+                return;
+            }
+            tcInput.value = tcToSave || '';
             if (plakaInput && !(plakaInput.value || '').trim()) {
                 toastr.error('Plaka giriniz.');
                 return;

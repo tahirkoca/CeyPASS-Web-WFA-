@@ -2,6 +2,7 @@ using System;
 
 namespace CeyPASS.Entities.Concrete
 {
+    /// <summary>Personel avans talebi ve onay bilgisi.</summary>
     public class AvansTalep
     {
         public int AvansId { get; set; }

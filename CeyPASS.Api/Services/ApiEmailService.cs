@@ -8,6 +8,7 @@ using System.Net.Mail;
 
 namespace CeyPASS.Api.Services
 {
+    /// <summary>API katmanı SMTP e-posta gönderimi (şifre sıfırlama vb.).</summary>
     public class ApiEmailService : IEmailService
     {
         private readonly string _host;
@@ -33,6 +34,7 @@ namespace CeyPASS.Api.Services
             _fromName = smtp["FromName"] ?? "CeyPASS Sistem";
         }
 
+        /// <inheritdoc />
         public void SendEmail(string toEmail, string subject, string body)
         {
             SendInternal(toEmail, subject, body, false);
@@ -61,11 +63,13 @@ namespace CeyPASS.Api.Services
             catch { /* Ignore for API demo safety */ }
         }
 
+        /// <summary>Şifre sıfırlama doğrulama kodu e-postası.</summary>
         public void SendVerificationCode(string toEmail, string code)
         {
             SendInternal(toEmail, "CeyPASS Doğrulama Kodu", $"Doğrulama kodunuz: {code}", false);
         }
 
+        /// <inheritdoc />
         public string MaskEmail(string email)
         {
             if (string.IsNullOrWhiteSpace(email)) return "";

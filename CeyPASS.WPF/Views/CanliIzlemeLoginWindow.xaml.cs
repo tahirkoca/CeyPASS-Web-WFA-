@@ -9,6 +9,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace CeyPASS.WPF.Views;
 
+/// <summary>Canlı izleme için bölge/kullanıcı/şifre girişi; oturum <see cref="CanliIzlemeWindow"/> ile devam eder.</summary>
 public partial class CanliIzlemeLoginWindow : Window
 {
     private readonly Window _loginOwner;
@@ -19,10 +20,10 @@ public partial class CanliIzlemeLoginWindow : Window
     private bool _returningToLogin;
     private bool _loadingBolge;
 
-    /// <summary>True when the user chose Back/Esc to return to the main login screen.</summary>
+    /// <summary>Geri/Esc ile ana <see cref="LoginWindow"/> ekranına dönüldüyse true.</summary>
     public bool ReturnedToLogin => _returningToLogin;
 
-    /// <summary>True when login succeeded and the live monitor window is opening.</summary>
+    /// <summary>Giriş başarılı ve monitör açılıyorsa true (kapanışta uygulama kapanmaz).</summary>
     public bool NavigatedToMonitor => _navigatingToMonitor;
     private readonly ObservableCollection<FirmaItem> _firmalar = new();
     private readonly ObservableCollection<string> _kullanicilar = new();
@@ -85,6 +86,7 @@ public partial class CanliIzlemeLoginWindow : Window
         FillKullanicilar();
     }
 
+    /// <summary>İlk yüklemede SelectedIndex=0 kullanıcı listesini iki kez çekmesin diye _loadingBolge bayrağı.</summary>
     private void CmbBolge_OnSelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         if (_loadingBolge) return;
@@ -197,6 +199,7 @@ public partial class CanliIzlemeLoginWindow : Window
         Close();
     }
 
+    /// <summary>X ile kapatmada uygulama sonlanır; monitöre geçiş veya geri dönüşte sonlandırma yapılmaz.</summary>
     private void Window_OnClosing(object? sender, CancelEventArgs e)
     {
         if (_navigatingToMonitor || _returningToLogin)
@@ -204,13 +207,25 @@ public partial class CanliIzlemeLoginWindow : Window
         System.Windows.Application.Current.Shutdown();
     }
 
+    /// <summary>Esc ana girişe döner; Enter giriş yapar — bölge/kullanıcı listesi açıkken Enter yalnızca seçimi onaylar.</summary>
     private void Window_OnPreviewKeyDown(object sender, KeyEventArgs e)
     {
         if (e.Key == Key.Escape)
         {
             ReturnToLogin();
             e.Handled = true;
+            return;
         }
+
+        if (e.Key is not (Key.Enter or Key.Return))
+            return;
+
+        // İş kuralı: açık ComboBox'ta Enter giriş tetiklemesin (WPF seçim davranışı).
+        if (CmbBolge.IsDropDownOpen || CmbKullanici.IsDropDownOpen)
+            return;
+
+        BtnGiris_OnClick(this, new RoutedEventArgs());
+        e.Handled = true;
     }
 
     private void Window_OnMouseLeftButtonDown(object sender, MouseButtonEventArgs e)

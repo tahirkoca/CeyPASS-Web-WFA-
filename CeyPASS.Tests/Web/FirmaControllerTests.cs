@@ -12,6 +12,9 @@ using Xunit;
 
 namespace CeyPASS.Tests.Web
 {
+    /// <summary>
+    /// Firma tanım ekranı MVC: CRUD ve yetki.
+    /// </summary>
     public class FirmaControllerTests
     {
         private readonly Mock<IFirmaService> _firmaMock = new();
@@ -30,6 +33,9 @@ namespace CeyPASS.Tests.Web
 
         // ─── Create POST ──────────────────────────────────────────────────────
 
+        /// <summary>
+        /// POST Yetkisiz IndexeYonlendirir
+        /// </summary>
         [Fact]
         public void Create_POST_Yetkisiz_IndexeYonlendirir()
         {
@@ -42,6 +48,9 @@ namespace CeyPASS.Tests.Web
             ((string)_sut.TempData["Error"]!).Should().NotBeNullOrEmpty();
         }
 
+        /// <summary>
+        /// POST boşAd Goruntumudöner
+        /// </summary>
         [Fact]
         public void Create_POST_BosAd_GoruntumuDoner()
         {
@@ -56,6 +65,9 @@ namespace CeyPASS.Tests.Web
 
         // ─── Edit POST ────────────────────────────────────────────────────────
 
+        /// <summary>
+        /// POST Yetkisiz IndexeYonlendirir
+        /// </summary>
         [Fact]
         public void Edit_POST_Yetkisiz_IndexeYonlendirir()
         {
@@ -68,6 +80,9 @@ namespace CeyPASS.Tests.Web
             ((string)_sut.TempData["Error"]!).Should().NotBeNullOrEmpty();
         }
 
+        /// <summary>
+        /// POST boşAd Goruntumudöner
+        /// </summary>
         [Fact]
         public void Edit_POST_BosAd_GoruntumuDoner()
         {
@@ -82,6 +97,9 @@ namespace CeyPASS.Tests.Web
 
         // ─── Index ────────────────────────────────────────────────────────────
 
+        /// <summary>
+        /// Yetkisiz HomeIndexeYonlendirir
+        /// </summary>
         [Fact]
         public void Index_Yetkisiz_HomeIndexeYonlendirir()
         {
@@ -97,6 +115,9 @@ namespace CeyPASS.Tests.Web
 
         // ─── Create GET ───────────────────────────────────────────────────────
 
+        /// <summary>
+        /// GET Yetkisiz IndexeYonlendirir
+        /// </summary>
         [Fact]
         public void Create_GET_Yetkisiz_IndexeYonlendirir()
         {
@@ -111,6 +132,9 @@ namespace CeyPASS.Tests.Web
 
         // ─── Edit GET ─────────────────────────────────────────────────────────
 
+        /// <summary>
+        /// GET Yetkisiz IndexeYonlendirir
+        /// </summary>
         [Fact]
         public void Edit_GET_Yetkisiz_IndexeYonlendirir()
         {
@@ -125,6 +149,9 @@ namespace CeyPASS.Tests.Web
 
         // ─── Delete ───────────────────────────────────────────────────────────
 
+        /// <summary>
+        /// Yetkisiz IndexeYonlendirir
+        /// </summary>
         [Fact]
         public void Delete_Yetkisiz_IndexeYonlendirir()
         {

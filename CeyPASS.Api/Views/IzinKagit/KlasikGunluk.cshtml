@@ -11,6 +11,7 @@
     var ustYetkilin = (string?)ViewBag.UstYetkiliAdSoyad ?? "Üst Yetkili";
     var logoSrc = (string?)ViewBag.LogoSrc ?? "/images/ceyLogo.ico";
 
+    // İzin tipi adından formdaki checkbox işareti (yazım varyasyonları: yillik/yıllık vb.)
     var s = izinTip.ToLowerInvariant();
     bool isYillik       = s.Contains("yıllık") || s.Contains("yillik");
     bool isMazeret      = s.Contains("mazeret");
@@ -21,6 +22,7 @@
     bool isDogum        = s.Contains("doğum") || s.Contains("dogum");
     bool isUcretsiz     = s.Contains("ücretsiz") || s.Contains("ucretsiz");
 
+    // Aynı gün bitiş = 1 gün; saatlik izinlerde gün sayısı 0 altında saat gösterilir
     var days = (t.Bitis.Date - t.Baslangic.Date).TotalDays + 1;
     var sure = days >= 1 ? $"{days:0} gün" : $"{(t.Bitis - t.Baslangic).TotalHours:0.##} saat";
 

@@ -6,6 +6,7 @@ using System.Linq;
 
 namespace CeyPASS.DataAccess.Repositories
 {
+    /// <summary>Canlı izleme geçiş ve auth sorguları.</summary>
     public class CanliIzlemeRepositoryCore : ICanliIzlemeRepository
     {
         private readonly CeyPASSDataConnectionCore _context;
@@ -15,6 +16,7 @@ namespace CeyPASS.DataAccess.Repositories
             _context = context;
         }
 
+        /// <summary>Last Passes sorgularını getirir.</summary>
         public List<LastPassDTO> GetLastPasses(int firmaId, int take)
         {
             var sql = @"
@@ -22,7 +24,7 @@ SELECT TOP (@p1)
     KH.PersonelId                           AS PersonelId,
     ISNULL(RTRIM(LTRIM(ISNULL(K.Ad, N'') + N' ' + ISNULL(K.Soyad, N''))), N'') AS AdSoyad,
     K.Fotograf                              AS Foto,
-    ISNULL(D.DepartmanAdi, N'')             AS DepartmanAdi,
+    ISNULL(I.IsyeriAdi, N'')                AS IsyeriAdi,
     ISNULL(P.PozisyonAdi, N'')              AS Unvan,
     KH.Tarih                                AS Zaman,
     CASE 
@@ -33,7 +35,7 @@ SELECT TOP (@p1)
     ISNULL(C.CihazAdi, N'')                 AS TerminalAdi
 FROM KisiHareketler KH
 LEFT JOIN Kisiler         K  ON KH.PersonelId = K.PersonelId
-LEFT JOIN Departmanlar    D  ON K.DepartmanId = D.DepartmanId
+LEFT JOIN Isyerler         I  ON K.IsyeriId = I.IsyeriId AND K.FirmaId = I.FirmaId
 LEFT JOIN Cihazlar        C  ON KH.CihazId    = C.CihazId
 LEFT JOIN Pozisyonlar     P  ON K.PozisyonId  = P.PozisyonId
 WHERE C.FirmaId = @p0 AND C.AnaGirisCikisMi=1
@@ -46,6 +48,7 @@ ORDER BY KH.Tarih DESC";
                 .ToList();
         }
 
+        /// <summary>Last Passes Yemekhane sorgularını getirir.</summary>
         public List<LastPassDTO> GetLastPassesYemekhane(int firmaId, int take)
         {
             var sql = @"
@@ -53,14 +56,14 @@ SELECT TOP (@p1)
     KH.PersonelId                           AS PersonelId,
     ISNULL(RTRIM(LTRIM(ISNULL(K.Ad, N'') + N' ' + ISNULL(K.Soyad, N''))), N'') AS AdSoyad,
     K.Fotograf                              AS Foto,
-    ISNULL(D.DepartmanAdi, N'')             AS DepartmanAdi,
+    ISNULL(I.IsyeriAdi, N'')                AS IsyeriAdi,
     ISNULL(P.PozisyonAdi, N'')              AS Unvan,
     KH.Tarih                                AS Zaman,
     CAST(1 AS bit)                          AS GirisMi,
     ISNULL(C.CihazAdi, N'')                 AS TerminalAdi
 FROM KisiHareketler KH
 LEFT JOIN Kisiler         K  ON KH.PersonelId = K.PersonelId
-LEFT JOIN Departmanlar    D  ON K.DepartmanId = D.DepartmanId
+LEFT JOIN Isyerler         I  ON K.IsyeriId = I.IsyeriId AND K.FirmaId = I.FirmaId
 LEFT JOIN Cihazlar        C  ON KH.CihazId    = C.CihazId
 LEFT JOIN Pozisyonlar     P  ON K.PozisyonId  = P.PozisyonId
 WHERE C.FirmaId = @p0
@@ -74,6 +77,7 @@ ORDER BY KH.Tarih DESC";
                 .ToList();
         }
 
+        /// <summary>Last Passes Arac sorgularını getirir.</summary>
         public List<LastPassDTO> GetLastPassesArac(int firmaId, int take)
         {
             var sql = @"
@@ -81,7 +85,7 @@ SELECT TOP (@p1)
     KH.PersonelId                           AS PersonelId,
     ISNULL(RTRIM(LTRIM(ISNULL(K.Ad, N'') + N' ' + ISNULL(K.Soyad, N''))), N'') AS AdSoyad,
     K.Fotograf                              AS Foto,
-    ISNULL(D.DepartmanAdi, N'')             AS DepartmanAdi,
+    ISNULL(I.IsyeriAdi, N'')                AS IsyeriAdi,
     ISNULL(P.PozisyonAdi, N'')              AS Unvan,
     KH.Tarih                                AS Zaman,
     CASE 
@@ -92,7 +96,7 @@ SELECT TOP (@p1)
     ISNULL(C.CihazAdi, N'')                 AS TerminalAdi
 FROM KisiHareketler KH
 LEFT JOIN Kisiler         K  ON KH.PersonelId = K.PersonelId
-LEFT JOIN Departmanlar    D  ON K.DepartmanId = D.DepartmanId
+LEFT JOIN Isyerler         I  ON K.IsyeriId = I.IsyeriId AND K.FirmaId = I.FirmaId
 LEFT JOIN Cihazlar        C  ON KH.CihazId    = C.CihazId
 LEFT JOIN Pozisyonlar     P  ON K.PozisyonId  = P.PozisyonId
 WHERE C.FirmaId = @p0 AND C.AracGirisCikisMi=1
@@ -105,6 +109,7 @@ ORDER BY KH.Tarih DESC";
                 .ToList();
         }
 
+        /// <summary>Validate işlemini doğrular.</summary>
         public AuthUserDTO Validate(int firmaId, string user, string password)
         {
             var sql = @"
@@ -133,6 +138,7 @@ WHERE c.FirmaId      = @p0
                 .FirstOrDefault();
         }
 
+        /// <summary>Canlı izleme giriş ekranı dropdown için firma bazlı kullanıcı adlarını getirir.</summary>
         public List<string> GetKullaniciAdlariByFirma(int firmaId)
         {
             return _context.CanliIzlemeHesaplari

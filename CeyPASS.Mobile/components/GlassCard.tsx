@@ -1,3 +1,4 @@
+/** Bulanık cam efektli kart sarmalayıcı (login ve listeler). */
 import React from 'react';
 import { View, StyleSheet, Platform } from 'react-native';
 import { BlurView } from 'expo-blur';

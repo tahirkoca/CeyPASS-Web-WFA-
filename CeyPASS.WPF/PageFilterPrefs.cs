@@ -1,5 +1,6 @@
 namespace CeyPASS.WPF;
 
+/// <summary>Sayfa filtrelerinin yerel diske yazılan anlık görüntüsü (firma, işyeri, tarih vb.).</summary>
 public sealed class PageFilterPrefs
 {
     public int? FirmaId { get; set; }

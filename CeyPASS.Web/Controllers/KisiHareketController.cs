@@ -9,6 +9,7 @@ using System.Linq;
 
 namespace CeyPASS.Web.Controllers
 {
+    /// <summary>Kisi hareket gecmisi sorgulama.</summary>
     public class KisiHareketController : Controller
     {
         private readonly IKisiHareketService _kisiHareketService;
@@ -45,7 +46,8 @@ namespace CeyPASS.Web.Controllers
             _cache = cache;
         }
 
-        public IActionResult Index(int? firmaId = null, int? isyeriId = null, string personelIds = null, DateTime? baslangic = null, DateTime? bitis = null, bool? sadeceAktif = null, bool? sadecePasif = null, bool? sadeceYemekhane = null, string kartTipi = null, int page = 1, int pageSize = DefaultPageSize)
+        /// <summary>Liste veya ana ekran.</summary>
+        public IActionResult Index(int? firmaId = null, int? isyeriId = null, string personelIds = null, DateTime? baslangic = null, DateTime? bitis = null, bool? sadeceAktif = null, bool? sadecePasif = null, bool? sadeceYemekhane = null, string kartTipi = null, string calismaDurumu = null, int page = 1, int pageSize = DefaultPageSize)
         {
             // Check authorization
             if (!_authorizationService.ViewAbility(PageName))
@@ -69,9 +71,10 @@ namespace CeyPASS.Web.Controllers
             DateTime baslangicTarih = baslangic ?? DateTime.Today;
             DateTime bitisTarih = bitis ?? DateTime.Today.AddDays(1).AddMinutes(-1);
 
-            // Kart tipi: puantajsiz = Puantaj Yapılmayanlar, aksi halde Puantaj Yapılanlar
-            bool puantajYapilir = kartTipi != "puantajsiz";
-            var personelList = GetPersonelList(selectedFirmaId, puantajYapilir, isyeriId);
+            bool sadeceIstenCikanlar = string.Equals(calismaDurumu, "cikan", StringComparison.OrdinalIgnoreCase);
+            // Kart tipi: puantajsiz = Puantaj Yapılmayanlar, aksi halde Puantaj Yapılanlar (çıkanlarda uygulanmaz)
+            bool? puantajYapilir = sadeceIstenCikanlar ? null : kartTipi != "puantajsiz";
+            var personelList = GetPersonelList(selectedFirmaId, puantajYapilir, isyeriId, sadeceIstenCikanlar);
 
             // Seçili personel ID'leri
             List<int> seciliPersonelIds = new List<int>();
@@ -136,6 +139,7 @@ namespace CeyPASS.Web.Controllers
             ViewBag.SadecePasif = sadecePasif ?? false;
             ViewBag.SadeceYemekhane = sadeceYemekhane ?? false;
             ViewBag.KartTipi = kartTipi ?? "puantaj";
+            ViewBag.CalismaDurumu = sadeceIstenCikanlar ? "cikan" : "aktif";
             ViewBag.Page = page;
             ViewBag.PageSize = pageSize;
             ViewBag.TotalCount = totalCount;
@@ -147,6 +151,7 @@ namespace CeyPASS.Web.Controllers
             return View(hareketler);
         }
 
+        /// <summary>Ekle islemi.</summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult Ekle(int firmaId, int personelId, DateTime tarih, string tip)
@@ -178,6 +183,7 @@ namespace CeyPASS.Web.Controllers
             return RedirectToAction("Index");
         }
 
+        /// <summary>Guncelle islemi.</summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult Guncelle(int id, DateTime tarih, string tip)
@@ -209,6 +215,7 @@ namespace CeyPASS.Web.Controllers
             return RedirectToAction("Index");
         }
 
+        /// <summary>PasifYap islemi.</summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult PasifYap(int id)
@@ -240,6 +247,7 @@ namespace CeyPASS.Web.Controllers
             return RedirectToAction("Index");
         }
 
+        /// <summary>Pasif kaydi tekrar aktif eder.</summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult AktifYap(int id)
@@ -271,6 +279,7 @@ namespace CeyPASS.Web.Controllers
             return RedirectToAction("Index");
         }
 
+        /// <summary>GetIsyerleri lookup/JSON verisi.</summary>
         [HttpGet]
         public IActionResult GetIsyerleri(int firmaId)
         {
@@ -290,7 +299,7 @@ namespace CeyPASS.Web.Controllers
                 isAdmin);
         }
 
-        private List<PersonelLookupItem> GetPersonelList(int firmaId, bool puantajYapilir = true, int? selectedIsyeriId = null)
+        private List<PersonelLookupItem> GetPersonelList(int firmaId, bool? puantajYapilir = true, int? selectedIsyeriId = null, bool sadeceIstenCikanlar = false)
         {
             var list = new List<PersonelLookupItem>();
             try
@@ -301,7 +310,7 @@ namespace CeyPASS.Web.Controllers
                     yetkiler = _puantajService.GetKullaniciFirmaIsyeriYetkileri((int)_sessionContext.AktifKullaniciId);
                 var (single, idIn) = FirmaIsyeriYetkiHelper.ResolveKisiQueryIsyeriFilter(
                     firmaId, selectedIsyeriId, yetkiler, isAdmin);
-                var kisiler = _kisiQueryService.GetAktifKisilerByFirma(firmaId, null, puantajYapilir, single, idIn)
+                var kisiler = _kisiQueryService.GetAktifKisilerByFirma(firmaId, null, puantajYapilir, single, idIn, sadeceIstenCikanlar)
                     ?? new List<KisiListItem>();
                 foreach (var k in kisiler)
                 {

@@ -7,6 +7,7 @@ using System.Data;
 
 namespace CeyPASS.DataAccess.Repositories
 {
+    /// <summary>Sistem log erişimi.</summary>
     public class SistemLogRepositoryCore : ISistemLogRepository
     {
         private readonly CeyPASSDataConnectionCore _context;
@@ -16,6 +17,7 @@ namespace CeyPASS.DataAccess.Repositories
             _context = context;
         }
 
+        /// <summary>Yeni kayıt ekler.</summary>
         public void Insert(SistemLog log)
         {
             var sql = @"

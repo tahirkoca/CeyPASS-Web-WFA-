@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace CeyPASS.WPF.ViewModels;
 
+/// <summary>Firma tanım CRUD (sayfa yetkisi: Firmalar).</summary>
 public sealed class FirmaViewModel : ObservableObject
 {
     private enum ScreenMode { List, Add, Edit }

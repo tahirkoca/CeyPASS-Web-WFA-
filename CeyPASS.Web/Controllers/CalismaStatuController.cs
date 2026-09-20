@@ -7,6 +7,7 @@ using System.Linq;
 
 namespace CeyPASS.Web.Controllers
 {
+    /// <summary>Calisma statusu tanim CRUD.</summary>
     public class CalismaStatuController : Controller
     {
         private readonly ICalismaStatuService _calismaStatuService;
@@ -27,6 +28,7 @@ namespace CeyPASS.Web.Controllers
             _lookupService = lookupService;
         }
 
+        /// <summary>Liste veya ana ekran.</summary>
         public IActionResult Index()
         {
             // Check authorization
@@ -45,6 +47,7 @@ namespace CeyPASS.Web.Controllers
             return View(calismaStatuleri);
         }
 
+        /// <summary>Yeni kayit formu ve kaydetme.</summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult Create(string ad)
@@ -82,6 +85,7 @@ namespace CeyPASS.Web.Controllers
             return RedirectToAction("Index");
         }
 
+        /// <summary>Update islemi.</summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult Update(int id, string ad)
@@ -119,6 +123,7 @@ namespace CeyPASS.Web.Controllers
             return RedirectToAction("Index");
         }
 
+        /// <summary>Kayit silme veya pasiflestirme.</summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult Delete(int id, string returnUrl = null)

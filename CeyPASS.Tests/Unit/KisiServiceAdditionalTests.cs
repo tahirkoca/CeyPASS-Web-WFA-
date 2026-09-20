@@ -8,6 +8,9 @@ using Xunit;
 
 namespace CeyPASS.Tests.Unit
 {
+    /// <summary>
+    /// Kişi servisi ek senaryolar: özel alanlar ve kenar durumları.
+    /// </summary>
     public class KisiServiceAdditionalTests
     {
         private readonly Mock<IKisiRepository> _kisiRepoMock = new();
@@ -24,6 +27,9 @@ namespace CeyPASS.Tests.Unit
 
         // ─── KisiGuncelle ─────────────────────────────────────────────────────
 
+        /// <summary>
+        /// RepoBBasarisiz Falsedöner
+        /// </summary>
         [Fact]
         public void KisiGuncelle_RepoBBasarisiz_FalseDoner()
         {
@@ -35,6 +41,9 @@ namespace CeyPASS.Tests.Unit
             sonuc.Should().BeFalse();
         }
 
+        /// <summary>
+        /// YemekHakkiVarAdediPositif UpsertLimitçağrılır
+        /// </summary>
         [Fact]
         public void KisiGuncelle_YemekHakkiVarAdediPositif_UpsertLimitCagrilir()
         {
@@ -48,6 +57,9 @@ namespace CeyPASS.Tests.Unit
             _yemekhaneRepoMock.Verify(y => y.PasifEtByPersonel(It.IsAny<string>()), Times.Never);
         }
 
+        /// <summary>
+        /// YemekHakkiYok PasifEtByPersonelçağrılır
+        /// </summary>
         [Fact]
         public void KisiGuncelle_YemekHakkiYok_PasifEtByPersonelCagrilir()
         {
@@ -61,6 +73,9 @@ namespace CeyPASS.Tests.Unit
             _yemekhaneRepoMock.Verify(y => y.UpsertLimit(It.IsAny<string>(), It.IsAny<int>()), Times.Never);
         }
 
+        /// <summary>
+        /// Istisna fırlatılırFirlatilinca Falsedöner
+        /// </summary>
         [Fact]
         public void KisiGuncelle_ExceptionFirlatilinca_FalseDoner()
         {
@@ -74,6 +89,9 @@ namespace CeyPASS.Tests.Unit
 
         // ─── YeniKisiEkle ─────────────────────────────────────────────────────
 
+        /// <summary>
+        /// PuantajYapilabilirTrue PuantajYapilirMiTrue
+        /// </summary>
         [Fact]
         public void YeniKisiEkle_PuantajYapilabilirTrue_PuantajYapilirMiTrue()
         {
@@ -84,6 +102,9 @@ namespace CeyPASS.Tests.Unit
             kisi.PuantajYapilirMi.Should().BeTrue();
         }
 
+        /// <summary>
+        /// PuantajYapilabilirFalse PuantajYapilirMiFalse
+        /// </summary>
         [Fact]
         public void YeniKisiEkle_PuantajYapilabilirFalse_PuantajYapilirMiFalse()
         {
@@ -94,6 +115,9 @@ namespace CeyPASS.Tests.Unit
             kisi.PuantajYapilirMi.Should().BeFalse();
         }
 
+        /// <summary>
+        /// YemekHakkiVar InsertLimitçağrılır
+        /// </summary>
         [Fact]
         public void YeniKisiEkle_YemekHakkiVar_InsertLimitCagrilir()
         {
@@ -104,6 +128,9 @@ namespace CeyPASS.Tests.Unit
             _yemekhaneRepoMock.Verify(y => y.InsertLimit(kisi.PersonelId, 3), Times.Once);
         }
 
+        /// <summary>
+        /// YemekHakkiYok InsertLimitCagrilmaz
+        /// </summary>
         [Fact]
         public void YeniKisiEkle_YemekHakkiYok_InsertLimitCagrilmaz()
         {
@@ -116,6 +143,9 @@ namespace CeyPASS.Tests.Unit
 
         // ─── KisiIstenCikar ───────────────────────────────────────────────────
 
+        /// <summary>
+        /// Basarili Truedöner
+        /// </summary>
         [Fact]
         public void KisiIstenCikar_Basarili_TrueDoner()
         {
@@ -126,6 +156,9 @@ namespace CeyPASS.Tests.Unit
             _yemekhaneRepoMock.Verify(y => y.PasifEtByPersonel("TEST001"), Times.Once);
         }
 
+        /// <summary>
+        /// Repoistisna fırlatılır Falsedöner
+        /// </summary>
         [Fact]
         public void KisiIstenCikar_RepoException_FalseDoner()
         {
@@ -139,6 +172,9 @@ namespace CeyPASS.Tests.Unit
 
         // ─── KisiTekrarAktifEt ────────────────────────────────────────────────
 
+        /// <summary>
+        /// GecmisYemekLimitiVar UpsertLimitçağrılır
+        /// </summary>
         [Fact]
         public void KisiTekrarAktifEt_GecmisYemekLimitiVar_UpsertLimitCagrilir()
         {
@@ -159,6 +195,9 @@ namespace CeyPASS.Tests.Unit
             _yemekhaneRepoMock.Verify(y => y.UpsertLimit("TEST001", 3), Times.Once);
         }
 
+        /// <summary>
+        /// YemekLimitiYok UpsertLimitCagrilmaz
+        /// </summary>
         [Fact]
         public void KisiTekrarAktifEt_YemekLimitiYok_UpsertLimitCagrilmaz()
         {
@@ -179,6 +218,9 @@ namespace CeyPASS.Tests.Unit
             _yemekhaneRepoMock.Verify(y => y.UpsertLimit(It.IsAny<string>(), It.IsAny<int>()), Times.Never);
         }
 
+        /// <summary>
+        /// ZatenAktif Falsedöner
+        /// </summary>
         [Fact]
         public void KisiTekrarAktifEt_ZatenAktif_FalseDoner()
         {

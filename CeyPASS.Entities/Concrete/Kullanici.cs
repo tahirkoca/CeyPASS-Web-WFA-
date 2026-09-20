@@ -1,5 +1,6 @@
 ﻿namespace CeyPASS.Entities.Concrete
 {
+    /// <summary>Sistem kullanıcısı; rol ve isteğe bağlı personel siciline bağlı.</summary>
     public class Kullanici
     {
         public int KullaniciId { get; set; }

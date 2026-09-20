@@ -7,6 +7,7 @@ using System.Linq;
 
 namespace CeyPASS.DataAccess.Repositories
 {
+    /// <summary>Admin kullanıcı erişimi.</summary>
     public class AdminKullaniciRepositoryCore : IAdminKullaniciRepository
     {
         private readonly CeyPASSDataConnectionCore _context;
@@ -16,6 +17,7 @@ namespace CeyPASS.DataAccess.Repositories
             _context = context;
         }
 
+        /// <summary>All sorgularını getirir.</summary>
         public List<KullaniciAdminRow> GetAll()
         {
             const string sql = @"
@@ -32,6 +34,7 @@ ORDER BY k.KullaniciAdi";
             return _context.Database.SqlQueryRaw<KullaniciAdminRow>(sql).ToList();
         }
 
+        /// <summary>Personel Id değerini ayarlar.</summary>
         public bool SetPersonelId(int kullaniciId, int? personelId)
         {
             const string sql = @"

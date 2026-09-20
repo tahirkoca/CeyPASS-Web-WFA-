@@ -9,6 +9,7 @@ public static class UiUndo
     private static System.Windows.Forms.Timer? _timer;
     private static Action? _pending;
 
+    /// <summary>Durum çubuğundaki Geri al linkini bağlar.</summary>
     public static void Register(ToolStripStatusLabel undoLink)
     {
         _link = undoLink;
@@ -18,6 +19,7 @@ public static class UiUndo
         undoLink.Click += (_, _) => Execute();
     }
 
+    /// <summary>Kısa süreli geri al teklifi gösterir (varsayılan 7 sn).</summary>
     public static void Offer(string message, Action undo)
     {
         Cancel();

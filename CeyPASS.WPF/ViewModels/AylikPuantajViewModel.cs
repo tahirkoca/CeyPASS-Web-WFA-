@@ -10,6 +10,7 @@ using System.Windows.Input;
 
 namespace CeyPASS.WPF.ViewModels;
 
+/// <summary>Yıl/ay seçimi combobox satırı.</summary>
 public sealed class AySecimItem
 {
     public int Yil { get; init; }
@@ -17,6 +18,7 @@ public sealed class AySecimItem
     public string Display { get; init; } = "";
 }
 
+/// <summary>Günlük puantaj grid satırı; düzenleme DTO üzerinden yapılır.</summary>
 public sealed class PuantajGunRowItem : ObservableObject
 {
     private static readonly CultureInfo Tr = new("tr-TR");
@@ -121,6 +123,9 @@ public sealed class PuantajGunRowItem : ObservableObject
         ts.HasValue ? ts.Value.ToString(@"hh\:mm") : "";
 }
 
+/// <summary>
+/// Aylık puantaj onay/düzenleme, toplu onay, çoklu sicil aktarımı ve Excel dışa aktarma (WFA ile aynı iş kuralları).
+/// </summary>
 public sealed class AylikPuantajViewModel : ObservableObject
 {
     private const string PageName = "AylikPuantaj";
@@ -146,7 +151,10 @@ public sealed class AylikPuantajViewModel : ObservableObject
     private bool _canUpdate;
     private bool _canExport;
     private bool _canEditEkKayit;
+    private bool _canCokluSicileAktar;
+    private int _cokluSicilHedefSayisi;
 
+    /// <summary>Oturum, yetki ve filtre tercihleriyle ekranı başlatır.</summary>
     public AylikPuantajViewModel(IServiceProvider root)
     {
         _scopes = root.GetRequiredService<IServiceScopeFactory>();
@@ -162,7 +170,7 @@ public sealed class AylikPuantajViewModel : ObservableObject
         RetCommand = new RelayCommand(ReddetSelected, () => CanDelete && SelectedRow is { IsLocked: false } && !Busy);
         DuzenleCommand = new RelayCommand(DuzenleSelected, () => CanUpdate && SelectedRow is { IsLocked: false } && !Busy);
         BuguneKadarOnaylaCommand = new RelayCommand(BuguneKadarOnayla, () => CanApprove && !Busy);
-        CokluSicileAktarCommand = new RelayCommand(CokluSicileAktar, () => !Busy);
+        CokluSicileAktarCommand = new RelayCommand(CokluSicileAktar, () => CanCokluSicileAktar);
         PuantajYapCommand = new RelayCommand(PuantajYap, () => CanExport && !Busy);
         EkKayitAyarlaCommand = new RelayCommand(EkKayitAyarla, () => CanEditEkKayit && !Busy);
 
@@ -256,6 +264,7 @@ public sealed class AylikPuantajViewModel : ObservableObject
         private set
         {
             SetProperty(ref _busy, value);
+            RaisePropertyChanged(nameof(CanCokluSicileAktar));
             CommandManager.InvalidateRequerySuggested();
         }
     }
@@ -290,12 +299,16 @@ public sealed class AylikPuantajViewModel : ObservableObject
         private set => SetProperty(ref _canEditEkKayit, value);
     }
 
+    public bool CanCokluSicileAktar => _canCokluSicileAktar && !Busy;
+
     public ICommand OnayCommand { get; }
     public ICommand RetCommand { get; }
     public ICommand DuzenleCommand { get; }
     public ICommand BuguneKadarOnaylaCommand { get; }
     public ICommand CokluSicileAktarCommand { get; }
+    /// <summary>Seçili ay için yetkili firmaların aylık puantaj Excel export'u.</summary>
     public ICommand PuantajYapCommand { get; }
+    /// <summary>Geçmiş günlerde düzenleme penceresini açan ek kayıt gün sayısını kaydeder.</summary>
     public ICommand EkKayitAyarlaCommand { get; }
 
     private int SeciliYil => SelectedAy?.Yil ?? 0;
@@ -324,6 +337,7 @@ public sealed class AylikPuantajViewModel : ObservableObject
 
         _viewAllowed = true;
         RefreshAuth(auth);
+        // Ek kayıt süresi yalnızca süper/yönetici rolleri tarafından değiştirilir (WFA uyumu).
         CanEditEkKayit = _session.RolId == 1 || _session.RolId == 2;
 
         var yetkiSvc = scope.ServiceProvider.GetRequiredService<IKullaniciFirmaIsyeriYetkiService>();
@@ -457,6 +471,7 @@ public sealed class AylikPuantajViewModel : ObservableObject
     {
         using var scope = _scopes.CreateScope();
         var fsvc = scope.ServiceProvider.GetRequiredService<IFirmaService>();
+        // Puantaj firmaları: kullanıcı firma/işyeri yetki matrisi dışında kalan firmalar listelenmez.
         bool isAdmin = FirmaIsyeriYetkiHelper.IsAdmin(_session.RolId);
         var list = FirmaIsyeriYetkiHelper.FilterFirmalar(fsvc.GetPuantajFirmalar(), _yetkiler, isAdmin);
 
@@ -533,12 +548,14 @@ public sealed class AylikPuantajViewModel : ObservableObject
         if (string.IsNullOrEmpty(pidStr))
         {
             Status = "Personel seçiniz.";
+            RefreshCokluSicilPuantajState(0);
             return;
         }
 
         if (!int.TryParse(pidStr, out var personelId))
         {
             UiDialog.Warning("Seçili personelin ID’si sayısal değil.", PageName);
+            RefreshCokluSicilPuantajState(0);
             return;
         }
 
@@ -558,6 +575,7 @@ public sealed class AylikPuantajViewModel : ObservableObject
             }
 
             Status = $"{Rows.Count} gün yüklendi.";
+            RefreshCokluSicilPuantajState(personelId);
         }
         catch (Exception ex)
         {
@@ -574,6 +592,7 @@ public sealed class AylikPuantajViewModel : ObservableObject
         !string.IsNullOrWhiteSpace(aciklama)
         && aciklama.StartsWith("Çoklu Sicil Aktarım", StringComparison.OrdinalIgnoreCase);
 
+    // Bugün ve gelecek günler onaylanmaz; çoklu sicil aktarımından gelen düzeltmeler kalıcı kilitlenir.
     private static bool IsLockedRow(PuantajGunSatirDTO dto)
     {
         if (dto.Tarih.Date >= DateTime.Today) return true;
@@ -767,6 +786,24 @@ public sealed class AylikPuantajViewModel : ObservableObject
         }
     }
 
+    private void RefreshCokluSicilPuantajState(int personelId)
+    {
+        if (personelId <= 0)
+        {
+            _canCokluSicileAktar = false;
+            _cokluSicilHedefSayisi = 0;
+        }
+        else
+        {
+            using var scope = _scopes.CreateScope();
+            var cs = scope.ServiceProvider.GetRequiredService<ICokluSicilService>();
+            _canCokluSicileAktar = cs.IsAnaSicil(personelId);
+            _cokluSicilHedefSayisi = cs.GetAktifHedefSayisi(personelId);
+        }
+        RaisePropertyChanged(nameof(CanCokluSicileAktar));
+        CommandManager.InvalidateRequerySuggested();
+    }
+
     private void CokluSicileAktar()
     {
         if (SeciliPersonelId <= 0)
@@ -775,10 +812,16 @@ public sealed class AylikPuantajViewModel : ObservableObject
             return;
         }
 
+        if (!_canCokluSicileAktar)
+        {
+            UiDialog.Warning("Seçili personel ana sicil değil veya aktif hedef bağlantısı yok.", "Uyarı");
+            return;
+        }
+
         int yil = SeciliYil;
         int ay = SeciliAyNum;
         if (!UiDialog.Confirm(
-                $"Seçili kişinin bağlı tüm sicillerine {yil}-{ay:D2} ayının SON GÜNÜNE 'NG 7,5' yazılacak.\n" +
+                $"Seçili kişinin {_cokluSicilHedefSayisi} hedef siciline {yil}-{ay:D2} ayı için Aktarım Gün Sayısı kadar 'NG 7,5' yazılacak.\n" +
                 "Ayrıca ana personelin ayın SON GÜNÜNDEKİ kayıtları kaldırılacaktır. Onaylıyor musunuz?",
                 "Onay",
                 yesText: "Aktar",
@@ -804,6 +847,9 @@ public sealed class AylikPuantajViewModel : ObservableObject
         }
     }
 
+    /// <summary>
+    /// Seçili ay için firmaları kullanıcı firma/işyeri yetkilerine göre derler; ExcelHelper ile .xlsx yazar.
+    /// </summary>
     private void PuantajYap()
     {
         if (!EnsureAuth(YetkiTipleri.Export)) return;
@@ -814,6 +860,7 @@ public sealed class AylikPuantajViewModel : ObservableObject
             Busy = true;
             using var scope = _scopes.CreateScope();
             var psvc = scope.ServiceProvider.GetRequiredService<IPuantajService>();
+            // PrepareMonthlyExport: yetki listesi dışındaki personel/firma satırları rapora girmez.
             var request = new PuantajExportRequest
             {
                 Yil = SelectedAy.Yil,
@@ -831,6 +878,7 @@ public sealed class AylikPuantajViewModel : ObservableObject
 
             if (dlg.ShowDialog() == true)
             {
+                // ExcelHelper: hazır tablo/DataSet yapısını şablonsuz doğrudan xlsx'e yazar.
                 ExcelHelper.ExceleDonustur(exportData, dlg.FileName);
                 UiDialog.Success("Excel kaydedildi.", "Bilgi");
                 Status = "Export tamamlandı.";

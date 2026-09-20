@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 
 namespace CeyPASS.Business.Services
 {
+    /// <summary>Bildirim servisi koordinasyonu.</summary>
     public class BildirimManager : IBildirimService
     {
         private readonly IBildirimRepository _bildirimRepository;
@@ -18,6 +19,7 @@ namespace CeyPASS.Business.Services
             _pushNotificationService = pushNotificationService;
         }
 
+        /// <inheritdoc />
         public void AddNotification(int? kullaniciId, string? personelId, string baslik, string mesaj, string tipi, int? ilgiliKayitId = null)
         {
             if (string.IsNullOrWhiteSpace(personelId) && !kullaniciId.HasValue)
@@ -41,21 +43,25 @@ namespace CeyPASS.Business.Services
             Task.Run(() => _pushNotificationService.SendPushToUserAsync(personelId, kullaniciId?.ToString(), baslik, mesaj));
         }
 
+        /// <inheritdoc />
         public List<Bildirim> GetMyNotifications(string? personelId, int? kullaniciId)
         {
             return _bildirimRepository.GetForUser(personelId, kullaniciId);
         }
 
+        /// <inheritdoc />
         public void MarkAsRead(int bildirimId)
         {
             _bildirimRepository.MarkAsRead(bildirimId);
         }
 
+        /// <inheritdoc />
         public int GetUnreadCount(string? personelId, int? kullaniciId)
         {
             return _bildirimRepository.GetUnreadCount(personelId, kullaniciId);
         }
 
+        /// <inheritdoc />
         public void MarkAllAsRead(string? personelId, int? kullaniciId)
         {
             _bildirimRepository.MarkAllAsRead(personelId, kullaniciId);

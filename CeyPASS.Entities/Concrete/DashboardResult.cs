@@ -2,6 +2,7 @@
 
 namespace CeyPASS.Entities.Concrete
 {
+    /// <summary>Ana ekran dashboard tek seferde dönen liste paketi.</summary>
     public class DashboardResult
     {
         public List<GecKalanlarDashboard> LateList { get; set; } = new List<GecKalanlarDashboard>();

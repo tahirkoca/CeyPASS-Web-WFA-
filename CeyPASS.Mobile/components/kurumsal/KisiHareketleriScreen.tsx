@@ -1,8 +1,10 @@
+/** Kurumsal geçiş hareketleri listesi ve filtreler. */
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, FlatList, Modal, Platform, ScrollView, Text, TextInput, TouchableOpacity, View } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { kisiHareketService, KisiHareketRow } from "../../services/kisiHareketApi";
+import { containsTrIgnoreCase } from "../../services/turkishText";
 import { StatusPopup } from "../StatusPopup";
 import { PageHeader } from "../PageHeader";
 import { useHeaderQuickMenu } from "../HeaderQuickMenu";
@@ -113,9 +115,9 @@ function MultiPersonelModal(props: {
   }, [props.visible]);
 
   const filtered = useMemo(() => {
-    const qq = q.trim().toLowerCase();
+    const qq = q.trim();
     if (!qq) return props.items;
-    return props.items.filter((x) => x.ad.toLowerCase().includes(qq) || String(x.id).includes(qq));
+    return props.items.filter((x) => containsTrIgnoreCase(x.ad, qq) || containsTrIgnoreCase(String(x.id), qq));
   }, [q, props.items]);
 
   const selSet = useMemo(() => new Set(props.selectedIds), [props.selectedIds]);
@@ -127,12 +129,16 @@ function MultiPersonelModal(props: {
           <View className="bg-white rounded-2xl overflow-hidden">
             <View className="px-4 py-3 border-b border-[#f1f5f9]">
               <Text className="text-[#0f172a] font-extrabold text-[16px]">{props.title}</Text>
-              <TextInput
-                value={q}
-                onChangeText={setQ}
-                placeholder="Ara (Ad/Soyad veya ID)"
-                className="mt-3 px-3 py-2 rounded-xl bg-[#f8fafc] border border-[#e2e8f0] text-[#0f172a]"
-              />
+              <View className="mt-3 px-3 py-2 rounded-xl bg-[#f8fafc] border border-[#e2e8f0] flex-row items-center">
+                <MaterialCommunityIcons name="magnify" size={20} color="#64748b" />
+                <TextInput
+                  value={q}
+                  onChangeText={setQ}
+                  placeholder="Ad veya Sicil No'ya göre arayabilirsiniz"
+                  placeholderTextColor="#94a3b8"
+                  className="ml-2 flex-1 text-[#0f172a] py-0"
+                />
+              </View>
               <View className="flex-row gap-2 mt-3">
                 <TouchableOpacity
                   className="flex-1 bg-[#f1f5f9] rounded-xl py-2 items-center"
@@ -212,9 +218,9 @@ function PersonelSingleModal(props: {
   }, [props.visible]);
 
   const filtered = useMemo(() => {
-    const qq = q.trim().toLowerCase();
+    const qq = q.trim();
     if (!qq) return props.items;
-    return props.items.filter((x) => x.ad.toLowerCase().includes(qq) || String(x.id).includes(qq));
+    return props.items.filter((x) => containsTrIgnoreCase(x.ad, qq) || containsTrIgnoreCase(String(x.id), qq));
   }, [q, props.items]);
 
   return (
@@ -224,12 +230,16 @@ function PersonelSingleModal(props: {
           <View className="bg-white rounded-2xl overflow-hidden">
             <View className="px-4 py-3 border-b border-[#f1f5f9]">
               <Text className="text-[#0f172a] font-extrabold text-[16px]">{props.title}</Text>
-              <TextInput
-                value={q}
-                onChangeText={setQ}
-                placeholder="Ara (Ad/Soyad veya ID)"
-                className="mt-3 px-3 py-2 rounded-xl bg-[#f8fafc] border border-[#e2e8f0] text-[#0f172a]"
-              />
+              <View className="mt-3 px-3 py-2 rounded-xl bg-[#f8fafc] border border-[#e2e8f0] flex-row items-center">
+                <MaterialCommunityIcons name="magnify" size={20} color="#64748b" />
+                <TextInput
+                  value={q}
+                  onChangeText={setQ}
+                  placeholder="Ad veya Sicil No'ya göre arayabilirsiniz"
+                  placeholderTextColor="#94a3b8"
+                  className="ml-2 flex-1 text-[#0f172a] py-0"
+                />
+              </View>
             </View>
 
             <View style={{ height: 520 }}>
@@ -337,6 +347,8 @@ export function KisiHareketleriScreen(props: { user: any; abilities: any; onOpen
   const [personelList, setPersonelList] = useState<PersonelItem[]>([]);
 
   const [kartTipi, setKartTipi] = useState<"puantaj" | "puantajsiz">("puantaj");
+  const [calismaDurumu, setCalismaDurumu] = useState<"aktif" | "cikan">("aktif");
+  const sadeceIstenCikanlar = calismaDurumu === "cikan";
   const [firmaId, setFirmaId] = useState<number | null>(null);
   const [isyeriId, setIsyeriId] = useState<number | null>(null);
   const [isyeriList, setIsyeriList] = useState<{ id: number; ad: string }[]>([]);
@@ -367,6 +379,7 @@ export function KisiHareketleriScreen(props: { user: any; abilities: any; onOpen
   const [firmaModal, setFirmaModal] = useState(false);
   const [isyeriModal, setIsyeriModal] = useState(false);
   const [kartTipiModal, setKartTipiModal] = useState(false);
+  const [calismaDurumuModal, setCalismaDurumuModal] = useState(false);
   const [pageSizeModal, setPageSizeModal] = useState(false);
   const [personelModal, setPersonelModal] = useState(false);
 
@@ -433,15 +446,18 @@ export function KisiHareketleriScreen(props: { user: any; abilities: any; onOpen
   const loadLookups = async (
     desiredFirmaId?: number | null,
     desiredKartTipi?: "puantaj" | "puantajsiz",
-    desiredIsyeriId?: number | null
+    desiredIsyeriId?: number | null,
+    desiredCalismaDurumu?: "aktif" | "cikan"
   ) => {
     const fId = desiredFirmaId ?? firmaId;
     const kTip = desiredKartTipi ?? kartTipi;
     const iId = desiredIsyeriId !== undefined ? desiredIsyeriId : isyeriId;
+    const cDurum = desiredCalismaDurumu ?? calismaDurumu;
     const res = await kisiHareketService.lookups({
       firmaId: fId,
       kartTipi: kTip,
       isyeriId: iId ?? undefined,
+      calismaDurumu: cDurum,
     });
     if (!res?.success) throw new Error(res?.message ?? "Lookups alınamadı.");
     const data = res.data ?? (res as any).Data ?? {};
@@ -553,7 +569,7 @@ export function KisiHareketleriScreen(props: { user: any; abilities: any; onOpen
         const prefs = await pageFilterPrefs.load("KisiHareketler");
         if (prefs) {
           if (typeof prefs.firmaId === "number" && prefs.firmaId > 0) setFirmaId(prefs.firmaId);
-          if (typeof prefs.isyeriId === "number" && prefs.isyeriId > 0) setIsyeriId(prefs.isyeriId);
+          if (typeof prefs.isyeriId === "number" && prefs.isyeriId >= 0) setIsyeriId(prefs.isyeriId);
           const da = parsePrefDate(prefs.dateA ?? null);
           const db = parsePrefDate(prefs.dateB ?? null);
           if (da) {
@@ -572,9 +588,23 @@ export function KisiHareketleriScreen(props: { user: any; abilities: any; onOpen
           else if (prefs.boolB === false) setSadecePasif(false);
           if (prefs.extra) {
             let extra = String(prefs.extra);
-            const yemek = extra.endsWith("|Y");
-            if (yemek) extra = extra.slice(0, -2);
+            let yemek = false;
+            let cikan = false;
+            while (true) {
+              if (extra.endsWith("|Y")) {
+                yemek = true;
+                extra = extra.slice(0, -2);
+                continue;
+              }
+              if (extra.endsWith("|C")) {
+                cikan = true;
+                extra = extra.slice(0, -2);
+                continue;
+              }
+              break;
+            }
             setSadeceYemekhane(yemek);
+            setCalismaDurumu(cikan ? "cikan" : "aktif");
             if (extra === "puantaj" || extra === "puantajsiz") setKartTipi(extra);
           }
         }
@@ -586,7 +616,8 @@ export function KisiHareketleriScreen(props: { user: any; abilities: any; onOpen
 
   useEffect(() => {
     if (!filtersHydrated) return;
-    const kart = kartTipi + (sadeceYemekhane ? "|Y" : "");
+    let kart = kartTipi + (sadeceYemekhane ? "|Y" : "");
+    if (calismaDurumu === "cikan") kart += "|C";
     void pageFilterPrefs.save("KisiHareketler", {
       firmaId,
       isyeriId,
@@ -596,7 +627,7 @@ export function KisiHareketleriScreen(props: { user: any; abilities: any; onOpen
       boolB: sadecePasif,
       extra: kart,
     });
-  }, [filtersHydrated, firmaId, isyeriId, baslangic, bitis, sadeceAktif, sadecePasif, sadeceYemekhane, kartTipi]);
+  }, [filtersHydrated, firmaId, isyeriId, baslangic, bitis, sadeceAktif, sadecePasif, sadeceYemekhane, kartTipi, calismaDurumu]);
 
   useEffect(() => {
     if (!filtersHydrated) return;
@@ -604,7 +635,7 @@ export function KisiHareketleriScreen(props: { user: any; abilities: any; onOpen
       setLoading(true);
       setError(null);
       try {
-        await loadLookups(firmaId, kartTipi, isyeriId);
+        await loadLookups(firmaId, kartTipi, isyeriId, calismaDurumu);
         await loadList();
       } catch (e: any) {
         setError(e?.message ?? "Beklenmeyen hata");
@@ -616,7 +647,7 @@ export function KisiHareketleriScreen(props: { user: any; abilities: any; onOpen
       }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filtersHydrated, firmaId, kartTipi, isyeriId, personelIds.join(","), sadeceAktif, sadecePasif, sadeceYemekhane, baslangic.getTime(), bitis.getTime(), page, pageSize]);
+  }, [filtersHydrated, firmaId, kartTipi, calismaDurumu, isyeriId, personelIds.join(","), sadeceAktif, sadecePasif, sadeceYemekhane, baslangic.getTime(), bitis.getTime(), page, pageSize]);
 
   const firmaLabel = useMemo(() => {
     const fid = firmaId ?? Number(pick<any>(aktifFirma, "firmaId", "FirmaId"));
@@ -834,7 +865,17 @@ export function KisiHareketleriScreen(props: { user: any; abilities: any; onOpen
 
             <View className="h-3" />
 
-            <TouchableOpacity onPress={() => setKartTipiModal(true)} className="px-3 py-3 rounded-xl border border-[#e2e8f0] bg-white">
+            <TouchableOpacity onPress={() => setCalismaDurumuModal(true)} className="px-3 py-3 rounded-xl border border-[#e2e8f0] bg-white">
+              <RowLabel label="Durum" value={calismaDurumu === "cikan" ? "İşten Çıkanlar" : "Aktif Çalışanlar"} />
+            </TouchableOpacity>
+
+            <View className="h-3" />
+
+            <TouchableOpacity
+              disabled={sadeceIstenCikanlar}
+              onPress={() => !sadeceIstenCikanlar && setKartTipiModal(true)}
+              className={`px-3 py-3 rounded-xl border border-[#e2e8f0] ${sadeceIstenCikanlar ? "bg-[#f1f5f9]" : "bg-white"}`}
+            >
               <RowLabel label="Kart Tipi" value={kartTipi === "puantajsiz" ? "Puantaj Yapılmayanlar" : "Puantaj Yapılanlar"} />
             </TouchableOpacity>
 
@@ -1030,6 +1071,24 @@ export function KisiHareketleriScreen(props: { user: any; abilities: any; onOpen
             setPage(1);
           }}
           items={isyeriSelectItems}
+        />
+      ) : null}
+
+      {calismaDurumuModal ? (
+        <SelectModal
+          visible={calismaDurumuModal}
+          title="Durum"
+          onClose={() => setCalismaDurumuModal(false)}
+          onPick={(key) => {
+            const k = key === "cikan" ? "cikan" : "aktif";
+            setCalismaDurumu(k);
+            setPersonelIds([]);
+            setPage(1);
+          }}
+          items={[
+            { key: "aktif", label: "Aktif Çalışanlar" },
+            { key: "cikan", label: "İşten Çıkanlar" },
+          ]}
         />
       ) : null}
 

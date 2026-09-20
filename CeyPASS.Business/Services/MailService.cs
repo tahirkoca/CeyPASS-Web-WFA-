@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 
 namespace CeyPASS.Business.Services
 {
+    /// <summary>Asenkron toplu e-posta.</summary>
     public class MailService : IMailService
     {
         private readonly string _smtpHost;
@@ -38,6 +39,7 @@ namespace CeyPASS.Business.Services
             _senderName = ConfigurationManager.AppSettings["EmailFromName"] ?? "CeyPASS";
             _enableSsl = bool.TryParse(ConfigurationManager.AppSettings["SmtpEnableSsl"], out var ssl) ? ssl : true;
         }
+        /// <inheritdoc />
         public async Task<bool> SendEmailAsync(List<string> alicilar, string konu, string icerik, bool htmlMi = true)
         {
             try

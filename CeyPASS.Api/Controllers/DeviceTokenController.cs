@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 
 namespace CeyPASS.Api.Controllers
 {
+    /// <summary>FCM push için cihaz token kaydı.</summary>
     [Authorize]
     [ApiController]
     [Route("api/v1/[controller]")]
@@ -25,6 +26,8 @@ namespace CeyPASS.Api.Controllers
             _sessionContext = sessionContext;
         }
 
+        
+        /// <summary>FCM token kaydı veya güncelleme.</summary>
         [HttpPost("register")]
         public ActionResult<CeyPASS.Models.ApiResult> Register([FromBody] TokenRegisterRequest request)
         {
@@ -45,6 +48,8 @@ namespace CeyPASS.Api.Controllers
             return ok ? Ok(CeyPASS.Models.ApiResult.Ok("Cihaz kaydedildi.")) : BadRequest(CeyPASS.Models.ApiResult.Failure("Kayıt başarısız."));
         }
 
+        
+        /// <summary>FCM token pasifleştirme.</summary>
         [HttpPost("unregister")]
         public ActionResult<CeyPASS.Models.ApiResult> Unregister([FromBody] string token)
         {

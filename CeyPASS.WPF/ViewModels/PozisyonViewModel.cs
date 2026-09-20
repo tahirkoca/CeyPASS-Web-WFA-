@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace CeyPASS.WPF.ViewModels;
 
+/// <summary>Pozisyon tanım CRUD (sayfa: Pozisyonlar).</summary>
 public sealed class PozisyonViewModel : ObservableObject
 {
     private enum ScreenMode { List, Add, Edit }

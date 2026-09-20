@@ -4,11 +4,13 @@
     var search = ViewBag.Search as string;
     var selectedFirmaId = ViewBag.SelectedFirmaId as int? ?? 0;
     var selectedIsyeriId = ViewBag.SelectedIsyeriId as int?;
+    var selectedBolumId = ViewBag.SelectedBolumId as int?;
     var kartTipi = ViewBag.KartTipi as string ?? "puantaj";
     var calismaDurumu = ViewBag.CalismaDurumu as string ?? "aktif";
     var sadeceIstenCikanlar = calismaDurumu == "cikan";
     var firmalar = ViewBag.Firmalar as List<CeyPASS.Entities.Concrete.Firma>;
     var isyerleri = ViewBag.Isyerleri as List<CeyPASS.Entities.Concrete.LookupItem>;
+    var bolumler = ViewBag.Bolumler as List<CeyPASS.Entities.Concrete.LookupItem>;
     var isAdmin = ViewBag.IsAdmin as bool? ?? false;
     var canCreate = ViewBag.CanCreate as bool? ?? false;
     var canUpdate = ViewBag.CanUpdate as bool? ?? false;
@@ -130,6 +132,27 @@
                                 }
                             </select>
                         </div>
+
+                        <div class="col-md-3">
+                            <label for="bolumId" class="form-label">Bölüm:</label>
+                            <select name="bolumId" id="bolumId" class="form-select" title="Filtrelemek için bölüm seçin">
+                                <option value="">Tümü</option>
+                                @if (bolumler != null && bolumler.Any())
+                                {
+                                    foreach (var b in bolumler)
+                                    {
+                                        if (selectedBolumId.HasValue && b.Id == selectedBolumId.Value)
+                                        {
+                                            <option value="@b.Id" selected="selected">@b.Ad</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="@b.Id">@b.Ad</option>
+                                        }
+                                    }
+                                }
+                            </select>
+                        </div>
                         
                         <div class="col-md-3">
                             <label for="search" class="form-label">Ara:</label>
@@ -174,7 +197,7 @@
                             <button type="submit" class="btn btn-primary me-2" title="Filtreleri uygula ve ara">
                                 <i class="bi bi-search"></i> Ara
                             </button>
-                            <a href="@Url.Action("Index", new { kartTipi, firmaId = selectedFirmaId })" class="btn btn-secondary" title="Tüm filtreleri temizle">
+                            <a href="@Url.Action("Index", new { kartTipi, firmaId = selectedFirmaId, calismaDurumu })" class="btn btn-secondary" title="Tüm filtreleri temizle">
                                 <i class="bi bi-x-circle"></i> Temizle
                             </a>
                         </div>
@@ -231,12 +254,12 @@
                                             <td>@personel.AdSoyad</td>
                                             <td class="text-center">
                                                 <div class="d-flex gap-1 justify-content-center">
-                                                    <a href="@Url.Action("Details", new { id = personel.PersonelId, kartTipi, firmaId = selectedFirmaId, page = currentPage, pageSize, search, isyeriId = selectedIsyeriId })" class="btn btn-sm btn-info" title="Detaylar">
+                                                    <a href="@Url.Action("Details", new { id = personel.PersonelId, kartTipi, firmaId = selectedFirmaId, page = currentPage, pageSize, search, isyeriId = selectedIsyeriId, bolumId = selectedBolumId })" class="btn btn-sm btn-info" title="Detaylar">
                                                         <i class="bi bi-eye"></i>
                                                     </a>
                                                     @if (canUpdate)
                                                     {
-                                                        <a href="@Url.Action("Edit", new { id = personel.PersonelId, kartTipi, firmaId = selectedFirmaId, page = currentPage, pageSize, search, isyeriId = selectedIsyeriId, calismaDurumu })" class="btn btn-sm @(sadeceIstenCikanlar ? "btn-success" : "btn-warning")" title="@(sadeceIstenCikanlar ? "Aktif Et" : "Düzenle")">
+                                                        <a href="@Url.Action("Edit", new { id = personel.PersonelId, kartTipi, firmaId = selectedFirmaId, page = currentPage, pageSize, search, isyeriId = selectedIsyeriId, bolumId = selectedBolumId, calismaDurumu })" class="btn btn-sm @(sadeceIstenCikanlar ? "btn-success" : "btn-warning")" title="@(sadeceIstenCikanlar ? "Aktif Et" : "Düzenle")">
                                                             <i class="bi @(sadeceIstenCikanlar ? "bi-person-check" : "bi-pencil")"></i>
                                                         </a>
                                                     }
@@ -268,7 +291,7 @@
                         <nav aria-label="Personel sayfalama" class="mt-3">
                             <ul class="pagination justify-content-center flex-wrap mb-0">
                                 <li class="page-item @(currentPage <= 1 ? "disabled" : "")">
-                                    <a class="page-link" href="@Url.Action("Index", new { search, firmaId = selectedFirmaId, isyeriId = selectedIsyeriId, kartTipi, page = currentPage - 1, pageSize })" aria-label="Önceki">
+                                    <a class="page-link" href="@Url.Action("Index", new { search, firmaId = selectedFirmaId, isyeriId = selectedIsyeriId, bolumId = selectedBolumId, kartTipi, page = currentPage - 1, pageSize })" aria-label="Önceki">
                                         <span aria-hidden="true">&laquo;</span>
                                     </a>
                                 </li>
@@ -280,7 +303,7 @@
                                     if (start > 1)
                                     {
                                         <li class="page-item">
-                                            <a class="page-link" href="@Url.Action("Index", new { search, firmaId = selectedFirmaId, isyeriId = selectedIsyeriId, kartTipi, page = 1, pageSize })">1</a>
+                                            <a class="page-link" href="@Url.Action("Index", new { search, firmaId = selectedFirmaId, isyeriId = selectedIsyeriId, bolumId = selectedBolumId, kartTipi, page = 1, pageSize })">1</a>
                                         </li>
                                         if (start > 2)
                                         {
@@ -291,7 +314,7 @@
                                     for (var p = start; p <= end; p++)
                                     {
                                         <li class="page-item @(p == currentPage ? "active" : "")">
-                                            <a class="page-link" href="@Url.Action("Index", new { search, firmaId = selectedFirmaId, isyeriId = selectedIsyeriId, kartTipi, page = p, pageSize })">@p</a>
+                                            <a class="page-link" href="@Url.Action("Index", new { search, firmaId = selectedFirmaId, isyeriId = selectedIsyeriId, bolumId = selectedBolumId, kartTipi, page = p, pageSize })">@p</a>
                                         </li>
                                     }
 
@@ -302,13 +325,13 @@
                                             <li class="page-item disabled"><span class="page-link">…</span></li>
                                         }
                                         <li class="page-item">
-                                            <a class="page-link" href="@Url.Action("Index", new { search, firmaId = selectedFirmaId, isyeriId = selectedIsyeriId, kartTipi, page = totalPages, pageSize })">@totalPages</a>
+                                            <a class="page-link" href="@Url.Action("Index", new { search, firmaId = selectedFirmaId, isyeriId = selectedIsyeriId, bolumId = selectedBolumId, kartTipi, page = totalPages, pageSize })">@totalPages</a>
                                         </li>
                                     }
                                 }
 
                                 <li class="page-item @(currentPage >= totalPages ? "disabled" : "")">
-                                    <a class="page-link" href="@Url.Action("Index", new { search, firmaId = selectedFirmaId, isyeriId = selectedIsyeriId, kartTipi, page = currentPage + 1, pageSize })" aria-label="Sonraki">
+                                    <a class="page-link" href="@Url.Action("Index", new { search, firmaId = selectedFirmaId, isyeriId = selectedIsyeriId, bolumId = selectedBolumId, kartTipi, page = currentPage + 1, pageSize })" aria-label="Sonraki">
                                         <span aria-hidden="true">&raquo;</span>
                                     </a>
                                 </li>
@@ -337,6 +360,7 @@
                         <input type="hidden" name="pageSize" value="@pageSize" />
                         <input type="hidden" name="search" value="@search" />
                         <input type="hidden" name="isyeriId" value="@(selectedIsyeriId?.ToString() ?? "")" />
+                        <input type="hidden" name="bolumId" value="@(selectedBolumId?.ToString() ?? "")" />
                         <div class="modal-body">
                             <p class="text-muted small mb-3">İşten çıkış tarihini seçin, isteğe bağlı firma dışı kart numarasını girin ve <strong>İşten çıkar</strong> butonuna basın.</p>
                             <input type="hidden" name="id" id="modalIstenCikarPersonelId" />
@@ -381,7 +405,7 @@
     <script>
         if (window.CeyPASS && CeyPASS.filters) {
             CeyPASS.filters.bindForm('personel', '#filterForm', [
-                'calismaDurumu', 'kartTipi', 'firmaId', 'isyeriId', 'search', 'pageSize'
+                'calismaDurumu', 'kartTipi', 'firmaId', 'isyeriId', 'bolumId', 'search', 'pageSize'
             ]);
         }
 
@@ -392,6 +416,10 @@
         document.getElementById('isyeriId')?.addEventListener('change', function () {
             this.closest('form')?.submit();
         });
+
+        document.getElementById('bolumId')?.addEventListener('change', function () {
+            this.closest('form')?.submit();
+        });
         
         document.getElementById('pageSize')?.addEventListener('change', function () {
             this.closest('form')?.submit();
@@ -400,46 +428,53 @@
         (function () {
             var firmaEl = document.getElementById('firmaId');
             var isyeriEl = document.getElementById('isyeriId');
+            var bolumEl = document.getElementById('bolumId');
             if (!firmaEl || !isyeriEl) return;
 
-            function clearIsyerleri() {
-                isyeriEl.innerHTML = '';
+            function clearSelect(el) {
+                if (!el) return;
+                el.innerHTML = '';
                 var opt = document.createElement('option');
                 opt.value = '';
                 opt.textContent = 'Tümü';
-                isyeriEl.appendChild(opt);
+                el.appendChild(opt);
             }
 
-            function fillIsyerleri(items) {
-                clearIsyerleri();
-                if (!items || !items.length) return;
+            function fillSelect(el, items) {
+                clearSelect(el);
+                if (!el || !items || !items.length) return;
                 for (var i = 0; i < items.length; i++) {
                     var it = items[i];
                     var o = document.createElement('option');
                     o.value = (it.id ?? it.Id ?? '').toString();
                     o.textContent = it.ad ?? it.Ad ?? '';
-                    isyeriEl.appendChild(o);
+                    el.appendChild(o);
                 }
             }
 
+            // Firma değişince işyeri/bölüm listeleri AJAX; seçimler sıfırlanıp filtre formu gönderilir
             firmaEl.addEventListener('change', function () {
                 var fid = firmaEl.value;
-                clearIsyerleri();
+                clearSelect(isyeriEl);
+                clearSelect(bolumEl);
                 if (!fid) {
                     firmaEl.closest('form')?.submit();
                     return;
                 }
-                fetch('@Url.Action("GetIsyerleri", "Personel")?firmaId=' + encodeURIComponent(fid), { credentials: 'same-origin' })
-                    .then(function (r) { return r.json(); })
-                    .then(function (data) {
-                        fillIsyerleri(data);
-                        isyeriEl.value = '';
-                        firmaEl.closest('form')?.submit();
-                    })
-                    .catch(function () {
-                        // hata olursa yine de firma değişikliğini uygula
-                        firmaEl.closest('form')?.submit();
-                    });
+                Promise.all([
+                    fetch('@Url.Action("GetIsyerleri", "Personel")?firmaId=' + encodeURIComponent(fid), { credentials: 'same-origin' }).then(function (r) { return r.json(); }),
+                    bolumEl
+                        ? fetch('@Url.Action("GetBolumler", "Personel")?firmaId=' + encodeURIComponent(fid), { credentials: 'same-origin' }).then(function (r) { return r.json(); })
+                        : Promise.resolve([])
+                ]).then(function (results) {
+                    fillSelect(isyeriEl, results[0]);
+                    fillSelect(bolumEl, results[1]);
+                    isyeriEl.value = '';
+                    if (bolumEl) bolumEl.value = '';
+                    firmaEl.closest('form')?.submit();
+                }).catch(function () {
+                    firmaEl.closest('form')?.submit();
+                });
             });
         })();
     </script>
@@ -493,6 +528,7 @@
                         onayModalBody.textContent = msg;
                         onayModalBtn.onclick = function () {
                             bootstrap.Modal.getInstance(onayModalEl).hide();
+                            // İşten çıkış öncesi undo kuyruğu: puantaj kartında TekrarAktifEt puantaj bayrağı taşır
                             if (window.CeyPASS && CeyPASS.undo) {
                                 var pid = idEl.value;
                                 var fields = {};

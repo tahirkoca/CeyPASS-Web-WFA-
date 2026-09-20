@@ -10,6 +10,7 @@ using System.Windows.Forms;
 
 namespace CeyPASS.WFA.UserControls
 {
+    /// <summary>İşyeri tanımı; firma yetkisine göre filtrelenmiş CRUD.</summary>
     public partial class ucIsyeriTanimlama : UserControl
     {
         private enum ScreenMode { List, Add, Edit }
@@ -28,6 +29,7 @@ namespace CeyPASS.WFA.UserControls
         private const string PageNameUI = "İşyerleri";
         private readonly WinFormsFieldErrors _fieldErrors;
 
+        /// <summary>Yetki servisi ile kullanıcı firma/işyeri kapsamını yükler.</summary>
         public ucIsyeriTanimlama(ISessionContext session,IIsyeriService isvc,IAuthorizationService auth, IKullaniciFirmaIsyeriYetkiService yetkiSvc)
         {
             InitializeComponent();
@@ -279,7 +281,7 @@ namespace CeyPASS.WFA.UserControls
                 return false;
             }
 
-            if (!int.TryParse(txtIsyeriId.Text, out isyeriId) || isyeriId <= 0)
+            if (!int.TryParse(txtIsyeriId.Text, out isyeriId) || isyeriId < 0)
             {
                 msg = "Geçerli bir İşyeri Id giriniz.";
                 _fieldErrors.Set(txtIsyeriId, msg);

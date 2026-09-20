@@ -16,13 +16,15 @@ using Xunit;
 
 namespace CeyPASS.Tests.Web
 {
+    /// <summary>
+    /// Admin paneli kullanıcı ve yetki yönetimi uç noktaları.
+    /// </summary>
     public class AdminControllerTests
     {
         private readonly Mock<ISessionContext> _sessionMock = new();
         private readonly Mock<IFirmaService> _firmaMock = new();
         private readonly Mock<IIsyeriService> _isyeriMock = new();
         private readonly Mock<ICihazService> _cihazMock = new();
-        private readonly Mock<IDepartmanService> _departmanMock = new();
         private readonly Mock<IPozisyonService> _pozisyonMock = new();
         private readonly Mock<IResmiTatilService> _resmiTatilMock = new();
         private readonly Mock<ICalismaStatuService> _calismaStatuMock = new();
@@ -45,7 +47,6 @@ namespace CeyPASS.Tests.Web
                 _firmaMock.Object,
                 _isyeriMock.Object,
                 _cihazMock.Object,
-                _departmanMock.Object,
                 _pozisyonMock.Object,
                 _resmiTatilMock.Object,
                 _calismaStatuMock.Object,
@@ -82,6 +83,9 @@ namespace CeyPASS.Tests.Web
 
         // ─── GuncellemeDogrula via GuncellemeMailOnizleme ─────────────────────
 
+        /// <summary>
+        /// Versiyonboş Hataylareddedilirirect
+        /// </summary>
         [Fact]
         public void GuncellemeMailOnizleme_VersiyonBos_HataylaRedirect()
         {
@@ -94,6 +98,9 @@ namespace CeyPASS.Tests.Web
             _sut.TempData["Error"].Should().NotBeNull();
         }
 
+        /// <summary>
+        /// Tipboş Hataylareddedilirirect
+        /// </summary>
         [Fact]
         public void GuncellemeMailOnizleme_TipBos_HataylaRedirect()
         {
@@ -106,6 +113,9 @@ namespace CeyPASS.Tests.Web
             _sut.TempData["Error"].Should().NotBeNull();
         }
 
+        /// <summary>
+        /// TumListelerboş Hataylareddedilirirect
+        /// </summary>
         [Fact]
         public void GuncellemeMailOnizleme_TumListelerBos_HataylaRedirect()
         {
@@ -127,6 +137,9 @@ namespace CeyPASS.Tests.Web
 
         // ─── SatirlariListeye via GuncellemeMailOnizleme ──────────────────────
 
+        /// <summary>
+        /// CokSatirliMetin DogruListeyeAyrilir
+        /// </summary>
         [Fact]
         public void GuncellemeMailOnizleme_CokSatirliMetin_DogruListeyeAyrilir()
         {
@@ -146,6 +159,9 @@ namespace CeyPASS.Tests.Web
             capturedDto.YeniOzellikler[1].Should().Be("Özellik 2");
         }
 
+        /// <summary>
+        /// BoşluklarVeYeniSatirlar Temizlenir
+        /// </summary>
         [Fact]
         public void GuncellemeMailOnizleme_BosluklarVeYeniSatirlar_Temizlenir()
         {
@@ -165,6 +181,9 @@ namespace CeyPASS.Tests.Web
             capturedDto.YeniOzellikler[1].Should().Be("Madde 2");
         }
 
+        /// <summary>
+        /// Geçerli ContentResultdöner
+        /// </summary>
         [Fact]
         public void GuncellemeMailOnizleme_Gecerli_ContentResultDoner()
         {
@@ -180,6 +199,9 @@ namespace CeyPASS.Tests.Web
 
         // ─── Index ────────────────────────────────────────────────────────────
 
+        /// <summary>
+        /// AdminDegil HomeIndexeYonlendirir
+        /// </summary>
         [Fact]
         public void Index_AdminDegil_HomeIndexeYonlendirir()
         {
@@ -188,7 +210,6 @@ namespace CeyPASS.Tests.Web
             _firmaMock.Setup(f => f.GetAll()).Returns(new List<Firma>());
             _isyeriMock.Setup(i => i.GetListForAdmin()).Returns(new List<IsyeriItem>());
             _cihazMock.Setup(c => c.GetListe(It.IsAny<bool>(), It.IsAny<int?>())).Returns(new List<CihazListDTO>());
-            _departmanMock.Setup(d => d.GetListForAdmin()).Returns(new List<DepartmanListDTO>());
             _pozisyonMock.Setup(p => p.GetListForAdmin()).Returns(new List<PozisyonListDTO>());
             _resmiTatilMock.Setup(r => r.GetList(It.IsAny<int?>())).Returns(new List<ResmiTatilDTO>());
             _calismaStatuMock.Setup(c => c.GetAll()).Returns(new List<LookupItem>());
@@ -201,13 +222,15 @@ namespace CeyPASS.Tests.Web
             redirect.ControllerName.Should().Be("Home");
         }
 
+        /// <summary>
+        /// Admin Viewdöner
+        /// </summary>
         [Fact]
         public void Index_Admin_ViewDoner()
         {
             _firmaMock.Setup(f => f.GetAll()).Returns(new List<Firma>());
             _isyeriMock.Setup(i => i.GetListForAdmin()).Returns(new List<IsyeriItem>());
             _cihazMock.Setup(c => c.GetListe(It.IsAny<bool>(), It.IsAny<int?>())).Returns(new List<CihazListDTO>());
-            _departmanMock.Setup(d => d.GetListForAdmin()).Returns(new List<DepartmanListDTO>());
             _pozisyonMock.Setup(p => p.GetListForAdmin()).Returns(new List<PozisyonListDTO>());
             _resmiTatilMock.Setup(r => r.GetList(It.IsAny<int?>())).Returns(new List<ResmiTatilDTO>());
             _calismaStatuMock.Setup(c => c.GetAll()).Returns(new List<LookupItem>());
@@ -247,6 +270,9 @@ namespace CeyPASS.Tests.Web
 
         // ─── Kullanıcı - Personel eşlemesi ────────────────────────────────────
 
+        /// <summary>
+        /// AdminDegil LoginaYonlendirir
+        /// </summary>
         [Fact]
         public void KullaniciPersonelGuncelle_AdminDegil_LoginaYonlendirir()
         {
@@ -259,6 +285,9 @@ namespace CeyPASS.Tests.Web
             redirect.ControllerName.Should().Be("Account");
         }
 
+        /// <summary>
+        /// Admin SetPersonelIdçağrılır VeKullanicilarTabinadöner
+        /// </summary>
         [Fact]
         public void KullaniciPersonelGuncelle_Admin_SetPersonelIdCagrilir_VeKullanicilarTabinaDoner()
         {
@@ -276,6 +305,9 @@ namespace CeyPASS.Tests.Web
 
         // ─── ÜstYetkili yönetimi ──────────────────────────────────────────────
 
+        /// <summary>
+        /// PersonelIdboş HataVeUstYetkiliTabinadöner
+        /// </summary>
         [Fact]
         public void UstYetkiliGuncelle_PersonelIdBos_HataVeUstYetkiliTabinaDoner()
         {
@@ -289,6 +321,9 @@ namespace CeyPASS.Tests.Web
             _ustYetkiliRepoMock.Verify(r => r.EkleVeyaGuncelle(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
         }
 
+        /// <summary>
+        /// Ustboş Silçağrılır
+        /// </summary>
         [Fact]
         public void UstYetkiliGuncelle_UstBos_SilCagrilir()
         {
@@ -303,6 +338,9 @@ namespace CeyPASS.Tests.Web
             _ustYetkiliRepoMock.Verify(r => r.EkleVeyaGuncelle(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
         }
 
+        /// <summary>
+        /// UstDolu EkleVeyaGuncelleçağrılır
+        /// </summary>
         [Fact]
         public void UstYetkiliGuncelle_UstDolu_EkleVeyaGuncelleCagrilir()
         {

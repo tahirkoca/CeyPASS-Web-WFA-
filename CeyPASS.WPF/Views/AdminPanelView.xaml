@@ -19,7 +19,6 @@
             <TabItem Header="Firma" x:Name="TabFirma"/>
             <TabItem Header="İşyeri" x:Name="TabIsyeri"/>
             <TabItem Header="Cihaz" x:Name="TabCihaz"/>
-            <TabItem Header="Departman" x:Name="TabDepartman"/>
             <TabItem Header="Pozisyon" x:Name="TabPozisyon"/>
             <TabItem Header="Resmi Tatil" x:Name="TabResmiTatil"/>
             <TabItem Header="Çalışma Statüsü" x:Name="TabCalismaStatu"/>

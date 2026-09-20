@@ -6,6 +6,7 @@ using System.Windows.Media.Effects;
 
 namespace CeyPASS.WPF;
 
+/// <summary>UiDialog görsel şerit / ikon türü.</summary>
 public enum UiDialogKind
 {
     Info,
@@ -15,6 +16,7 @@ public enum UiDialogKind
     Confirm
 }
 
+/// <summary>Onay diyaloglarında birincil / ikincil düğme sonucu.</summary>
 public enum UiDialogResult
 {
     None,

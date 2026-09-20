@@ -6,6 +6,7 @@ using System.Linq;
 
 namespace CeyPASS.DataAccess.Repositories
 {
+    /// <summary>Vardiya/yemek yetki erişimi.</summary>
     public class PersonelVardiyaYemekYetkiRepositoryCore : IPersonelVardiyaYemekYetkiRepository
     {
         private readonly CeyPASSDataConnectionCore _context;
@@ -15,6 +16,7 @@ namespace CeyPASS.DataAccess.Repositories
             _context = context;
         }
 
+        /// <summary>Firma Has Saat Penceresi Aktif işlemini gerçekleştirir.</summary>
         public bool FirmaHasSaatPenceresiAktif(int firmaId)
         {
             // Explicit kolon: EF model/DB adı sapmalarında sessiz false dönmesin.
@@ -23,6 +25,7 @@ namespace CeyPASS.DataAccess.Repositories
                           && EF.Property<bool>(c, nameof(Cihazlar.SaatPenceresiAktifMi)));
         }
 
+        /// <summary>By Calisma Sekli Id sorgularını getirir.</summary>
         public List<PersonelVardiyaYemekYetki> GetByCalismaSekliId(int calismaSekliId)
         {
             var q =
@@ -51,6 +54,7 @@ namespace CeyPASS.DataAccess.Repositories
             return q.ToList();
         }
 
+        /// <summary>Exists For Cihaz işlemini gerçekleştirir.</summary>
         public bool ExistsForCihaz(int calismaSekliId, int cihazId, int? excludeId = null)
         {
             var q = _context.PersonelVardiyaYemekYetkileri.AsNoTracking()
@@ -62,6 +66,7 @@ namespace CeyPASS.DataAccess.Repositories
             return q.Any();
         }
 
+        /// <summary>Yeni kayıt ekler.</summary>
         public int Insert(PersonelVardiyaYemekYetki item)
         {
             var entity = new PersonelVardiyaYemekYetkileri
@@ -79,6 +84,7 @@ namespace CeyPASS.DataAccess.Repositories
             return entity.Id;
         }
 
+        /// <summary>Kaydı günceller.</summary>
         public bool Update(PersonelVardiyaYemekYetki item)
         {
             var entity = _context.PersonelVardiyaYemekYetkileri
@@ -97,6 +103,7 @@ namespace CeyPASS.DataAccess.Repositories
             return _context.SaveChanges() > 0;
         }
 
+        /// <summary>Kaydı siler.</summary>
         public bool Delete(int id)
         {
             var entity = _context.PersonelVardiyaYemekYetkileri

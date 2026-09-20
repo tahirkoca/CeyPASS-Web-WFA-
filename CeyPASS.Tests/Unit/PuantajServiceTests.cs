@@ -9,6 +9,9 @@ using Xunit;
 
 namespace CeyPASS.Tests.Unit
 {
+    /// <summary>
+    /// Puantaj hesaplamaları: fazla mesai dakikası, rapor gün gruplama, satır düzenlenebilirlik, FM1 ve GetAy erken/geç çıkış.
+    /// </summary>
     public class PuantajServiceTests
     {
         private readonly Mock<IPuantajRepository> _repoMock = new();
@@ -21,6 +24,9 @@ namespace CeyPASS.Tests.Unit
 
         // ─── HesaplaFazlaMesaiDakika ──────────────────────────────────────────
 
+        /// <summary>
+        /// FM1/FM2 dışındaki çalışma kodlarında fazla mesai dakikası hesaplanmaz (0).
+        /// </summary>
         [Theory]
         [InlineData("N")]
         [InlineData("HT")]
@@ -32,18 +38,27 @@ namespace CeyPASS.Tests.Unit
             _sut.HesaplaFazlaMesaiDakika(kod, 9.0m).Should().Be(0);
         }
 
+        /// <summary>
+        /// FM1 için tam 7,5 saat çalışmada fazla mesai dakikası yoktur.
+        /// </summary>
         [Fact]
         public void HesaplaFazlaMesaiDakika_SaatTam7_5_SifirDoner()
         {
             _sut.HesaplaFazlaMesaiDakika("FM1", 7.5m).Should().Be(0);
         }
 
+        /// <summary>
+        /// FM1 için 7,5 saatin altında çalışmada fazla mesai dakikası negatif sayılmaz (0).
+        /// </summary>
         [Fact]
         public void HesaplaFazlaMesaiDakika_SaatAlti7_5_SifirDoner()
         {
             _sut.HesaplaFazlaMesaiDakika("FM1", 7.0m).Should().Be(0);
         }
 
+        /// <summary>
+        /// FM1: (saat − 7,5) × 60 formülü; 9 saat → 90 dakika fazla mesai.
+        /// </summary>
         [Fact]
         public void HesaplaFazlaMesaiDakika_9Saat_90DakikaDoner()
         {
@@ -51,6 +66,9 @@ namespace CeyPASS.Tests.Unit
             _sut.HesaplaFazlaMesaiDakika("FM1", 9.0m).Should().Be(90);
         }
 
+        /// <summary>
+        /// FM1: 8,25 saat → 0,75 saat × 60 = 45 dakika fazla mesai.
+        /// </summary>
         [Fact]
         public void HesaplaFazlaMesaiDakika_8_25Saat_45DakikaDoner()
         {
@@ -60,6 +78,9 @@ namespace CeyPASS.Tests.Unit
 
         // ─── HesaplaRaporGunleri ──────────────────────────────────────────────
 
+        /// <summary>
+        /// Rapor tarih listesi null ise NG ve rapor gün sayıları 0.
+        /// </summary>
         [Fact]
         public void HesaplaRaporGunleri_NullListe_SifirDoner()
         {
@@ -68,6 +89,9 @@ namespace CeyPASS.Tests.Unit
             sonuc.RaporGunSayisi.Should().Be(0);
         }
 
+        /// <summary>
+        /// Boş rapor tarih listesinde NG ve rapor gün sayıları 0.
+        /// </summary>
         [Fact]
         public void HesaplaRaporGunleri_BosListe_SifirDoner()
         {
@@ -76,6 +100,9 @@ namespace CeyPASS.Tests.Unit
             sonuc.RaporGunSayisi.Should().Be(0);
         }
 
+        /// <summary>
+        /// Tek rapor günü henüz 3'lü blok oluşturmaz: 1 NG, 0 rapor bloğu.
+        /// </summary>
         [Fact]
         public void HesaplaRaporGunleri_TekTarih_BirNGSifirRapor()
         {
@@ -85,6 +112,9 @@ namespace CeyPASS.Tests.Unit
             sonuc.RaporGunSayisi.Should().Be(0);
         }
 
+        /// <summary>
+        /// İki ardışık rapor günü hâlâ rapor bloğu sayılmaz (2 NG, 0 rapor).
+        /// </summary>
         [Fact]
         public void HesaplaRaporGunleri_IkiTarih_IkiNGSifirRapor()
         {
@@ -98,6 +128,9 @@ namespace CeyPASS.Tests.Unit
             sonuc.RaporGunSayisi.Should().Be(0);
         }
 
+        /// <summary>
+        /// Üç ardışık rapor gününde 2 NG + 1 rapor bloğu sayılır.
+        /// </summary>
         [Fact]
         public void HesaplaRaporGunleri_UcArdisikTarih_IkiNGBirRapor()
         {
@@ -112,6 +145,9 @@ namespace CeyPASS.Tests.Unit
             sonuc.RaporGunSayisi.Should().Be(1);
         }
 
+        /// <summary>
+        /// Beş ardışık rapor gününde NG/rapor dağılımı: 2 NG, 3 rapor günü.
+        /// </summary>
         [Fact]
         public void HesaplaRaporGunleri_BesArdisikTarih_IkiNGUcRapor()
         {
@@ -128,6 +164,9 @@ namespace CeyPASS.Tests.Unit
             sonuc.RaporGunSayisi.Should().Be(3);
         }
 
+        /// <summary>
+        /// Kopuk iki 3'lü rapor koşusunda her koşu ayrı rapor bloğu: toplam 4 NG, 2 rapor.
+        /// </summary>
         [Fact]
         public void HesaplaRaporGunleri_IkiAyriKosu_HerKostanIkisiNG()
         {
@@ -148,6 +187,9 @@ namespace CeyPASS.Tests.Unit
 
         // ─── IsRowEditable ────────────────────────────────────────────────────
 
+        /// <summary>
+        /// Gelecek aya ait puantaj satırı düzenlenemez.
+        /// </summary>
         [Fact]
         public void IsRowEditable_GelecekAy_FalseDoner()
         {
@@ -155,6 +197,9 @@ namespace CeyPASS.Tests.Unit
             _sut.IsRowEditable(gelecekAy, 30).Should().BeFalse();
         }
 
+        /// <summary>
+        /// Geçmiş günler (bugün hariç) mevcut ay içinde düzenlenebilir.
+        /// </summary>
         [Fact]
         public void IsRowEditable_BuAy_TrueDoner()
         {
@@ -162,6 +207,9 @@ namespace CeyPASS.Tests.Unit
             _sut.IsRowEditable(DateTime.Today.AddDays(-1), 0).Should().BeTrue();
         }
 
+        /// <summary>
+        /// Geçen ay satırları ek kayıt süresi (ekKayitGun) dolmadan düzenlenebilir.
+        /// </summary>
         [Fact]
         public void IsRowEditable_GecenAy_DeadlineGecmemis_TrueDoner()
         {
@@ -170,6 +218,9 @@ namespace CeyPASS.Tests.Unit
             _sut.IsRowEditable(gecenAy, 100).Should().BeTrue();
         }
 
+        /// <summary>
+        /// Geçen ay için ek kayıt süresi 0 ise ay sonu geçildiğinde satır kilitlenir.
+        /// </summary>
         [Fact]
         public void IsRowEditable_GecenAy_DeadlineGecmis_FalseDoner()
         {
@@ -180,24 +231,36 @@ namespace CeyPASS.Tests.Unit
 
         // ─── HesaplaFM1CalismaSaati ───────────────────────────────────────────
 
+        /// <summary>
+        /// FM1 taban çalışma saati 7,5; ek fazla mesai dakikası yokken 7,5 döner.
+        /// </summary>
         [Fact]
         public void HesaplaFM1CalismaSaati_SifirDakika_7_5Doner()
         {
             _sut.HesaplaFM1CalismaSaati(0).Should().Be(7.5m);
         }
 
+        /// <summary>
+        /// FM1 çalışma saati = 7,5 + (dakika/60); 60 dk → 8,5 saat.
+        /// </summary>
         [Fact]
         public void HesaplaFM1CalismaSaati_60Dakika_8_5Doner()
         {
             _sut.HesaplaFM1CalismaSaati(60).Should().Be(8.5m);
         }
 
+        /// <summary>
+        /// 90 dakika fazla mesai FM1 toplam çalışma saatini 9,0 yapar.
+        /// </summary>
         [Fact]
         public void HesaplaFM1CalismaSaati_90Dakika_9_0Doner()
         {
             _sut.HesaplaFM1CalismaSaati(90).Should().Be(9.0m);
         }
 
+        /// <summary>
+        /// FM1 çalışma saati iki ondalık basamağa yuvarlanır (7,5 + 1,25 = 8,75).
+        /// </summary>
         [Fact]
         public void HesaplaFM1CalismaSaati_75Dakika_IkiOndaligaYuvarlanir()
         {
@@ -207,6 +270,9 @@ namespace CeyPASS.Tests.Unit
 
         // ─── GetAy ────────────────────────────────────────────────────────────
 
+        /// <summary>
+        /// Vardiya başlangıcından önce ilk giriş varsa erken giriş dakikası fark kadar yazılır.
+        /// </summary>
         [Fact]
         public void GetAy_IlkGirisVardiyaBasindanOnce_ErkenGirisDakikasiHesaplanir()
         {
@@ -225,6 +291,9 @@ namespace CeyPASS.Tests.Unit
             sonuc[0].ErkenGirisDakika.Should().Be(30);
         }
 
+        /// <summary>
+        /// Vardiya başlangıcından sonra girişte erken giriş dakikası 0 (geç kalma ayrı alan).
+        /// </summary>
         [Fact]
         public void GetAy_IlkGirisVardiyaBasindanSonra_ErkenGirisDakikasiSifir()
         {
@@ -243,6 +312,9 @@ namespace CeyPASS.Tests.Unit
             sonuc[0].ErkenGirisDakika.Should().Be(0);
         }
 
+        /// <summary>
+        /// Vardiya bitişinden sonra çıkışta geç çıkış dakikası hesaplanır.
+        /// </summary>
         [Fact]
         public void GetAy_SonCikisVardiyaBitisindanSonra_GecCikisDakikasiHesaplanir()
         {
@@ -261,6 +333,9 @@ namespace CeyPASS.Tests.Unit
             sonuc[0].GecCikisDakika.Should().Be(45);
         }
 
+        /// <summary>
+        /// Negatif düzenlenen FM dakikası 0'a klamp edilir.
+        /// </summary>
         [Fact]
         public void GetAy_DuzenlenenFMNegatif_SifiraKlamplanir()
         {

@@ -1,3 +1,4 @@
+/** Süper admin: kullanıcı-personel, üst yetkili, sürüm duyurusu. */
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, Modal, ScrollView, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
@@ -431,7 +432,6 @@ export function AdminPanelScreen(props: {
                 { key: "firmalar", label: "Firmalar" },
                 { key: "isyerleri", label: "İşyerleri" },
                 { key: "cihazlar", label: "Cihazlar" },
-                { key: "departmanlar", label: "Departmanlar" },
                 { key: "pozisyonlar", label: "Pozisyonlar" },
                 { key: "resmiTatiller", label: "Resmi Tatiller" },
                 { key: "calismaStatuleri", label: "Çalışma Statüleri" },

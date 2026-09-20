@@ -6,6 +6,7 @@ using System.Linq;
 
 namespace CeyPASS.Web.Controllers
 {
+    /// <summary>Resmi tatil gunleri yonetimi.</summary>
     public class ResmiTatilController : Controller
     {
         private readonly IResmiTatilService _resmiTatilService;
@@ -23,6 +24,7 @@ namespace CeyPASS.Web.Controllers
             _authorizationService = authorizationService;
         }
 
+        /// <summary>Liste veya ana ekran.</summary>
         public IActionResult Index(int? yil = null)
         {
             // Check authorization
@@ -42,6 +44,7 @@ namespace CeyPASS.Web.Controllers
             return View(resmiTatiller);
         }
 
+        /// <summary>DoldurSabit islemi.</summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult DoldurSabit(int baslangicYili, int bitisYili)
@@ -65,6 +68,7 @@ namespace CeyPASS.Web.Controllers
             return RedirectToAction("Index", new { yil = baslangicYili });
         }
 
+        /// <summary>EkleVeyaGuncelle islemi.</summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult EkleVeyaGuncelle(DateTime tarih, string ad, decimal? calismaSaat)

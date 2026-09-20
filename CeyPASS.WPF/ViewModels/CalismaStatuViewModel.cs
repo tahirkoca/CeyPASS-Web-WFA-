@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace CeyPASS.WPF.ViewModels;
 
+/// <summary>Çalışma statüsü tanım CRUD (sayfa: CalismaStatuleri).</summary>
 public sealed class CalismaStatuViewModel : ObservableObject
 {
     private enum ScreenMode { List, Add, Edit }

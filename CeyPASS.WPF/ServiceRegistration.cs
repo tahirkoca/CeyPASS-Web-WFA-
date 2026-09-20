@@ -12,8 +12,10 @@ using System.IO;
 
 namespace CeyPASS.WPF;
 
+/// <summary>WPF uygulaması DI konteyneri (EF, repository, business, view'lar).</summary>
 public static class ServiceRegistration
 {
+    /// <summary>appsettings + yerel bağlantı dizesi ile ServiceProvider oluşturur.</summary>
     public static ServiceProvider Build()
     {
         var baseDir = AppContext.BaseDirectory;
@@ -70,10 +72,13 @@ public static class ServiceRegistration
         services.AddScoped<IMailRepository, MailRepositoryCore>();
         services.AddScoped<IRaporRepository, RaporRepositoryCore>();
         services.AddScoped<IPuantajRepository, PuantajRepositoryCore>();
+        services.AddScoped<ICokluSicilRepository, CokluSicilRepositoryCore>();
 
         services.AddScoped<IPuantajsizKartAtamaRepository, PuantajsizKartAtamaRepositoryCore>();
+        services.AddScoped<ICanliIzlemeKartKomutRepository, CanliIzlemeKartKomutRepositoryCore>();
         services.AddScoped<IMisafirKartService, MisafirKartService>();
         services.AddScoped<IAracKartiService, AracKartiService>();
+        services.AddScoped<ICanliIzlemeKartKomutService, CanliIzlemeKartKomutService>();
 
         // Business
         services.AddScoped<IAuthorizationService, AuthorizationService>();
@@ -107,12 +112,12 @@ public static class ServiceRegistration
         services.AddScoped<ISifreService, SifreService>();
         services.AddScoped<ISistemLogService, SistemLogService>();
         services.AddScoped<IPuantajService, PuantajService>();
+        services.AddScoped<ICokluSicilService, CokluSicilService>();
 
         services.AddTransient<Views.LoginWindow>();
         services.AddTransient<Views.MainWindow>();
         services.AddTransient<Views.KisiHareketView>();
         services.AddTransient<Views.DashboardView>();
-        services.AddTransient<Views.DepartmanView>();
         services.AddTransient<Views.PozisyonView>();
         services.AddTransient<Views.FirmaView>();
         services.AddTransient<Views.IsyeriView>();

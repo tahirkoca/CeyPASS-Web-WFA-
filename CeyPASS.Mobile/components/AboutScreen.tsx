@@ -1,3 +1,4 @@
+/** Uygulama sürümü ve iletişim bilgileri. */
 import React, { useMemo } from "react";
 import { Image, ScrollView, Text, View } from "react-native";
 import Constants from "expo-constants";

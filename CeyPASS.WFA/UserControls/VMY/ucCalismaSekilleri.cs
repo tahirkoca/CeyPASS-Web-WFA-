@@ -11,6 +11,7 @@ using System.Windows.Forms;
 
 namespace CeyPASS.WFA.UserControls.VMY
 {
+    /// <summary>Vardiya (çalışma şekli) tanımı ve yemek penceresi yönetimi.</summary>
     public partial class ucCalismaSekilleri : UserControl
     {
         private enum ScreenMode { List, Add, Edit }
@@ -50,6 +51,7 @@ namespace CeyPASS.WFA.UserControls.VMY
         /// </summary>
         public bool AdminPanelMode { get; set; }
 
+        /// <summary>Yemek penceresi alt panelini ve yetkileri kurar.</summary>
         public ucCalismaSekilleri(
             ISessionContext session,
             ICalismaSekliService vsvc,
@@ -392,6 +394,7 @@ namespace CeyPASS.WFA.UserControls.VMY
         /// <summary>
         /// Scoped UC tekrar host'a eklenince gate/listeyi yeniler (Cihazlar'da flag değişmiş olabilir).
         /// </summary>
+        /// <summary>Admin sekmesine dönüldüğünde listeyi tazeler.</summary>
         public void OnHostedAgain()
         {
             if (IsDisposed)
@@ -903,6 +906,7 @@ namespace CeyPASS.WFA.UserControls.VMY
         /// <summary>
         /// Admin Panel'de AdminPanelMode set edildikten sonra listeyi filtresiz yeniden yüklemek için.
         /// </summary>
+        /// <summary>AdminPanelMode ve firmaya göre vardiya grid'ini yeniden yükler.</summary>
         public void RefreshList()
         {
             LoadList();

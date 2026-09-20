@@ -1,7 +1,7 @@
 @model CeyPASS.Entities.Concrete.IzinTalep
 @using CeyPASS.Infrastructure.Helpers
 @{
-    Layout = null;
+    Layout = null; /* Yazdırma/PDF çıktısı; site layout ve script yok */
     var t = Model;
     var adSoyad  = (string?)ViewBag.PersonelAdSoyad ?? t.PersonelId;
     var gorev    = (string?)ViewBag.PersonelGorev   ?? "";

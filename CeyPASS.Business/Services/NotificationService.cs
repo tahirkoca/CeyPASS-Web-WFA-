@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 
 namespace CeyPASS.Business.Services
 {
+    /// <summary>Güncelleme e-posta bildirimleri.</summary>
     public class NotificationService : INotificationService
     {
         private readonly IMailService _mailService;
@@ -23,6 +24,7 @@ namespace CeyPASS.Business.Services
             _mailRepo = mailRepo;
             AliciGruplariniYukle();
         }
+        /// <inheritdoc />
         public List<string> AliciGrupGetir(string grupAdi)
         {
             if (_aliciGruplari.ContainsKey(grupAdi))
@@ -31,6 +33,7 @@ namespace CeyPASS.Business.Services
             }
             return new List<string>();
         }
+        /// <inheritdoc />
         public async Task<bool> GuncellemeNotifikasyonuGonderAsync(GuncellemeNotifikasyonDTO guncellemeInfo, string? logoBase64 = null)
         {
             var htmlIcerik = GuncellemeEmailHtmlOlustur(guncellemeInfo, logoBase64);
@@ -54,10 +57,12 @@ namespace CeyPASS.Business.Services
 
             return await _mailService.SendEmailAsync(alicilar, konu, htmlIcerik, true);
         }
+        /// <inheritdoc />
         public string OnizlemeHtmlOlustur(GuncellemeNotifikasyonDTO guncellemeInfo, string? logoBase64 = null)
         {
             return GuncellemeEmailHtmlOlustur(guncellemeInfo, logoBase64);
         }
+        /// <inheritdoc />
         public async Task<bool> OzelNotifikasyonGonderAsync(List<string> alicilar, string konu, string mesaj)
         {
             return await _mailService.SendEmailAsync(alicilar, konu, mesaj, true);

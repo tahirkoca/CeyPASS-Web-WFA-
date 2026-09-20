@@ -1,3 +1,4 @@
+/** Oturum açmış personelin profil kartı ve kısayollar. */
 import React, { useEffect, useMemo, useState } from "react";
 import { Image, Modal, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
@@ -175,7 +176,7 @@ export function ProfilScreen(props: { user: any; onOpenMenu?: () => void; onNavi
   const telefon = vstr(pick(p, "CepTel", "cepTel", "TelefonNo", "telefonNo", "Telefon", "telefon", "CepTelefonu", "cepTelefonu"));
   const dogumTarihi = vstr(fmtDateTR(pick(p, "DogumTarihi", "dogumTarihi")));
   const iseGiris = vstr(fmtDateTR(pick(p, "IseGirisTarihi", "iseGirisTarihi")));
-  const departman = vstr(pick(profile, "departmanAdi", "DepartmanAdi") ?? pick(p, "DepartmanAdi", "departmanAdi"));
+  const isyeri = vstr(pick(profile, "isyeriAdi", "IsyeriAdi") ?? pick(p, "IsyeriAdi", "isyeriAdi"));
   const pozisyon = vstr(pick(profile, "pozisyonAdi", "PozisyonAdi") ?? pick(p, "PozisyonAdi", "pozisyonAdi"));
   const calismaStatu = vstr(pick(p, "CalismaStatusuText", "calismaStatusuText", "CalismaStatuAdi", "calismaStatuAdi", "CalismaStatu", "calismaStatu"));
   const vardiyaIds = parseCsv(pick(p, "CalismaSekliCsv", "calismaSekliCsv"));
@@ -238,7 +239,7 @@ export function ProfilScreen(props: { user: any; onOpenMenu?: () => void; onNavi
                     {adSoyad}
                   </Text>
                   <Text className="mt-1 text-[#64748b] font-semibold" numberOfLines={1} ellipsizeMode="tail">
-                    {(pozisyon !== "-" ? pozisyon : departman) || " "}
+                    {(pozisyon !== "-" ? pozisyon : isyeri) || " "}
                   </Text>
                 </View>
               </View>
@@ -279,7 +280,7 @@ export function ProfilScreen(props: { user: any; onOpenMenu?: () => void; onNavi
               ) : (
                 <Row label="Çalışma Şekilleri (Vardiyalar)" value={vardiyaRowValue} />
               )}
-              <Row label="Departman" value={departman} />
+              <Row label="İşyeri" value={isyeri} />
               <Row label="Pozisyon" value={pozisyon} />
               <Row label="Yemek Hakkı" value={yemekHakkiVar === true ? "Var" : yemekHakkiVar === false ? "Yok" : "-"} />
               <Row

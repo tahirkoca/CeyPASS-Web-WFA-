@@ -1,3 +1,4 @@
+/** Uygulama tema renk paleti (Material benzeri token’lar). */
 export const Colors = {
   surface: "#0b1326",
   onSurface: "#dae2fd",

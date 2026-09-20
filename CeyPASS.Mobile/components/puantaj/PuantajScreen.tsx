@@ -1,3 +1,6 @@
+/**
+ * Aylık puantaj: lookup yetkileri (canUpdate/canApprove/canExport), gün satırı onay/düzenle, Excel indir.
+ */
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, FlatList, LayoutAnimation, Modal, Platform, ScrollView, Text, TextInput, TouchableOpacity, UIManager, View } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
@@ -54,6 +57,7 @@ function toYmd(value: any): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
 
+/** API OnayDurumu: 0 Bekliyor, 1 Onaylandı, 2 Reddedildi, 3 Düzeltildi. */
 function onayDurumuText(v: any): string {
   const raw = v?.OnayDurumu ?? v?.onayDurumu ?? v;
   if (raw === 0 || raw === "Bekliyor") return "Bekliyor";
@@ -135,6 +139,7 @@ function getRowTheme(row: any, ekKayitGun: number) {
   };
 }
 
+/** Düzenlenebilir gün: geçmiş ay son + ekKayitGun toleransı; bugün ve gelecek hariç. */
 function isRowEditable(tarihValue: any, ekKayitGun: number) {
   const tarih = new Date(tarihValue);
   if (Number.isNaN(tarih.getTime())) return false;
@@ -159,6 +164,7 @@ function isRowEditable(tarihValue: any, ekKayitGun: number) {
   return false;
 }
 
+/** Bugün/gelecek veya çoklu sicil aktarımı sonrası “Düzeltildi” satırları kilitli. */
 function isLockedRow(row: any) {
   const tarih = new Date(pick(row, "Tarih", "tarih") ?? row?.Tarih ?? row?.tarih);
   const today = new Date();
@@ -264,6 +270,9 @@ function RowLabel({ label, value }: { label: string; value: string }) {
   );
 }
 
+/**
+ * Puantaj listesi ve detay aksiyonları; export yalnızca lookup.canExport true iken.
+ */
 export function PuantajScreen(props: { user: any; abilities: any; onOpenMenu: () => void }) {
   const [loading, setLoading] = useState(true); // initial load only
   const [error, setError] = useState<string | null>(null);
@@ -309,6 +318,7 @@ export function PuantajScreen(props: { user: any; abilities: any; onOpenMenu: ()
   const [rejectVisible, setRejectVisible] = useState(false);
   const [bulkVisible, setBulkVisible] = useState(false);
   const [cokluVisible, setCokluVisible] = useState(false);
+  const [cokluSicilOzet, setCokluSicilOzet] = useState<{ isAnaSicil?: boolean; aktifHedefSayisi?: number }>({});
   const [ekGunVisible, setEkGunVisible] = useState(false);
   const [editMode, setEditMode] = useState<"edit" | "approve">("edit");
 
@@ -486,7 +496,7 @@ export function PuantajScreen(props: { user: any; abilities: any; onOpenMenu: ()
           setAy(da.getMonth() + 1);
         }
         if (typeof prefs.firmaId === "number" && prefs.firmaId > 0) setFirmaId(prefs.firmaId);
-        if (typeof prefs.isyeriId === "number" && prefs.isyeriId > 0) setIsyeriId(prefs.isyeriId);
+        if (typeof prefs.isyeriId === "number" && prefs.isyeriId >= 0) setIsyeriId(prefs.isyeriId);
         if (prefs.firmaId || prefs.isyeriId || prefs.dateA) skipServerSelectRef.current = true;
       }
       setFiltersHydrated(true);
@@ -525,6 +535,17 @@ export function PuantajScreen(props: { user: any; abilities: any; onOpenMenu: ()
     loadRows();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [personelId, yil, ay]);
+
+  useEffect(() => {
+    const pId = asInt(personelId, 0);
+    if (!pId) {
+      setCokluSicilOzet({});
+      return;
+    }
+    puantajService.cokluSicilOzet(pId).then(setCokluSicilOzet).catch(() => setCokluSicilOzet({}));
+  }, [personelId]);
+
+  const canCokluSicileAktar = !!(cokluSicilOzet?.isAnaSicil ?? (cokluSicilOzet as any)?.IsAnaSicil);
 
   const openRow = (r: any) => {
     setSelectedRow(r);
@@ -720,6 +741,7 @@ export function PuantajScreen(props: { user: any; abilities: any; onOpenMenu: ()
     }
   };
 
+  /** Seçili yıl/ay Excel: Bearer ile indir, mümkünse paylaşım sheet’i aç. */
   const doExportExcel = async () => {
     if (!canExport || exporting) return;
     setExporting(true);
@@ -1120,10 +1142,14 @@ export function PuantajScreen(props: { user: any; abilities: any; onOpenMenu: ()
                         showPopup("error", "Lütfen personel seçiniz.");
                         return;
                       }
+                      if (!canCokluSicileAktar) {
+                        showPopup("error", "Seçili personel ana sicil değil veya aktif hedef bağlantısı yok.");
+                        return;
+                      }
                       setAdvVisible(false);
                       setCokluVisible(true);
                     }}
-                    className={`mt-3 px-4 py-3 rounded-xl items-center ${canUpdate ? "bg-[#f59e0b]" : "bg-[#fde68a]"}`}
+                    className={`mt-3 px-4 py-3 rounded-xl items-center ${canUpdate && canCokluSicileAktar ? "bg-[#f59e0b]" : "bg-[#fde68a]"}`}
                   >
                     <Text className="text-white font-extrabold">Çoklu Sicil Aktar</Text>
                   </TouchableOpacity>
@@ -1364,7 +1390,8 @@ export function PuantajScreen(props: { user: any; abilities: any; onOpenMenu: ()
               </View>
               <View className="p-4">
                 <Text className="text-[#334155] font-semibold">
-                  {yil}/{String(ay).padStart(2, "0")} ayı için, sistemde tanımlı çoklu sicil bağlantıları olan kayıtların hedef sicillerine{" "}
+                  {yil}/{String(ay).padStart(2, "0")} ayı için, seçili ana sicilin{" "}
+                  {Number(cokluSicilOzet?.aktifHedefSayisi ?? (cokluSicilOzet as any)?.AktifHedefSayisi ?? 0)} hedef siciline{" "}
                   <Text className="text-[#0f172a] font-extrabold">Aktarım Gün Sayısı kadar gün NG 7,5</Text> aktarmak istiyor musunuz?
                 </Text>
                 <View className="mt-4 flex-row gap-2">

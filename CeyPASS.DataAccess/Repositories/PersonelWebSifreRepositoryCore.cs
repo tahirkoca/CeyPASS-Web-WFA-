@@ -4,6 +4,7 @@ using System.Linq;
 
 namespace CeyPASS.DataAccess.Repositories
 {
+    /// <summary>Personel web şifre erişimi.</summary>
     public class PersonelWebSifreRepositoryCore : IPersonelWebSifreRepository
     {
         private readonly CeyPASSDataConnectionCore _context;
@@ -13,6 +14,7 @@ namespace CeyPASS.DataAccess.Repositories
             _context = context;
         }
 
+        /// <summary>Dogrula işlemini gerçekleştirir.</summary>
         public bool Dogrula(string personelId, string sifre)
         {
             const string sql = @"
@@ -23,6 +25,7 @@ WHERE PersonelId = {0} AND Sifre = {1}";
             return _context.Database.SqlQueryRaw<int>(sql, personelId, sifre).Any();
         }
 
+        /// <summary>Ekle Veya Guncelle işlemini ekler.</summary>
         public bool EkleVeyaGuncelle(string personelId, string sifre)
         {
             const string sql = @"
@@ -34,6 +37,7 @@ ELSE
             return _context.Database.ExecuteSqlRaw(sql, personelId, sifre) > 0;
         }
 
+        /// <summary>Kurtarma Kodu Kaydet işlemini gerçekleştirir.</summary>
         public void KurtarmaKoduKaydet(string personelId, string kod, System.DateTime expireTime)
         {
             const string sql = @"
@@ -45,18 +49,21 @@ ELSE
             _context.Database.ExecuteSqlRaw(sql, personelId, kod, expireTime);
         }
 
+        /// <summary>Kurtarma Kodu sorgularını getirir.</summary>
         public string? GetKurtarmaKodu(string personelId)
         {
             const string sql = "SELECT KurtarmaKodu FROM dbo.PersonelWebSifreler WHERE PersonelId = {0} AND SonKullanmaZamani > GETDATE() AND Kullanildi = 0";
             return _context.Database.SqlQueryRaw<string>(sql, personelId).FirstOrDefault();
         }
 
+        /// <summary>Kurtarma Kodunu Temizle işlemini gerçekleştirir.</summary>
         public void KurtarmaKodunuTemizle(string personelId)
         {
             const string sql = "UPDATE dbo.PersonelWebSifreler SET Kullanildi = 1 WHERE PersonelId = {0}";
             _context.Database.ExecuteSqlRaw(sql, personelId);
         }
 
+        /// <summary>Kimliğe göre kaydı getirir.</summary>
         public string? GetSifreById(string personelId)
         {
             const string sql = "SELECT TOP 1 Sifre FROM dbo.PersonelWebSifreler WHERE PersonelId = {0}";

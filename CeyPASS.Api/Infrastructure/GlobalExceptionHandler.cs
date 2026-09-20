@@ -6,6 +6,7 @@ using System.Net;
 
 namespace CeyPASS.Api.Infrastructure
 {
+    /// <summary>Yakalanmamış hataları <see cref="ApiResult"/> JSON olarak 500 döner.</summary>
     public class GlobalExceptionHandler : IExceptionHandler
     {
         private readonly ILogger<GlobalExceptionHandler> _logger;
@@ -15,6 +16,7 @@ namespace CeyPASS.Api.Infrastructure
             _logger = logger;
         }
 
+        /// <inheritdoc />
         public async ValueTask<bool> TryHandleAsync(
             HttpContext httpContext,
             Exception exception,

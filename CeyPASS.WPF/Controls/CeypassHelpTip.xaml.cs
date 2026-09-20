@@ -6,6 +6,9 @@ using System.Windows.Media.Animation;
 
 namespace CeyPASS.WPF.Controls;
 
+/// <summary>
+/// <see cref="PageHelpCatalog"/> Topic ile sayfa rehberi; adımlarda geçen kontrollere kısa pulse animasyonu.
+/// </summary>
 public partial class CeypassHelpTip : UserControl
 {
     public static readonly DependencyProperty TopicProperty =
@@ -21,6 +24,7 @@ public partial class CeypassHelpTip : UserControl
         HelpPopup.Opened += HelpPopup_OnOpened;
     }
 
+    /// <summary>PageHelpCatalog anahtarı (ör. CanliIzlemeKartAtama, AylikPuantaj).</summary>
     public string? Topic
     {
         get => (string?)GetValue(TopicProperty);
@@ -117,7 +121,7 @@ public partial class CeypassHelpTip : UserControl
         if (topic is null || topic.PulseTargetNames.Count == 0)
             return;
 
-        var root = FindHostUserControl();
+        var root = FindHostRoot();
         if (root is null) return;
 
         foreach (var name in topic.PulseTargetNames)
@@ -147,13 +151,15 @@ public partial class CeypassHelpTip : UserControl
         _pulsing.Clear();
     }
 
-    private UserControl? FindHostUserControl()
+    private FrameworkElement? FindHostRoot()
     {
         var cur = VisualTreeHelper.GetParent(this);
         while (cur != null)
         {
             if (cur is UserControl uc)
                 return uc;
+            if (cur is Window w)
+                return w;
             cur = VisualTreeHelper.GetParent(cur);
         }
         return null;

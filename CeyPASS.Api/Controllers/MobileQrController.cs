@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace CeyPASS.Api.Controllers
 {
+    /// <summary>Mobil QR okutma; sicil JWT claim'inden personel kimliği alınır.</summary>
     [Authorize]
     [ApiController]
     [Route("api/v1/[controller]")]
@@ -18,6 +19,7 @@ namespace CeyPASS.Api.Controllers
             _mobileQrService = mobileQrService;
         }
 
+        /// <summary>QR payload'ını işler; giriş/çıkış veya yemek vb. senaryo serviste çözülür.</summary>
         [HttpPost("Okut")]
         public ActionResult<ApiResult<string>> Okut([FromBody] QrIstekModel request)
         {

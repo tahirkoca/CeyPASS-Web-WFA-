@@ -8,6 +8,7 @@ using System.Windows.Forms;
 
 namespace CeyPASS.WFA.Forms
 {
+    /// <summary>Tek günlük puantaj satırı tip ve açıklama düzenleme diyaloğu.</summary>
     public partial class puantajSatirDuzenlemeEkrani : Form
     {
         [DllImport("user32.dll", CharSet = CharSet.Auto)]
@@ -19,6 +20,7 @@ namespace CeyPASS.WFA.Forms
         private List<PuantajTipDTO> _tipler;
         private readonly int _personelId;
 
+        /// <summary>Grid satırı DTO'sunu forma yükler.</summary>
         public puantajSatirDuzenlemeEkrani(PuantajGunSatirDTO model, int personelId, IPuantajService svc, ISessionContext session)
         {
             InitializeComponent();

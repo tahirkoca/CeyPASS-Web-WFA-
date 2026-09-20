@@ -8,17 +8,20 @@ namespace CeyPASS.Entities.Concrete
     public class KisiSearchFilter
     {
         public int FirmaId { get; set; }
+        /// <summary>null ise puantaj filtresi uygulanmaz.</summary>
         public bool? PuantajYapilirMi { get; set; }
         public int? IsyeriId { get; set; }
         public IReadOnlyList<int> IsyeriIdIn { get; set; }
+        /// <summary>İşten çıkan sicilleri dahil et.</summary>
         public bool SadeceIstenCikanlar { get; set; }
 
         public string AdSoyadKart { get; set; }
         public string Sicil { get; set; }
         public string TcKimlikNo { get; set; }
         public string Email { get; set; }
-        public int? DepartmanId { get; set; }
         public int? PozisyonId { get; set; }
+        /// <summary>Seçili firmaya ait bölüm; 0/null = tümü.</summary>
+        public int? BolumId { get; set; }
         public int? CalismaStatuId { get; set; }
     }
 }

@@ -12,6 +12,9 @@ using Xunit;
 
 namespace CeyPASS.Tests.Web
 {
+    /// <summary>
+    /// Resmi tatil tanım ve doldurma MVC.
+    /// </summary>
     public class ResmiTatilControllerTests
     {
         private readonly Mock<IResmiTatilService> _tatilMock = new();
@@ -30,6 +33,9 @@ namespace CeyPASS.Tests.Web
 
         // ─── Index ────────────────────────────────────────────────────────────
 
+        /// <summary>
+        /// Yetkisiz HomeIndexeYonlendirir
+        /// </summary>
         [Fact]
         public void Index_Yetkisiz_HomeIndexeYonlendirir()
         {
@@ -43,6 +49,9 @@ namespace CeyPASS.Tests.Web
             ((string)_sut.TempData["Error"]!).Should().NotBeNullOrEmpty();
         }
 
+        /// <summary>
+        /// YilParametresiYok BugununYiliKullanilir
+        /// </summary>
         [Fact]
         public void Index_YilParametresiYok_BugununYiliKullanilir()
         {
@@ -58,6 +67,9 @@ namespace CeyPASS.Tests.Web
 
         // ─── DoldurSabit ──────────────────────────────────────────────────────
 
+        /// <summary>
+        /// Yetkisiz IndexeYonlendirir
+        /// </summary>
         [Fact]
         public void DoldurSabit_Yetkisiz_IndexeYonlendirir()
         {
@@ -70,6 +82,9 @@ namespace CeyPASS.Tests.Web
             ((string)_sut.TempData["Error"]!).Should().NotBeNullOrEmpty();
         }
 
+        /// <summary>
+        /// Yetkili ServisBasarili IndexeYonlendirir
+        /// </summary>
         [Fact]
         public void DoldurSabit_Yetkili_ServisBasarili_IndexeYonlendirir()
         {
@@ -84,6 +99,9 @@ namespace CeyPASS.Tests.Web
 
         // ─── EkleVeyaGuncelle ─────────────────────────────────────────────────
 
+        /// <summary>
+        /// Yetkisiz IndexeYonlendirir
+        /// </summary>
         [Fact]
         public void EkleVeyaGuncelle_Yetkisiz_IndexeYonlendirir()
         {

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 
 namespace CeyPASS.Web.Models.Profil
 {
+    /// <summary>Profil ana sayfa view modeli.</summary>
     public class ProfilIndexViewModel
     {
         public string SicilNo { get; set; } = "";
@@ -10,7 +11,7 @@ namespace CeyPASS.Web.Models.Profil
         public KisiDetay? Kisi { get; set; }
         public string? FotografDataUrl { get; set; }
 
-        public string? DepartmanAdi { get; set; }
+        public string? IsyeriAdi { get; set; }
         public string? PozisyonAdi { get; set; }
         public bool? YemekHakkiVar { get; set; }
         public int? GunlukYemekAdedi { get; set; }

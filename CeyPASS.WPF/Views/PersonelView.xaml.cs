@@ -5,6 +5,7 @@ using CeyPASS.WPF.ViewModels;
 
 namespace CeyPASS.WPF.Views;
 
+/// <summary>Personel tanımlama ve düzenleme ekranı.</summary>
 public partial class PersonelView : System.Windows.Controls.UserControl
 {
     public PersonelView()
@@ -14,6 +15,7 @@ public partial class PersonelView : System.Windows.Controls.UserControl
     }
 }
 
+/// <summary>XAML bağlamında bool ters çevirme.</summary>
 public sealed class InverseBoolConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
@@ -23,6 +25,7 @@ public sealed class InverseBoolConverter : IValueConverter
         => value is bool b && !b;
 }
 
+/// <summary>Bool false iken Visible, true iken Collapsed.</summary>
 public sealed class InverseBoolToVisConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)

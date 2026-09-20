@@ -6,6 +6,9 @@ using Xunit;
 
 namespace CeyPASS.Tests.Unit
 {
+    /// <summary>
+    /// Çalışma statüsü tanımlarında otomatik ID ile ekleme (AddAuto) davranışı.
+    /// </summary>
     public class CalismaStatuServiceTests
     {
         private readonly Mock<ICalismaStatuRepository> _repoMock = new();
@@ -18,6 +21,9 @@ namespace CeyPASS.Tests.Unit
 
         // ─── AddAuto ──────────────────────────────────────────────────────────
 
+        /// <summary>
+        /// AddAuto bir sonraki ID ile Insert çağırır; başarılı insert true döner.
+        /// </summary>
         [Fact]
         public void AddAuto_GetNextIdSonucuInsertaGonder_TrueDoner()
         {
@@ -30,6 +36,9 @@ namespace CeyPASS.Tests.Unit
             _repoMock.Verify(r => r.Insert(5, "Tam Zamanlı"), Times.Once);
         }
 
+        /// <summary>
+        /// Insert başarısızsa AddAuto false döner.
+        /// </summary>
         [Fact]
         public void AddAuto_InsertBasarisiz_FalseDoner()
         {

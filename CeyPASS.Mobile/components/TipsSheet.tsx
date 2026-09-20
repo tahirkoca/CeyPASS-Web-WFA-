@@ -1,7 +1,9 @@
+/** Sayfa bazlı kullanım ipuçları alt sheet. */
 import React, { useEffect, useMemo } from "react";
 import { BackHandler, Modal, Platform, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 
+/** Tek ipucu satırı (ikon + başlık + açıklama). */
 export type TipItem = { icon?: keyof typeof MaterialCommunityIcons.glyphMap; title: string; detail: string };
 
 const GLOBAL_TIPS: TipItem[] = [
@@ -79,6 +81,7 @@ function tipsForPage(pageKey: string | null | undefined): TipItem[] {
   return [...pageTips, ...GLOBAL_TIPS];
 }
 
+/** Sayfa anahtarına göre ipuçları listesi modalı. */
 export function TipsSheet(props: {
   visible: boolean;
   pageKey?: string | null;

@@ -2,11 +2,13 @@ using System;
 
 namespace CeyPASS.Web.Models.CanliIzleme
 {
+    /// <summary>Arac karti guncelleme form modeli.</summary>
     public class AracKartiGuncelleModel
     {
         public int AtamaId { get; set; }
         public string AdSoyad { get; set; }
         public string TCKimlikNo { get; set; }
+        public string PasaportNo { get; set; }
         public string Plaka { get; set; }
         public string ZiyaretEdilenKisi { get; set; }
         public DateTime GirisSaati { get; set; }

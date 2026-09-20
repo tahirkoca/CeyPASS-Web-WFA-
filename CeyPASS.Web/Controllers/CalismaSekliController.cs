@@ -6,6 +6,7 @@ using System.Linq;
 
 namespace CeyPASS.Web.Controllers
 {
+    /// <summary>Calisma sekli tanim CRUD.</summary>
     public class CalismaSekliController : Controller
     {
         private readonly ICalismaSekliService _calismaSekliService;
@@ -26,6 +27,7 @@ namespace CeyPASS.Web.Controllers
             _lookupService = lookupService;
         }
 
+        /// <summary>Liste veya ana ekran.</summary>
         public IActionResult Index()
         {
             // Check authorization
@@ -45,6 +47,7 @@ namespace CeyPASS.Web.Controllers
             return View(vardiyalar);
         }
 
+        /// <summary>Yeni kayit formu ve kaydetme.</summary>
         [HttpGet]
         public IActionResult Create()
         {
@@ -67,6 +70,7 @@ namespace CeyPASS.Web.Controllers
             return View(model);
         }
 
+        /// <summary>Yeni kayit formu ve kaydetme.</summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult Create(CalismaSekli vardiya, TimeSpan baslangic, TimeSpan bitis, TimeSpan baslangicTolerans, TimeSpan bitisTolerans, TimeSpan yemekAktiflestirme)
@@ -101,6 +105,7 @@ namespace CeyPASS.Web.Controllers
             return View(vardiya);
         }
 
+        /// <summary>Kayit guncelleme.</summary>
         [HttpGet]
         public IActionResult Edit(int id)
         {
@@ -122,6 +127,7 @@ namespace CeyPASS.Web.Controllers
             return View(vardiya);
         }
 
+        /// <summary>Kayit guncelleme.</summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult Edit(CalismaSekli vardiya, TimeSpan baslangic, TimeSpan bitis, TimeSpan baslangicTolerans, TimeSpan bitisTolerans, TimeSpan yemekAktiflestirme)
@@ -163,6 +169,7 @@ namespace CeyPASS.Web.Controllers
             return View(vardiya);
         }
 
+        /// <summary>Kayit silme veya pasiflestirme.</summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult Delete(int id)

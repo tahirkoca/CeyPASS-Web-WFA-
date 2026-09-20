@@ -1,5 +1,6 @@
 ﻿namespace CeyPASS.Entities.Concrete
 {
+    /// <summary>Dashboard geç kalanlar listesi satırı.</summary>
     public class GecKalanlarDashboard
     {
         public int PersonelId { get; set; }
@@ -9,6 +10,7 @@
         public int IsyeriId { get; set; }
         public string FirmaAdi { get; set; } = "";
         public string IsyeriAdi { get; set; } = "";
+        /// <summary>Vardiya başlangıcına göre gecikme (dakika).</summary>
         public int FazlaDakika { get; set; }
     }
 }

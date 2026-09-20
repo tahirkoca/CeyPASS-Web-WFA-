@@ -1,7 +1,9 @@
 @{
     ViewData["Title"] = "Canlı İzleme";
     var user = ViewBag.User as CeyPASS.Entities.Concrete.AuthUserDTO;
+    /* CanMisafirKart: kart atama/komut paneli; ShowHareketListesi: alt hareket tablosu (kapalıysa sadece 4 son geçiş kartı) */
     var canMisafirKart = ViewBag.CanMisafirKart as bool? ?? false;
+    var showHareketListesi = ViewBag.ShowHareketListesi as bool? ?? false;
     var initialPasses = ViewBag.LastPasses as List<CeyPASS.Entities.Concrete.LastPassDTO> ?? new List<CeyPASS.Entities.Concrete.LastPassDTO>();
     var initialMoves = ViewBag.LastMoves as List<CeyPASS.Entities.Concrete.KisiHareketDTO> ?? new List<CeyPASS.Entities.Concrete.KisiHareketDTO>();
 }
@@ -21,17 +23,8 @@
             <div class="d-flex gap-2 flex-wrap justify-content-end">
                 @if (canMisafirKart)
                 {
-                    <button class="btn btn-outline-primary" type="button" onclick="openMisafirKartYeni()" title="Seçili kişiye yeni bir misafir kartı ata">
-                        <i class="bi bi-person-plus me-1"></i>Kişiye Kart Ata
-                    </button>
-                    <button class="btn btn-outline-secondary" type="button" onclick="openMisafirKartGuncelle()" title="Kişiye daha önce atanan kart bilgilerini güncelle">
-                        <i class="bi bi-pencil-square me-1"></i>Atanan Kartı Güncelle
-                    </button>
-                    <button class="btn btn-outline-warning" type="button" onclick="openAracKartiYeni()" title="Araç kartı ver">
-                        <i class="bi bi-truck me-1"></i>Araç Kartı Ver
-                    </button>
-                    <button class="btn btn-outline-warning" type="button" onclick="openAracKartiGuncelle()" title="Verilen araç kartını güncelle">
-                        <i class="bi bi-truck-flatbed me-1"></i>Araç Kartını Güncelle
+                    <button class="btn btn-outline-dark" type="button" onclick="openKartDurumlari()" title="Serbest/kısıtlı kartları toplu yönet">
+                        <i class="bi bi-sliders me-1"></i>Kart durumları
                     </button>
                 }
                 <form method="post" asp-controller="CanliIzleme" asp-action="Logout">
@@ -45,7 +38,7 @@
     </div>
 
     <!-- Son geçenler (4 kart) - WinForms tasarımına yakın -->
-    <div class="row g-4 mb-4" id="lastPassesRow">
+    <div class="row g-4 @(showHareketListesi ? "mb-4" : "mb-0 cards-only-layout")" id="lastPassesRow">
         @for (int i = 0; i < 4; i++)
         {
             var p = i < initialPasses.Count ? initialPasses[i] : null;
@@ -54,26 +47,16 @@
                 <div class="card shadow-lg h-100 last-pass-card border-0" data-index="@i" style="transition: transform 0.2s, box-shadow 0.2s;">
                     <div class="card-body text-center p-4">
                         <!-- Büyük fotoğraf (WinForms: 254x268) -->
-                        <div class="mb-3">
-                            <img class="rounded border border-2" width="200" height="240" alt="" 
+                        <div class="mb-3 last-pass-photo-wrap">
+                            <img class="rounded border border-2 last-pass-photo" width="200" height="240" alt="" 
                                  src="@GetImgSrc(p?.Foto)" 
                                  onerror="this.onerror=null; this.src=&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 240'%3E%3Crect width='200' height='240' fill='%23f1f5f9'/%3E%3Ccircle cx='100' cy='80' r='40' fill='%23cbd5e1'/%3E%3Cellipse cx='100' cy='195' rx='60' ry='45' fill='%23cbd5e1'/%3E%3C/svg%3E&quot;;"
                                  style="object-fit: cover; border-color: #dee2e6 !important;" />
                         </div>
                         
                         <!-- Ad Soyad (Bold, ortalanmış) -->
-                        <div class="fw-bold fs-5 mb-2" style="color: #212529; min-height: 28px;">
+                        <div class="fw-bold fs-5 mb-3" style="color: #212529; min-height: 28px;">
                             @((p?.AdSoyad) ?? "-")
-                        </div>
-                        
-                        <!-- Departman (Italic) -->
-                        <div class="fst-italic text-muted mb-1" style="min-height: 20px;">
-                            @((p?.DepartmanAdi) ?? "-")
-                        </div>
-                        
-                        <!-- Unvan (Italic) -->
-                        <div class="fst-italic text-muted mb-3" style="min-height: 20px;">
-                            @((p?.Unvan) ?? "-")
                         </div>
                     </div>
                     
@@ -98,9 +81,70 @@
         }
     </div>
 
+    @if (canMisafirKart)
+    {
+    <div class="row g-3 mb-3">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
+                    <h5 class="mb-0 d-flex align-items-center gap-2">
+                        <span><i class="bi bi-credit-card me-2"></i>Kart Atamaları</span>
+                        <button class="btn btn-sm btn-outline-secondary rounded-circle" type="button" data-bs-toggle="modal" data-bs-target="#atamaYardimModal" title="Durumlar" aria-label="Kart Atamaları yardımı" style="width:28px;height:28px;padding:0;line-height:1;">?</button>
+                    </h5>
+                    <div class="d-flex align-items-center gap-2">
+                        <label class="mb-0 small text-muted" for="atamaTip">Kart tipi</label>
+                        <select id="atamaTip" class="form-select form-select-sm" style="width: 180px;" onchange="refreshAtamaListe(true)">
+                            <option value="misafir">Misafir / Ziyaretçi</option>
+                            <option value="arac">Araç</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive" style="max-height: 360px; overflow-y: auto;">
+                        <table class="table table-sm table-hover mb-0" id="atamaTable">
+                            <thead class="table-light sticky-top">
+                                <tr>
+                                    <th>Kart</th>
+                                    <th>Kişi / Plaka</th>
+                                    <th>Durum</th>
+                                    <th class="text-end">İşlem</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="atamaYardimModal" tabindex="-1" aria-labelledby="atamaYardimTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="atamaYardimTitle">Kart Atamaları — durumlar</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+                </div>
+                <div class="modal-body small">
+                    <p class="mb-1"><strong style="color:#E67E22">HAZIR</strong>: Kart boşta; kimseye verilmemiş. Çift tıklayınca yeni atama açılır.</p>
+                    <p class="mb-1"><strong style="color:#47698A">ATANMIŞ</strong>: Kart birine verilmiş; henüz turnikede giriş/çıkış yok.</p>
+                    <p class="mb-1"><strong style="color:#2E8B57">GİRİŞ</strong>: Atama sonrası son hareket giriş (içeride).</p>
+                    <p class="mb-2"><strong style="color:#B22222">ÇIKIŞ</strong>: Atama sonrası son hareket çıkış.</p>
+                    <p class="mb-1">ATANMIŞ / GİRİŞ / ÇIKIŞ satırına çift tık → atamayı güncelleyin (Kartı Kısıtla’dan bağımsızdır).</p>
+                    <p class="mb-1">Satırın sağındaki Kartı Kısıtla / Kart Kısıtı Kaldır: cihaz kuyruğuna komut yazar; atamayı değiştirmez.</p>
+                    <p class="mb-1">Kısıt kanıtı yoksa kart serbest sayılır. Atanmış+serbest → Kısıtla; kısıtlı → Kısıtı Kaldır; HAZIR+serbest → ikisi kapalı.</p>
+                    <p class="mb-1">Kart durumları: misafir+araç anlık serbest/kısıtlı listesi (Tümü/Misafir/Araç); seçerek veya topluca yönetin.</p>
+                    <p class="mb-0">Üstteki Misafir / Araç seçimi liste tipini değiştirir.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    }
+
+    @if (showHareketListesi)
+    {
     <div class="row g-3">
         <!-- Son hareketler -->
-        <div class="col-xl-8">
+        <div class="col-12">
             <div class="card shadow-sm">
                 <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
                     <h5 class="mb-0">
@@ -115,19 +159,15 @@
                                 <tr>
                                     <th>Tarih</th>
                                     <th>Ad Soyad</th>
-                                    <th>Departman</th>
-                                    <th>Unvan</th>
                                     <th>Turnike</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @foreach (var m in initialMoves)
                                 {
-                                    <tr data-kisiid="@m.PersonelId" style="cursor:pointer;">
+                                    <tr data-kisiid="@m.PersonelId">
                                         <td>@m.Tarih.ToString("dd.MM.yyyy HH:mm:ss")</td>
                                         <td>@m.AdSoyad</td>
-                                        <td>@m.Departman</td>
-                                        <td>@m.Unvan</td>
                                         <td>@m.CihazAdi</td>
                                     </tr>
                                 }
@@ -137,61 +177,55 @@
                 </div>
             </div>
         </div>
+    </div>
+    }
+</div>
 
-        <!-- Seçili kişi detayı -->
-        <div class="col-xl-4">
-            <div class="card shadow-sm h-100" style="border: 2px solid #6366f1;">
-                <div class="card-header text-white" style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);">
-                    <h5 class="mb-0">
-                        <i class="bi bi-person-circle me-2"></i>Seçili Kişi Bilgileri
-                    </h5>
+@if (canMisafirKart)
+{
+<div class="modal fade" id="kartDurumModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Kart durumları</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+                    <label class="mb-0 small text-muted">Kart tipi</label>
+                    <select id="durumTip" class="form-select form-select-sm" style="width: 140px;" onchange="renderDurumRows()">
+                        <option value="tumu">Tümü</option>
+                        <option value="misafir">Misafir</option>
+                        <option value="arac">Araç</option>
+                    </select>
+                    <button type="button" class="btn btn-sm text-white" style="background:#3b82f6" onclick="setDurumSelection(true)">Tümünü seç</button>
+                    <button type="button" class="btn btn-sm text-white" style="background:#64748b" onclick="setDurumSelection(false)">Seçimi kaldır</button>
+                    <button type="button" class="btn btn-sm text-white" style="background:#ea580c" onclick="enqueueDurum('selected', true)">Seçilenleri kısıtla</button>
+                    <button type="button" class="btn btn-sm text-white" style="background:#0d9488" onclick="enqueueDurum('selected', false)">Seçilenleri serbest bırak</button>
+                    <button type="button" class="btn btn-sm text-white" style="background:#dc2626" onclick="enqueueDurum('serbest', true)">Tüm serbestleri kısıtla</button>
+                    <button type="button" class="btn btn-sm text-white" style="background:#16a34a" onclick="enqueueDurum('kisitli', false)">Tüm kısıtlıları serbest bırak</button>
                 </div>
-                <div class="card-body p-0">
-                    <!-- Üst kısım - Fotoğraf ve isim -->
-                    <div class="text-center p-4" style="background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);">
-                        <div class="position-relative d-inline-block mb-3">
-                            <img id="selectedFoto" 
-                                 class="rounded-circle shadow" 
-                                 width="140" height="140" 
-                                 alt="" 
-                                 src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 240'%3E%3Crect width='200' height='240' fill='%23f1f5f9'/%3E%3Ccircle cx='100' cy='80' r='40' fill='%23cbd5e1'/%3E%3Cellipse cx='100' cy='195' rx='60' ry='45' fill='%23cbd5e1'/%3E%3C/svg%3E"
-                                 style="object-fit: cover; border: 4px solid #6366f1;" />
-                            <span id="selectedStatusBadge" class="position-absolute bottom-0 end-0 p-2 bg-secondary rounded-circle" style="display: none;">
-                                <i class="bi bi-check-lg text-white"></i>
-                            </span>
-                        </div>
-                        <h4 id="selectedAdSoyad" class="fw-bold mb-0" style="color: #1e293b;">
-                            Kişi Seçilmedi
-                        </h4>
-                    </div>
-                    
-                    <!-- Alt kısım - Detay bilgileri -->
-                    <div class="p-3">
-                        <div class="selected-info-item d-flex align-items-center p-3 mb-2 rounded" style="background: #f1f5f9;">
-                            <div class="selected-info-icon me-3" style="width: 40px; height: 40px; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); border-radius: 10px; display: flex; align-items: center; justify-content: center;">
-                                <i class="bi bi-briefcase text-white"></i>
-                            </div>
-                            <div class="flex-grow-1">
-                                <div class="text-muted small">Pozisyon / Ünvan</div>
-                                <div id="selectedUnvan" class="fw-semibold" style="color: #334155;">-</div>
-                            </div>
-                        </div>
-                        
-                        <div class="selected-info-item d-flex align-items-center p-3 rounded" style="background: #f1f5f9;">
-                            <div class="selected-info-icon me-3" style="width: 40px; height: 40px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); border-radius: 10px; display: flex; align-items: center; justify-content: center;">
-                                <i class="bi bi-diagram-3 text-white"></i>
-                            </div>
-                            <div class="flex-grow-1">
-                                <div class="text-muted small">Departman</div>
-                                <div id="selectedDepartman" class="fw-semibold" style="color: #334155;">-</div>
-                            </div>
-                        </div>
-                    </div>
+                <div class="table-responsive" style="max-height: 420px;">
+                    <table class="table table-sm table-hover mb-0" id="durumTable">
+                        <thead class="table-light sticky-top">
+                            <tr>
+                                <th style="width:36px"></th>
+                                <th>Tip</th>
+                                <th>Kart</th>
+                                <th>Kişi / Plaka</th>
+                                <th>Atama</th>
+                                <th>Cihaz</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
                 </div>
             </div>
         </div>
     </div>
 </div>
+<form id="kartAfForm" class="d-none">@Html.AntiForgeryToken()</form>
+}
 
 <!-- Misafir Kart Modal -->
 <div class="modal fade" id="misafirModal" tabindex="-1">
@@ -318,10 +352,41 @@
             0%, 100% { opacity: 1; }
             50% { opacity: 0.5; }
         }
+        .cards-only-layout {
+            min-height: calc(100vh - 140px);
+            align-content: stretch;
+        }
+        .cards-only-layout .last-pass-card {
+            min-height: calc(100vh - 160px);
+            display: flex;
+            flex-direction: column;
+        }
+        .cards-only-layout .last-pass-card .card-body {
+            flex: 1 1 auto;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .cards-only-layout .last-pass-photo-wrap {
+            flex: 1 1 auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 280px;
+        }
+        .cards-only-layout .last-pass-photo {
+            width: min(100%, 360px) !important;
+            height: auto !important;
+            max-height: 55vh;
+            aspect-ratio: 5 / 6;
+            object-fit: cover;
+        }
     </style>
     <script>
-        let selectedKisiId = null;
-        const pollMs = 2000; // 2 saniye - daha makul bir aralık
+        // Son geçiş kartları: 2 sn poll; gereksiz DOM güncellemesi cache ile engellenir
+        const pollMs = 2000;
+        const showHareketListesi = @(showHareketListesi ? "true" : "false");
+        const canKartAtama = @(canMisafirKart ? "true" : "false");
         
         // Son veriyi cache'de tut - sadece değişiklik olduğunda güncelle
         let lastPassesCache = [];
@@ -369,8 +434,6 @@
 
             const img = card.querySelector('img');
             const nameEl = card.querySelector('.fw-bold.fs-5');
-            const deptEl = card.querySelectorAll('.fst-italic.text-muted')[0];
-            const unvanEl = card.querySelectorAll('.fst-italic.text-muted')[1];
             const timeEl = card.querySelectorAll('.fw-semibold')[0];
             const terminalEl = card.querySelectorAll('.fw-semibold')[1];
             const badgeEl = card.querySelector('.badge');
@@ -379,8 +442,6 @@
             if (!p) {
                 img.src = '@GetImgSrc(null)';
                 if (nameEl) nameEl.textContent = '-';
-                if (deptEl) deptEl.textContent = '-';
-                if (unvanEl) unvanEl.textContent = '-';
                 if (timeEl) timeEl.textContent = '-';
                 if (terminalEl) terminalEl.textContent = '-';
                 if (badgeEl) badgeEl.textContent = '-';
@@ -395,8 +456,6 @@
                 img.src = defaultAvatar;
             }
             if (nameEl) nameEl.textContent = p.adSoyad || '-';
-            if (deptEl) deptEl.textContent = p.departmanAdi || '-';
-            if (unvanEl) unvanEl.textContent = p.unvan || '-';
             if (timeEl) timeEl.textContent = new Date(p.zaman).toLocaleString('tr-TR', { 
                 day: '2-digit', month: '2-digit', year: 'numeric', 
                 hour: '2-digit', minute: '2-digit', second: '2-digit' 
@@ -404,6 +463,7 @@
             if (terminalEl) terminalEl.textContent = p.terminalAdi || '-';
             if (badgeEl) badgeEl.textContent = p.girisMi ? 'GİRİŞ' : 'ÇIKIŞ';
             
+            // Giriş/çıkış alt paneli: WinForms SeaGreen / Firebrick tonları
             const bgColor = p.girisMi ? '#2e7d32' : '#c62828';
             if (footer) footer.style.backgroundColor = bgColor;
 
@@ -448,6 +508,7 @@
         }
 
         async function refreshMoves() {
+            if (!showHareketListesi) return;
             const res = await fetch('@Url.Action("LastMoves")');
             if (!res.ok) return;
             const data = await res.json();
@@ -460,6 +521,7 @@
             lastMoveTimestamp = newFirstTimestamp;
 
             const tbody = document.querySelector('#movesTable tbody');
+            if (!tbody) return;
             const existingIds = Array.from(tbody.querySelectorAll('tr')).map(tr => tr.dataset.kisiid + '_' + tr.querySelector('td')?.textContent);
             
             tbody.innerHTML = '';
@@ -474,8 +536,6 @@
                 tr.innerHTML = `
                     <td>${timeStr}</td>
                     <td>${m.adSoyad ?? ''}</td>
-                    <td>${m.departman ?? ''}</td>
-                    <td>${m.unvan ?? ''}</td>
                     <td>${m.cihazAdi ?? ''}</td>
                 `;
                 
@@ -485,64 +545,163 @@
                     tr.classList.add('new-row');
                 }
                 
-                if (selectedKisiId && parseInt(selectedKisiId) === parseInt(m.kisiId)) {
-                    tr.classList.add('table-primary');
-                }
-                tr.addEventListener('click', () => selectKisi(m.kisiId, tr));
                 tbody.appendChild(tr);
-            }
-        }
-
-        async function selectKisi(kisiId, trEl) {
-            selectedKisiId = kisiId;
-            document.querySelectorAll('#movesTable tbody tr').forEach(x => x.classList.remove('table-primary'));
-            if (trEl) trEl.classList.add('table-primary');
-
-            const res = await fetch('@Url.Action("KisiDetay")' + '?kisiId=' + encodeURIComponent(kisiId));
-            if (!res.ok) return;
-            const data = await res.json();
-            if (!data.ok) return;
-
-            // Seçili kişi bilgilerini güncelle
-            const adSoyadEl = document.getElementById('selectedAdSoyad');
-            const unvanEl = document.getElementById('selectedUnvan');
-            const deptEl = document.getElementById('selectedDepartman');
-            const fotoEl = document.getElementById('selectedFoto');
-
-            adSoyadEl.textContent = data.adSoyad || 'Bilinmiyor';
-            unvanEl.textContent = data.unvan || '-';
-            deptEl.textContent = data.departman || '-';
-            
-            // Fotoğraf kontrolü
-            if (data.fotoBase64 && data.fotoBase64.length > 100) {
-                fotoEl.src = 'data:image/jpeg;base64,' + data.fotoBase64;
-                fotoEl.onerror = function() { this.onerror=null; this.src=defaultAvatar; };
-            } else {
-                fotoEl.src = defaultAvatar;
             }
         }
 
         async function tick() {
             try { await refreshLastPasses(); } catch (e) { console.warn('LastPasses error:', e); }
-            try { await refreshMoves(); } catch (e) { console.warn('Moves error:', e); }
+            if (showHareketListesi) {
+                try { await refreshMoves(); } catch (e) { console.warn('Moves error:', e); }
+            }
         }
 
-        // Misafir Kart modalları
-        async function openMisafirKartYeni() {
-            document.getElementById('misafirModalTitle').textContent = 'Misafir Kart Atama - Yeni';
-            await loadModal('@Url.Action("MisafirKartYeni")');
+        // Atama durum renkleri (yardım modalı ile aynı): boşta / atanmış / son hareket giriş-çıkış
+        function durumBadge(text) {
+            const map = { 'HAZIR': '#E67E22', 'ATANMIŞ': '#47698A', 'GİRİŞ': '#2E8B57', 'ÇIKIŞ': '#B22222' };
+            const bg = map[text] || '#64748b';
+            return `<span class="badge" style="background:${bg}">${text || ''}</span>`;
         }
-        async function openMisafirKartGuncelle() {
-            document.getElementById('misafirModalTitle').textContent = 'Misafir Kart Atama - Güncelleme';
-            await loadModal('@Url.Action("MisafirKartGuncelle")');
+
+        function afToken() {
+            return document.querySelector('#kartAfForm input[name="__RequestVerificationToken"]')?.value || '';
         }
-        async function openAracKartiYeni() {
-            document.getElementById('misafirModalTitle').textContent = 'Araç Kartı Ver';
-            await loadModal('@Url.Action("AracKartiYeni")');
+
+        let atamaRows = [];
+        async function refreshAtamaListe(force) {
+            if (!canKartAtama) return;
+            const tip = document.getElementById('atamaTip')?.value || 'misafir';
+            const res = await fetch('@Url.Action("AtamaListe")?tip=' + encodeURIComponent(tip));
+            if (!res.ok) return;
+            const data = await res.json();
+            const key = JSON.stringify(data);
+            if (!force && key === window._atamaKey) return;
+            window._atamaKey = key;
+            atamaRows = data || [];
+            const tbody = document.querySelector('#atamaTable tbody');
+            if (!tbody) return;
+            tbody.innerHTML = atamaRows.map(r => `
+                <tr data-pid="${r.personelId}" data-tip="${r.tip}" data-durum="${r.durum}" data-atama="${r.atamaId ?? ''}" style="cursor:pointer">
+                    <td>${r.kartAdi ?? ''}</td>
+                    <td>${r.kisiPlaka ?? ''}</td>
+                    <td>${durumBadge(r.durumText)}</td>
+                    <td class="text-end text-nowrap">
+                        <button type="button" class="btn btn-sm btn-danger me-1" ${r.canKisitla ? '' : 'disabled'} onclick="event.stopPropagation(); enqueueOne('${r.personelId}', true)">Kartı Kısıtla</button>
+                        <button type="button" class="btn btn-sm btn-success" ${r.canSerbestBirak ? '' : 'disabled'} onclick="event.stopPropagation(); enqueueOne('${r.personelId}', false)">Kart Kısıtı Kaldır</button>
+                    </td>
+                </tr>`).join('');
+            // Çift tık: satır atama modalını açar (tek tık komut butonları için ayrılmış)
+            tbody.querySelectorAll('tr').forEach(tr => {
+                tr.addEventListener('dblclick', () => openAtamaFromRow(tr.dataset));
+            });
         }
-        async function openAracKartiGuncelle() {
-            document.getElementById('misafirModalTitle').textContent = 'Verilen Araç Kartını Güncelle';
-            await loadModal('@Url.Action("AracKartiGuncelle")');
+
+        // HAZIR → yeni atama partial; ATANMIŞ/GİRİŞ/ÇIKIŞ → güncelleme partial (misafir/araç ayrımı)
+        function openAtamaFromRow(ds) {
+            const q = ds.durum === 'Hazir'
+                ? (ds.tip === 'arac'
+                    ? '@Url.Action("AracKartiYeni")?personelId=' + encodeURIComponent(ds.pid)
+                    : '@Url.Action("MisafirKartYeni")?personelId=' + encodeURIComponent(ds.pid))
+                : (ds.tip === 'arac'
+                    ? '@Url.Action("AracKartiGuncelle")?atamaId=' + encodeURIComponent(ds.atama || '')
+                    : '@Url.Action("MisafirKartGuncelle")?atamaId=' + encodeURIComponent(ds.atama || ''));
+            const title = ds.durum === 'Hazir'
+                ? (ds.tip === 'arac' ? 'Araç Kartı Ver' : 'Misafir Kart Atama - Yeni')
+                : (ds.tip === 'arac' ? 'Verilen Araç Kartını Güncelle' : 'Misafir Kart Atama - Güncelleme');
+            document.getElementById('misafirModalTitle').textContent = title;
+            loadModal(q);
+        }
+
+        // KartKomut: cihaz komut kuyruğu (pasif=kısıt); veritabanı atamasını değiştirmez
+        async function enqueueOne(personelId, pasif) {
+            const n = pasif ? 'kısıtlansın' : 'kısıtı kaldırılsın';
+            if (!confirm('Kart ' + n + ' mı?')) return;
+            const body = new URLSearchParams();
+            body.set('personelId', personelId);
+            body.set('pasif', pasif ? 'true' : 'false');
+            body.set('__RequestVerificationToken', afToken());
+            const res = await fetch('@Url.Action("KartKomut")', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body });
+            const data = await res.json();
+            if (!data.ok) { alert(data.message || 'İşlem başarısız'); return; }
+            window._atamaKey = '';
+            await refreshAtamaListe(true);
+            if (window._durumSnapshot) await loadDurumSnapshot();
+        }
+
+        let _durumSnapshot = null;
+        async function openKartDurumlari() {
+            await loadDurumSnapshot();
+            bootstrap.Modal.getOrCreateInstance(document.getElementById('kartDurumModal')).show();
+        }
+        async function loadDurumSnapshot() {
+            const res = await fetch('@Url.Action("AtamaListe")?tip=tumu');
+            if (!res.ok) return;
+            _durumSnapshot = (await res.json() || []).map(r => ({ ...r, selected: false }));
+            renderDurumRows();
+        }
+        function filteredDurum() {
+            const tip = document.getElementById('durumTip')?.value || 'tumu';
+            return (_durumSnapshot || []).filter(r => tip === 'tumu' || r.tip === tip);
+        }
+        function renderDurumRows() {
+            const tbody = document.querySelector('#durumTable tbody');
+            if (!tbody) return;
+            tbody.innerHTML = filteredDurum().map(r => `
+                <tr>
+                    <td><input type="checkbox" ${r.selected ? 'checked' : ''} onchange="toggleDurum('${r.personelId}', this.checked)" /></td>
+                    <td>${r.tipLabel ?? ''}</td>
+                    <td>${r.kartAdi ?? ''}</td>
+                    <td>${r.kisiPlaka ?? ''}</td>
+                    <td>${r.durumText ?? ''}</td>
+                    <td>${r.cihazdaAktif ? 'Serbest' : 'Kısıtlı'}</td>
+                </tr>`).join('');
+        }
+        function toggleDurum(pid, on) {
+            const r = (_durumSnapshot || []).find(x => x.personelId === pid);
+            if (r) r.selected = on;
+        }
+        function setDurumSelection(on) {
+            filteredDurum().forEach(r => r.selected = on);
+            renderDurumRows();
+        }
+        async function enqueueDurum(mode, pasif) {
+            const pool = filteredDurum();
+            const targets = mode === 'selected'
+                ? pool.filter(r => r.selected)
+                : mode === 'serbest'
+                    ? pool.filter(r => r.cihazdaAktif)
+                    : pool.filter(r => !r.cihazdaAktif);
+            if (targets.length === 0) {
+                alert(mode === 'selected' ? 'Önce kart seçin.' : (pasif ? 'Serbest kart yok.' : 'Kısıtlı kart yok.'));
+                return;
+            }
+            if (!confirm(targets.length + ' kart için komut yazılsın mı?')) return;
+            let ok = 0;
+            try {
+                for (const r of targets) {
+                    const body = new URLSearchParams();
+                    body.set('personelId', r.personelId);
+                    body.set('pasif', pasif ? 'true' : 'false');
+                    body.set('__RequestVerificationToken', afToken());
+                    const res = await fetch('@Url.Action("KartKomut")', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body });
+                    const data = await res.json();
+                    if (!data.ok) throw new Error(data.message || 'Hata');
+                    r.cihazdaAktif = !pasif;
+                    ok++;
+                }
+                alert((pasif ? 'Kısıtlama' : 'Kısıt kaldırma') + ' komutu kuyruğa alındı: ' + ok);
+            } catch (e) {
+                alert(ok > 0 ? (ok + ' kart yazıldı, sonra hata:\n' + e.message) : e.message);
+            }
+            renderDurumRows();
+            window._atamaKey = '';
+            await refreshAtamaListe(true);
+        }
+
+        if (canKartAtama) {
+            refreshAtamaListe(true);
+            // Atama listesi turnike hareketine daha duyarlı: 1 sn poll (JSON aynıysa DOM dokunulmaz)
+            setInterval(() => refreshAtamaListe(false), 1000);
         }
 
         async function loadModal(url) {
@@ -564,8 +723,6 @@
                     zaman = p.Zaman, 
                     personelId = p.PersonelId,
                     adSoyad = p.AdSoyad,
-                    departmanAdi = p.DepartmanAdi,
-                    unvan = p.Unvan,
                     terminalAdi = p.TerminalAdi,
                     girisMi = p.GirisMi
                 })));
@@ -579,10 +736,6 @@
                 </text>
             }
 
-            document.querySelectorAll('#movesTable tbody tr').forEach(tr => {
-                tr.addEventListener('click', () => selectKisi(tr.dataset.kisiid, tr));
-            });
-            
             // Polling başlat
             setInterval(tick, pollMs);
         });

@@ -5,13 +5,16 @@ using System.Windows.Forms;
 
 namespace CeyPASS.WFA.UserControls.Canlı_İzleme
 {
+    /// <summary>Geçmiş ziyaretçi arama listesi; seçim kart atama formuna aktarılır.</summary>
     public partial class gecmisZiyaretciPanel : UserControl
     {
         private Func<string, List<GecmisZiyaretciItem>> _search;
         private bool _suppressSearch;
 
+        /// <summary>Listeden ziyaretçi seçildiğinde tetiklenir.</summary>
         public event Action<GecmisZiyaretciItem> ZiyaretciSecildi;
 
+        /// <summary>Arama kutusu ve liste olaylarını bağlar.</summary>
         public gecmisZiyaretciPanel()
         {
             InitializeComponent();
@@ -19,12 +22,14 @@ namespace CeyPASS.WFA.UserControls.Canlı_İzleme
             lstGecmis.SelectedIndexChanged += LstGecmis_SelectedIndexChanged;
         }
 
+        /// <summary>Arama delegesini kaydeder ve listeyi doldurur.</summary>
         public void LoadListe(Func<string, List<GecmisZiyaretciItem>> search)
         {
             _search = search;
             YenileListe();
         }
 
+        /// <summary>Arama kutusu placeholder metni.</summary>
         public void SetSearchPlaceholder(string placeholder)
         {
             if (txtAra != null)

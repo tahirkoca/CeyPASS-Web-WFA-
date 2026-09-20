@@ -15,6 +15,7 @@ using System.Windows.Forms;
 
 namespace CeyPASS.WFA.UserControls
 {
+    /// <summary>Personel kartı oluşturma, güncelleme, fotoğraf ve çoklu sicil bağlantıları.</summary>
     public partial class ucPersonelTanimlama : UserControl
     {
         [DllImport("user32.dll", CharSet = CharSet.Auto)]
@@ -32,7 +33,10 @@ namespace CeyPASS.WFA.UserControls
         private bool _isAdmin;
         AuthorizationHelper authHelp;
         private bool _istenCikisModu = false;
+        private bool _dogumTarihiVar;
+        private bool _hasIstenCikisTarihi;
         private bool _isYeniKayit = false;
+        private int? _loadedGunlukYemekAdedi;
         private bool _guncelleModu = false;
         private bool _fotoDirty = false;
         private KisiListItem _sonSecilen = null;
@@ -44,6 +48,7 @@ namespace CeyPASS.WFA.UserControls
         private static readonly Color SilButtonColor = Color.FromArgb(220, 53, 69);
         private static readonly Color AktifEtButtonColor = Color.FromArgb(40, 167, 69);
 
+        /// <summary>Lookup, yetki ve modal formlar için DI sağlayıcısını alır.</summary>
         public ucPersonelTanimlama(ISessionContext session, IKisiService kisiSvc, IKisiQueryService kisiQuerySvc, IKisiEkraniLookUpService lookups, ICalismaSekliService calismaSekliSvc, IAuthorizationService authSvc, IFirmaService firmaSvc, IKullaniciFirmaIsyeriYetkiService yetkiSvc, IServiceProvider serviceProvider)
         {
             InitializeComponent();
@@ -53,6 +58,10 @@ namespace CeyPASS.WFA.UserControls
             dtpIstenCikis.Format = DateTimePickerFormat.Custom;
             dtpIstenCikis.CustomFormat = "'Aktif Çalışıyor...'";
             dtpIstenCikis.Enabled = false;
+            dtpIseGiris.ShowCheckBox = false;
+            dtpDogumGunu.ShowCheckBox = false;
+            dtpIstenCikis.ShowCheckBox = false;
+            dtpDogumGunu.ValueChanged += (_, __) => _dogumTarihiVar = true;
 
             _session = session;
             _kisiSvc = kisiSvc;
@@ -110,10 +119,12 @@ namespace CeyPASS.WFA.UserControls
 
             chkFirmaPersoneliMi.CheckedChanged += (s, e) => UpdateUIState();
             chkYemekHakkiVarMi.CheckedChanged += (s, e) => UpdateUIState();
-            chkPuantajYapilirMi.CheckedChanged += (s, e) => UpdateUIState();
+            chkPuantajYapilirMi.CheckedChanged += ChkPuantajYapilirMi_CheckedChanged;
             chkZiyaretciMi.CheckedChanged += (s, e) => UpdateUIState();
             chkAracKartiMi.CheckedChanged += (s, e) => UpdateUIState();
             chkTaseronCalisanMi.CheckedChanged += (s, e) => UpdateUIState();
+
+            InitCokluSicilControls();
 
             lstKisiler.DrawMode = DrawMode.OwnerDrawFixed;
             lstKisiler.ItemHeight = 30;
@@ -285,6 +296,86 @@ namespace CeyPASS.WFA.UserControls
                 : Properties.Resources.icons8_minus_50;
             WinFormsAuthHelper.ApplyPageAuthorization(_auth, _session, PageName, this);
         }
+        private Button btnCokluSicilEslestir;
+        private ToolTip _cokluSicilToolTip;
+        private bool _isHedefSicilOnly;
+
+        private void InitCokluSicilControls()
+        {
+            btnCokluSicilEslestir = new Button
+            {
+                Text = "Çoklu Sicil",
+                AutoSize = true,
+                Height = 92,
+                Margin = new Padding(5, 6, 5, 6),
+                FlatStyle = FlatStyle.System,
+                Font = new Font("Segoe UI", 9F, FontStyle.Bold)
+            };
+            _cokluSicilToolTip = new ToolTip();
+            pnlActions.Controls.Add(btnCokluSicilEslestir);
+
+            btnCokluSicilEslestir.Click += BtnCokluSicilEslestir_Click;
+        }
+
+        private void BtnCokluSicilEslestir_Click(object sender, EventArgs e)
+        {
+            if (!CanOpenCokluSicil()) return;
+            if (!int.TryParse(txtSicilNo.Text?.Trim(), out var pid) || pid <= 0) return;
+
+            var adSoyad = txtAdSoyad.Text?.Trim() ?? "";
+            var tc = txtKimlikNo.Text?.Trim() ?? "";
+            using var frm = ActivatorUtilities.CreateInstance<frmCokluSicilEslestirme>(
+                _serviceProvider, pid, tc, adSoyad);
+            frm.ShowDialog(FindForm());
+            RefreshCokluSicilState(pid, tc);
+        }
+
+        private bool CanOpenCokluSicil()
+        {
+            if (_isYeniKayit || GetSeciliIstenCikanMi()) return false;
+            return chkPuantajYapilirMi.Checked && !_isHedefSicilOnly
+                   && int.TryParse(txtSicilNo.Text?.Trim(), out var id) && id > 0
+                   && !string.IsNullOrWhiteSpace(txtKimlikNo.Text);
+        }
+
+        private void RefreshCokluSicilState(int personelId, string tcKimlikNo)
+        {
+            _isHedefSicilOnly = false;
+
+            if (personelId <= 0)
+            {
+                UpdateCokluSicilUi();
+                return;
+            }
+
+            var svc = _serviceProvider.GetRequiredService<ICokluSicilService>();
+            var ozet = svc.GetOzet(personelId);
+            _isHedefSicilOnly = ozet.IsHedefSicil && !ozet.IsAnaSicil;
+
+            UpdateCokluSicilUi();
+        }
+
+        private void UpdateCokluSicilUi()
+        {
+            if (btnCokluSicilEslestir == null) return;
+
+            btnCokluSicilEslestir.Enabled = CanOpenCokluSicil();
+            var tip = CanOpenCokluSicil()
+                ? "Hedef sicil eşleştirmeleri"
+                : _isYeniKayit ? "Önce personeli kaydedin."
+                : GetSeciliIstenCikanMi() ? "İşten çıkan personelde kullanılamaz."
+                : !chkPuantajYapilirMi.Checked ? "Puantaj Yapılır işaretlenmelidir."
+                : _isHedefSicilOnly ? "Bu sicil yalnızca hedef sicildir."
+                : string.IsNullOrWhiteSpace(txtKimlikNo.Text) ? "TC kimlik numarası girilmelidir."
+                : "Kayıtlı personel seçin.";
+            _cokluSicilToolTip.SetToolTip(btnCokluSicilEslestir, tip);
+        }
+
+        private void ChkPuantajYapilirMi_CheckedChanged(object sender, EventArgs e)
+        {
+            UpdateUIState();
+        }
+
         private void SetDetailControlsReadOnly(bool readOnly)
         {
             txtAdSoyad.ReadOnly = readOnly;
@@ -300,7 +391,6 @@ namespace CeyPASS.WFA.UserControls
             dtpIstenCikis.Enabled = !readOnly && _istenCikisModu;
 
             cmbPozisyon.Enabled = !readOnly;
-            cmbDepartman.Enabled = !readOnly;
             cmbIsyeri.Enabled = !readOnly;
             cmbFirma.Enabled = !readOnly;
             cmbBolum.Enabled = !readOnly;
@@ -314,7 +404,9 @@ namespace CeyPASS.WFA.UserControls
             chkAracKartiMi.Enabled = !readOnly;
             chkTaseronCalisanMi.Enabled = !readOnly;
             nudYemekAdedi.Enabled = !readOnly && chkYemekHakkiVarMi.Checked;
+            UpdateCokluSicilUi();
         }
+
         private void lstKisiler_DrawItem(object sender, DrawItemEventArgs e)
         {
             if (e.Index < 0) return;
@@ -451,7 +543,7 @@ namespace CeyPASS.WFA.UserControls
             {
                 var list = _iklsvc.GetIsyerleri(firmaId) ?? new List<LookupItem>();
                 list = FirmaIsyeriYetkiHelper.FilterIsyeriLookup(list, firmaId, _kullaniciYetkileri, _isAdmin);
-                var data = new List<LookupItem> { new LookupItem { Id = 0, Ad = "Tümü" } };
+                var data = new List<LookupItem> { FirmaIsyeriYetkiHelper.CreateIsyeriFilterTumuItem() };
                 data.AddRange(list);
 
                 cmbIsyeriFilter.DropDownStyle = ComboBoxStyle.DropDownList;
@@ -462,10 +554,10 @@ namespace CeyPASS.WFA.UserControls
 
                 var prefs = PageFilterPrefsStore.Load(PageName);
                 var preferredIsyeri = prefs?.IsyeriId;
-                if (preferredIsyeri.HasValue && data.Any(x => x.Id == preferredIsyeri.Value))
+                if (preferredIsyeri.HasValue && preferredIsyeri.Value >= 0 && data.Any(x => x.Id == preferredIsyeri.Value))
                     cmbIsyeriFilter.SelectedValue = preferredIsyeri.Value;
                 else
-                    cmbIsyeriFilter.SelectedValue = 0;
+                    cmbIsyeriFilter.SelectedValue = FirmaIsyeriYetkiHelper.IsyeriFilterTumuId;
             }
             catch (Exception ex)
             {
@@ -488,12 +580,12 @@ namespace CeyPASS.WFA.UserControls
             else if (!int.TryParse(cmbIsyeriFilter.SelectedValue.ToString(), out val))
                 return null;
 
-            return val <= 0 ? (int?)null : val;
+            return FirmaIsyeriYetkiHelper.ToIsyeriQueryFilterId(val);
         }
 
         private string BosListeUyariMesaji(int? seciliIsyeriId)
         {
-            bool isyeriVar = seciliIsyeriId.HasValue && seciliIsyeriId.Value > 0;
+            bool isyeriVar = seciliIsyeriId.HasValue;
             string isyeriAd = isyeriVar ? cmbIsyeriFilter?.Text?.Trim() : null;
 
             if (isyeriVar)
@@ -537,6 +629,7 @@ namespace CeyPASS.WFA.UserControls
                 txtCepTel.Text = d.CepTel ?? "";
                 txtEmail.Text = d.Email ?? "";
 
+                _hasIstenCikisTarihi = d.IstenCikisTarihi.HasValue;
                 if (d.IstenCikisTarihi.HasValue)
                 {
                     dtpIstenCikis.Enabled = false;
@@ -552,17 +645,12 @@ namespace CeyPASS.WFA.UserControls
                     dtpIstenCikis.Value = DateTime.Today;
                 }
 
-                dtpDogumGunu.Checked = d.DogumTarihi.HasValue;
+                _dogumTarihiVar = d.DogumTarihi.HasValue;
                 if (d.DogumTarihi.HasValue) dtpDogumGunu.Value = d.DogumTarihi.Value;
 
                 dtpIseGiris.Value = d.IseGirisTarihi ?? DateTime.Today;
 
-                dtpIstenCikis.Checked = d.IstenCikisTarihi.HasValue;
-                if (d.IstenCikisTarihi.HasValue)
-                    dtpIstenCikis.Value = d.IstenCikisTarihi.Value;
-
                 cmbPozisyon.SelectedValue = d.PozisyonId ?? -1;
-                cmbDepartman.SelectedValue = d.DepartmanId ?? -1;
                 cmbIsyeri.SelectedValue = d.IsyeriId ?? -1;
                 cmbFirma.SelectedValue = d.FirmaId;
                 cmbBolum.SelectedValue = d.BolumId ?? -1;
@@ -570,13 +658,14 @@ namespace CeyPASS.WFA.UserControls
                 if (int.TryParse(d.CalismaStatusuId?.ToString(), out var cstId))
                     cmbCalismaStatu.SelectedValue = cstId;
                 else
-                    cmbCalismaStatu.Text = d.CalismaStatusuText ?? "";
+                    cmbCalismaStatu.SelectedValue = -1;
 
                 VardiyalariIsaretle(d.CalismaSekliCsv ?? "");
 
                 txtFirmaDisiKartNo.Text = d.TaseronKartNo ?? "";
 
                 chkYemekHakkiVarMi.Checked = d.YemekHakkiVar;
+                _loadedGunlukYemekAdedi = d.GunlukYemekAdedi;
                 nudYemekAdedi.Value = d.GunlukYemekAdedi.HasValue ? d.GunlukYemekAdedi.Value : 0;
 
                 chkFirmaPersoneliMi.Checked = d.FirmaPersoneli;
@@ -589,6 +678,10 @@ namespace CeyPASS.WFA.UserControls
                 _fotoDirty = false;
 
                 ApplyCheckboxRules();
+                if (int.TryParse(d.PersonelId, out var pid))
+                    RefreshCokluSicilState(pid, d.TcKimlikNo);
+                else
+                    RefreshCokluSicilState(0, null);
                 SetDetailControlsReadOnly(GetSeciliIstenCikanMi());
                 WinFormsAuthHelper.ApplyPageAuthorization(_auth, _session, PageName, this);
                 LogHelper.Info(PageName, "KisiyiGetir", $"Kişi detay yüklendi: {kisiId}", null, cid);
@@ -607,17 +700,32 @@ namespace CeyPASS.WFA.UserControls
                 cb.DataSource = null;
                 cb.DisplayMember = nameof(LookupItem.Ad);
                 cb.ValueMember = nameof(LookupItem.Id);
-                cb.DataSource = data ?? new List<LookupItem>();
+                cb.DataSource = WithComboPlaceholder(data);
                 if (cb.Items.Count > 0)
                     cb.SelectedIndex = 0;
             };
 
             bind(cmbCalismaStatu, _iklsvc.GetCalismaStatuleri(firmId));
-            bind(cmbDepartman, _iklsvc.GetDepartmanlar(firmId));
             bind(cmbPozisyon, _iklsvc.GetPozisyonlar(firmId));
             bind(cmbIsyeri, _iklsvc.GetIsyerleri(firmId));
-            bind(cmbFirma, _iklsvc.GetFirma(firmId));
             bind(cmbBolum, _iklsvc.GetBolumler(firmId));
+
+            var firmaData = _iklsvc.GetFirma(firmId) ?? new List<LookupItem>();
+            cmbFirma.DropDownStyle = ComboBoxStyle.DropDownList;
+            cmbFirma.DataSource = null;
+            cmbFirma.DisplayMember = nameof(LookupItem.Ad);
+            cmbFirma.ValueMember = nameof(LookupItem.Id);
+            cmbFirma.DataSource = firmaData;
+            if (cmbFirma.Items.Count > 0)
+                cmbFirma.SelectedIndex = 0;
+        }
+
+        private static List<LookupItem> WithComboPlaceholder(List<LookupItem>? data)
+        {
+            var list = new List<LookupItem> { new LookupItem { Id = -1, Ad = "-- Seçiniz --" } };
+            if (data != null)
+                list.AddRange(data);
+            return list;
         }
         private void VardiyaYukle(int firmaId)
         {
@@ -710,16 +818,16 @@ namespace CeyPASS.WFA.UserControls
 
             pbKisiFoto.Image = null;
 
+            _dogumTarihiVar = false;
+            _hasIstenCikisTarihi = false;
+
             dtpIseGiris.Value = DateTime.Today;
-            dtpDogumGunu.Checked = false;
-            dtpIstenCikis.Checked = false;
             dtpIstenCikis.Enabled = false;
             dtpIstenCikis.Format = DateTimePickerFormat.Custom;
             dtpIstenCikis.CustomFormat = "'Aktif Çalışıyor...'";
 
-            if (cmbDepartman.Items.Count > 0) cmbDepartman.SelectedIndex = 0;
-            if (cmbPozisyon.Items.Count > 0) cmbPozisyon.SelectedIndex = 0;
             if (cmbIsyeri.Items.Count > 0) cmbIsyeri.SelectedIndex = 0;
+            if (cmbPozisyon.Items.Count > 0) cmbPozisyon.SelectedIndex = 0;
             if (cmbCalismaStatu.Items.Count > 0) cmbCalismaStatu.SelectedIndex = 0;
             if (cmbBolum.Items.Count > 0) cmbBolum.SelectedIndex = 0;
 
@@ -742,8 +850,10 @@ namespace CeyPASS.WFA.UserControls
             chkAracKartiMi.Checked = false;
             chkTaseronCalisanMi.Checked = false;
             nudYemekAdedi.Value = 0;
+            _loadedGunlukYemekAdedi = null;
 
             IslemButonlariniGoster(false);
+            RefreshCokluSicilState(0, null);
             SetDetailControlsReadOnly(false);
             ApplyCheckboxRules();
             WinFormsAuthHelper.ApplyPageAuthorization(_auth, _session, PageName, this);
@@ -843,11 +953,10 @@ namespace CeyPASS.WFA.UserControls
                 }
 
                 _istenCikisModu = true;
-                dtpIstenCikis.ShowCheckBox = true;
+                _hasIstenCikisTarihi = true;
                 dtpIstenCikis.Format = DateTimePickerFormat.Short;
                 dtpIstenCikis.CustomFormat = "dd.MM.yyyy";
                 dtpIstenCikis.Enabled = true;
-                dtpIstenCikis.Checked = true;
                 if (dtpIstenCikis.Value.Year < 2000)
                     dtpIstenCikis.Value = DateTime.Today;
 
@@ -945,7 +1054,7 @@ namespace CeyPASS.WFA.UserControls
                         return;
                     }
 
-                    if (!dtpIstenCikis.Checked)
+                    if (_istenCikisModu && dtpIstenCikis.Value.Year < 2000)
                     {
                         MessageBox.Show("İşten çıkış tarihini seçiniz.", "Uyarı",
                             MessageBoxButtons.OK, MessageBoxIcon.Warning);
@@ -1014,13 +1123,12 @@ namespace CeyPASS.WFA.UserControls
                         KartNo = txtPersonelKartNo.Text.Trim(),
                         TcKimlikNo = txtKimlikNo.Text.Trim(),
                         PozisyonId = GetComboNullableInt(cmbPozisyon),
-                        DepartmanId = GetComboNullableInt(cmbDepartman),
                         IsyeriId = GetComboNullableInt(cmbIsyeri, allowZeroAsValidId: true),
                         BolumId = GetComboNullableInt(cmbBolum),
                         FirmaId = GetComboNullableInt(cmbFirma) ?? GetSeciliFirmaId(),
-                        IseGirisTarihi = dtpIseGiris.Value.Date,
-                        IstenCikisTarihi = dtpIstenCikis.Checked ? (DateTime?)dtpIstenCikis.Value.Date : null,
-                        DogumTarihi = dtpDogumGunu.Checked ? (DateTime?)dtpDogumGunu.Value.Date : null,
+                        IseGirisTarihi = ResolveIseGirisTarihi(),
+                        IstenCikisTarihi = ResolveIstenCikisTarihi(),
+                        DogumTarihi = ResolveDogumTarihi(),
                         CalismaStatusu = (cmbCalismaStatu.SelectedValue ?? cmbCalismaStatu.Text)?.ToString(),
                         CalismaSekli = SecilenVardiyaIds(),
                         CepTel = txtCepTel.Text.Trim(),
@@ -1042,7 +1150,7 @@ namespace CeyPASS.WFA.UserControls
                         firma,
                         puantaj,
                         yemek,
-                        (int)nudYemekAdedi.Value,
+                        ResolveGunlukYemekAdedi(yemek, (int)nudYemekAdedi.Value),
                         txtFirmaDisiKartNo.Text.Trim(),
                         fotoDegisti: _fotoDirty
                     );
@@ -1089,7 +1197,8 @@ namespace CeyPASS.WFA.UserControls
                     KartNo = txtPersonelKartNo.Text.Trim(),
                     TaseronCalisanMi = chkTaseronCalisanMi.Checked,
                     ZiyaretciMi = chkZiyaretciMi.Checked,
-                    AracKartiMi = chkAracKartiMi.Checked
+                    AracKartiMi = chkAracKartiMi.Checked,
+                    IsyeriId = GetComboNullableInt(cmbIsyeri, allowZeroAsValidId: true)
                 };
 
                 var validasyonSonuc = _kisiSvc.ValidateKisiKayit(validasyonDto);
@@ -1098,7 +1207,9 @@ namespace CeyPASS.WFA.UserControls
                     _fieldErrors.Clear();
                     var msg = validasyonSonuc.Message ?? "Zorunlu alanları doldurun.";
                     Control target = txtSicilNo;
-                    if (msg.IndexOf("Sicil", StringComparison.OrdinalIgnoreCase) >= 0
+                    if (msg.IndexOf("İşyeri", StringComparison.OrdinalIgnoreCase) >= 0)
+                        target = cmbIsyeri;
+                    else if (msg.IndexOf("Sicil", StringComparison.OrdinalIgnoreCase) >= 0
                         || msg.IndexOf("PersonelId", StringComparison.OrdinalIgnoreCase) >= 0)
                         target = txtSicilNo;
                     else if (msg.IndexOf("Kimlik", StringComparison.OrdinalIgnoreCase) >= 0)
@@ -1121,10 +1232,9 @@ namespace CeyPASS.WFA.UserControls
                     KartNo = txtPersonelKartNo.Text.Trim(),
                     TcKimlikNo = txtKimlikNo.Text.Trim(),
                     PozisyonId = cmbPozisyon.SelectedValue as int?,
-                    DogumTarihi = dtpDogumGunu.Checked ? (DateTime?)dtpDogumGunu.Value.Date : null,
-                    DepartmanId = cmbDepartman.SelectedValue as int?,
-                    IseGirisTarihi = dtpIseGiris.Value.Date,
-                    IstenCikisTarihi = dtpIstenCikis.Checked ? (DateTime?)dtpIstenCikis.Value.Date : null,
+                    DogumTarihi = ResolveDogumTarihi(),
+                    IseGirisTarihi = ResolveIseGirisTarihi(),
+                    IstenCikisTarihi = ResolveIstenCikisTarihi(),
                     CalismaStatusu = cmbCalismaStatu.SelectedValue != null
                         ? ((int)cmbCalismaStatu.SelectedValue).ToString()
                         : null,
@@ -1293,6 +1403,7 @@ namespace CeyPASS.WFA.UserControls
 
             dtpIstenCikis.Enabled = _istenCikisModu;
 
+            UpdateCokluSicilUi();
             WinFormsAuthHelper.ApplyPageAuthorization(_auth, _session, PageName, this);
         }
         private void ApplyCheckboxRules() => UpdateUIState();
@@ -1324,10 +1435,10 @@ namespace CeyPASS.WFA.UserControls
                     cmbFirmaFilter.SelectedValue = ctx.FirmaId;
 
                 IsyeriFilteriniYukle(ctx.FirmaId);
-                if (ctx.IsyeriId.HasValue && ctx.IsyeriId.Value > 0)
+                if (ctx.IsyeriId.HasValue && ctx.IsyeriId.Value >= 0)
                     cmbIsyeriFilter.SelectedValue = ctx.IsyeriId.Value;
                 else
-                    cmbIsyeriFilter.SelectedValue = 0;
+                    cmbIsyeriFilter.SelectedValue = FirmaIsyeriYetkiHelper.IsyeriFilterTumuId;
 
                 cmbCalismaDurumu.SelectedIndex = ctx.SadeceIstenCikanlar ? 1 : 0;
                 ApplyCalismaDurumuUi();
@@ -1383,6 +1494,13 @@ namespace CeyPASS.WFA.UserControls
             btnKaydet.Visible = goster;
             btnVazgec.Visible = goster;
         }
+        private int ResolveGunlukYemekAdedi(bool yemekHakkiVar, int adedi)
+        {
+            if (!yemekHakkiVar) return 0;
+            if (adedi > 0) return adedi;
+            return _loadedGunlukYemekAdedi ?? 0;
+        }
+
         /// <param name="allowZeroAsValidId">
         /// true: işyeri gibi Id=0 geçerli olabilir; yalnızca null veya negatif (ör. -1 sentinel) → null.
         /// false: önceki davranış — 0 ve negatif değerler null sayılır (pozisyon/departman/bölüm).
@@ -1408,5 +1526,13 @@ namespace CeyPASS.WFA.UserControls
 
             return null;
         }
+
+        private DateTime ResolveIseGirisTarihi() => dtpIseGiris.Value.Date;
+
+        private DateTime? ResolveDogumTarihi() =>
+            _dogumTarihiVar ? dtpDogumGunu.Value.Date : (DateTime?)null;
+
+        private DateTime? ResolveIstenCikisTarihi() =>
+            (_hasIstenCikisTarihi || _istenCikisModu) ? dtpIstenCikis.Value.Date : (DateTime?)null;
     }
 }

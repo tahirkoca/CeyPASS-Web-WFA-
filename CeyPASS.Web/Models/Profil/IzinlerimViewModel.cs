@@ -4,6 +4,7 @@ using System.Collections.Generic;
 
 namespace CeyPASS.Web.Models.Profil
 {
+    /// <summary>KisiIzinGecmisRow modeli.</summary>
     public class KisiIzinGecmisRow
     {
         public int KisiIzinId { get; set; }

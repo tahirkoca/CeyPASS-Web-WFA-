@@ -7,6 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace CeyPASS.WPF.ViewModels;
 
+/// <summary>Vardiyaya bağlı yemekhane zaman penceresi grid satırı.</summary>
 public sealed class YemekPencereRow : ObservableObject
 {
     public int Id { get; set; }
@@ -22,6 +23,7 @@ public sealed class YemekPencereRow : ObservableObject
     public bool AktifMi { get; set; }
 }
 
+/// <summary>Seçili vardiya için işyeri/cihaz bazlı yemek saatleri alt ekranı.</summary>
 public sealed class YemekSaatleriDetailViewModel : ObservableObject
 {
     private const string PageName = "Vardiyalar";

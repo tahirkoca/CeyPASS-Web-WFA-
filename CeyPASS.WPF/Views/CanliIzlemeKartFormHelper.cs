@@ -7,6 +7,7 @@ using DevExpress.Xpf.Editors;
 
 namespace CeyPASS.WPF.Views;
 
+/// <summary>Canlı izleme misafir/araç kart formları için ortak UI ve T.C. maskeleme.</summary>
 internal static class CanliIzlemeKartFormHelper
 {
     private const double FieldGap = 8;
@@ -23,6 +24,7 @@ internal static class CanliIzlemeKartFormHelper
     private static Brush LabelBrush =>
         ThemeBrushes.Get("Brush.TextMuted", Color.FromRgb(0x64, 0x74, 0x8B));
 
+    /// <summary>11 hane T.C.; geçmiş kayıttan maskeli gösterim, kayıtta tam değer çözümü.</summary>
     public sealed class TcField
     {
         public TextBox Box { get; }
@@ -64,6 +66,9 @@ internal static class CanliIzlemeKartFormHelper
         }
 
         public string ResolveForSave() => TcKimlikHelper.ResolveForSave(Box.Text, _tamTc);
+
+        public string? ResolveOptionalForSave() =>
+            TcKimlikHelper.ResolveTcOptionalForSave(Box.Text, _tamTc);
     }
 
     public static TextBlock CreateLabel(string text) => new()

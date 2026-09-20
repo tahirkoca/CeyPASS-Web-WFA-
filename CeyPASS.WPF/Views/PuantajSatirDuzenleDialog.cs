@@ -48,6 +48,7 @@ public static class PuantajSatirDuzenleDialog
             (model.Saat > 0 ? model.Saat : 0M).ToString("0.##", CultureInfo.InvariantCulture));
         fields.Children.Add(saatBox);
 
+        // Tip değişince varsayılan çalışma saati otomatik doldurulur.
         cmb.SelectionChanged += (_, _) =>
         {
             if (cmb.SelectedItem is PuantajTipDTO tip && tip.VarsayilanSaat.HasValue)

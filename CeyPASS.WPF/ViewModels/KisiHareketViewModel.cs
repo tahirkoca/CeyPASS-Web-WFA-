@@ -1,13 +1,17 @@
 using CeyPASS.Business.Abstractions;
 using CeyPASS.Entities.Concrete;
+using CeyPASS.Entities.Helpers;
 using CeyPASS.Infrastructure.Helpers;
 using Microsoft.Extensions.DependencyInjection;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Data;
+using System.Windows.Data;
 using System.Windows.Input;
 
 namespace CeyPASS.WPF.ViewModels;
 
+/// <summary>Toplu hareket eklemede seçilen personel satırı.</summary>
 public sealed class PersonCheckItem : ObservableObject
 {
     private bool _isChecked;
@@ -20,6 +24,9 @@ public sealed class PersonCheckItem : ObservableObject
     }
 }
 
+/// <summary>
+/// Kişi giriş/çıkış hareketleri; firma/işyeri yetkisi ve puantajlı/puantajsız kart tipi filtreleri.
+/// </summary>
 public sealed class KisiHareketViewModel : ObservableObject
 {
     private const string PageName = "KisiHareketler";
@@ -33,6 +40,7 @@ public sealed class KisiHareketViewModel : ObservableObject
     private Firma? _selectedFirma;
     private LookupItem? _selectedIsyeri;
     private string _kartTipi = "Puantaj Yapılanlar";
+    private string _calismaDurumu = "Aktif Çalışanlar";
     private DateTime _baslangic = DateTime.Today;
     private DateTime _bitis = DateTime.Today.AddDays(1).AddMinutes(-1);
     private bool _aktif;
@@ -47,6 +55,8 @@ public sealed class KisiHareketViewModel : ObservableObject
     private bool _canEdit;
     private bool _canDelete;
     private bool _canLoadGrid;
+    private string _personSearch = "";
+    private ICollectionView? _personsView;
 
     public KisiHareketViewModel(IServiceProvider root)
     {
@@ -60,6 +70,11 @@ public sealed class KisiHareketViewModel : ObservableObject
             "Puantaj Yapılanlar",
             "Puantaj Yapılmayanlar"
         };
+        CalismaDurumlari = new ObservableCollection<string>
+        {
+            "Aktif Çalışanlar",
+            "İşten Çıkanlar"
+        };
 
         LoadPersonsCommand = new RelayCommand(LoadPersons, () => !Busy);
         LoadGridCommand = new RelayCommand(LoadGrid, () => CanLoadGrid && !Busy);
@@ -71,10 +86,27 @@ public sealed class KisiHareketViewModel : ObservableObject
     }
 
     public ObservableCollection<PersonCheckItem> Persons { get; }
+    /// <summary>Sol listedeki filtrelenmiş görünüm; seçimler Persons öğelerinde kalır.</summary>
+    public ICollectionView PersonsView => _personsView ??= CreatePersonsView();
     public ObservableCollection<Firma> Firmalar { get; }
     public ObservableCollection<LookupItem> Isyerleri { get; }
     public ObservableCollection<string> KartTipleri { get; }
+    /// <summary>Aktif çalışanlar veya işten çıkanlar.</summary>
+    public ObservableCollection<string> CalismaDurumlari { get; }
     public BindableFieldErrors Errors { get; } = new();
+
+    /// <summary>Sol kişi listesini ad/sicil ile istemci tarafında filtreler.</summary>
+    public string PersonSearch
+    {
+        get => _personSearch;
+        set
+        {
+            var next = value ?? "";
+            if (_personSearch == next) return;
+            SetProperty(ref _personSearch, next);
+            PersonsView.Refresh();
+        }
+    }
 
     public Firma? SelectedFirma
     {
@@ -118,6 +150,26 @@ public sealed class KisiHareketViewModel : ObservableObject
             LoadPersons();
         }
     }
+
+    /// <summary>Aktif Çalışanlar / İşten Çıkanlar; çıkanlarda kart tipi uygulanmaz.</summary>
+    public string CalismaDurumu
+    {
+        get => _calismaDurumu;
+        set
+        {
+            if (_calismaDurumu == value) return;
+            SetProperty(ref _calismaDurumu, value);
+            RaisePropertyChanged(nameof(KartTipiEnabled));
+            if (_suppressFilter) return;
+            PersistFilters();
+            ClearPersonChecks();
+            LoadPersons();
+        }
+    }
+
+    /// <summary>İşten çıkanlar seçiliyken kart tipi filtresini kilitler.</summary>
+    public bool KartTipiEnabled => !IstenCikanlarSecili;
+    private bool IstenCikanlarSecili => CalismaDurumu == "İşten Çıkanlar";
 
     public DateTime Baslangic
     {
@@ -303,9 +355,6 @@ public sealed class KisiHareketViewModel : ObservableObject
 
     private void PersistFilters()
     {
-        var kart = KartTipi ?? "";
-        if (Yemekhane)
-            kart += "|Y";
         PageFilterPrefsStore.Save(PageName, new PageFilterPrefs
         {
             FirmaId = SelectedFirmaId > 0 ? SelectedFirmaId : null,
@@ -314,8 +363,39 @@ public sealed class KisiHareketViewModel : ObservableObject
             DateB = Bitis,
             BoolA = Aktif,
             BoolB = Pasif,
-            Extra = kart
+            Extra = EncodeKartExtra(KartTipi, Yemekhane, IstenCikanlarSecili)
         });
+    }
+
+    private static string EncodeKartExtra(string? kartTipi, bool yemekhane, bool istenCikanlar)
+    {
+        var kart = kartTipi ?? "";
+        if (yemekhane) kart += "|Y";
+        if (istenCikanlar) kart += "|C";
+        return kart;
+    }
+
+    private static void ParseKartExtra(string extra, out string kart, out bool yemekhane, out bool istenCikanlar)
+    {
+        kart = extra ?? "";
+        yemekhane = false;
+        istenCikanlar = false;
+        while (true)
+        {
+            if (kart.EndsWith("|Y", StringComparison.Ordinal))
+            {
+                yemekhane = true;
+                kart = kart[..^2];
+                continue;
+            }
+            if (kart.EndsWith("|C", StringComparison.Ordinal))
+            {
+                istenCikanlar = true;
+                kart = kart[..^2];
+                continue;
+            }
+            break;
+        }
     }
 
     private void LoadFirmalar(IFirmaService firmaSvc)
@@ -357,9 +437,9 @@ public sealed class KisiHareketViewModel : ObservableObject
 
                 if (!string.IsNullOrWhiteSpace(prefs.Extra))
                 {
-                    var extra = prefs.Extra;
-                    _yemekhane = extra.EndsWith("|Y", StringComparison.Ordinal);
-                    var kart = _yemekhane ? extra[..^2] : extra;
+                    ParseKartExtra(prefs.Extra, out var kart, out var yemek, out var cikan);
+                    _yemekhane = yemek;
+                    _calismaDurumu = cikan ? "İşten Çıkanlar" : "Aktif Çalışanlar";
                     if (KartTipleri.Contains(kart))
                         _kartTipi = kart;
                 }
@@ -370,6 +450,8 @@ public sealed class KisiHareketViewModel : ObservableObject
                 RaisePropertyChanged(nameof(Pasif));
                 RaisePropertyChanged(nameof(Yemekhane));
                 RaisePropertyChanged(nameof(KartTipi));
+                RaisePropertyChanged(nameof(CalismaDurumu));
+                RaisePropertyChanged(nameof(KartTipiEnabled));
                 RaisePropertyChanged(nameof(ShowActivateMode));
             }
         }
@@ -389,7 +471,7 @@ public sealed class KisiHareketViewModel : ObservableObject
             list = FirmaIsyeriYetkiHelper.FilterIsyeriLookup(list, firmaId, _yetkiler, _isAdmin);
 
             Isyerleri.Clear();
-            Isyerleri.Add(new LookupItem { Id = 0, Ad = "Tümü" });
+            Isyerleri.Add(FirmaIsyeriYetkiHelper.CreateIsyeriFilterTumuItem());
             foreach (var i in list)
                 Isyerleri.Add(i);
 
@@ -398,7 +480,7 @@ public sealed class KisiHareketViewModel : ObservableObject
             _suppressFilter = true;
             try
             {
-                _selectedIsyeri = (preferredIsyeri.HasValue
+                _selectedIsyeri = (preferredIsyeri.HasValue && preferredIsyeri.Value >= 0
                         ? Isyerleri.FirstOrDefault(x => x.Id == preferredIsyeri.Value)
                         : null)
                     ?? Isyerleri.FirstOrDefault();
@@ -416,10 +498,7 @@ public sealed class KisiHareketViewModel : ObservableObject
     }
 
     private int? GetSeciliIsyeriFilterId()
-    {
-        var id = SelectedIsyeri?.Id ?? 0;
-        return id <= 0 ? null : id;
-    }
+        => FirmaIsyeriYetkiHelper.ToIsyeriQueryFilterId(SelectedIsyeri?.Id);
 
     private void ClearPersonChecks()
     {
@@ -427,9 +506,27 @@ public sealed class KisiHareketViewModel : ObservableObject
             p.IsChecked = false;
     }
 
+    /// <summary>Persons için CollectionView oluşturur ve arama filtresini bağlar.</summary>
+    private ICollectionView CreatePersonsView()
+    {
+        var view = CollectionViewSource.GetDefaultView(Persons);
+        view.Filter = PersonMatchesSearch;
+        return view;
+    }
+
+    /// <summary>PersonSearch metnine göre ad veya sicil eşleşmesi (tr-TR).</summary>
+    private bool PersonMatchesSearch(object obj)
+    {
+        if (obj is not PersonCheckItem p) return false;
+        var q = (_personSearch ?? "").Trim();
+        if (q.Length == 0) return true;
+        return TurkishText.ContainsIgnoreCase(p.Ad, q)
+            || TurkishText.ContainsIgnoreCase(p.Id.ToString(), q);
+    }
+
     private string BosListeUyariMesaji(int? seciliIsyeriId)
     {
-        if (seciliIsyeriId.HasValue && seciliIsyeriId.Value > 0)
+        if (seciliIsyeriId.HasValue)
         {
             var ad = SelectedIsyeri?.Ad?.Trim();
             return string.IsNullOrEmpty(ad)
@@ -459,7 +556,9 @@ public sealed class KisiHareketViewModel : ObservableObject
             var (isyeriId, isyeriIdIn) = FirmaIsyeriYetkiHelper.ResolveKisiQueryIsyeriFilter(
                 firmaId, seciliIsyeri, _yetkiler, _isAdmin);
 
-            var data = kq.GetAktifKisilerByFirma(firmaId, null, PuantajYapilanlarSecili, isyeriId, isyeriIdIn)
+            bool cikan = IstenCikanlarSecili;
+            bool? puantaj = cikan ? null : PuantajYapilanlarSecili;
+            var data = kq.GetAktifKisilerByFirma(firmaId, null, puantaj, isyeriId, isyeriIdIn, cikan)
                        ?? new List<KisiListItem>();
 
             Persons.Clear();
@@ -471,6 +570,8 @@ public sealed class KisiHareketViewModel : ObservableObject
                     continue;
                 Persons.Add(new PersonCheckItem { Id = id, Ad = k.AdSoyad });
             }
+
+            PersonsView.Refresh();
 
             if (Persons.Count == 0)
                 Status = BosListeUyariMesaji(seciliIsyeri);

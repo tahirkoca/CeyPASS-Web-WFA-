@@ -1,8 +1,11 @@
+/** Ekran bazlı firma/tarih filtrelerini SecureStore’da saklar. */
 import * as SecureStore from "expo-secure-store";
 
+/** Sayfa filtresi alanları (JSON). */
 export type PageFilterPrefs = {
   firmaId?: number | null;
   isyeriId?: number | null;
+  bolumId?: number | null;
   boolA?: boolean | null;
   boolB?: boolean | null;
   extra?: string | null;
@@ -29,6 +32,7 @@ function toIsoDate(v: Date | string | null | undefined): string | null {
   return v.toISOString();
 }
 
+/** ISO veya Date → geçerli Date veya null. */
 export function parsePrefDate(iso: string | Date | null | undefined): Date | null {
   if (iso == null) return null;
   if (iso instanceof Date) return Number.isNaN(iso.getTime()) ? null : iso;
@@ -36,6 +40,7 @@ export function parsePrefDate(iso: string | Date | null | undefined): Date | nul
   return Number.isNaN(d.getTime()) ? null : d;
 }
 
+/** Kayıtlı filtreleri oku. */
 export async function load(pageKey: PageFilterKey): Promise<PageFilterPrefs | null> {
   try {
     const raw = await SecureStore.getItemAsync(storeKey(pageKey));
@@ -48,11 +53,13 @@ export async function load(pageKey: PageFilterKey): Promise<PageFilterPrefs | nu
   }
 }
 
+/** Filtreleri normalize edip sakla (best-effort). */
 export async function save(pageKey: PageFilterKey, prefs: PageFilterPrefs): Promise<void> {
   try {
     const payload: PageFilterPrefs = {
       firmaId: prefs.firmaId ?? null,
       isyeriId: prefs.isyeriId ?? null,
+      bolumId: prefs.bolumId ?? null,
       boolA: prefs.boolA ?? null,
       boolB: prefs.boolB ?? null,
       extra: prefs.extra ?? null,
@@ -65,4 +72,5 @@ export async function save(pageKey: PageFilterKey, prefs: PageFilterPrefs): Prom
   }
 }
 
+/** load / save / parsePrefDate kolay erişim. */
 export const pageFilterPrefs = { load, save, parsePrefDate };

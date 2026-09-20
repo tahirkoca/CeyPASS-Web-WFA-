@@ -1,3 +1,4 @@
+/** Personelin izin talepleri ve onaylı izinler. */
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Modal, Platform, ScrollView, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";

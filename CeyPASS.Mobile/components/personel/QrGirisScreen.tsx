@@ -1,3 +1,4 @@
+/** QR kod okutarak turnike girişi (konum ile). */
 import React, { useState, useEffect, useRef } from "react";
 import { View, Text, TouchableOpacity, ActivityIndicator, Alert, Linking, Platform } from "react-native";
 import { CameraView, useCameraPermissions } from "expo-camera";

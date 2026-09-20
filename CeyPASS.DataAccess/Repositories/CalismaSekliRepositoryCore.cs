@@ -6,6 +6,7 @@ using System.Linq;
 
 namespace CeyPASS.DataAccess.Repositories
 {
+    /// <summary>Çalışma şekli tanım erişimi.</summary>
     public class CalismaSekliRepositoryCore : ICalismaSekliRepository
     {
         private readonly CeyPASSDataConnectionCore _context;
@@ -28,6 +29,7 @@ namespace CeyPASS.DataAccess.Repositories
             return new DateTime(1900, 1, 1).Add(t);
         }
 
+        /// <summary>All sorgularını getirir.</summary>
         public List<CalismaSekli> GetAll(int firmaId, bool includeGlobal = true)
         {
             var query = _context.CalismaSekilleri.AsQueryable();
@@ -52,6 +54,7 @@ namespace CeyPASS.DataAccess.Repositories
             }).ToList();
         }
 
+        /// <summary>All For Admin sorgularını getirir.</summary>
         public List<CalismaSekli> GetAllForAdmin()
         {
             var list = _context.CalismaSekilleri
@@ -72,6 +75,7 @@ namespace CeyPASS.DataAccess.Repositories
             }).ToList();
         }
 
+        /// <summary>Yeni kayıt ekler.</summary>
         public int Insert(CalismaSekli x)
         {
             var entity = new CeyPASS.DataAccess.CalismaSekilleri
@@ -90,6 +94,7 @@ namespace CeyPASS.DataAccess.Repositories
             return entity.CalismaSekilId;
         }
 
+        /// <summary>Kaydı günceller.</summary>
         public bool Update(CalismaSekli x)
         {
             var entity = _context.CalismaSekilleri
@@ -108,6 +113,7 @@ namespace CeyPASS.DataAccess.Repositories
             return _context.SaveChanges() > 0;
         }
 
+        /// <summary>Kaydı siler.</summary>
         public bool Delete(int id, int firmaId)
         {
             var entity = _context.CalismaSekilleri

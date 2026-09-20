@@ -1,5 +1,6 @@
 ﻿namespace CeyPASS.Entities.Concrete
 {
+    /// <summary>Firma-işyeri eşlemesi satırı.</summary>
     public class IsyeriRow
     {
         public int FirmaId { get; set; }

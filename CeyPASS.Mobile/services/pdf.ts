@@ -1,3 +1,4 @@
+/** API’den Bearer ile PDF indirme ve paylaşım / harici açma. */
 import * as FileSystem from "expo-file-system/legacy";
 import * as Sharing from "expo-sharing";
 import { Linking } from "react-native";
@@ -7,11 +8,13 @@ function sanitizeFilename(name: string) {
   return name.replace(/[\\/:*?"<>|]+/g, "_");
 }
 
+/** İndir + kullanıcıya paylaş/aç dialogu. */
 export async function openPdfFromApi(apiPath: string, fileName: string) {
   const uri = await downloadPdfFromApi(apiPath, fileName);
   await shareOrOpenPdf(uri);
 }
 
+/** Cache dizinine PDF yazar; local uri döner. */
 export async function downloadPdfFromApi(apiPath: string, fileName: string): Promise<string> {
   const token = await getAuthToken();
   if (!token) throw new Error("Oturum bulunamadı. Lütfen tekrar giriş yapın.");
@@ -28,6 +31,7 @@ export async function downloadPdfFromApi(apiPath: string, fileName: string): Pro
   return res.uri;
 }
 
+/** Expo Sharing veya Linking fallback. */
 export async function shareOrOpenPdf(fileUri: string) {
   if (await Sharing.isAvailableAsync()) {
     await Sharing.shareAsync(fileUri, {

@@ -13,6 +13,9 @@ using Xunit;
 
 namespace CeyPASS.Tests.Web
 {
+    /// <summary>
+    /// Personel listesi ve arama MVC.
+    /// </summary>
     public class PersonelControllerTests
     {
         private readonly Mock<IKisiService> _kisiMock = new();
@@ -23,6 +26,7 @@ namespace CeyPASS.Tests.Web
         private readonly Mock<ICalismaSekliService> _calismaSekliMock = new();
         private readonly Mock<IFirmaService> _firmaMock = new();
         private readonly Mock<IPuantajService> _puantajMock = new();
+        private readonly Mock<ICokluSicilService> _cokluSicilMock = new();
         private readonly IMemoryCache _cache = new MemoryCache(new MemoryCacheOptions());
         private readonly PersonelController _sut;
 
@@ -39,6 +43,7 @@ namespace CeyPASS.Tests.Web
                 _calismaSekliMock.Object,
                 _firmaMock.Object,
                 _puantajMock.Object,
+                _cokluSicilMock.Object,
                 _cache);
 
             _puantajMock.Setup(p => p.GetKullaniciFirmaIsyeriYetkileri(It.IsAny<int>()))
@@ -49,7 +54,6 @@ namespace CeyPASS.Tests.Web
             _sut.TempData = new TempDataDictionary(httpContext, Mock.Of<ITempDataProvider>());
 
             // Default lookup stubs
-            _lookupMock.Setup(l => l.GetDepartmanlar(It.IsAny<int?>())).Returns(new List<LookupItem>());
             _lookupMock.Setup(l => l.GetPozisyonlar(It.IsAny<int?>())).Returns(new List<LookupItem>());
             _lookupMock.Setup(l => l.GetIsyerleri(It.IsAny<int>())).Returns(new List<LookupItem>());
             _lookupMock.Setup(l => l.GetBolumler(It.IsAny<int>())).Returns(new List<LookupItem>());
@@ -58,6 +62,9 @@ namespace CeyPASS.Tests.Web
             _firmaMock.Setup(f => f.GetAll()).Returns(new List<Firma>());
         }
 
+        /// <summary>
+        /// Yetkisiz HomeIndexeYonlendirir
+        /// </summary>
         [Fact]
         public void Index_Yetkisiz_HomeIndexeYonlendirir()
         {
@@ -70,6 +77,9 @@ namespace CeyPASS.Tests.Web
             redirect.ControllerName.Should().Be("Home");
         }
 
+        /// <summary>
+        /// Basarili IndexeYonlendirir VeTempDataSet
+        /// </summary>
         [Fact]
         public void Delete_Basarili_IndexeYonlendirir_VeTempDataSet()
         {
@@ -85,6 +95,9 @@ namespace CeyPASS.Tests.Web
             _sut.TempData["Success"].Should().NotBeNull();
         }
 
+        /// <summary>
+        /// Basarili Viewdöner
+        /// </summary>
         [Fact]
         public void Details_Basarili_ViewDoner()
         {

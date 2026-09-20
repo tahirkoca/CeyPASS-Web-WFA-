@@ -7,6 +7,7 @@ using System.Linq;
 
 namespace CeyPASS.Web.Controllers
 {
+    /// <summary>Firma tanim CRUD (POY).</summary>
     public class FirmaController : Controller
     {
         private readonly IFirmaService _firmaService;
@@ -21,6 +22,7 @@ namespace CeyPASS.Web.Controllers
             _lookupService = lookupService;
         }
 
+        /// <summary>Liste veya ana ekran.</summary>
         public IActionResult Index()
         {
             if (!_authorizationService.ViewAbility(PageName))
@@ -36,6 +38,7 @@ namespace CeyPASS.Web.Controllers
             return View(list.OrderBy(x => x.FirmaAdi).ToList());
         }
 
+        /// <summary>Yeni kayit formu ve kaydetme.</summary>
         [HttpGet]
         public IActionResult Create(string returnUrl = null)
         {
@@ -53,6 +56,7 @@ namespace CeyPASS.Web.Controllers
             return View(model);
         }
 
+        /// <summary>Yeni kayit formu ve kaydetme.</summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult Create(FirmaFormModel model)
@@ -86,6 +90,7 @@ namespace CeyPASS.Web.Controllers
             return RedirectToAction("Index");
         }
 
+        /// <summary>Kayit guncelleme.</summary>
         [HttpGet]
         public IActionResult Edit(int id, string returnUrl = null)
         {
@@ -108,6 +113,7 @@ namespace CeyPASS.Web.Controllers
             return View(model);
         }
 
+        /// <summary>Kayit guncelleme.</summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult Edit(FirmaFormModel model)
@@ -141,6 +147,7 @@ namespace CeyPASS.Web.Controllers
             return RedirectToAction("Index");
         }
 
+        /// <summary>Kayit silme veya pasiflestirme.</summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult Delete(int id, string returnUrl = null)

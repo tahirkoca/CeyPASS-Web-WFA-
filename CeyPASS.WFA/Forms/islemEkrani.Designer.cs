@@ -30,7 +30,6 @@ namespace CeyPASS.WFA.Forms
             this.pbLogo = new System.Windows.Forms.PictureBox();
             this.btnAnasayfa = new System.Windows.Forms.Button();
             this.lblPOYBaslik = new System.Windows.Forms.Label();
-            this.btnDepartmanTanimlama = new System.Windows.Forms.Button();
             this.btnPersonelTanimlama = new System.Windows.Forms.Button();
             this.btnPozisyonTanimlama = new System.Windows.Forms.Button();
             this.btnFirmaTanimlama = new System.Windows.Forms.Button();
@@ -81,7 +80,6 @@ namespace CeyPASS.WFA.Forms
             this.pnlSolMenu.Controls.Add(this.pnlLogo);
             this.pnlSolMenu.Controls.Add(this.btnAnasayfa);
             this.pnlSolMenu.Controls.Add(this.lblPOYBaslik);
-            this.pnlSolMenu.Controls.Add(this.btnDepartmanTanimlama);
             this.pnlSolMenu.Controls.Add(this.btnPersonelTanimlama);
             this.pnlSolMenu.Controls.Add(this.btnPozisyonTanimlama);
             this.pnlSolMenu.Controls.Add(this.btnFirmaTanimlama);
@@ -120,6 +118,7 @@ namespace CeyPASS.WFA.Forms
             // 
             // pnlSidebarContainer
             // 
+            this.pnlSidebarContainer.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(37)))), ((int)(((byte)(41)))));
             this.pnlSidebarContainer.Controls.Add(this.pnlSolMenu);
             this.pnlSidebarContainer.Controls.Add(this.pnlSidebarToggleEdge);
             this.pnlSidebarContainer.Dock = System.Windows.Forms.DockStyle.Left;
@@ -178,25 +177,6 @@ namespace CeyPASS.WFA.Forms
             this.lblPOYBaslik.Size = new System.Drawing.Size(155, 20);
             this.lblPOYBaslik.TabIndex = 2;
             this.lblPOYBaslik.Text = "PERSONEL YÖNETİMİ";
-            // 
-            // btnDepartmanTanimlama
-            // 
-            this.btnDepartmanTanimlama.FlatAppearance.BorderSize = 0;
-            this.btnDepartmanTanimlama.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnDepartmanTanimlama.Font = new System.Drawing.Font("Segoe UI", 10F);
-            this.btnDepartmanTanimlama.ForeColor = System.Drawing.Color.LightGray;
-            this.btnDepartmanTanimlama.Image = global::CeyPASS.WFA.Properties.Resources.icons8_department_25;
-            this.btnDepartmanTanimlama.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            this.btnDepartmanTanimlama.Location = new System.Drawing.Point(3, 186);
-            this.btnDepartmanTanimlama.Name = "btnDepartmanTanimlama";
-            this.btnDepartmanTanimlama.Padding = new System.Windows.Forms.Padding(15, 0, 0, 0);
-            this.btnDepartmanTanimlama.Size = new System.Drawing.Size(250, 45);
-            this.btnDepartmanTanimlama.TabIndex = 3;
-            this.btnDepartmanTanimlama.Text = "  Departman Tanımlama";
-            this.btnDepartmanTanimlama.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            this.btnDepartmanTanimlama.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageBeforeText;
-            this.btnDepartmanTanimlama.UseVisualStyleBackColor = true;
-            this.btnDepartmanTanimlama.Click += new System.EventHandler(this.btnDepartmanTanimlama_Click);
             // 
             // btnPersonelTanimlama
             // 
@@ -501,7 +481,7 @@ namespace CeyPASS.WFA.Forms
             this.pnlSidebarUserFooter.Controls.Add(this.lblSidebarUserRole);
             this.pnlSidebarUserFooter.Controls.Add(this.btnSidebarLogout);
             this.pnlSidebarUserFooter.Location = new System.Drawing.Point(0, 1019);
-            this.pnlSidebarUserFooter.Margin = new System.Windows.Forms.Padding(0, 0, 0, 8);
+            this.pnlSidebarUserFooter.Margin = new System.Windows.Forms.Padding(0);
             this.pnlSidebarUserFooter.Name = "pnlSidebarUserFooter";
             this.pnlSidebarUserFooter.Size = new System.Drawing.Size(294, 72);
             this.pnlSidebarUserFooter.TabIndex = 22;
@@ -707,7 +687,6 @@ namespace CeyPASS.WFA.Forms
         private System.Windows.Forms.ToolStripStatusLabel lblStatusCount;
         private System.Windows.Forms.Button btnAnasayfa;
         private System.Windows.Forms.Label lblPOYBaslik;
-        private System.Windows.Forms.Button btnDepartmanTanimlama;
         private System.Windows.Forms.Button btnPersonelTanimlama;
         private System.Windows.Forms.Button btnPozisyonTanimlama;
         private System.Windows.Forms.Button btnFirmaTanimlama;

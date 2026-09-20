@@ -7,6 +7,7 @@ using System.Linq;
 
 namespace CeyPASS.DataAccess.Repositories
 {
+    /// <summary>Kullanicilar erişimi.</summary>
     public class KullaniciRepositoryCore : IKullaniciRepository
     {
         private readonly CeyPASSDataConnectionCore _context;
@@ -39,6 +40,7 @@ namespace CeyPASS.DataAccess.Repositories
             };
         }
 
+        /// <summary>Kullanici Dogrula işlemini gerçekleştirir.</summary>
         public Kullanici KullaniciDogrula(string kullaniciAdi, string sifre)
         {
             const string sql = @"
@@ -49,13 +51,13 @@ SELECT TOP 1
        k.RolId,
        k.PersonelId,
        r.RolTanimi,
-       kis.Ad + ' ' + kis.Soyad AS AdSoyad,
+       LTRIM(RTRIM(CONCAT(kis.Ad, ' ', kis.Soyad))) AS AdSoyad,
        kis.FirmaId,
        f.FirmaAdi,
        kis.Email
 FROM   Kullanicilar k
 LEFT JOIN Roller   r   ON k.RolId      = r.RolId
-LEFT JOIN Kisiler  kis ON k.PersonelId = kis.PersonelId
+LEFT JOIN Kisiler  kis ON CAST(k.PersonelId AS NVARCHAR(50)) = kis.PersonelId
 LEFT JOIN Firmalar f   ON kis.FirmaId  = f.FirmaId
 WHERE  k.KullaniciAdi = {0}
   AND  k.Sifre        = {1}";
@@ -67,6 +69,7 @@ WHERE  k.KullaniciAdi = {0}
             return MapToKullanici(row);
         }
 
+        /// <summary>Sifre Guncelle işlemini gerçekleştirir.</summary>
         public bool SifreGuncelle(string kullaniciAdi, string yeniSifre)
         {
             const string sql = @"
@@ -78,12 +81,13 @@ WHERE KullaniciAdi = {0}";
             return affected > 0;
         }
 
+        /// <summary>Kullaniciya Kod Gonder işlemini gerçekleştirir.</summary>
         public string KullaniciyaKodGonder(string kullaniciAdi)
         {
             const string sql = @"
 SELECT TOP 1 ki.Email
 FROM   Kullanicilar k
-JOIN   Kisiler      ki ON k.PersonelId = ki.PersonelId
+JOIN   Kisiler      ki ON CAST(k.PersonelId AS NVARCHAR(50)) = ki.PersonelId
 WHERE  k.KullaniciAdi = {0}";
 
             return _context.Database
@@ -91,6 +95,7 @@ WHERE  k.KullaniciAdi = {0}";
                 .FirstOrDefault();
         }
 
+        /// <summary>Isyeri Id List By Firma sorgularını getirir.</summary>
         public List<int> GetIsyeriIdListByFirma(int firmaId)
         {
             const string sql = @"
@@ -103,6 +108,7 @@ WHERE FirmaId = {0} AND IsyeriId IS NOT NULL";
                 .ToList();
         }
 
+        /// <summary>By User Name sorgularını getirir.</summary>
         public Kullanici GetByUserName(string kullaniciAdi)
         {
             const string sql = @"
@@ -113,13 +119,13 @@ SELECT TOP 1
        U.RolId,
        U.PersonelId,
        R.RolTanimi,
-       K.Ad + ' ' + K.Soyad AS AdSoyad,
+       LTRIM(RTRIM(CONCAT(K.Ad, ' ', K.Soyad))) AS AdSoyad,
        K.FirmaId,
        F.FirmaAdi,
        K.Email
 FROM   [CeyPASS].[dbo].[Kullanicilar] AS U
 INNER JOIN Roller   AS R ON U.RolId      = R.RolId
-INNER JOIN Kisiler  AS K ON K.PersonelId = U.PersonelId
+INNER JOIN Kisiler  AS K ON CAST(U.PersonelId AS NVARCHAR(50)) = K.PersonelId
 LEFT  JOIN Firmalar AS F ON K.FirmaId    = F.FirmaId
 WHERE  U.KullaniciAdi = {0}";
 
@@ -130,6 +136,7 @@ WHERE  U.KullaniciAdi = {0}";
             return MapToKullanici(row);
         }
 
+        /// <summary>By Personel Id sorgularını getirir.</summary>
         public Kullanici GetByPersonelId(string personelId)
         {
             const string sql = @"
@@ -140,13 +147,13 @@ SELECT TOP 1
        U.RolId,
        U.PersonelId,
        R.RolTanimi,
-       K.Ad + ' ' + K.Soyad AS AdSoyad,
+       LTRIM(RTRIM(CONCAT(K.Ad, ' ', K.Soyad))) AS AdSoyad,
        K.FirmaId,
        F.FirmaAdi,
        K.Email
 FROM   [CeyPASS].[dbo].[Kullanicilar] AS U
 INNER JOIN Roller   AS R ON U.RolId      = R.RolId
-INNER JOIN Kisiler  AS K ON K.PersonelId = U.PersonelId
+INNER JOIN Kisiler  AS K ON CAST(U.PersonelId AS NVARCHAR(50)) = K.PersonelId
 LEFT  JOIN Firmalar AS F ON K.FirmaId    = F.FirmaId
 WHERE  K.PersonelId = {0}";
 
@@ -157,6 +164,7 @@ WHERE  K.PersonelId = {0}";
             return MapToKullanici(row);
         }
 
+        /// <summary>Kurtarma Kodu Kaydet işlemini gerçekleştirir.</summary>
         public void KurtarmaKoduKaydet(int kullaniciId, string kod, DateTime sonKullanmaZamani)
         {
             const string sql = @"
@@ -168,6 +176,7 @@ VALUES
             _context.Database.ExecuteSqlRaw(sql, kullaniciId, kod, sonKullanmaZamani);
         }
 
+        /// <summary>Kurtarma Kodu sorgularını getirir.</summary>
         public string GetKurtarmaKodu(int kullaniciId)
         {
             const string sql = @"
@@ -181,6 +190,7 @@ ORDER BY Id DESC";
                 .FirstOrDefault();
         }
 
+        /// <summary>Kurtarma Kodunu Temizle işlemini gerçekleştirir.</summary>
         public void KurtarmaKodunuTemizle(int kullaniciId)
         {
             const string sql = @"
@@ -191,6 +201,7 @@ WHERE KullaniciId = {0} AND Kullanildi = 0";
             _context.Database.ExecuteSqlRaw(sql, kullaniciId);
         }
 
+        /// <summary>Giriş ekranı dropdown için tüm kullanıcı adlarını getirir (yetkili tablosu).</summary>
         public List<string> GetTumKullaniciAdlari()
         {
             return _context.Kullanicilar
@@ -199,6 +210,7 @@ WHERE KullaniciId = {0} AND Kullanildi = 0";
                 .ToList();
         }
 
+        /// <summary>Admin User Ids sorgularını getirir.</summary>
         public List<string> GetAdminUserIds()
         {
             // RolId = 1 genellikle Admin veya Süper Admin'dir. 

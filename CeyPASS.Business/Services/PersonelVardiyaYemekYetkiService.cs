@@ -5,6 +5,7 @@ using System.Collections.Generic;
 
 namespace CeyPASS.Business.Services
 {
+    /// <summary>Yemek saat penceresi yetkileri.</summary>
     public class PersonelVardiyaYemekYetkiService : IPersonelVardiyaYemekYetkiService
     {
         private readonly IPersonelVardiyaYemekYetkiRepository _repo;
@@ -14,8 +15,10 @@ namespace CeyPASS.Business.Services
             _repo = repo;
         }
 
+        /// <inheritdoc />
         public bool FirmaHasSaatPenceresiAktif(int firmaId) => _repo.FirmaHasSaatPenceresiAktif(firmaId);
 
+        /// <inheritdoc />
         public List<PersonelVardiyaYemekYetki> GetByCalismaSekliId(int calismaSekliId) =>
             _repo.GetByCalismaSekliId(calismaSekliId);
 
@@ -44,6 +47,7 @@ namespace CeyPASS.Business.Services
             return (true, null);
         }
 
+        /// <inheritdoc />
         public bool Delete(int id) => _repo.Delete(id);
 
         private string Validate(PersonelVardiyaYemekYetki item, int? excludeId)
@@ -54,7 +58,7 @@ namespace CeyPASS.Business.Services
             if (item.CalismaSekliId <= 0)
                 return "Önce bir vardiya seçin.";
 
-            if (item.IsyeriId <= 0)
+            if (item.IsyeriId < 0)
                 return "İşyeri seçiniz.";
 
             if (item.CihazId <= 0)

@@ -5,14 +5,17 @@ using System.Windows.Forms;
 
 namespace CeyPASS.WFA.Forms
 {
+    /// <summary>Puantaj satırı ret nedeni giriş diyaloğu.</summary>
     public partial class reddetmeEkrani : Form
     {
         [DllImport("user32.dll", CharSet = CharSet.Auto)]
         private static extern IntPtr SendMessage(IntPtr hWnd, int msg, int wParam, string lParam);
         private const int EM_SETCUEBANNER = 0x1501;
         private readonly PuantajGunSatirDTO _model;
+        /// <summary>Onay sonrası girilen ret açıklaması.</summary>
         public string RetSebebi { get; private set; }
 
+        /// <summary>İlgili puantaj satırı modelini bağlar.</summary>
         public reddetmeEkrani(PuantajGunSatirDTO model)
         {
             InitializeComponent();

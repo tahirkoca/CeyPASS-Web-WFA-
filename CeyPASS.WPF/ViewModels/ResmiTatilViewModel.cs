@@ -8,6 +8,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace CeyPASS.WPF.ViewModels;
 
+/// <summary>Resmi tatil günleri yönetimi (puantaj hesaplarında dikkate alınır).</summary>
 public sealed class ResmiTatilViewModel : ObservableObject
 {
     private const string PageName = "ResmiTatiller";

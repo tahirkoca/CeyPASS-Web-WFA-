@@ -8,6 +8,9 @@ using Xunit;
 
 namespace CeyPASS.Tests.Unit
 {
+    /// <summary>
+    /// Admin işyeri listesinin DataTable kaynağından DTO'ya dönüşümü ve boş/null güvenliği.
+    /// </summary>
     public class IsyeriServiceTests
     {
         private readonly Mock<IIsyeriRepository> _repoMock = new();
@@ -18,6 +21,7 @@ namespace CeyPASS.Tests.Unit
             _sut = new IsyeriService(_repoMock.Object);
         }
 
+        /// <summary>Repo DataTable satırları için test verisi.</summary>
         private static DataTable OrnekDataTable(params (int firmaId, int isyeriId, string ad)[] satirlar)
         {
             var dt = new DataTable();
@@ -29,6 +33,9 @@ namespace CeyPASS.Tests.Unit
             return dt;
         }
 
+        /// <summary>
+        /// GetAll null dönerse boş liste; hata fırlatılmaz.
+        /// </summary>
         [Fact]
         public void GetListForAdmin_NullDataTable_BosListeDoner()
         {
@@ -39,6 +46,9 @@ namespace CeyPASS.Tests.Unit
             sonuc.Should().BeEmpty();
         }
 
+        /// <summary>
+        /// Her DataTable satırı bir IsyeriItem (FirmaId, IsyeriId, Ad) olarak map edilir.
+        /// </summary>
         [Fact]
         public void GetListForAdmin_IkiSatir_IkiIsyeriItemDoner()
         {
@@ -56,6 +66,9 @@ namespace CeyPASS.Tests.Unit
             sonuc[1].Ad.Should().Be("Şube");
         }
 
+        /// <summary>
+        /// IsyeriAdi null ise Ad alanı boş string.
+        /// </summary>
         [Fact]
         public void GetListForAdmin_AdSutunuNull_BosStringKullanilir()
         {

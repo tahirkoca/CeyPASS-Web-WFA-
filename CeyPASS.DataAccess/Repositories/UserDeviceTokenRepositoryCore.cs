@@ -7,6 +7,7 @@ using System.Linq;
 
 namespace CeyPASS.DataAccess.Repositories
 {
+    /// <summary>Mobil token erişimi.</summary>
     public class UserDeviceTokenRepositoryCore : IUserDeviceTokenRepository
     {
         private readonly CeyPASSDataConnectionCore _context;
@@ -16,6 +17,7 @@ namespace CeyPASS.DataAccess.Repositories
             _context = context;
         }
 
+        /// <summary>Add Or Update işlemini ekler.</summary>
         public bool AddOrUpdate(UserDeviceToken token)
         {
             try
@@ -48,6 +50,7 @@ namespace CeyPASS.DataAccess.Repositories
             }
         }
 
+        /// <summary>Deactivate işlemini gerçekleştirir.</summary>
         public void Deactivate(string fcmToken)
         {
             var existing = _context.UserDeviceTokens.FirstOrDefault(t => t.FCMToken == fcmToken);
@@ -60,6 +63,7 @@ namespace CeyPASS.DataAccess.Repositories
             }
         }
 
+        /// <summary>Tokens By User sorgularını getirir.</summary>
         public List<string> GetTokensByUser(string? personelId, string? kullaniciId)
         {
             return _context.UserDeviceTokens

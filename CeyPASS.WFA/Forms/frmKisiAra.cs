@@ -9,6 +9,7 @@ using System.Windows.Forms;
 
 namespace CeyPASS.WFA.Forms
 {
+    /// <summary>Personel arama, önizleme ve tek seçim diyaloğu.</summary>
     public partial class frmKisiAra : Form
     {
         private const int PageSize = 25;
@@ -35,8 +36,8 @@ namespace CeyPASS.WFA.Forms
         private TextBox txtSicil;
         private TextBox txtTc;
         private TextBox txtEmail;
-        private ComboBox cmbDepartman;
         private ComboBox cmbPozisyon;
+        private ComboBox cmbBolum;
         private ComboBox cmbStatu;
         private DataGridView dgvSonuc;
         private Label lblSayfalama;
@@ -47,16 +48,17 @@ namespace CeyPASS.WFA.Forms
         private PictureBox picOnizleme;
         private Label lblOnizlemeAd;
         private Label lblOnizlemeTc;
-        private Label lblOnizlemeDepartman;
         private Label lblOnizlemePozisyon;
         private Label lblOnizlemeStatu;
         private Label lblOnizlemeIsyeri;
         private Button btnKisiSec;
 
+        /// <summary>Seçilen personelin sicil/kart kimliği.</summary>
         public string SelectedPersonelId { get; private set; }
         /// <summary>Seçim sonrası ana ekran filtrelerinin senkronu için.</summary>
         public KisiAraContext AppliedContext { get; private set; }
 
+        /// <summary>Filtre ve sonuç grid arayüzünü programatik oluşturur.</summary>
         public frmKisiAra(
             IKisiQueryService kisiQuery,
             IKisiEkraniLookUpService lookup,
@@ -73,6 +75,7 @@ namespace CeyPASS.WFA.Forms
             BuildUi();
         }
 
+        /// <summary>Çağıran ekranın firma/işyeri filtrelerini senkronize eder.</summary>
         public void SetContext(KisiAraContext context)
         {
             if (context == null)
@@ -227,7 +230,7 @@ namespace CeyPASS.WFA.Forms
         private Panel BuildFilterPanel()
         {
             var card = CreateCard();
-            const int fieldRows = 14;
+            const int fieldRows = 15;
             const int btnRowH = BtnH + 12;
 
             var tlp = new TableLayoutPanel
@@ -251,7 +254,7 @@ namespace CeyPASS.WFA.Forms
             txtSicil = AddFilterField(tlp, ref row, "Sicil No");
             txtTc = AddFilterField(tlp, ref row, "TC Kimlik No");
             txtEmail = AddFilterField(tlp, ref row, "E-posta");
-            cmbDepartman = AddFilterFieldCombo(tlp, ref row, "Departman");
+            cmbBolum = AddFilterFieldCombo(tlp, ref row, "Bölüm");
             cmbPozisyon = AddFilterFieldCombo(tlp, ref row, "Pozisyon");
             cmbStatu = AddFilterFieldCombo(tlp, ref row, "Statü");
 
@@ -339,7 +342,7 @@ namespace CeyPASS.WFA.Forms
             {
                 Dock = DockStyle.Fill,
                 ColumnCount = 1,
-                RowCount = 9,
+                RowCount = 8,
                 Padding = new Padding(12)
             };
             tlp.RowStyles.Add(new RowStyle(SizeType.Absolute, 140F));
@@ -361,7 +364,6 @@ namespace CeyPASS.WFA.Forms
             };
             lblOnizlemeAd = CreatePreviewLabel(true);
             lblOnizlemeTc = CreatePreviewLabel(false);
-            lblOnizlemeDepartman = CreatePreviewLabel(false);
             lblOnizlemePozisyon = CreatePreviewLabel(false);
             lblOnizlemeStatu = CreatePreviewLabel(false);
             lblOnizlemeIsyeri = CreatePreviewLabel(false);
@@ -374,11 +376,10 @@ namespace CeyPASS.WFA.Forms
             tlp.Controls.Add(picOnizleme, 0, 0);
             tlp.Controls.Add(lblOnizlemeAd, 0, 1);
             tlp.Controls.Add(lblOnizlemeTc, 0, 2);
-            tlp.Controls.Add(lblOnizlemeDepartman, 0, 3);
-            tlp.Controls.Add(lblOnizlemePozisyon, 0, 4);
-            tlp.Controls.Add(lblOnizlemeStatu, 0, 5);
-            tlp.Controls.Add(lblOnizlemeIsyeri, 0, 6);
-            tlp.Controls.Add(btnKisiSec, 0, 8);
+            tlp.Controls.Add(lblOnizlemePozisyon, 0, 3);
+            tlp.Controls.Add(lblOnizlemeStatu, 0, 4);
+            tlp.Controls.Add(lblOnizlemeIsyeri, 0, 5);
+            tlp.Controls.Add(btnKisiSec, 0, 7);
 
             card.Controls.Add(tlp);
             return card;
@@ -499,7 +500,7 @@ namespace CeyPASS.WFA.Forms
         {
             var list = _lookup.GetIsyerleri(firmaId) ?? new List<LookupItem>();
             list = FirmaIsyeriYetkiHelper.FilterIsyeriLookup(list, firmaId, _yetkiler, _isAdmin);
-            var data = new List<LookupItem> { new LookupItem { Id = 0, Ad = "Tümü" } };
+            var data = new List<LookupItem> { FirmaIsyeriYetkiHelper.CreateIsyeriFilterTumuItem() };
             data.AddRange(list);
 
             cmbIsyeri.DataSource = null;
@@ -507,17 +508,17 @@ namespace CeyPASS.WFA.Forms
             cmbIsyeri.ValueMember = nameof(LookupItem.Id);
             cmbIsyeri.DataSource = data;
 
-            if (preferredIsyeriId.HasValue && preferredIsyeriId.Value > 0
+            if (preferredIsyeriId.HasValue && preferredIsyeriId.Value >= 0
                 && data.Any(x => x.Id == preferredIsyeriId.Value))
                 cmbIsyeri.SelectedValue = preferredIsyeriId.Value;
             else
-                cmbIsyeri.SelectedValue = 0;
+                cmbIsyeri.SelectedValue = FirmaIsyeriYetkiHelper.IsyeriFilterTumuId;
         }
 
         private void LoadDetailLookups()
         {
             int firmaId = GetSeciliFirmaId();
-            BindLookup(cmbDepartman, _lookup.GetDepartmanlar(firmaId));
+            BindLookup(cmbBolum, firmaId > 0 ? _lookup.GetBolumler(firmaId) : new List<LookupItem>());
             BindLookup(cmbPozisyon, _lookup.GetPozisyonlar(firmaId));
             BindLookup(cmbStatu, _lookup.GetCalismaStatuleri(firmaId));
         }
@@ -541,7 +542,7 @@ namespace CeyPASS.WFA.Forms
             txtSicil.Clear();
             txtTc.Clear();
             txtEmail.Clear();
-            if (cmbDepartman.Items.Count > 0) cmbDepartman.SelectedIndex = 0;
+            if (cmbBolum.Items.Count > 0) cmbBolum.SelectedIndex = 0;
             if (cmbPozisyon.Items.Count > 0) cmbPozisyon.SelectedIndex = 0;
             if (cmbStatu.Items.Count > 0) cmbStatu.SelectedIndex = 0;
             ClearPreview();
@@ -565,9 +566,9 @@ namespace CeyPASS.WFA.Forms
         private int? GetSeciliIsyeriIdRaw()
         {
             if (cmbIsyeri?.SelectedValue is int id)
-                return id <= 0 ? null : id;
+                return FirmaIsyeriYetkiHelper.ToIsyeriQueryFilterId(id);
             if (cmbIsyeri?.SelectedValue != null && int.TryParse(cmbIsyeri.SelectedValue.ToString(), out var parsed))
-                return parsed <= 0 ? null : parsed;
+                return FirmaIsyeriYetkiHelper.ToIsyeriQueryFilterId(parsed);
             return null;
         }
 
@@ -599,8 +600,8 @@ namespace CeyPASS.WFA.Forms
                 Sicil = NullIfWhite(txtSicil.Text),
                 TcKimlikNo = NullIfWhite(txtTc.Text),
                 Email = NullIfWhite(txtEmail.Text),
-                DepartmanId = GetComboId(cmbDepartman),
                 PozisyonId = GetComboId(cmbPozisyon),
+                BolumId = GetComboId(cmbBolum),
                 CalismaStatuId = GetComboId(cmbStatu)
             };
         }
@@ -692,7 +693,6 @@ namespace CeyPASS.WFA.Forms
             H("KartNo", "Kart No");
             H("TcKimlikNo", "TC Kimlik No");
             H("IsyeriAdi", "İşyeri");
-            H("DepartmanAdi", "Departman");
             H("PozisyonAdi", "Pozisyon");
         }
 
@@ -727,14 +727,11 @@ namespace CeyPASS.WFA.Forms
                 : $"TC: {detay.TcKimlikNo}";
 
             int firmaId = GetSeciliFirmaId();
-            var dept = _lookup.GetDepartmanlar(firmaId)?.FirstOrDefault(x => x.Id == detay.DepartmanId)?.Ad
-                       ?? row.DepartmanAdi;
             var poz = _lookup.GetPozisyonlar(firmaId)?.FirstOrDefault(x => x.Id == detay.PozisyonId)?.Ad
                       ?? row.PozisyonAdi;
             var isy = _lookup.GetIsyerleri(firmaId)?.FirstOrDefault(x => x.Id == detay.IsyeriId)?.Ad
                       ?? row.IsyeriAdi;
 
-            lblOnizlemeDepartman.Text = "Departman: " + (string.IsNullOrWhiteSpace(dept) ? "—" : dept);
             lblOnizlemePozisyon.Text = "Pozisyon: " + (string.IsNullOrWhiteSpace(poz) ? "—" : poz);
             lblOnizlemeStatu.Text = "Statü: " + (detay.CalismaStatusuText ?? "—");
             lblOnizlemeIsyeri.Text = "İşyeri: " + (string.IsNullOrWhiteSpace(isy) ? "—" : isy);
@@ -745,7 +742,6 @@ namespace CeyPASS.WFA.Forms
             picOnizleme.Image = null;
             lblOnizlemeAd.Text = "Ad Soyad: —";
             lblOnizlemeTc.Text = "TC: —";
-            lblOnizlemeDepartman.Text = "Departman: —";
             lblOnizlemePozisyon.Text = "Pozisyon: —";
             lblOnizlemeStatu.Text = "Statü: —";
             lblOnizlemeIsyeri.Text = "İşyeri: —";

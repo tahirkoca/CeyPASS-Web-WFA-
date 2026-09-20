@@ -2,12 +2,15 @@ using System;
 
 namespace CeyPASS.Entities.Concrete
 {
+    /// <summary>Geçmiş ziyaretçi/araç kaydı; yeni atamada otomatik doldurma için.</summary>
     public class GecmisZiyaretciItem
     {
         public string AdSoyad { get; set; } = "";
         public string TCKimlikNo { get; set; }
+        public string PasaportNo { get; set; }
         public string ZiyaretEdilenKisi { get; set; }
         public string Plaka { get; set; }
+        public string Notlar { get; set; }
         public DateTime SonZiyaret { get; set; }
 
         public string Gosterim

@@ -1,3 +1,4 @@
+/** Expo giriş noktası — App bileşenini kaydeder. */
 import { registerRootComponent } from 'expo';
 
 import App from './App';

@@ -13,6 +13,7 @@ public static class UiStatus
     private static TextBlock? _count;
     private static string _lastMessage = "Hazır";
 
+    /// <summary>Ana pencere durum çubuğu TextBlock'larını bağlar.</summary>
     public static void Register(TextBlock message, TextBlock? count = null)
     {
         _message = message;
@@ -26,6 +27,7 @@ public static class UiStatus
         _count = null;
     }
 
+    /// <summary>Durum metni; isteğe bağlı kayıt sayısı gösterimi.</summary>
     public static void Set(string message, int? recordCount = null)
     {
         _lastMessage = string.IsNullOrWhiteSpace(message) ? "Hazır" : message.Trim();

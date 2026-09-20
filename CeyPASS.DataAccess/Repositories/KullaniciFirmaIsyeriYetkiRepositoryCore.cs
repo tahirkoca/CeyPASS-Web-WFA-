@@ -6,6 +6,7 @@ using System.Linq;
 
 namespace CeyPASS.DataAccess.Repositories
 {
+    /// <summary>Kullanıcı firma/işyeri yetkileri.</summary>
     public class KullaniciFirmaIsyeriYetkiRepositoryCore : IKullaniciFirmaIsyeriYetkiRepository
     {
         private readonly CeyPASSDataConnectionCore _context;
@@ -15,6 +16,7 @@ namespace CeyPASS.DataAccess.Repositories
             _context = context;
         }
 
+        /// <summary>Yetkiler sorgularını getirir.</summary>
         public List<FirmaIsyeriYetkiDTO> GetYetkiler(int kullaniciId)
         {
             const string sql = @"

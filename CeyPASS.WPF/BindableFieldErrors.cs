@@ -18,10 +18,13 @@ public sealed class BindableFieldErrors : INotifyPropertyChanged, IEnumerable<Ke
         set => Set(key, value);
     }
 
+    /// <summary>En az bir alan hatası var mı.</summary>
     public bool HasErrors => _map.Count > 0;
 
+    /// <summary>İlk hata metni (banner / özet mesaj için).</summary>
     public string? FirstMessage => _map.Values.FirstOrDefault();
 
+    /// <summary>Tüm alan hatalarını temizler.</summary>
     public void Clear()
     {
         if (_map.Count == 0) return;
@@ -33,6 +36,7 @@ public sealed class BindableFieldErrors : INotifyPropertyChanged, IEnumerable<Ke
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("Item[]"));
     }
 
+    /// <summary>Alan anahtarına hata yazar; boş/null ise hatayı kaldırır.</summary>
     public void Set(string key, string? message)
     {
         if (string.IsNullOrWhiteSpace(message))

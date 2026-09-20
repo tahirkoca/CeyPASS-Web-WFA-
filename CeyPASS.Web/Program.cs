@@ -8,6 +8,7 @@ using CeyPASS.Infrastructure.Pdf;
 using Microsoft.EntityFrameworkCore;
 using CeyPASS.Web.Services;
 
+/// <summary>CeyPASS Web uygulama giriş noktası; DI, session ve MVC pipeline.</summary>
 // PDF export (MigraDoc) için Windows'ta Arial vb. sistem fontlarının kullanılması - ilk PDF'den önce ayarlanmalı
 ExportHelper.ConfigurePdfFonts();
 
@@ -76,6 +77,7 @@ builder.Services.AddTransient<ISistemLogRepository, SistemLogRepositoryCore>();
 builder.Services.AddTransient<IMailRepository, MailRepositoryCore>();
 builder.Services.AddTransient<IYemekhaneRepository, YemekhaneRepositoryCore>();
 builder.Services.AddTransient<ICanliIzlemeRepository, CanliIzlemeRepositoryCore>();
+builder.Services.AddTransient<ICanliIzlemeKartKomutRepository, CanliIzlemeKartKomutRepositoryCore>();
 builder.Services.AddTransient<IDashboardRepository, DashboardRepositoryCore>();
 builder.Services.AddTransient<IPuantajsizKartAtamaRepository, PuantajsizKartAtamaRepositoryCore>();
 builder.Services.AddTransient<IRaporRepository, RaporRepositoryCore>();
@@ -85,6 +87,7 @@ builder.Services.AddTransient<IKisiRepository, KisiRepositoryCore>();
 builder.Services.AddTransient<IKullaniciFirmaIsyeriYetkiRepository, KullaniciFirmaIsyeriYetkiRepositoryCore>();
 builder.Services.AddTransient<IKullaniciFirmaIsyeriYetkiService, KullaniciFirmaIsyeriYetkiService>();
 builder.Services.AddTransient<IPuantajRepository, PuantajRepositoryCore>();
+builder.Services.AddTransient<ICokluSicilRepository, CokluSicilRepositoryCore>();
 
 // Yeni modüller: İzin Talepleri / ÜstYetkili / Avans
 builder.Services.AddTransient<IIzinTalepRepository, IzinTalepRepositoryCore>();
@@ -101,6 +104,7 @@ builder.Services.AddTransient<IAuthorizationService, AuthorizationService>();
 builder.Services.AddTransient<ICalismaSekliService, CalismaSekliService>();
 builder.Services.AddTransient<ICalismaStatuService, CalismaStatuService>();
 builder.Services.AddTransient<ICanliIzlemeService, CanliIzlemeService>();
+builder.Services.AddTransient<ICanliIzlemeKartKomutService, CanliIzlemeKartKomutService>();
 builder.Services.AddTransient<ICihazService, CihazService>();
 builder.Services.AddTransient<IDashboardService, DashboardService>();
 builder.Services.AddTransient<IDepartmanService, DepartmanService>();
@@ -121,6 +125,7 @@ builder.Services.AddTransient<IMisafirKartService, MisafirKartService>();
 builder.Services.AddTransient<IAracKartiService, AracKartiService>();
 builder.Services.AddTransient<IPozisyonService, PozisyonService>();
 builder.Services.AddTransient<IPuantajService, PuantajService>();
+builder.Services.AddTransient<ICokluSicilService, CokluSicilService>();
 builder.Services.AddTransient<IRaporService, RaporService>();
 builder.Services.AddTransient<IResmiTatilService, ResmiTatilService>();
 builder.Services.AddTransient<ISifreService, SifreService>();

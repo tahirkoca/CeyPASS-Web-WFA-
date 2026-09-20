@@ -2,6 +2,7 @@
 
 namespace CeyPASS.Entities.Concrete
 {
+    /// <summary>Dashboard liste raporu isteği (tarih aralığı + tip).</summary>
     public class ReportRequest
     {
         public DashboardReportTypeHelper Type { get; set; }

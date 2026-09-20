@@ -11,14 +11,17 @@ using Orientation = MigraDoc.DocumentObjectModel.Orientation;
 
 namespace CeyPASS.Infrastructure.Helpers
 {
+    /// <summary>Rapor DataTable → Excel/PDF dışa aktarım (MigraDoc / EPPlus).</summary>
     public static class ExportHelper
     {
+        /// <summary>Windows’ta PDF için sistem fontlarını kullanır.</summary>
         public static void ConfigurePdfFonts()
         {
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 GlobalFontSettings.UseWindowsFontsUnderWindows = true;
         }
 
+        /// <summary>DataTable’ı tek sayfalık Excel’e yazar; tarih/sayı kolonlarına format uygular.</summary>
         public static void ExportToExcel(DataTable dt, string filePath)
         {
             var cid = Guid.NewGuid().ToString("N");
@@ -80,6 +83,7 @@ namespace CeyPASS.Infrastructure.Helpers
                 throw;
             }
         }
+        /// <summary>DataTable’ı yatay A4 PDF tablo raporu olarak kaydeder.</summary>
         public static void ExportToPdf(DataTable dt, string filePath, string reportTitle = "Rapor")
         {
             var cid = Guid.NewGuid().ToString("N");

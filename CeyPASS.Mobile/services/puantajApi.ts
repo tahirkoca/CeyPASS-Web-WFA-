@@ -1,3 +1,6 @@
+/**
+ * Puantaj REST: lookups (yetki bayrakları), günlük satırlar, onay/red/düzenle, toplu onay, Excel export.
+ */
 import api, { cachedGet } from "./api";
 import { invalidate } from "./httpCache";
 
@@ -58,7 +61,9 @@ export type PuantajLookupsDto = {
   canExport: boolean;
 };
 
+/** Puantaj ekranı ve export; POST sonrası `/Puantaj` önbelleği temizlenir. */
 export const puantajService = {
+  /** Firma/işyeri/personel filtreleri ve canUpdate/canApprove/canExport vb. */
   async lookups(
     params: { firmaId?: number | null; isyeriId?: number | null; yil?: number | null; ay?: number | null },
     opts?: { forceRefresh?: boolean }
@@ -88,6 +93,7 @@ export const puantajService = {
     });
   },
 
+  /** Tek gün FM/onay — OnayDurumu onaylandı. */
   async onayla(payload: {
     personelId: number;
     tarih: string;
@@ -179,7 +185,12 @@ export const puantajService = {
     return resp.data;
   },
 
-  // Excel export: response handling is implemented in the screen (file write/share).
+  async cokluSicilOzet(personelId: number): Promise<{ isAnaSicil?: boolean; aktifHedefSayisi?: number }> {
+    const resp = await api.get("/Puantaj/GetCokluSicilOzet", { params: { personelId }, timeout: 15000 });
+    return resp.data ?? {};
+  },
+
+  /** Excel binary; ekranda çoğunlukla FileSystem.downloadAsync + paylaşım kullanılır. */
   async exportExcel(payload: { yil: number; ay: number }): Promise<any> {
     const resp = await api.post("/Puantaj/export-excel", { Yil: payload.yil, Ay: payload.ay }, { timeout: 120000, responseType: "arraybuffer" as any });
     return resp;

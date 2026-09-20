@@ -5,6 +5,7 @@ using System;
 
 namespace CeyPASS.Business.Services
 {
+    /// <summary>Şifre sıfırlama ve güncelleme.</summary>
     public class SifreService:ISifreService
     {
         private readonly IKullaniciRepository _repo;
@@ -29,10 +30,12 @@ namespace CeyPASS.Business.Services
             _bildirimService = bildirimService;
             _ustYetkiliRepo = ustYetkiliRepo;
         }
+        /// <inheritdoc />
         public string KodGonder(string kullaniciAdi)
         {
             return _repo.KullaniciyaKodGonder(kullaniciAdi);
         }
+        /// <inheritdoc />
         public SifreSifirlamaSureci SifreSifirlamaBaslat(string kullaniciAdi)
         {
             var sonuc = new SifreSifirlamaSureci();
@@ -130,6 +133,7 @@ namespace CeyPASS.Business.Services
             sonuc.HataMesaji = "Girdiğiniz bilgilere ait bir kayıt bulunamadı.";
             return sonuc;
         }
+        /// <inheritdoc />
         public SifreSifirlamaTamamlayici SifreSifirlamaTamamla(string kullaniciAdi, string girilenKod, string yeniSifre, string yeniSifreTekrar)
         {
             var sonuc = new SifreSifirlamaTamamlayici();
@@ -199,12 +203,14 @@ namespace CeyPASS.Business.Services
             return true;
         }
 
+        /// <inheritdoc />
         public bool SifreSifirlaManuel(string personelId, string yeniSifre)
         {
             if (string.IsNullOrWhiteSpace(personelId) || string.IsNullOrWhiteSpace(yeniSifre)) return false;
             return _personelSifreRepo.EkleVeyaGuncelle(personelId, yeniSifre);
         }
 
+        /// <inheritdoc />
         public bool SifreyiGuncelle(string kullaniciAdi, string yeniSifre, bool isCorporate = true)
         {
             if (isCorporate)

@@ -7,6 +7,7 @@ using System.Linq;
 
 namespace CeyPASS.DataAccess.Repositories
 {
+    /// <summary>Avans talep kayıtları için EF/SQL erişimi.</summary>
     public class AvansRepositoryCore : IAvansRepository
     {
         private readonly CeyPASSDataConnectionCore _context;
@@ -16,6 +17,7 @@ namespace CeyPASS.DataAccess.Repositories
             _context = context;
         }
 
+        /// <summary>Ekle işlemini ekler.</summary>
         public int Ekle(AvansTalep talep)
         {
             var outIdParam = new Microsoft.Data.SqlClient.SqlParameter
@@ -44,24 +46,28 @@ SET {5} = CAST(SCOPE_IDENTITY() as int);";
             return outIdParam.Value != DBNull.Value ? (int)outIdParam.Value : 0;
         }
 
+        /// <summary>By Personel sorgularını getirir.</summary>
         public List<AvansTalep> GetByPersonel(string personelId)
         {
             const string sql = @"SELECT * FROM dbo.AvansTalepleri WHERE PersonelId = {0} ORDER BY TalepTarihi DESC";
             return _context.Database.SqlQueryRaw<AvansTalep>(sql, personelId).ToList();
         }
 
+        /// <summary>All sorgularını getirir.</summary>
         public List<AvansTalep> GetAll()
         {
             const string sql = @"SELECT * FROM dbo.AvansTalepleri ORDER BY TalepTarihi DESC";
             return _context.Database.SqlQueryRaw<AvansTalep>(sql).ToList();
         }
 
+        /// <summary>Kimliğe göre kaydı getirir.</summary>
         public AvansTalep? GetById(int avansId)
         {
             const string sql = @"SELECT * FROM dbo.AvansTalepleri WHERE AvansId = {0}";
             return _context.Database.SqlQueryRaw<AvansTalep>(sql, avansId).FirstOrDefault();
         }
 
+        /// <summary>Guncelle Onay işlemini günceller.</summary>
         public bool GuncelleOnay(int avansId, AvansDurumu durum, int onaylayanId, string? aciklama)
         {
             const string sql = @"
@@ -75,12 +81,14 @@ WHERE AvansId = {0}";
             return _context.Database.ExecuteSqlRaw(sql, avansId, (byte)durum, onaylayanId, (object?)aciklama) > 0;
         }
 
+        /// <summary>Sil işlemini siler.</summary>
         public bool Sil(int avansId)
         {
             const string sql = @"DELETE FROM dbo.AvansTalepleri WHERE AvansId = {0} AND Durum = 0"; // Sadece bekleyenler silinebilir
             return _context.Database.ExecuteSqlRaw(sql, avansId) > 0;
         }
 
+        /// <summary>Guncelle işlemini günceller.</summary>
         public bool Guncelle(int avansId, decimal miktar, string? aciklama)
         {
             const string sql = @"UPDATE dbo.AvansTalepleri SET Miktar = {1}, Aciklama = {2} WHERE AvansId = {0} AND Durum = 0";

@@ -5,6 +5,7 @@ namespace CeyPASS.WFA;
 /// </summary>
 public static class UiConfirm
 {
+    /// <summary>Özelleştirilmiş Evet/Hayır metinli onay diyaloğu.</summary>
     public static bool Confirm(
         IWin32Window? owner,
         string message,

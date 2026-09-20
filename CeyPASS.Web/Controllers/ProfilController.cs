@@ -10,6 +10,7 @@ using System.Linq;
 
 namespace CeyPASS.Web.Controllers
 {
+    /// <summary>Personel self-servis profil, izin ve avans gorunumu.</summary>
     public class ProfilController : Controller
     {
         private const string PageName = "Profil";
@@ -54,6 +55,7 @@ namespace CeyPASS.Web.Controllers
             _sifreService = sifreService;
         }
 
+        /// <summary>Liste veya ana ekran.</summary>
         public IActionResult Index(int hareketPage = 1)
         {
             if (!_auth.ViewAbility(PageName))
@@ -86,8 +88,8 @@ namespace CeyPASS.Web.Controllers
                 model.YemekHakkiVar = kisi?.YemekHakkiVar;
                 model.GunlukYemekAdedi = kisi?.GunlukYemekAdedi;
 
-                if (kisi?.DepartmanId != null)
-                    model.DepartmanAdi = _lookupService.GetDepartmanlar().FirstOrDefault(x => x.Id == kisi.DepartmanId)?.Ad;
+                if (kisi?.IsyeriId != null)
+                    model.IsyeriAdi = _lookupService.GetIsyerleri(kisi.FirmaId).FirstOrDefault(x => x.Id == kisi.IsyeriId)?.Ad;
                 if (kisi?.PozisyonId != null)
                     model.PozisyonAdi = _lookupService.GetPozisyonlar().FirstOrDefault(x => x.Id == kisi.PozisyonId)?.Ad;
 
@@ -141,6 +143,7 @@ namespace CeyPASS.Web.Controllers
             return $"data:{mime};base64,{Convert.ToBase64String(bytes)}";
         }
 
+        /// <summary>Izinlerim islemi.</summary>
         [HttpGet]
         public IActionResult Izinlerim(int taleplerPage = 1, int gecmisPage = 1)
         {
@@ -256,6 +259,7 @@ namespace CeyPASS.Web.Controllers
             return 0m;
         }
 
+        /// <summary>KullanimImzaAt islemi.</summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult KullanimImzaAt(int talepId)
@@ -279,6 +283,7 @@ namespace CeyPASS.Web.Controllers
             return RedirectToAction(nameof(Izinlerim));
         }
 
+        /// <summary>IzinTalep islemi.</summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult IzinTalep(int izinTipId, DateTime baslangic, DateTime bitis, bool saatlikIzinMi, string? aciklama, string? izinAdres, string? telefonNo)
@@ -313,7 +318,7 @@ namespace CeyPASS.Web.Controllers
             return RedirectToAction(nameof(Izinlerim));
         }
 
-        [HttpGet]
+        /// <summary>Avanslarim islemi.</summary>
         [HttpGet]
         public IActionResult Avanslarim(int pageAktif = 1, int pageGecmis = 1)
         {
@@ -349,6 +354,7 @@ namespace CeyPASS.Web.Controllers
             return View(model);
         }
 
+        /// <summary>AvansTalep islemi.</summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult AvansTalep(decimal miktar, string? aciklama)
@@ -369,6 +375,7 @@ namespace CeyPASS.Web.Controllers
             return RedirectToAction(nameof(Avanslarim));
         }
 
+        /// <summary>UstYetkiliPaneli islemi.</summary>
         [HttpGet]
         public IActionResult UstYetkiliPaneli()
         {
@@ -407,6 +414,7 @@ namespace CeyPASS.Web.Controllers
             return View(items);
         }
 
+        /// <summary>SifreSifirlaSubordinate islemi.</summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult SifreSifirlaSubordinate(string personelId, string yeniSifre)
@@ -426,6 +434,7 @@ namespace CeyPASS.Web.Controllers
             return RedirectToAction(nameof(UstYetkiliPaneli));
         }
 
+        /// <summary>UstYetkiliOnayla islemi.</summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult UstYetkiliOnayla(int talepId, string? aciklama)
@@ -441,6 +450,7 @@ namespace CeyPASS.Web.Controllers
             return RedirectToAction(nameof(UstYetkiliPaneli));
         }
 
+        /// <summary>UstYetkiliReddet islemi.</summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult UstYetkiliReddet(int talepId, string? aciklama)
@@ -455,6 +465,7 @@ namespace CeyPASS.Web.Controllers
             TempData[ok ? "Success" : "Error"] = ok ? "Talep reddedildi." : "İşlem başarısız.";
             return RedirectToAction(nameof(UstYetkiliPaneli));
         }
+        /// <summary>AvansIptal islemi.</summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult AvansIptal(int avansId)
@@ -477,6 +488,7 @@ namespace CeyPASS.Web.Controllers
             return RedirectToAction(nameof(Avanslarim));
         }
 
+        /// <summary>AvansGuncelle islemi.</summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult AvansGuncelle(int avansId, decimal miktar, string? aciklama)

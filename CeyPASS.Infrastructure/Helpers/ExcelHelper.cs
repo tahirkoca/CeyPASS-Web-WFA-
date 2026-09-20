@@ -7,8 +7,20 @@ using LicenseContext = OfficeOpenXml.LicenseContext;
 
 namespace CeyPASS.Infrastructure.Helpers
 {
+    /// <summary>Aylık puantaj Excel dışa aktarımı (Logo bordro import şablonu).</summary>
     public static class ExcelHelper
     {
+        /// <summary>
+        /// Puantaj listesini Logo uyumlu .xlsx dosyasına yazar.
+        /// A1: kayıt adedi + 1 (başlık satırı dahil Logo satır sayacı).
+        /// Satır 1 (B1…): kolon başlıkları; satır 2: Logo alan kodları —
+        /// 900001 sicil, 900002 ad, 900003 soyad; 910001/910002/910003 firma/bölüm/işyeri;
+        /// 01xxxx ve 02xxxx puantaj kalemleri; 900008 SSK eksik nedeni, 900009 İşkur eksik nedeni.
+        /// Veri satır 3’ten başlar. Başlıkta (Gün) geçen kolonlar tam sayı &quot;0&quot;;
+        /// (Saat) kolonları ondalıklı &quot;#,##0.00&quot;.
+        /// </summary>
+        /// <param name="data">Dışa aktarılacak puantaj satırları.</param>
+        /// <param name="filePath">Oluşturulacak .xlsx yolu.</param>
         public static void ExceleDonustur(List<PuantajExportDTO> data, string filePath)
         {
             try

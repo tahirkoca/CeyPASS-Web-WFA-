@@ -107,13 +107,17 @@
         </Style>
     </Window.Resources>
 
-    <Grid>
+    <Grid SnapsToDevicePixels="True" UseLayoutRounding="True">
         <Grid.ColumnDefinitions>
             <ColumnDefinition x:Name="SidebarColumn" Width="294"/>
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
 
-        <Border x:Name="SidebarBorder" Grid.Column="0" Background="#212529" ClipToBounds="True">
+        <Border Grid.Column="0" Background="#212529" Margin="-1,0,0,-1"
+                Panel.ZIndex="-1" IsHitTestVisible="False"/>
+
+        <Border x:Name="SidebarBorder" Grid.Column="0" Background="#212529"
+                Margin="-1,0,0,-1" ClipToBounds="False">
             <Grid>
                 <DockPanel x:Name="SidebarExpandedContent">
                     <Border x:Name="LogoBand" DockPanel.Dock="Top" Background="#1A1A1A" Height="84" Margin="0,0,0,8">
@@ -122,7 +126,7 @@
                                VerticalAlignment="Center"/>
                     </Border>
 
-                    <Border x:Name="UserFooter" DockPanel.Dock="Bottom" Background="#212529" Height="72" Margin="0,0,0,8">
+                    <Border x:Name="UserFooter" DockPanel.Dock="Bottom" Background="#212529" Height="72">
                         <Grid Margin="10,10,28,10">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto"/>
@@ -162,13 +166,6 @@
 
                             <Expander x:Name="ExpPOY" Style="{StaticResource SidebarExpander}" Header="PERSONEL YÖNETİMİ">
                                 <StackPanel>
-                                    <Button x:Name="BtnDepartmanlar" Style="{StaticResource SidebarButton}"
-                                            Tag="Departmanlar" Click="Menu_OnClick">
-                                        <StackPanel Orientation="Horizontal">
-                                            <Image Source="pack://application:,,,/Assets/icons8-department-25.png" Width="25" Height="25" Margin="0,0,10,0"/>
-                                            <TextBlock Text="Departman Tanımlama" VerticalAlignment="Center"/>
-                                        </StackPanel>
-                                    </Button>
                                     <Button x:Name="BtnPersoneller" Style="{StaticResource SidebarButton}"
                                             Tag="Personeller" Click="Menu_OnClick">
                                         <StackPanel Orientation="Horizontal">
@@ -289,7 +286,7 @@
                 </DockPanel>
 
                 <DockPanel x:Name="SidebarCollapsedContent" Visibility="Collapsed">
-                    <Border DockPanel.Dock="Bottom" Background="#212529" Height="72" Margin="0,0,0,8">
+                    <Border DockPanel.Dock="Bottom" Background="#212529" Height="72">
                         <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
                             <Border Width="36" Height="36" Background="#404040" HorizontalAlignment="Center">
                                 <TextBlock x:Name="LblAvatarCollapsed" Text="K" Foreground="White" FontWeight="Bold"

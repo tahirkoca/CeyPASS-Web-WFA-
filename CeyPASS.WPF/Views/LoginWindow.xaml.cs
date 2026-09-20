@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace CeyPASS.WPF.Views;
 
+/// <summary>Ana uygulama giriş penceresi; başarılı oturumda <see cref="MainWindow"/> açılır.</summary>
 public partial class LoginWindow : Window
 {
     private readonly LoginViewModel _vm;
@@ -29,6 +30,7 @@ public partial class LoginWindow : Window
         };
     }
 
+    /// <summary>PasswordBox ↔ ViewModel; ShowPassword kapatılınca senkronizasyon döngüsünü keser.</summary>
     private void PwdBox_OnPasswordChanged(object sender, RoutedEventArgs e)
     {
         if (_syncingPassword) return;
@@ -42,6 +44,7 @@ public partial class LoginWindow : Window
             DragMove();
     }
 
+    /// <summary>Esc pencereyi kapatır; Enter giriş komutunu çalıştırır (komut müsaitse).</summary>
     private void Window_OnPreviewKeyDown(object sender, KeyEventArgs e)
     {
         if (e.Key == Key.Escape)
@@ -61,10 +64,12 @@ public partial class LoginWindow : Window
     private void OnLoginSucceeded()
     {
         var main = App.Services.GetRequiredService<MainWindow>();
+        Application.Current.MainWindow = main;
         main.Show();
         Close();
     }
 
+    /// <summary>Canlı izleme girişine geçer; DI scope pencere kapanınca dispose edilir.</summary>
     private void OnOpenLiveMonitor()
     {
         var scope = App.Services.CreateScope();

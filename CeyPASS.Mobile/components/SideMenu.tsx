@@ -1,3 +1,4 @@
+/** Yetki ve role göre modül menüsü (drawer). */
 import React, { useEffect, useMemo, useState } from "react";
 import { Image, Modal, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
@@ -40,7 +41,6 @@ function buildMenu(abilities: any, user: any, hasSicilNo: boolean) {
     !!view.Raporlar ||
     !!view.Firmalar ||
     !!view.Isyerler ||
-    !!view.Departmanlar ||
     !!view.Pozisyonlar ||
     !!view.Vardiyalar ||
     !!view.CalismaStatuleri ||
@@ -84,7 +84,6 @@ function buildMenu(abilities: any, user: any, hasSicilNo: boolean) {
   const orgItems: MenuItem[] = [];
   if (view.Firmalar) orgItems.push({ key: "firmalar", label: "Firmalar", icon: "office-building" });
   if (view.Isyerler) orgItems.push({ key: "isyerleri", label: "İşyerleri", icon: "map-marker" });
-  if (view.Departmanlar) orgItems.push({ key: "departmanlar", label: "Departmanlar", icon: "sitemap" });
   if (view.Pozisyonlar) orgItems.push({ key: "pozisyonlar", label: "Pozisyonlar", icon: "badge-account" });
   if (orgItems.length) sections.push({ title: "Organizasyon", items: orgItems });
 
@@ -105,6 +104,7 @@ function buildMenu(abilities: any, user: any, hasSicilNo: boolean) {
   return sections;
 }
 
+/** Modal yan menü; `onNavigate` ile AppShell sayfa anahtarı. */
 export function SideMenu(props: {
   visible: boolean;
   abilities: any;
@@ -166,25 +166,21 @@ export function SideMenu(props: {
       "";
     return (v ?? "").toString().trim();
   }, [profile, props.user]);
-  const deptName = useMemo(() => {
+  const isyeriName = useMemo(() => {
     const v =
-      profile?.departmanAdi ??
-      profile?.DepartmanAdi ??
-      profile?.personel?.DepartmanAdi ??
-      profile?.personel?.departmanAdi ??
-      props.user?.departmanAdi ??
-      props.user?.DepartmanAdi ??
-      props.user?.departman ??
-      props.user?.Departman ??
-      props.user?.birimAdi ??
-      props.user?.BirimAdi ??
+      profile?.isyeriAdi ??
+      profile?.IsyeriAdi ??
+      profile?.personel?.IsyeriAdi ??
+      profile?.personel?.isyeriAdi ??
+      props.user?.isyeriAdi ??
+      props.user?.IsyeriAdi ??
       "";
     return (v ?? "").toString().trim();
   }, [profile, props.user]);
   const normalizedRole = roleName.toLocaleLowerCase("tr-TR");
   const roleIsGenericPersonel = normalizedRole === "personel";
   // For Üst Yetkili (dual role), show position in the user card like web.
-  const subtitle = isSupervisor ? pozName || deptName || " " : (!roleIsGenericPersonel && roleName) || pozName || deptName || " ";
+  const subtitle = isSupervisor ? pozName || isyeriName || " " : (!roleIsGenericPersonel && roleName) || pozName || isyeriName || " ";
   const avatarUri = useMemo(() => {
     const v = profile?.fotografDataUrl ?? profile?.FotografDataUrl ?? profile?.personel?.FotografDataUrl ?? profile?.personel?.fotografDataUrl ?? "";
     return (v ?? "").toString().trim();

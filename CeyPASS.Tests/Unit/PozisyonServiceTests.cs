@@ -8,6 +8,9 @@ using Xunit;
 
 namespace CeyPASS.Tests.Unit
 {
+    /// <summary>
+    /// Pozisyon düzenleme ekranı için DataRow → (id, ad, açıklama) dönüşümü.
+    /// </summary>
     public class PozisyonServiceTests
     {
         private readonly Mock<IPozisyonRepository> _repoMock = new();
@@ -18,6 +21,7 @@ namespace CeyPASS.Tests.Unit
             _sut = new PozisyonService(_repoMock.Object);
         }
 
+        /// <summary>Tek pozisyon satırı için in-memory DataRow üretir.</summary>
         private static DataRow BuildRow(int id, object ad, object aciklama)
         {
             var dt = new DataTable();
@@ -34,6 +38,9 @@ namespace CeyPASS.Tests.Unit
 
         // ─── GetForEdit ───────────────────────────────────────────────────────
 
+        /// <summary>
+        /// GetByIdnulldöner nulldöner
+        /// </summary>
         [Fact]
         public void GetForEdit_GetByIdNullDoner_NullDoner()
         {
@@ -44,6 +51,9 @@ namespace CeyPASS.Tests.Unit
             result.Should().BeNull();
         }
 
+        /// <summary>
+        /// GeçerliDataRow DogruTupledöner
+        /// </summary>
         [Fact]
         public void GetForEdit_GecerliDataRow_DogruTupleDoner()
         {
@@ -58,6 +68,9 @@ namespace CeyPASS.Tests.Unit
             result.Value.ack.Should().Be("Açıklama");
         }
 
+        /// <summary>
+        /// AciklamaDBnull boşStringdöner
+        /// </summary>
         [Fact]
         public void GetForEdit_AciklamaDBNull_BosStringDoner()
         {

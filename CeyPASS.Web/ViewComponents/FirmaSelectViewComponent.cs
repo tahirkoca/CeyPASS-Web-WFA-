@@ -6,6 +6,7 @@ using System.Linq;
 
 namespace CeyPASS.Web.ViewComponents
 {
+    /// <summary>Navbar aktif firma seçici bileşeni.</summary>
     public class FirmaSelectViewComponent : ViewComponent
     {
         private readonly ISessionContext _session;
@@ -22,6 +23,7 @@ namespace CeyPASS.Web.ViewComponents
             _puantajService = puantajService;
         }
 
+        /// <summary>Kullanıcı yetkisindeki firmaları combo olarak döner.</summary>
         public IViewComponentResult Invoke()
         {
             var vm = new FirmaSelectViewModel { Firmalar = null, SelectedFirmaId = 0, ShowCombo = false };

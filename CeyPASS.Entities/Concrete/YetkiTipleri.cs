@@ -1,5 +1,6 @@
 ﻿namespace CeyPASS.Entities.Concrete
 {
+    /// <summary>Modül yetki matrisinde kullanılan işlem kodları.</summary>
     public class YetkiTipleri
     {
         public const string View = "View";

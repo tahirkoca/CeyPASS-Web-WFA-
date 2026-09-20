@@ -7,6 +7,7 @@ using CeyPASS.Models;
 
 namespace CeyPASS.Api.Controllers
 {
+    /// <summary>Vardiya (çalışma şekli) tanımları.</summary>
     [Authorize]
     [ApiController]
     [Route("api/v1/[controller]")]
@@ -27,6 +28,8 @@ namespace CeyPASS.Api.Controllers
             _authorizationService = authorizationService;
         }
 
+        
+        /// <summary>Firmaya göre vardiya listesi.</summary>
         [HttpGet]
         public ActionResult<ApiResult<List<CalismaSekli>>> Get()
         {
@@ -37,6 +40,8 @@ namespace CeyPASS.Api.Controllers
             return Ok(ApiResult<List<CalismaSekli>>.Ok(list));
         }
 
+        
+        /// <summary>Yeni vardiya ekler.</summary>
         [HttpPost]
         public ActionResult<ApiResult<int>> Post([FromBody] CalismaSekli request)
         {
@@ -48,6 +53,8 @@ namespace CeyPASS.Api.Controllers
             return Ok(ApiResult<int>.Ok(id, "Vardiya başarıyla eklendi."));
         }
 
+        
+        /// <summary>Vardiya günceller.</summary>
         [HttpPut("{id}")]
         public ActionResult<ApiResult> Put(int id, [FromBody] CalismaSekli request)
         {
@@ -60,6 +67,8 @@ namespace CeyPASS.Api.Controllers
             return ok ? Ok(ApiResult.Ok("Vardiya güncellendi.")) : BadRequest(ApiResult.Failure("İşlem başarısız."));
         }
 
+        
+        /// <summary>Vardiya siler.</summary>
         [HttpDelete("{id}")]
         public ActionResult<ApiResult> Delete(int id)
         {

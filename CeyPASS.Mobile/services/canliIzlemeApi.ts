@@ -1,3 +1,6 @@
+/**
+ * Canlı İzleme API istemcisi: ayrı login token, geçiş/hareket verisi, misafir/araç kart atama ve cihaz kart-komut.
+ */
 import axios from "axios";
 import { getApiBaseUrl } from "./api";
 
@@ -16,11 +19,26 @@ export type FirmaOption = { id: number; ad: string };
 
 export type KartListItem = { personelId: string; adSoyad: string };
 
+export type AtamaListeSatir = {
+  tip: string;
+  tipLabel: string;
+  personelId: string;
+  kartAdi: string;
+  kisiPlaka: string;
+  atamaId?: number | null;
+  durum: string;
+  durumText: string;
+  cihazdaAktif: boolean;
+  canKisitla: boolean;
+  canSerbestBirak: boolean;
+};
+
 export type KartAtamaItem = {
   atamaId: number;
   kartId: string;
   adSoyad: string;
   tcKimlikNo?: string | null;
+  pasaportNo?: string | null;
   ziyaretEdilenKisi?: string | null;
   plaka?: string | null;
   kartAdi?: string | null;
@@ -32,8 +50,10 @@ export type KartAtamaItem = {
 export type GecmisZiyaretci = {
   adSoyad: string;
   tcKimlikNo?: string | null;
+  pasaportNo?: string | null;
   ziyaretEdilenKisi?: string | null;
   plaka?: string | null;
+  notlar?: string | null;
   sonZiyaret?: string;
   gosterim?: string | null;
 };
@@ -44,6 +64,7 @@ export type KartCreateBody = {
   girisSaati: string;
   aciklama?: string;
   tcKimlikNo?: string;
+  pasaportNo?: string;
   ziyaretEdilenKisi?: string;
   plaka?: string;
 };
@@ -54,10 +75,12 @@ export type KartUpdateBody = {
   cikisSaati?: string | null;
   aciklama?: string;
   tcKimlikNo?: string;
+  pasaportNo?: string;
   ziyaretEdilenKisi?: string;
   plaka?: string;
 };
 
+/** Firma listesi, firma kullanıcıları ve canlı izleme JWT girişi. */
 export const canliIzlemeAuth = {
   async firmalar() {
     const res = await createClient().get<ApiResult<FirmaOption[]>>("/CanliIzleme/firmalar");
@@ -76,6 +99,7 @@ export const canliIzlemeAuth = {
   },
 };
 
+/** Token ile son geçişler, son hareketler ve kişi detayı. */
 export const canliIzlemeData = {
   async sonGecisler(token: string, take = 4) {
     const res = await createClient(token).get<ApiResult<any[]>>("/CanliIzleme/son-gecisler", { params: { take } });
@@ -95,7 +119,18 @@ function kartBase(kind: "misafir" | "arac") {
   return kind === "misafir" ? "/CanliIzleme/misafir-kart" : "/CanliIzleme/arac-kart";
 }
 
+/** Kart atama CRUD, geçmiş ziyaretçi ve cihaz kuyruğu (kart-komut ≠ atama güncelleme). */
 export const canliIzlemeKart = {
+  /** tip=tumu: kart durumları modalı için misafir+araç birleşik liste. */
+  async atamaListe(token: string, tip: "misafir" | "arac" | "tumu" = "tumu") {
+    const res = await createClient(token).get<ApiResult<AtamaListeSatir[]>>("/CanliIzleme/atama-liste", { params: { tip } });
+    return res.data;
+  },
+  /** Turnike/cihaz kuyruğuna kısıtla/serbest bırak komutu (pasif=true → kısıtla). */
+  async kartKomut(token: string, personelId: string, pasif: boolean) {
+    const res = await createClient(token).post<ApiResult<object>>("/CanliIzleme/kart-komut", { personelId, pasif });
+    return res.data;
+  },
   async kartlar(token: string, kind: "misafir" | "arac") {
     const res = await createClient(token).get<ApiResult<KartListItem[]>>(`${kartBase(kind)}/kartlar`);
     return res.data;
@@ -116,6 +151,7 @@ export const canliIzlemeKart = {
     const res = await createClient(token).get<ApiResult<{
       adSoyad?: string;
       tcKimlikNo?: string;
+      pasaportNo?: string;
       ziyaretEdilenKisi?: string;
       plaka?: string;
       aciklama?: string;

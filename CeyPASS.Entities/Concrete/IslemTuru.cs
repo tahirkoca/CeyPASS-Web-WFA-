@@ -1,5 +1,6 @@
 ﻿namespace CeyPASS.Entities.Concrete
 {
+    /// <summary>Sistem log seviyesi (Serilog benzeri sıra).</summary>
     public enum IslemTuru:byte
     {
         Trace = 0, 

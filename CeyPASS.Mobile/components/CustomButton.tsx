@@ -1,3 +1,4 @@
+/** Gradient birincil aksiyon düğmesi (yükleniyor + ikon). */
 import React from 'react';
 import { TouchableOpacity, Text, ActivityIndicator, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -11,7 +12,7 @@ interface CustomButtonProps {
   className?: string;
 }
 
-export const CustomButton: React.FC<CustomButtonProps> = ({ 
+export const CustomButton: React.FC<CustomButtonProps> = ({
   onPress, 
   title, 
   loading, 

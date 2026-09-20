@@ -4,10 +4,16 @@ using Xunit;
 
 namespace CeyPASS.Tests.Unit.Helpers
 {
+    /// <summary>
+    /// Form girdisi: yıl parse aralığı (1900–2100) ve virgüllü ID listesi ayrıştırma.
+    /// </summary>
     public class InputHelperTests
     {
         // ─── TryParseYear ─────────────────────────────────────────────────────
 
+        /// <summary>
+        /// GeçerliYil Truedöner
+        /// </summary>
         [Fact]
         public void TryParseYear_GecerliYil_TrueDoner()
         {
@@ -16,6 +22,9 @@ namespace CeyPASS.Tests.Unit.Helpers
             year.Should().Be(2024);
         }
 
+        /// <summary>
+        /// SinirAlt1900 Truedöner
+        /// </summary>
         [Fact]
         public void TryParseYear_SinirAlt1900_TrueDoner()
         {
@@ -24,6 +33,9 @@ namespace CeyPASS.Tests.Unit.Helpers
             year.Should().Be(1900);
         }
 
+        /// <summary>
+        /// SinirUst2100 Truedöner
+        /// </summary>
         [Fact]
         public void TryParseYear_SinirUst2100_TrueDoner()
         {
@@ -32,6 +44,9 @@ namespace CeyPASS.Tests.Unit.Helpers
             year.Should().Be(2100);
         }
 
+        /// <summary>
+        /// 1899 Falsedöner
+        /// </summary>
         [Fact]
         public void TryParseYear_1899_FalseDoner()
         {
@@ -39,6 +54,9 @@ namespace CeyPASS.Tests.Unit.Helpers
             result.Should().BeFalse();
         }
 
+        /// <summary>
+        /// SayisalOlmayan Falsedöner
+        /// </summary>
         [Fact]
         public void TryParseYear_SayisalOlmayan_FalseDoner()
         {
@@ -48,6 +66,9 @@ namespace CeyPASS.Tests.Unit.Helpers
 
         // ─── ParseCsvIds ──────────────────────────────────────────────────────
 
+        /// <summary>
+        /// BoşString boşSetdöner
+        /// </summary>
         [Fact]
         public void ParseCsvIds_BosString_BosSetDoner()
         {
@@ -55,6 +76,9 @@ namespace CeyPASS.Tests.Unit.Helpers
             result.Should().BeEmpty();
         }
 
+        /// <summary>
+        /// TekGeçerliId TekElemandöner
+        /// </summary>
         [Fact]
         public void ParseCsvIds_TekGecerliId_TekElemanDoner()
         {
@@ -62,6 +86,9 @@ namespace CeyPASS.Tests.Unit.Helpers
             result.Should().ContainSingle().Which.Should().Be(5);
         }
 
+        /// <summary>
+        /// MukerrerIdler BirKezSayilir
+        /// </summary>
         [Fact]
         public void ParseCsvIds_MukerrerIdler_BirKezSayilir()
         {
@@ -69,6 +96,9 @@ namespace CeyPASS.Tests.Unit.Helpers
             result.Should().HaveCount(1).And.Contain(3);
         }
 
+        /// <summary>
+        /// GeçersizVeGeçerliKarisik SadaceGeçerliler
+        /// </summary>
         [Fact]
         public void ParseCsvIds_GecersizVeGecerliKarisik_SadaceGecerliler()
         {

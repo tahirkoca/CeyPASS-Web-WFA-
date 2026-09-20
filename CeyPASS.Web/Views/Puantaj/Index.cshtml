@@ -11,6 +11,7 @@
     var kisiler = ViewBag.Kisiler as List<CeyPASS.Entities.Concrete.KisiListItem> ?? new List<CeyPASS.Entities.Concrete.KisiListItem>();
     var puantajTipleri = ViewBag.PuantajTipleri as List<CeyPASS.Entities.Concrete.PuantajTipDTO> ?? new List<CeyPASS.Entities.Concrete.PuantajTipDTO>();
     var ekKayitGun = ViewBag.EkKayitGun as int? ?? 0;
+    /* CanUpdate/Approve/Delete/Export: modül yetkileri; satır düzenleme ayrıca IsRowEditable + IsLockedRow ile kilitlenir */
     var canUpdate = ViewBag.CanUpdate as bool? ?? false;
     var canApprove = ViewBag.CanApprove as bool? ?? false;
     var canDelete = ViewBag.CanDelete as bool? ?? false;
@@ -24,6 +25,7 @@
                && aciklama.StartsWith("Çoklu Sicil Aktarım", StringComparison.OrdinalIgnoreCase);
     }
 
+    // Ek kilit: bugün/gelecek; çoklu sicil aktarımı sonrası Düzeltildi satırları dokunulmaz
     private static bool IsLockedRow(CeyPASS.Entities.Concrete.PuantajGunSatirDTO dto)
     {
         if (dto == null) return true;
@@ -698,6 +700,7 @@
             setTimeout(function() { $t.fadeOut(300, function() { $(this).remove(); }); }, 5000);
         }
 
+        // Tekil onay/red/düzeltme sonrası tam sayfa yenilemeden satır rengi ve onay butonlarını güncelle
         function updateRowOnayDurumu(tarih, onayDurumu) {
             var tarihStr = (tarih || '').toString().trim();
             if (!tarihStr) return;
@@ -735,6 +738,7 @@
             }
         }
 
+        // WinForms gibi modal yok: satırdaki FM/tip/saat ile gizli forma doldurup AJAX onay
         function onaylaPuantaj(personelId, tarih, duzenlenmisFm, calismaTipi, saat) {
             $('#onaylaPersonelId').val(parseInt(personelId));
             $('#onaylaTarih').val(tarih);
@@ -837,6 +841,7 @@
             });
         });
 
+        // Çoklu sicil: yalnızca ana sicil + aktif hedef bağlantısı olan personelde NG 7,5 ay sonu aktarımı
         $('#btnCokluSicileAktar').on('click', function() {
             var personelId = $('#personelId').val();
             var yil = $('#yil').val();
@@ -845,13 +850,22 @@
                 toastr.warning('Lütfen personel seçiniz.');
                 return;
             }
-            var ayAdi = $('#ay option:selected').text();
-            $('#cokluSicilPersonelId').val(personelId);
-            $('#cokluSicilYil').val(yil);
-            $('#cokluSicilAy').val(ay);
-            $('#cokluSicilMesaj').text(yil + ' ' + ayAdi + ' ayının son gününe bağlı sicillere NG 7,5 aktarılacak. Onaylıyor musunuz?');
-            var modal = new bootstrap.Modal(document.getElementById('cokluSicilModal'));
-            modal.show();
+            $.get('@Url.Action("GetCokluSicilOzet", "Puantaj")', { personelId: personelId }, function(ozet) {
+                if (!ozet || !ozet.isAnaSicil) {
+                    showToast('Seçili personel ana sicil değil veya aktif hedef bağlantısı yok.', 'warning');
+                    return;
+                }
+                var ayAdi = $('#ay option:selected').text();
+                var hedefSayisi = ozet.aktifHedefSayisi || 0;
+                $('#cokluSicilPersonelId').val(personelId);
+                $('#cokluSicilYil').val(yil);
+                $('#cokluSicilAy').val(ay);
+                $('#cokluSicilMesaj').text(yil + ' ' + ayAdi + ' ayı için ' + hedefSayisi + ' hedef sicile Aktarım Gün Sayısı kadar NG 7,5 aktarılacak. Onaylıyor musunuz?');
+                var modal = new bootstrap.Modal(document.getElementById('cokluSicilModal'));
+                modal.show();
+            }).fail(function() {
+                showToast('Çoklu sicil bilgisi alınamadı.', 'danger');
+            });
         });
 
         $('#btnTopluOnayla').on('click', function () {
@@ -877,6 +891,7 @@
             var $btn = $(this);
             $btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> İşleniyor...');
 
+            // Sunucu ek kayıt günü + kilit kurallarını uygular; tablo satır renkleri reload ile yenilenir
             $.ajax({
                 url: '@Url.Action("TopluOnayla")',
                 type: 'POST',

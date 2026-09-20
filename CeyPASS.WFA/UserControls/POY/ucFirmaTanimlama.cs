@@ -7,6 +7,7 @@ using System.Windows.Forms;
 
 namespace CeyPASS.WFA.UserControls
 {
+    /// <summary>Firma (bölge) tanım CRUD ekranı.</summary>
     public partial class ucFirmaTanimlama : UserControl
     {
         private enum ScreenMode { List, Add, Edit }
@@ -20,6 +21,7 @@ namespace CeyPASS.WFA.UserControls
         private const string PageNameUI = "Firmalar";
         private readonly WinFormsFieldErrors _fieldErrors;
 
+        /// <summary>Yetki ve alan doğrulama yardımcılarını kurar.</summary>
         public ucFirmaTanimlama(ISessionContext session,IFirmaService fsvc,IAuthorizationService auth)
         {
             InitializeComponent();

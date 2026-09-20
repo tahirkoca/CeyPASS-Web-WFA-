@@ -1,5 +1,6 @@
 namespace CeyPASS.Entities.Concrete
 {
+    /// <summary>Cihaz seçim listesi; bağlantı ve görünen metin alanları.</summary>
     public class CihazListDTO
     {
         public int CihazId { get; set; }

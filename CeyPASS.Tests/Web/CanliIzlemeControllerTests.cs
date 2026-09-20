@@ -14,6 +14,9 @@ using Xunit;
 
 namespace CeyPASS.Tests.Web
 {
+    /// <summary>
+    /// Canlı izleme ekranı MVC ve rol bazlı görünüm.
+    /// </summary>
     public class CanliIzlemeControllerTests
     {
         private readonly Mock<ICanliIzlemeService> _svcMock = new();
@@ -21,6 +24,7 @@ namespace CeyPASS.Tests.Web
         private readonly Mock<IKisiDetayService> _kdMock = new();
         private readonly Mock<IMisafirKartService> _mMock = new();
         private readonly Mock<IAracKartiService> _aracMock = new();
+        private readonly Mock<ICanliIzlemeKartKomutService> _kartKomutMock = new();
 
         private CanliIzlemeController CreateSutWithRole(string rol)
         {
@@ -29,7 +33,8 @@ namespace CeyPASS.Tests.Web
                 _khMock.Object,
                 _kdMock.Object,
                 _mMock.Object,
-                _aracMock.Object);
+                _aracMock.Object,
+                _kartKomutMock.Object);
 
             // Serialize an AuthUserDTO into the session key "CanliIzlemeUser"
             var user = new AuthUserDTO { FirmaId = 1, Rol = rol, KullaniciId = 1 };
@@ -58,6 +63,9 @@ namespace CeyPASS.Tests.Web
 
         // ─── Index — IsYemekhaneRole / IsDanismaRole / IsArac ─────────
 
+        /// <summary>
+        /// YemekhaneRolu IsYemekhaneTrueOlmali
+        /// </summary>
         [Fact]
         public void Index_YemekhaneRolu_IsYemekhaneTrueOlmali()
         {
@@ -68,8 +76,12 @@ namespace CeyPASS.Tests.Web
             sonuc.Should().BeOfType<ViewResult>();
             ((bool)sut.ViewBag.IsYemekhane).Should().BeTrue();
             ((bool)sut.ViewBag.CanMisafirKart).Should().BeFalse();
+            ((bool)sut.ViewBag.ShowHareketListesi).Should().BeFalse();
         }
 
+        /// <summary>
+        /// AracRolu IsAracTrueVeKartKapaliOlmali
+        /// </summary>
         [Fact]
         public void Index_AracRolu_IsAracTrueVeKartKapaliOlmali()
         {
@@ -80,10 +92,14 @@ namespace CeyPASS.Tests.Web
             sonuc.Should().BeOfType<ViewResult>();
             ((bool)sut.ViewBag.IsArac).Should().BeTrue();
             ((bool)sut.ViewBag.CanMisafirKart).Should().BeFalse();
+            ((bool)sut.ViewBag.ShowHareketListesi).Should().BeFalse();
         }
 
+        /// <summary>
+        /// DanismaRolu IsDanismaTrueVeKartKapaliOlmali
+        /// </summary>
         [Fact]
-        public void Index_DanismaRolu_IsDanismaTrueOlmali()
+        public void Index_DanismaRolu_IsDanismaTrueVeKartKapaliOlmali()
         {
             var sut = CreateSutWithRole("DANIŞMA GÖREVLİSİ");
 
@@ -91,18 +107,38 @@ namespace CeyPASS.Tests.Web
 
             sonuc.Should().BeOfType<ViewResult>();
             ((bool)sut.ViewBag.IsDanisma).Should().BeTrue();
+            ((bool)sut.ViewBag.CanMisafirKart).Should().BeFalse();
+            ((bool)sut.ViewBag.ShowHareketListesi).Should().BeFalse();
         }
 
+        /// <summary>
+        /// NormalRol CanMisafirKartFalseOlmali
+        /// </summary>
         [Fact]
-        public void Index_NormalRol_CanMisafirKartTrueOlmali()
+        public void Index_NormalRol_CanMisafirKartFalseOlmali()
         {
-            // Normal role: IsYemekhane=false → CanMisafirKart = !(false && !false) = true
             var sut = CreateSutWithRole("Operatör");
 
             var sonuc = sut.Index();
 
             sonuc.Should().BeOfType<ViewResult>();
+            ((bool)sut.ViewBag.CanMisafirKart).Should().BeFalse();
+            ((bool)sut.ViewBag.ShowHareketListesi).Should().BeFalse();
+        }
+
+        /// <summary>
+        /// CanliIzlemeRolu TamEkranOlmali
+        /// </summary>
+        [Fact]
+        public void Index_CanliIzlemeRolu_TamEkranOlmali()
+        {
+            var sut = CreateSutWithRole("CANLI İZLEME");
+
+            var sonuc = sut.Index();
+
+            sonuc.Should().BeOfType<ViewResult>();
             ((bool)sut.ViewBag.CanMisafirKart).Should().BeTrue();
+            ((bool)sut.ViewBag.ShowHareketListesi).Should().BeTrue();
         }
 
         // ─── Helper: Fake ISessionFeature ────────────────────────────────────

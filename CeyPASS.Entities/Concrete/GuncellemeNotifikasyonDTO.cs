@@ -3,6 +3,7 @@ using System.Collections.Generic;
 
 namespace CeyPASS.Entities.Concrete
 {
+    /// <summary>Uygulama sürüm notları; istemci güncelleme diyaloğu için.</summary>
     public class GuncellemeNotifikasyonDTO
     {
         public GuncellemeNotifikasyonDTO()

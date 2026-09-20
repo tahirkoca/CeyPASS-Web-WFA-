@@ -2,6 +2,7 @@
 
 namespace CeyPASS.Entities.Concrete
 {
+    /// <summary>İzin kaydı öncesi süre ve tip kuralları için girdi.</summary>
     public class IzinKayitValidasyonDTO
     {
         public bool SaatlikIzinMi { get; set; }

@@ -4,6 +4,7 @@ using System.Linq;
 
 namespace CeyPASS.DataAccess.Repositories
 {
+    /// <summary>Sistem mail alıcıları.</summary>
     public class MailRepositoryCore : IMailRepository
     {
         private readonly CeyPASSDataConnectionCore _context;
@@ -13,6 +14,7 @@ namespace CeyPASS.DataAccess.Repositories
             _context = context;
         }
 
+        /// <summary>Alici Gruplarini Getir işlemini gerçekleştirir.</summary>
         public Dictionary<string, List<string>> AliciGruplariniGetir()
         {
             var query = _context.SistemMailAlicilari
@@ -28,6 +30,7 @@ namespace CeyPASS.DataAccess.Repositories
             return result;
         }
 
+        /// <summary>Alici Ekle işlemini gerçekleştirir.</summary>
         public bool AliciEkle(string grupAdi, string emailAdresi, string adSoyad)
         {
             var entity = new CeyPASS.DataAccess.SistemMailAlicilari
@@ -42,6 +45,7 @@ namespace CeyPASS.DataAccess.Repositories
             return _context.SaveChanges() > 0;
         }
 
+        /// <summary>Alici Sil işlemini gerçekleştirir.</summary>
         public bool AliciSil(int aliciId)
         {
             var entity = _context.SistemMailAlicilari

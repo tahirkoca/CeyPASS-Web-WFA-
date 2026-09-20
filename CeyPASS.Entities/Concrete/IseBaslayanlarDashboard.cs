@@ -2,6 +2,7 @@
 
 namespace CeyPASS.Entities.Concrete
 {
+    /// <summary>Dashboard dönem içinde işe başlayanlar satırı.</summary>
     public class IseBaslayanlarDashboard
     {
         public int PersonelId { get; set; }

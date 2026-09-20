@@ -5,6 +5,7 @@ using CeyPASS.Models;
 
 namespace CeyPASS.Api.Controllers
 {
+    /// <summary>Mobil ana ekran özet ve günlük dashboard.</summary>
     [Authorize]
     [ApiController]
     [Route("api/v1/[controller]")]
@@ -33,6 +34,8 @@ namespace CeyPASS.Api.Controllers
             _dashboardService = dashboardService;
         }
 
+        
+        /// <summary>Kişisel ve onay bekleyen sayaç özeti.</summary>
         [HttpGet("ozet")]
         public ActionResult<ApiResult<DashboardOzet>> GetOzet()
         {
@@ -67,6 +70,8 @@ namespace CeyPASS.Api.Controllers
             return Ok(ApiResult<DashboardOzet>.Ok(ozet));
         }
 
+        
+        /// <summary>Firma günlük dashboard verisi.</summary>
         [HttpGet("full")]
         public ActionResult<ApiResult<CeyPASS.Entities.Concrete.DashboardResult>> GetFull()
         {

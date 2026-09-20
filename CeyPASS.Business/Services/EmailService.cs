@@ -6,6 +6,7 @@ using System.Net.Mail;
 
 namespace CeyPASS.Business.Services
 {
+    /// <summary>SMTP e-posta gönderimi.</summary>
     public class EmailService : IEmailService
     {
         private readonly SmtpConfiguration _config;
@@ -16,6 +17,7 @@ namespace CeyPASS.Business.Services
             _config.Validate();
         }
         public EmailService() : this(new SmtpConfiguration()) { }
+        /// <inheritdoc />
         public void SendEmail(string toEmail, string subject, string body)
         {
             if (string.IsNullOrWhiteSpace(toEmail))
@@ -54,6 +56,7 @@ namespace CeyPASS.Business.Services
                 throw new InvalidOperationException($"Email gönderme sırasında beklenmeyen hata: {ex.Message}", ex);
             }
         }
+        /// <inheritdoc />
         public void SendVerificationCode(string toEmail, string code)
         {
             string subject = "CeyPASS Doğrulama Kodu";
@@ -69,6 +72,7 @@ CeyPASS Sistem";
 
             SendEmail(toEmail, subject, body);
         }
+        /// <inheritdoc />
         public string MaskEmail(string email)
         {
             if (string.IsNullOrWhiteSpace(email))

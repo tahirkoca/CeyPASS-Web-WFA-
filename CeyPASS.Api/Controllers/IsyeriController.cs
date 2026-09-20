@@ -8,6 +8,7 @@ using System.Data;
 
 namespace CeyPASS.Api.Controllers
 {
+    /// <summary>İşyeri tanımları.</summary>
     [Authorize]
     [ApiController]
     [Route("api/v1/[controller]")]
@@ -31,6 +32,8 @@ namespace CeyPASS.Api.Controllers
             _authorizationService = authorizationService;
         }
 
+        
+        /// <summary>İşyeri listesi (firma filtresi).</summary>
         [HttpGet]
         public ActionResult<ApiResult<List<IsyeriItem>>> Get([FromQuery] int? firmaId = null)
         {
@@ -58,6 +61,8 @@ namespace CeyPASS.Api.Controllers
             return Ok(ApiResult<List<IsyeriItem>>.Ok(list.OrderBy(x => x.Ad).ToList()));
         }
 
+        
+        /// <summary>İşyeri formu firma lookup.</summary>
         [HttpGet("lookups")]
         public ActionResult<ApiResult<object>> Lookups()
         {
@@ -72,6 +77,8 @@ namespace CeyPASS.Api.Controllers
             }));
         }
 
+        
+        /// <summary>İşyeri ekler.</summary>
         [HttpPost]
         public ActionResult<ApiResult> Post([FromBody] IsyeriItem item)
         {
@@ -84,6 +91,8 @@ namespace CeyPASS.Api.Controllers
             return ok ? Ok(ApiResult.Ok("İşyeri başarıyla eklendi.")) : BadRequest(ApiResult.Failure("İşlem başarısız."));
         }
 
+        
+        /// <summary>İşyeri günceller.</summary>
         [HttpPut("{id}")]
         public ActionResult<ApiResult> Put(int id, [FromBody] IsyeriItem item)
         {
@@ -95,6 +104,8 @@ namespace CeyPASS.Api.Controllers
             return ok ? Ok(ApiResult.Ok("İşyeri güncellendi.")) : BadRequest(ApiResult.Failure("İşlem başarısız."));
         }
 
+        
+        /// <summary>İşyeri siler.</summary>
         [HttpDelete("{firmaId}/{isyeriId}")]
         public ActionResult<ApiResult> Delete(int firmaId, int isyeriId)
         {

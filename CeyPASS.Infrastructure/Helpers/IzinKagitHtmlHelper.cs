@@ -3,8 +3,12 @@ using CeyPASS.Entities.Concrete;
 
 namespace CeyPASS.Infrastructure.Helpers
 {
+    /// <summary>İzin kağıdı HTML’inde dijital onay satırı metinleri.</summary>
     public static class IzinKagitHtmlHelper
     {
+        /// <summary>
+        /// Onay/red/bekleme durumuna göre imza satırı: reddedildi, bekliyor (refNo=0 ise boş), onaylı ad-soyad ve tarih.
+        /// </summary>
         public static string DijitalImzaText(string label, string? adSoyad, DateTime? tarih, int? refNo, IzinOnayDurumu? durum = null)
         {
             if (durum == IzinOnayDurumu.Reddedildi)
@@ -22,4 +26,3 @@ namespace CeyPASS.Infrastructure.Helpers
         }
     }
 }
-

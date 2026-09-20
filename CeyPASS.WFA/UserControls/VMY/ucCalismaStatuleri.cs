@@ -8,6 +8,7 @@ using System.Windows.Forms;
 
 namespace CeyPASS.WFA.UserControls.VMY
 {
+    /// <summary>Çalışma statüsü (kadro tipi) tanım CRUD.</summary>
     public partial class ucCalismaStatuleri : UserControl
     {
         private enum ScreenMode { List, Add, Edit }
@@ -21,6 +22,7 @@ namespace CeyPASS.WFA.UserControls.VMY
         private const string PageNameUI = "Çalışma Statüleri";
         private readonly WinFormsFieldErrors _fieldErrors;
 
+        /// <summary>Yetki ve alan doğrulama yardımcılarını kurar.</summary>
         public ucCalismaStatuleri(ISessionContext session,ICalismaStatuService csvc,IAuthorizationService auth)
         {
             InitializeComponent();

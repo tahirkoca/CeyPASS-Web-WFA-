@@ -4,6 +4,7 @@ using CeyPASS.Entities.Concrete;
 
 namespace CeyPASS.Business.Services
 {
+    /// <summary>Personel detay sorgusu.</summary>
     public sealed class KisiDetayService:IKisiDetayService
     {
         private readonly IKisiRepository _repo;
@@ -12,6 +13,7 @@ namespace CeyPASS.Business.Services
         {
                 _repo= repo;
         }
+        /// <inheritdoc />
         public KisiDetayDTO GetDetay(int kisiId)
         {
             return _repo.GetById(kisiId);

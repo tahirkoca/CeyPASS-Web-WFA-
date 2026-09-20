@@ -6,6 +6,7 @@ using System.Windows.Threading;
 
 namespace CeyPASS.WPF;
 
+/// <summary>Toast renk / ikon ayrımı.</summary>
 public enum UiToastKind
 {
     Success,
@@ -24,6 +25,7 @@ public static class UiToast
     private static Border? _current;
     private static Action? _pendingUndo;
 
+    /// <summary>Toast'ların gösterileceği panel (genelde ana pencere üst katmanı).</summary>
     public static void RegisterHost(Panel host)
     {
         lock (Sync)

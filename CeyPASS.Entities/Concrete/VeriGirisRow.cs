@@ -2,6 +2,7 @@
 
 namespace CeyPASS.Entities.Concrete
 {
+    /// <summary>Manuel puantaj veri girişi satırı.</summary>
     public class VeriGirisRow
     {
         public int SicilNo { get; set; }

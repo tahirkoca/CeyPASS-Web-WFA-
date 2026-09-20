@@ -1,3 +1,4 @@
+/** Turnike/geçiş hareketleri listesi ve düzenleme. */
 import api, { cachedGet } from "./api";
 import { invalidate } from "./httpCache";
 
@@ -36,11 +37,13 @@ export type KisiHareketRow = {
   AktifMi?: boolean;
 };
 
+/** /KisiHareket lookups, list, güncelle/sil. */
 export const kisiHareketService = {
   async lookups(params: {
     firmaId?: number | null;
     kartTipi?: "puantaj" | "puantajsiz";
     isyeriId?: number | null;
+    calismaDurumu?: "aktif" | "cikan";
   }): Promise<ApiResult<any>> {
     return await cachedGet<ApiResult<any>>("/KisiHareket/lookups", {
       params,

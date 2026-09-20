@@ -112,9 +112,12 @@
                                     <Button Content="Vazgeç" Style="{StaticResource SecondaryBtn}" Margin="0,0,8,0"
                                             Command="{Binding CancelCommand}"
                                             Visibility="{Binding ShowSaveCancel, Converter={StaticResource BoolToVis}}"/>
-                                    <Button Content="Kaydet" Style="{StaticResource PrimaryBtn}"
+                                    <Button Content="Kaydet" Style="{StaticResource PrimaryBtn}" Margin="0,0,8,0"
                                             Command="{Binding SaveCommand}"
                                             Visibility="{Binding ShowSaveCancel, Converter={StaticResource BoolToVis}}"/>
+                                    <Button x:Name="BtnCokluSicil" Content="Çoklu Sicil" Style="{StaticResource SecondaryBtn}"
+                                            Command="{Binding OpenCokluSicilCommand}" IsEnabled="{Binding CanOpenCokluSicil}"
+                                            ToolTip="{Binding CokluSicilOpenTooltip}"/>
                                 </StackPanel>
                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                     <TextBlock Text="Personel Bilgileri" FontSize="15" FontWeight="Bold"
@@ -124,7 +127,7 @@
                                             <Style TargetType="Border">
                                                 <Setter Property="Background" Value="{DynamicResource Brush.StatusOkBg}"/>
                                                 <Style.Triggers>
-                                                    <DataTrigger Binding="{Binding HasIstenCikis}" Value="True">
+                                                    <DataTrigger Binding="{Binding IsIstenCikmis}" Value="True">
                                                         <Setter Property="Background" Value="{DynamicResource Brush.StatusBadBg}"/>
                                                     </DataTrigger>
                                                 </Style.Triggers>
@@ -135,8 +138,33 @@
                                                 <Style TargetType="TextBlock">
                                                     <Setter Property="Foreground" Value="{DynamicResource Brush.StatusOkFg}"/>
                                                     <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding HasIstenCikis}" Value="True">
+                                                        <DataTrigger Binding="{Binding IsIstenCikmis}" Value="True">
                                                             <Setter Property="Foreground" Value="{DynamicResource Brush.StatusBadFg}"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                    </Border>
+                                    <Border Margin="8,0,0,0" CornerRadius="8" Padding="10,4" VerticalAlignment="Center"
+                                            Visibility="{Binding ShowCokluSicilDurum, Converter={StaticResource BoolToVis}}">
+                                        <Border.Style>
+                                            <Style TargetType="Border">
+                                                <Setter Property="Background" Value="#E0F2FE"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsHedefSicilOnly}" Value="True">
+                                                        <Setter Property="Background" Value="#FEF3C7"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Border.Style>
+                                        <TextBlock Text="{Binding CokluSicilDurumText}" FontSize="12" FontWeight="SemiBold">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Foreground" Value="#0369A1"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsHedefSicilOnly}" Value="True">
+                                                            <Setter Property="Foreground" Value="#B45309"/>
                                                         </DataTrigger>
                                                     </Style.Triggers>
                                                 </Style>
@@ -203,49 +231,49 @@
                                             </StackPanel>
                                             <StackPanel Grid.Row="2" Grid.Column="2" Margin="0,0,0,12">
                                                 <TextBlock Text="İşe Giriş" Style="{StaticResource FieldLabel}"/>
+                                                <TextBox Text="{Binding IseGirisMissingText, Mode=OneWay}" IsReadOnly="True"
+                                                         Style="{StaticResource FieldBox}"
+                                                         Foreground="#64748b" FontStyle="Italic"
+                                                         Visibility="{Binding ShowIseGirisMissingText, Converter={StaticResource BoolToVis}}"/>
                                                 <DatePicker SelectedDate="{Binding IseGiris, UpdateSourceTrigger=PropertyChanged}"
                                                             Style="{StaticResource FieldDatePicker}"
+                                                            Visibility="{Binding ShowIseGirisMissingText, Converter={StaticResource InvBoolToVis}}"
                                                             IsEnabled="{Binding FieldsReadOnly, Converter={StaticResource InvBool}}"/>
                                             </StackPanel>
 
                                             <StackPanel Grid.Row="3" Grid.Column="0" Margin="0,0,0,12">
                                                 <TextBlock Text="İşten Çıkış" Style="{StaticResource FieldLabel}"/>
-                                                <DockPanel>
-                                                    <CheckBox DockPanel.Dock="Right" Content="Var" VerticalAlignment="Center"
-                                                              Margin="8,0,0,0"
-                                                              IsChecked="{Binding HasIstenCikis, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                                              IsEnabled="{Binding FieldsReadOnly, Converter={StaticResource InvBool}}"/>
-                                                    <TextBox Text="{Binding AktifCalisiyorPlaceholder, Mode=OneWay}" IsReadOnly="True"
-                                                             Style="{StaticResource FieldBox}" Margin="0"
-                                                             Foreground="#059669" FontWeight="SemiBold"
-                                                             Visibility="{Binding ShowAktifCalisiyorText, Converter={StaticResource BoolToVis}}"/>
-                                                    <DatePicker SelectedDate="{Binding IstenCikis, UpdateSourceTrigger=PropertyChanged}"
-                                                                Visibility="{Binding ShowIstenCikisDatePicker, Converter={StaticResource BoolToVis}}">
-                                                        <DatePicker.Style>
-                                                            <Style TargetType="DatePicker" BasedOn="{StaticResource FieldDatePicker}">
-                                                                <Setter Property="IsEnabled" Value="False"/>
-                                                                <Style.Triggers>
-                                                                    <DataTrigger Binding="{Binding IstenCikisEnabled}" Value="True">
-                                                                        <Setter Property="IsEnabled" Value="True"/>
-                                                                    </DataTrigger>
-                                                                    <MultiDataTrigger>
-                                                                        <MultiDataTrigger.Conditions>
-                                                                            <Condition Binding="{Binding FieldsReadOnly}" Value="False"/>
-                                                                            <Condition Binding="{Binding HasIstenCikis}" Value="True"/>
-                                                                        </MultiDataTrigger.Conditions>
-                                                                        <Setter Property="IsEnabled" Value="True"/>
-                                                                    </MultiDataTrigger>
-                                                                </Style.Triggers>
-                                                            </Style>
-                                                        </DatePicker.Style>
-                                                    </DatePicker>
-                                                </DockPanel>
+                                                <TextBox Text="{Binding AktifCalisiyorPlaceholder, Mode=OneWay}" IsReadOnly="True"
+                                                         Style="{StaticResource FieldBox}"
+                                                         Foreground="#059669" FontWeight="SemiBold"
+                                                         Visibility="{Binding ShowAktifCalisiyorText, Converter={StaticResource BoolToVis}}"/>
+                                                <DatePicker SelectedDate="{Binding IstenCikis, UpdateSourceTrigger=PropertyChanged}"
+                                                            Visibility="{Binding ShowIstenCikisDatePicker, Converter={StaticResource BoolToVis}}">
+                                                    <DatePicker.Style>
+                                                        <Style TargetType="DatePicker" BasedOn="{StaticResource FieldDatePicker}">
+                                                            <Setter Property="IsEnabled" Value="False"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding IstenCikisEnabled}" Value="True">
+                                                                    <Setter Property="IsEnabled" Value="True"/>
+                                                                </DataTrigger>
+                                                                <MultiDataTrigger>
+                                                                    <MultiDataTrigger.Conditions>
+                                                                        <Condition Binding="{Binding FieldsReadOnly}" Value="False"/>
+                                                                        <Condition Binding="{Binding IsIstenCikmis}" Value="True"/>
+                                                                    </MultiDataTrigger.Conditions>
+                                                                    <Setter Property="IsEnabled" Value="True"/>
+                                                                </MultiDataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </DatePicker.Style>
+                                                </DatePicker>
                                             </StackPanel>
                                             <StackPanel Grid.Row="3" Grid.Column="2" Margin="0,0,0,12">
-                                                <TextBlock Text="Departman" Style="{StaticResource FieldLabel}"/>
-                                                <ComboBox Style="{StaticResource FieldCombo}" ItemsSource="{Binding Departmanlar}"
-                                                          DisplayMemberPath="Ad" SelectedItem="{Binding SelectedDepartman}"
-                                                          IsEnabled="{Binding FieldsReadOnly, Converter={StaticResource InvBool}}"/>
+                                                <TextBlock Text="İşyeri" Style="{StaticResource FieldLabel}"/>
+                                                <ComboBox Style="{StaticResource FieldCombo}" ItemsSource="{Binding IsyerleriForm}"
+                                                          DisplayMemberPath="Ad" SelectedItem="{Binding SelectedIsyeri}"
+                                                          IsEnabled="{Binding FieldsReadOnly, Converter={StaticResource InvBool}}"
+                                                          wpf:FieldValidation.Error="{Binding Errors[Isyeri]}"/>
                                             </StackPanel>
 
                                             <StackPanel Grid.Row="4" Grid.Column="0" Margin="0,0,0,12">
@@ -275,40 +303,40 @@
                                             VerticalAlignment="Top" Background="{DynamicResource Brush.Card}"
                                             CornerRadius="12" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1" Padding="10">
                                         <StackPanel>
-                                            <Border Height="160" Background="{DynamicResource Brush.Card}" CornerRadius="8"
-                                                    BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1" Margin="0,0,0,10">
+                                            <Border Height="128" Background="{DynamicResource Brush.Card}" CornerRadius="8"
+                                                    BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1" Margin="0,0,0,8">
                                                 <Image Source="{Binding FotoImage}" Stretch="Uniform" Margin="4"/>
                                             </Border>
                                             <Button Content="Foto Ekle" Style="{StaticResource SecondaryBtn}"
-                                                    Margin="0,0,0,6" Command="{Binding AddPhotoCommand}"
+                                                    Margin="0,0,0,4" Command="{Binding AddPhotoCommand}"
                                                     IsEnabled="{Binding CanPhoto}"/>
                                             <Button Content="Foto Sil" Style="{StaticResource DangerBtn}"
-                                                    Command="{Binding RemovePhotoCommand}"
+                                                    Margin="0,0,0,4" Command="{Binding RemovePhotoCommand}"
                                                     IsEnabled="{Binding CanPhoto}"/>
-                                            <StackPanel Margin="0,10,0,0">
+                                            <StackPanel Margin="0,6,0,0">
                                                 <CheckBox Content="Firma Personeli"
                                                           IsChecked="{Binding FirmaPersoneli, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                                          Margin="0,0,0,6"
+                                                          Margin="0,0,0,4"
                                                           IsEnabled="{Binding FieldsReadOnly, Converter={StaticResource InvBool}}"/>
                                                 <CheckBox Content="Puantaj Yapılır"
                                                           IsChecked="{Binding PuantajYapilir, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                                          Margin="0,0,0,6"
+                                                          Margin="0,0,0,4"
                                                           IsEnabled="{Binding FieldsReadOnly, Converter={StaticResource InvBool}}"/>
+                                                <Border Height="1" Background="{DynamicResource Brush.Border}" Margin="0,2,0,6"/>
                                                 <CheckBox Content="Yemek Hakkı"
                                                           IsChecked="{Binding YemekHakki, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                                          Margin="0,0,0,6"
+                                                          Margin="0,0,0,4"
                                                           IsEnabled="{Binding FieldsReadOnly, Converter={StaticResource InvBool}}"/>
                                                 <CheckBox Content="Ziyaretçi"
                                                           IsChecked="{Binding Ziyaretci, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                                          Margin="0,0,0,6"
+                                                          Margin="0,0,0,4"
                                                           IsEnabled="{Binding FieldsReadOnly, Converter={StaticResource InvBool}}"/>
                                                 <CheckBox Content="Araç Kartı"
                                                           IsChecked="{Binding AracKarti, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                                          Margin="0,0,0,6"
+                                                          Margin="0,0,0,4"
                                                           IsEnabled="{Binding FieldsReadOnly, Converter={StaticResource InvBool}}"/>
                                                 <CheckBox Content="Taşeron"
                                                           IsChecked="{Binding Taseron, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                                          Margin="0,0,0,6"
                                                           IsEnabled="{Binding FieldsReadOnly, Converter={StaticResource InvBool}}"/>
                                             </StackPanel>
                                         </StackPanel>
@@ -329,6 +357,7 @@
                                             <Grid.RowDefinitions>
                                                 <RowDefinition Height="Auto"/><RowDefinition Height="Auto"/>
                                                 <RowDefinition Height="Auto"/><RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/><RowDefinition Height="Auto"/>
                                             </Grid.RowDefinitions>
 
                                             <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,0,12">
@@ -345,44 +374,24 @@
                                             <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,0,0,12">
                                                 <TextBlock Text="Doğum Tarihi" Style="{StaticResource FieldLabel}"/>
                                                 <DockPanel>
-                                                    <CheckBox DockPanel.Dock="Right" Content="Var" VerticalAlignment="Center"
-                                                              Margin="8,0,0,0"
-                                                              IsChecked="{Binding HasDogum, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                                              IsEnabled="{Binding FieldsReadOnly, Converter={StaticResource InvBool}}"/>
-                                                    <DatePicker SelectedDate="{Binding DogumTarihi, UpdateSourceTrigger=PropertyChanged}">
-                                                        <DatePicker.Style>
-                                                            <Style TargetType="DatePicker" BasedOn="{StaticResource FieldDatePicker}">
-                                                                <Setter Property="IsEnabled" Value="False"/>
-                                                                <Style.Triggers>
-                                                                    <MultiDataTrigger>
-                                                                        <MultiDataTrigger.Conditions>
-                                                                            <Condition Binding="{Binding FieldsReadOnly}" Value="False"/>
-                                                                            <Condition Binding="{Binding HasDogum}" Value="True"/>
-                                                                        </MultiDataTrigger.Conditions>
-                                                                        <Setter Property="IsEnabled" Value="True"/>
-                                                                    </MultiDataTrigger>
-                                                                </Style.Triggers>
-                                                            </Style>
-                                                        </DatePicker.Style>
-                                                    </DatePicker>
+                                                    <Button DockPanel.Dock="Right" Content="Temizle" Style="{StaticResource SecondaryBtn}"
+                                                            Margin="8,0,0,0" Padding="10,4" MinWidth="72"
+                                                            Command="{Binding ClearDogumCommand}"
+                                                            Visibility="{Binding FieldsReadOnly, Converter={StaticResource InvBoolToVis}}"/>
+                                                    <DatePicker SelectedDate="{Binding DogumTarihi, UpdateSourceTrigger=PropertyChanged}"
+                                                                Style="{StaticResource FieldDatePicker}"
+                                                                IsEnabled="{Binding FieldsReadOnly, Converter={StaticResource InvBool}}"/>
                                                 </DockPanel>
                                             </StackPanel>
                                             <StackPanel Grid.Row="1" Grid.Column="2" Margin="0,0,0,12">
-                                                <TextBlock Text="İşyeri" Style="{StaticResource FieldLabel}"/>
-                                                <ComboBox Style="{StaticResource FieldCombo}" ItemsSource="{Binding IsyerleriForm}"
-                                                          DisplayMemberPath="Ad" SelectedItem="{Binding SelectedIsyeri}"
-                                                          IsEnabled="{Binding FieldsReadOnly, Converter={StaticResource InvBool}}"/>
-                                            </StackPanel>
-
-                                            <StackPanel Grid.Row="2" Grid.Column="0" Margin="0,0,0,12">
                                                 <TextBlock Text="Çalışma Statü" Style="{StaticResource FieldLabel}"/>
                                                 <ComboBox Style="{StaticResource FieldCombo}" ItemsSource="{Binding CalismaStatuleri}"
                                                           DisplayMemberPath="Ad" SelectedItem="{Binding SelectedCalismaStatu}"
                                                           IsEnabled="{Binding FieldsReadOnly, Converter={StaticResource InvBool}}"/>
                                             </StackPanel>
-                                            <StackPanel Grid.Row="2" Grid.Column="2" Margin="0,0,0,12">
+                                            <StackPanel Grid.Row="2" Grid.Column="0" Margin="0,0,0,12">
                                                 <TextBlock Text="Yemek Adedi" Style="{StaticResource FieldLabel}"/>
-                                                <TextBox Text="{Binding YemekAdedi, UpdateSourceTrigger=PropertyChanged}"
+                                                <TextBox Text="{Binding YemekAdediText, UpdateSourceTrigger=PropertyChanged}"
                                                          Style="{StaticResource FieldBox}" MaxWidth="120" HorizontalAlignment="Left"
                                                          IsEnabled="{Binding YemekAdediEnabled}"/>
                                             </StackPanel>

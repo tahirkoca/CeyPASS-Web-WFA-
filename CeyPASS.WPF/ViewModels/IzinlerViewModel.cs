@@ -9,6 +9,9 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace CeyPASS.WPF.ViewModels;
 
+/// <summary>
+/// Personel izin kayıtları; yarım gün yıllık izin kuralları WFA ile uyumlu (YarimGunYillikIzinHelper).
+/// </summary>
 public sealed class IzinlerViewModel : ObservableObject
 {
     private enum ScreenMode { List, Add, Edit }
@@ -25,11 +28,13 @@ public sealed class IzinlerViewModel : ObservableObject
     private int? _editingIzinId;
     private bool _saving;
     private bool _suppressChecks;
+    private bool _suppressFilter;
     private bool _kisilerLoaded;
     private bool _izinTipleriLoaded;
     private List<FirmaIsyeriYetkiDTO> _yetkiler = new();
 
     private Firma? _selectedFirma;
+    private LookupItem? _selectedIsyeri;
     private KisiListItem? _selectedKisi;
     private IzinTip? _selectedIzinTip;
     private DataRowView? _selectedRow;
@@ -64,6 +69,7 @@ public sealed class IzinlerViewModel : ObservableObject
         _auth = root.GetRequiredService<IAuthorizationService>();
 
         Firmalar = new ObservableCollection<Firma>();
+        Isyerleri = new ObservableCollection<LookupItem>();
         Kisiler = new ObservableCollection<KisiListItem>();
         IzinTipleri = new ObservableCollection<IzinTip>();
         YarimGunDilimler = new ObservableCollection<string>
@@ -93,6 +99,8 @@ public sealed class IzinlerViewModel : ObservableObject
     }
 
     public ObservableCollection<Firma> Firmalar { get; }
+    /// <summary>Seçili firmaya ait yetkili işyerleri (Tümü dahil).</summary>
+    public ObservableCollection<LookupItem> Isyerleri { get; }
     public ObservableCollection<KisiListItem> Kisiler { get; }
     public ObservableCollection<IzinTip> IzinTipleri { get; }
     public ObservableCollection<string> YarimGunDilimler { get; }
@@ -104,6 +112,8 @@ public sealed class IzinlerViewModel : ObservableObject
         {
             if (Equals(_selectedFirma, value)) return;
             SetProperty(ref _selectedFirma, value);
+            if (_suppressFilter) return;
+            LoadIsyerleri();
             Kisiler.Clear();
             IzinTipleri.Clear();
             _kisilerLoaded = false;
@@ -112,6 +122,25 @@ public sealed class IzinlerViewModel : ObservableObject
             _selectedIzinTip = null;
             RaisePropertyChanged(nameof(SelectedKisi));
             RaisePropertyChanged(nameof(SelectedIzinTip));
+            PersistFilters();
+            if (_mode == ScreenMode.List && !_saving)
+            {
+                EnsureKisilerLoaded();
+                ReloadGrid();
+            }
+        }
+    }
+
+    /// <summary>İşyeri filtresi; Id 0 = tümü (yetki kapsamı). Değişince kişi listesi ve grid yenilenir.</summary>
+    public LookupItem? SelectedIsyeri
+    {
+        get => _selectedIsyeri;
+        set
+        {
+            if (ReferenceEquals(_selectedIsyeri, value)) return;
+            SetProperty(ref _selectedIsyeri, value);
+            if (_suppressFilter) return;
+            OnIsyeriFilterChanged();
         }
     }
 
@@ -416,12 +445,104 @@ public sealed class IzinlerViewModel : ObservableObject
             foreach (var f in list)
                 Firmalar.Add(f);
 
-            SelectedFirma = Firmalar.FirstOrDefault();
+            var prefs = PageFilterPrefsStore.Load(PageName);
+            Firma? sel = null;
+            if (prefs?.FirmaId is int pfid)
+                sel = Firmalar.FirstOrDefault(f => f.FirmaId == pfid);
+            sel ??= Firmalar.FirstOrDefault();
+
+            _selectedFirma = sel;
+            RaisePropertyChanged(nameof(SelectedFirma));
+            LoadIsyerleri(preferredIsyeriId: prefs?.IsyeriId);
         }
         catch (Exception ex)
         {
             Error = "Firmalar yüklenemedi: " + ex.Message;
         }
+    }
+
+    /// <summary>Firma değişince yetkili işyerlerini yükler.</summary>
+    private void LoadIsyerleri(int? preferredIsyeriId = null)
+    {
+        _suppressFilter = true;
+        try
+        {
+            Isyerleri.Clear();
+            _selectedIsyeri = null;
+
+            int firmaId = SelectedFirma?.FirmaId ?? 0;
+            if (firmaId == TumuInt && _session.AktifFirmaId.HasValue)
+                firmaId = (int)_session.AktifFirmaId.Value;
+            if (firmaId <= 0)
+            {
+                RaisePropertyChanged(nameof(SelectedIsyeri));
+                return;
+            }
+
+            try
+            {
+                using var scope = _scopes.CreateScope();
+                var ikl = scope.ServiceProvider.GetRequiredService<IKisiEkraniLookUpService>();
+                bool isAdmin = FirmaIsyeriYetkiHelper.IsAdmin(_session.RolId);
+                var list = ikl.GetIsyerleri(firmaId) ?? new List<LookupItem>();
+                list = FirmaIsyeriYetkiHelper.FilterIsyeriLookup(list, firmaId, _yetkiler, isAdmin);
+
+                Isyerleri.Add(FirmaIsyeriYetkiHelper.CreateIsyeriFilterTumuItem());
+                foreach (var i in list)
+                    Isyerleri.Add(i);
+
+                LookupItem? sel = null;
+                if (preferredIsyeriId is int pid && pid >= 0)
+                    sel = Isyerleri.FirstOrDefault(x => x.Id == pid);
+                sel ??= Isyerleri.FirstOrDefault();
+                _selectedIsyeri = sel;
+                RaisePropertyChanged(nameof(SelectedIsyeri));
+            }
+            catch (Exception ex)
+            {
+                Error = "İşyerleri yüklenemedi: " + ex.Message;
+                RaisePropertyChanged(nameof(SelectedIsyeri));
+            }
+        }
+        finally
+        {
+            _suppressFilter = false;
+        }
+    }
+
+    /// <summary>İşyeri değişince kişi combo ve listeyi seçime göre yeniler.</summary>
+    private void OnIsyeriFilterChanged()
+    {
+        Kisiler.Clear();
+        _kisilerLoaded = false;
+        _selectedKisi = null;
+        RaisePropertyChanged(nameof(SelectedKisi));
+        PersistFilters();
+        if (_mode != ScreenMode.List || _saving) return;
+        EnsureKisilerLoaded();
+        ReloadGrid();
+    }
+
+    /// <summary>Seçili işyeri Id (Tümü/-1 ise null; 0 geçerli işyeridir).</summary>
+    private int? GetSeciliIsyeriFilterId()
+        => FirmaIsyeriYetkiHelper.ToIsyeriQueryFilterId(SelectedIsyeri?.Id);
+
+    /// <summary>Firma ve işyeri filtre tercihlerini yerel olarak saklar.</summary>
+    private void PersistFilters()
+    {
+        PageFilterPrefsStore.Save(PageName, new PageFilterPrefs
+        {
+            FirmaId = SelectedFirma is { FirmaId: > 0 } and not { FirmaId: TumuInt } ? SelectedFirma.FirmaId : null,
+            IsyeriId = GetSeciliIsyeriFilterId()
+        });
+    }
+
+    /// <summary>Yetkiye göre tek işyeri veya işyeri listesi filtresi üretir.</summary>
+    private (int? isyeriId, IReadOnlyList<int>? isyeriIdIn) ResolveIsyeriFilter(int firmaId)
+    {
+        bool isAdmin = FirmaIsyeriYetkiHelper.IsAdmin(_session.RolId);
+        return FirmaIsyeriYetkiHelper.ResolveKisiQueryIsyeriFilter(
+            firmaId, GetSeciliIsyeriFilterId(), _yetkiler, isAdmin);
     }
 
     public void EnsureKisilerLoaded()
@@ -436,9 +557,7 @@ public sealed class IzinlerViewModel : ObservableObject
         {
             using var scope = _scopes.CreateScope();
             var ksvc = scope.ServiceProvider.GetRequiredService<IKisiQueryService>();
-            bool isAdmin = FirmaIsyeriYetkiHelper.IsAdmin(_session.RolId);
-            var (isyeriId, isyeriIdIn) = FirmaIsyeriYetkiHelper.ResolveKisiQueryIsyeriFilter(
-                firmaId, null, _yetkiler, isAdmin);
+            var (isyeriId, isyeriIdIn) = ResolveIsyeriFilter(firmaId);
             var kisiler = ksvc.GetAktifKisilerByFirma(firmaId, isyeriId: isyeriId, isyeriIdIn: isyeriIdIn);
             kisiler.Insert(0, new KisiListItem { PersonelId = TumuStr, AdSoyad = "— TÜMÜ —" });
 
@@ -516,7 +635,24 @@ public sealed class IzinlerViewModel : ObservableObject
             DateTime bas = BaslangicTarihi.Date;
             DateTime bit = BitisTarihi.Date.AddDays(1).AddSeconds(-1);
 
-            var dt = kisvc.GetTumIzinler(firmaId, personelId, izinTipId, bas, bit);
+            int resolveFirmaId = firmaId
+                ?? (SelectedFirma?.FirmaId == TumuInt && _session.AktifFirmaId.HasValue
+                    ? (int)_session.AktifFirmaId.Value
+                    : SelectedFirma?.FirmaId ?? 0);
+            int? isyeriId = null;
+            IReadOnlyList<int>? isyeriIdIn = null;
+            if (resolveFirmaId > 0 && resolveFirmaId != TumuInt)
+                (isyeriId, isyeriIdIn) = ResolveIsyeriFilter(resolveFirmaId);
+
+            // Combo'da somut işyeri seçiliyse tek Id filtresini zorunlu kıl (Tümü hariç; 0 dahil).
+            var seciliIsyeriId = GetSeciliIsyeriFilterId();
+            if (seciliIsyeriId.HasValue)
+            {
+                isyeriId = seciliIsyeriId;
+                isyeriIdIn = null;
+            }
+
+            var dt = kisvc.GetTumIzinler(firmaId, personelId, izinTipId, bas, bit, isyeriId, isyeriIdIn);
             Grid = dt?.DefaultView;
             SelectedRow = null;
         }

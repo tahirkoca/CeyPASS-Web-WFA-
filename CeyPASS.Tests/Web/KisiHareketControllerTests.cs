@@ -13,6 +13,9 @@ using Xunit;
 
 namespace CeyPASS.Tests.Web
 {
+    /// <summary>
+    /// Kişi hareket geçmişi MVC.
+    /// </summary>
     public class KisiHareketControllerTests : IDisposable
     {
         private readonly Mock<IKisiHareketService> _khMock = new();
@@ -52,6 +55,9 @@ namespace CeyPASS.Tests.Web
 
         // ─── Index ────────────────────────────────────────────────────────────
 
+        /// <summary>
+        /// Yetkisiz HomeIndexeYonlendirir
+        /// </summary>
         [Fact]
         public void Index_Yetkisiz_HomeIndexeYonlendirir()
         {
@@ -66,6 +72,9 @@ namespace CeyPASS.Tests.Web
             ((string)sut.TempData["Error"]!).Should().NotBeNullOrEmpty();
         }
 
+        /// <summary>
+        /// NonAdmin FirmaIdSeciliTasarlanirAktifFirmaya
+        /// </summary>
         [Fact]
         public void Index_NonAdmin_FirmaIdSeciliTasarlanirAktifFirmaya()
         {
@@ -75,7 +84,7 @@ namespace CeyPASS.Tests.Web
             _sessionMock.Setup(s => s.AktifFirmaId).Returns(1);
 
             _lookupMock.Setup(l => l.GetIsyerleri(It.IsAny<int>())).Returns(new List<LookupItem>());
-            _kisiQueryMock.Setup(q => q.GetAktifKisilerByFirma(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<bool?>(), It.IsAny<int?>(), It.IsAny<IReadOnlyList<int>>(), It.IsAny<bool>()))
+            _kisiQueryMock.Setup(q => q.GetAktifKisilerByFirma(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<bool?>(), It.IsAny<int?>(), It.IsAny<IReadOnlyList<int>>(), It.IsAny<bool>(), It.IsAny<int?>()))
                 .Returns(new List<KisiListItem>());
 
             var sut = CreateSut();
@@ -86,6 +95,9 @@ namespace CeyPASS.Tests.Web
             ((int)sut.ViewBag.SelectedFirmaId).Should().Be(1);
         }
 
+        /// <summary>
+        /// Admin FirmalarViewBagdaYuklenirVeIsAdminTrue
+        /// </summary>
         [Fact]
         public void Index_Admin_FirmalarViewBagdaYuklenirVeIsAdminTrue()
         {
@@ -95,7 +107,7 @@ namespace CeyPASS.Tests.Web
             _sessionMock.Setup(s => s.AktifFirmaId).Returns(1);
 
             _lookupMock.Setup(l => l.GetIsyerleri(It.IsAny<int>())).Returns(new List<LookupItem>());
-            _kisiQueryMock.Setup(q => q.GetAktifKisilerByFirma(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<bool?>(), It.IsAny<int?>(), It.IsAny<IReadOnlyList<int>>(), It.IsAny<bool>()))
+            _kisiQueryMock.Setup(q => q.GetAktifKisilerByFirma(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<bool?>(), It.IsAny<int?>(), It.IsAny<IReadOnlyList<int>>(), It.IsAny<bool>(), It.IsAny<int?>()))
                 .Returns(new List<KisiListItem>());
             _firmaMock.Setup(f => f.GetAll()).Returns(new List<Firma>
             {
@@ -111,6 +123,9 @@ namespace CeyPASS.Tests.Web
             ((object)sut.ViewBag.Firmalar).Should().NotBeNull();
         }
 
+        /// <summary>
+        /// IsyeriId ile GetAktifKisilerByFirma cagrilir
+        /// </summary>
         [Fact]
         public void Index_IsyeriId_ile_GetAktifKisilerByFirma_cagrilir()
         {
@@ -121,7 +136,7 @@ namespace CeyPASS.Tests.Web
             _sessionMock.Setup(s => s.IsAdmin()).Returns(true);
 
             _lookupMock.Setup(l => l.GetIsyerleri(1)).Returns(new List<LookupItem> { new LookupItem { Id = 10, Ad = "Şube A" } });
-            _kisiQueryMock.Setup(q => q.GetAktifKisilerByFirma(1, null, true, 10, null, false))
+            _kisiQueryMock.Setup(q => q.GetAktifKisilerByFirma(1, null, true, 10, null, false, null))
                 .Returns(new List<KisiListItem> { new KisiListItem { PersonelId = "100", AdSoyad = "Test [100]" } });
             _firmaMock.Setup(f => f.GetAll()).Returns(new List<Firma> { new Firma { FirmaId = 1, FirmaAdi = "Firma A" } });
 
@@ -130,12 +145,15 @@ namespace CeyPASS.Tests.Web
             var sonuc = sut.Index(firmaId: 1, isyeriId: 10);
 
             sonuc.Should().BeOfType<ViewResult>();
-            _kisiQueryMock.Verify(q => q.GetAktifKisilerByFirma(1, null, true, 10, null, false), Times.Once);
+            _kisiQueryMock.Verify(q => q.GetAktifKisilerByFirma(1, null, true, 10, null, false, null), Times.Once);
             ((int?)sut.ViewBag.SelectedIsyeriId).Should().Be(10);
         }
 
         // ─── Ekle ─────────────────────────────────────────────────────────────
 
+        /// <summary>
+        /// Yetkisiz IndexeYonlendirir
+        /// </summary>
         [Fact]
         public void Ekle_Yetkisiz_IndexeYonlendirir()
         {
@@ -151,6 +169,9 @@ namespace CeyPASS.Tests.Web
 
         // ─── Guncelle ─────────────────────────────────────────────────────────
 
+        /// <summary>
+        /// Yetkisiz IndexeYonlendirir
+        /// </summary>
         [Fact]
         public void Guncelle_Yetkisiz_IndexeYonlendirir()
         {
@@ -166,6 +187,9 @@ namespace CeyPASS.Tests.Web
 
         // ─── PasifYap ─────────────────────────────────────────────────────────
 
+        /// <summary>
+        /// Yetkisiz IndexeYonlendirir
+        /// </summary>
         [Fact]
         public void PasifYap_Yetkisiz_IndexeYonlendirir()
         {

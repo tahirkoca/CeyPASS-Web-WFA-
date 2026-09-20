@@ -51,11 +51,17 @@ namespace CeyPASS.WFA.UserControls.EO
             cmbIsyeriFilter = new ComboBox();
             pnlLeft = new Panel();
             chkKisiler = new CheckedListBox();
+            pnlKisiAra = new Panel();
+            lblKisiAraIcon = new Label();
+            txtKisiAra = new TextBox();
             pnlLeftHeader = new Panel();
             lblPersonelListesi = new Label();
             pnlKartTipi = new Panel();
             cmbKartTipi = new ComboBox();
             lblKartTipi = new Label();
+            pnlCalismaDurumu = new Panel();
+            cmbCalismaDurumu = new ComboBox();
+            lblCalismaDurumu = new Label();
             pnlMain.SuspendLayout();
             pnlContent.SuspendLayout();
             pnlGridContainer.SuspendLayout();
@@ -68,8 +74,10 @@ namespace CeyPASS.WFA.UserControls.EO
             pnlFirmaFilter.SuspendLayout();
             tlpFirmaFilter.SuspendLayout();
             pnlLeft.SuspendLayout();
+            pnlKisiAra.SuspendLayout();
             pnlLeftHeader.SuspendLayout();
             pnlKartTipi.SuspendLayout();
+            pnlCalismaDurumu.SuspendLayout();
             SuspendLayout();
             // 
             // pnlMain
@@ -437,8 +445,10 @@ namespace CeyPASS.WFA.UserControls.EO
             // 
             pnlLeft.BackColor = Color.White;
             pnlLeft.Controls.Add(chkKisiler);
+            pnlLeft.Controls.Add(pnlKisiAra);
             pnlLeft.Controls.Add(pnlLeftHeader);
             pnlLeft.Controls.Add(pnlKartTipi);
+            pnlLeft.Controls.Add(pnlCalismaDurumu);
             pnlLeft.Dock = DockStyle.Left;
             pnlLeft.Location = new Point(10, 12);
             pnlLeft.Margin = new Padding(3, 4, 3, 4);
@@ -454,18 +464,53 @@ namespace CeyPASS.WFA.UserControls.EO
             chkKisiler.Font = new Font("Segoe UI", 10F);
             chkKisiler.FormattingEnabled = true;
             chkKisiler.HorizontalScrollbar = true;
-            chkKisiler.Location = new Point(1, 118);
+            chkKisiler.Location = new Point(1, 225);
             chkKisiler.Margin = new Padding(3, 4, 3, 4);
             chkKisiler.Name = "chkKisiler";
-            chkKisiler.Size = new Size(348, 943);
+            chkKisiler.Size = new Size(348, 891);
             chkKisiler.TabIndex = 1;
+            // 
+            // pnlKisiAra
+            // 
+            pnlKisiAra.BackColor = Color.White;
+            pnlKisiAra.Controls.Add(txtKisiAra);
+            pnlKisiAra.Controls.Add(lblKisiAraIcon);
+            pnlKisiAra.Dock = DockStyle.Top;
+            pnlKisiAra.Location = new Point(1, 173);
+            pnlKisiAra.Name = "pnlKisiAra";
+            pnlKisiAra.Padding = new Padding(8, 6, 8, 6);
+            pnlKisiAra.Size = new Size(348, 44);
+            pnlKisiAra.TabIndex = 3;
+            // 
+            // lblKisiAraIcon
+            // 
+            lblKisiAraIcon.Dock = DockStyle.Left;
+            lblKisiAraIcon.Font = new Font("Segoe MDL2 Assets", 12F);
+            lblKisiAraIcon.ForeColor = Color.Gray;
+            lblKisiAraIcon.Location = new Point(8, 6);
+            lblKisiAraIcon.Name = "lblKisiAraIcon";
+            lblKisiAraIcon.Size = new Size(28, 32);
+            lblKisiAraIcon.TabIndex = 0;
+            lblKisiAraIcon.Text = "\uE721";
+            lblKisiAraIcon.TextAlign = ContentAlignment.MiddleCenter;
+            // 
+            // txtKisiAra
+            // 
+            txtKisiAra.BorderStyle = BorderStyle.FixedSingle;
+            txtKisiAra.Dock = DockStyle.Fill;
+            txtKisiAra.Font = new Font("Segoe UI", 9.5F);
+            txtKisiAra.Location = new Point(36, 6);
+            txtKisiAra.Name = "txtKisiAra";
+            txtKisiAra.PlaceholderText = "Ad veya Sicil No'ya göre arayabilirsiniz";
+            txtKisiAra.Size = new Size(304, 29);
+            txtKisiAra.TabIndex = 1;
             // 
             // pnlLeftHeader
             // 
             pnlLeftHeader.BackColor = Color.WhiteSmoke;
             pnlLeftHeader.Controls.Add(lblPersonelListesi);
             pnlLeftHeader.Dock = DockStyle.Top;
-            pnlLeftHeader.Location = new Point(1, 56);
+            pnlLeftHeader.Location = new Point(1, 111);
             pnlLeftHeader.Margin = new Padding(3, 4, 3, 4);
             pnlLeftHeader.Name = "pnlLeftHeader";
             pnlLeftHeader.Size = new Size(348, 62);
@@ -490,7 +535,7 @@ namespace CeyPASS.WFA.UserControls.EO
             pnlKartTipi.Controls.Add(cmbKartTipi);
             pnlKartTipi.Controls.Add(lblKartTipi);
             pnlKartTipi.Dock = DockStyle.Top;
-            pnlKartTipi.Location = new Point(1, 1);
+            pnlKartTipi.Location = new Point(1, 56);
             pnlKartTipi.Margin = new Padding(3, 4, 3, 4);
             pnlKartTipi.Name = "pnlKartTipi";
             pnlKartTipi.Padding = new Padding(8, 8, 8, 8);
@@ -519,6 +564,41 @@ namespace CeyPASS.WFA.UserControls.EO
             lblKartTipi.TabIndex = 0;
             lblKartTipi.Text = "Kart Tipi:";
             // 
+            // pnlCalismaDurumu
+            // 
+            pnlCalismaDurumu.BackColor = Color.WhiteSmoke;
+            pnlCalismaDurumu.Controls.Add(cmbCalismaDurumu);
+            pnlCalismaDurumu.Controls.Add(lblCalismaDurumu);
+            pnlCalismaDurumu.Dock = DockStyle.Top;
+            pnlCalismaDurumu.Location = new Point(1, 1);
+            pnlCalismaDurumu.Margin = new Padding(3, 4, 3, 4);
+            pnlCalismaDurumu.Name = "pnlCalismaDurumu";
+            pnlCalismaDurumu.Padding = new Padding(8, 8, 8, 8);
+            pnlCalismaDurumu.Size = new Size(348, 55);
+            pnlCalismaDurumu.TabIndex = 4;
+            // 
+            // cmbCalismaDurumu
+            // 
+            cmbCalismaDurumu.DropDownStyle = ComboBoxStyle.DropDownList;
+            cmbCalismaDurumu.Font = new Font("Segoe UI", 9.5F);
+            cmbCalismaDurumu.FormattingEnabled = true;
+            cmbCalismaDurumu.Location = new Point(90, 10);
+            cmbCalismaDurumu.Margin = new Padding(3, 4, 3, 4);
+            cmbCalismaDurumu.Name = "cmbCalismaDurumu";
+            cmbCalismaDurumu.Size = new Size(250, 29);
+            cmbCalismaDurumu.TabIndex = 1;
+            // 
+            // lblCalismaDurumu
+            // 
+            lblCalismaDurumu.AutoSize = true;
+            lblCalismaDurumu.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            lblCalismaDurumu.ForeColor = Color.Gray;
+            lblCalismaDurumu.Location = new Point(8, 15);
+            lblCalismaDurumu.Name = "lblCalismaDurumu";
+            lblCalismaDurumu.Size = new Size(58, 20);
+            lblCalismaDurumu.TabIndex = 0;
+            lblCalismaDurumu.Text = "Durum:";
+            // 
             // ucKisiHareketler
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
@@ -543,9 +623,13 @@ namespace CeyPASS.WFA.UserControls.EO
             tlpFirmaFilter.ResumeLayout(false);
             tlpFirmaFilter.PerformLayout();
             pnlLeft.ResumeLayout(false);
+            pnlKisiAra.ResumeLayout(false);
+            pnlKisiAra.PerformLayout();
             pnlLeftHeader.ResumeLayout(false);
             pnlKartTipi.ResumeLayout(false);
             pnlKartTipi.PerformLayout();
+            pnlCalismaDurumu.ResumeLayout(false);
+            pnlCalismaDurumu.PerformLayout();
             ResumeLayout(false);
 
         }
@@ -558,11 +642,17 @@ namespace CeyPASS.WFA.UserControls.EO
         private System.Windows.Forms.Panel pnlContent;
 
         // Sol Menü
+        private System.Windows.Forms.Panel pnlCalismaDurumu;
+        private System.Windows.Forms.Label lblCalismaDurumu;
+        private System.Windows.Forms.ComboBox cmbCalismaDurumu;
         private System.Windows.Forms.Panel pnlKartTipi;
         private System.Windows.Forms.Label lblKartTipi;
         private System.Windows.Forms.ComboBox cmbKartTipi;
         private System.Windows.Forms.Panel pnlLeftHeader;
         private System.Windows.Forms.Label lblPersonelListesi;
+        private System.Windows.Forms.Panel pnlKisiAra;
+        private System.Windows.Forms.Label lblKisiAraIcon;
+        private System.Windows.Forms.TextBox txtKisiAra;
         private System.Windows.Forms.CheckedListBox chkKisiler;
 
         // Filtreler

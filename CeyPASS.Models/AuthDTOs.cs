@@ -1,5 +1,6 @@
 namespace CeyPASS.Models.Auth
 {
+    /// <summary>Mobil/web oturum açma isteği.</summary>
     public class LoginRequest
     {
         public string Username { get; set; } = string.Empty;
@@ -7,6 +8,7 @@ namespace CeyPASS.Models.Auth
         public bool RememberMe { get; set; }
     }
 
+    /// <summary>JWT ve kullanıcı özet bilgisi ile oturum yanıtı.</summary>
     public class LoginResponse
     {
         public string Token { get; set; } = string.Empty;
@@ -15,6 +17,7 @@ namespace CeyPASS.Models.Auth
         public AuthUserDTO User { get; set; } = new();
     }
 
+    /// <summary>Oturum açmış kullanıcının firma ve rol bağlamı.</summary>
     public class AuthUserDTO
     {
         public int KullaniciId { get; set; }
@@ -24,6 +27,7 @@ namespace CeyPASS.Models.Auth
         public string? AdSoyad { get; set; }
         public string? Rol { get; set; }
         public int? RolId { get; set; }
+        /// <summary>Bağlı personel sicil numarası; yoksa null.</summary>
         public string? SicilNo { get; set; }
     }
 }

@@ -1,5 +1,6 @@
 ﻿namespace CeyPASS.Entities.Concrete
 {
+    /// <summary>Puantaj gün satırı onay durumu; veritabanında int olarak da tutulabilir.</summary>
     public enum OnayDurumu
     {
         Bekliyor = 0,

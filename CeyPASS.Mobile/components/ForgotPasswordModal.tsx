@@ -1,3 +1,4 @@
+/** E-posta ile şifre sıfırlama talebi modalı. */
 import React, { useMemo, useState } from "react";
 import { Modal, Text, TouchableOpacity, View } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";

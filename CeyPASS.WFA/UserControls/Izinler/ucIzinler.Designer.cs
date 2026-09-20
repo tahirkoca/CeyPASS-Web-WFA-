@@ -45,6 +45,8 @@ namespace CeyPASS.WFA.UserControls.Izinler
             this.pnlSelectionFilters = new System.Windows.Forms.Panel();
             this.label7 = new System.Windows.Forms.Label();
             this.cmbFirmalarSecimi = new System.Windows.Forms.ComboBox();
+            this.lblIsyeri = new System.Windows.Forms.Label();
+            this.cmbIsyeriFilter = new System.Windows.Forms.ComboBox();
             this.label4 = new System.Windows.Forms.Label();
             this.cmbIzinlerSecimi = new System.Windows.Forms.ComboBox();
             this.label3 = new System.Windows.Forms.Label();
@@ -184,6 +186,8 @@ namespace CeyPASS.WFA.UserControls.Izinler
             // 
             this.pnlSelectionFilters.Controls.Add(this.label7);
             this.pnlSelectionFilters.Controls.Add(this.cmbFirmalarSecimi);
+            this.pnlSelectionFilters.Controls.Add(this.lblIsyeri);
+            this.pnlSelectionFilters.Controls.Add(this.cmbIsyeriFilter);
             this.pnlSelectionFilters.Controls.Add(this.label4);
             this.pnlSelectionFilters.Controls.Add(this.cmbIzinlerSecimi);
             this.pnlSelectionFilters.Controls.Add(this.label3);
@@ -202,12 +206,22 @@ namespace CeyPASS.WFA.UserControls.Izinler
             this.cmbFirmalarSecimi.Font = new System.Drawing.Font("Segoe UI", 10F);
             this.cmbFirmalarSecimi.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
 
+            this.lblIsyeri.Text = "İşyeri";
+            this.lblIsyeri.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
+            this.lblIsyeri.Location = new System.Drawing.Point(200, 10);
+            this.lblIsyeri.Size = new System.Drawing.Size(100, 20);
+
+            this.cmbIsyeriFilter.Location = new System.Drawing.Point(200, 33);
+            this.cmbIsyeriFilter.Size = new System.Drawing.Size(180, 30);
+            this.cmbIsyeriFilter.Font = new System.Drawing.Font("Segoe UI", 10F);
+            this.cmbIsyeriFilter.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+
             this.label4.Text = "İzin Tipi";
             this.label4.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
-            this.label4.Location = new System.Drawing.Point(200, 10);
+            this.label4.Location = new System.Drawing.Point(390, 10);
             this.label4.Size = new System.Drawing.Size(100, 20);
 
-            this.cmbIzinlerSecimi.Location = new System.Drawing.Point(200, 33);
+            this.cmbIzinlerSecimi.Location = new System.Drawing.Point(390, 33);
             this.cmbIzinlerSecimi.Size = new System.Drawing.Size(180, 30);
             this.cmbIzinlerSecimi.Font = new System.Drawing.Font("Segoe UI", 10F);
             this.cmbIzinlerSecimi.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
@@ -218,7 +232,7 @@ namespace CeyPASS.WFA.UserControls.Izinler
             this.label3.Size = new System.Drawing.Size(100, 20);
 
             this.cmbKisilerSecimi.Location = new System.Drawing.Point(10, 98);
-            this.cmbKisilerSecimi.Size = new System.Drawing.Size(370, 30);
+            this.cmbKisilerSecimi.Size = new System.Drawing.Size(560, 30);
             this.cmbKisilerSecimi.Font = new System.Drawing.Font("Segoe UI", 10F);
             this.cmbKisilerSecimi.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.cmbKisilerSecimi.SelectedIndexChanged += new System.EventHandler(this.cmbKisilerSecimi_SelectedIndexChanged);
@@ -432,6 +446,8 @@ namespace CeyPASS.WFA.UserControls.Izinler
 
         private System.Windows.Forms.Label label7;
         private System.Windows.Forms.ComboBox cmbFirmalarSecimi;
+        private System.Windows.Forms.Label lblIsyeri;
+        private System.Windows.Forms.ComboBox cmbIsyeriFilter;
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.ComboBox cmbKisilerSecimi;
         private System.Windows.Forms.Label label4;

@@ -1,5 +1,6 @@
 namespace CeyPASS.WPF;
 
+/// <summary>Klavye kısayolu satırı (tuş kombinasyonu + açıklama).</summary>
 public readonly record struct ShortcutItem(string Keys, string Description);
 
 /// <summary>

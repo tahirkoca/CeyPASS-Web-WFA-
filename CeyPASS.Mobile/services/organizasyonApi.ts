@@ -1,3 +1,4 @@
+/** Firma, işyeri, departman, pozisyon master verileri. */
 import api, { cachedGet } from "./api";
 import { invalidate } from "./httpCache";
 
@@ -36,6 +37,7 @@ export type IsyeriItem = {
 export type DepartmanDetail = { id: number; ad: string; aciklama?: string | null };
 export type PozisyonDetail = { id: number; ad: string; aciklama?: string | null };
 
+/** CRUD + invalidate; firma/işyeri/org ağacı. */
 export const organizasyonService = {
   // Firmalar
   async listFirmalar(opts?: { forceRefresh?: boolean }): Promise<ApiResult<FirmaRow[]>> {

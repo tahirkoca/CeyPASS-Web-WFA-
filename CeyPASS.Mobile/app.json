@@ -27,7 +27,7 @@
       "favicon": "./assets/favicon.png"
     },
     "extra": {
-      "apiBaseUrl": "https://localhost:7061"
+      "apiBaseUrl": "http://localhost:5126"
     },
     "newArchEnabled": true,
     "plugins": [

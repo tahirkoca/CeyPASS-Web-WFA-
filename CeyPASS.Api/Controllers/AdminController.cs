@@ -9,6 +9,7 @@ using System.IO;
 
 namespace CeyPASS.Api.Controllers
 {
+    /// <summary>Sistem yöneticisi paneli; RolId=1 zorunlu.</summary>
     [Authorize]
     [ApiController]
     [Route("api/v1/[controller]")]
@@ -39,6 +40,8 @@ namespace CeyPASS.Api.Controllers
 
         private bool IsAdmin() => _sessionContext.RolId == 1;
 
+        
+        /// <summary>Admin panel verisi: kullanıcı, personel, üst yetkili listeleri.</summary>
         [HttpGet("panel")]
         public ActionResult<ApiResult<AdminPanelDto>> Panel()
         {
@@ -53,6 +56,8 @@ namespace CeyPASS.Api.Controllers
             return Ok(ApiResult<AdminPanelDto>.Ok(model));
         }
 
+        
+        /// <summary>Kurumsal kullanıcı ile personel sicil eşlemesi.</summary>
         [HttpPost("kullanici-personel")]
         public ActionResult<ApiResult> SetKullaniciPersonel([FromBody] KullaniciPersonelRequest request)
         {
@@ -62,6 +67,8 @@ namespace CeyPASS.Api.Controllers
             return ok ? Ok(ApiResult.Ok("Kullanıcı-personel bağlantısı güncellendi.")) : BadRequest(ApiResult.Failure("İşlem başarısız."));
         }
 
+        
+        /// <summary>Personel–üst yetkili hiyerarşisi günceller.</summary>
         [HttpPost("ust-yetkili")]
         public ActionResult<ApiResult> SetUstYetkili([FromBody] UstYetkiliRequest request)
         {
@@ -76,6 +83,8 @@ namespace CeyPASS.Api.Controllers
             return ok ? Ok(ApiResult.Ok("Üst yetkili kaydı güncellendi.")) : BadRequest(ApiResult.Failure("İşlem başarısız."));
         }
 
+        
+        /// <summary>Sürüm güncelleme bildirim maili gönderir.</summary>
         [HttpPost("guncelleme-mail")]
         public async Task<ActionResult<ApiResult>> SendUpdateMail([FromBody] GuncellemeNotifikasyonDTO model)
         {
@@ -96,6 +105,8 @@ namespace CeyPASS.Api.Controllers
             }
         }
 
+        
+        /// <summary>Güncelleme maili HTML önizlemesi.</summary>
         [HttpPost("guncelleme-mail/preview")]
         public ActionResult<ApiResult<string>> PreviewUpdateMail([FromBody] GuncellemeNotifikasyonDTO model)
         {

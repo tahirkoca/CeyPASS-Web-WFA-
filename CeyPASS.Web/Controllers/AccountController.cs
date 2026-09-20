@@ -9,6 +9,7 @@ using System;
 
 namespace CeyPASS.Web.Controllers
 {
+    /// <summary>Kurumsal ve personel portal girişi, oturum ve şifre işlemleri.</summary>
     public class AccountController : Controller
     {
         private readonly IKullaniciService _kullaniciService;
@@ -40,6 +41,7 @@ namespace CeyPASS.Web.Controllers
             _dataProtector = dataProtectionProvider.CreateProtector("CeyPASS.RememberMeAuth");
         }
 
+        /// <summary>Giriş işlemi.</summary>
         [HttpGet]
         public IActionResult Login()
         {
@@ -54,7 +56,7 @@ namespace CeyPASS.Web.Controllers
                 _sessionContext.Clear();
             }
 
-            // Auto-login from Remember Me cookie
+            // Beni hatırla: şifre değil imza saklanır (DataProtection)
             var rmCookie = Request.Cookies["CeyPASS_RM"];
             if (!string.IsNullOrEmpty(rmCookie))
             {
@@ -74,6 +76,7 @@ namespace CeyPASS.Web.Controllers
             return View();
         }
 
+        /// <summary>POST giriş; anti-forgery zorunlu.</summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult Login(string username, string password, bool rememberMe = false)
@@ -92,7 +95,7 @@ namespace CeyPASS.Web.Controllers
                 {
                     if (rememberMe)
                     {
-                        // Secure signature instead of plaintext password
+                        // Çerezde düz metin şifre yok; imza saklanır
                         var signature = GeneratePasswordSignature(password);
                         var payload = _dataProtector.Protect($"{username}|{signature}");
                         var cookieOptions = new CookieOptions 
@@ -222,6 +225,7 @@ namespace CeyPASS.Web.Controllers
             return null;
         }
 
+        /// <summary>Oturumu kapatır.</summary>
         [HttpGet]
         [HttpPost]
         public IActionResult Logout()
@@ -244,6 +248,7 @@ namespace CeyPASS.Web.Controllers
             }
         }
 
+        /// <summary>Şifre sıfırlama.</summary>
         [HttpGet]
         public IActionResult ForgotPassword()
         {
@@ -252,6 +257,7 @@ namespace CeyPASS.Web.Controllers
             return View();
         }
 
+        /// <summary>Şifre sıfırlama.</summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult ForgotPassword(string username)
@@ -287,6 +293,7 @@ namespace CeyPASS.Web.Controllers
             return RedirectToAction("ForgotPasswordConfirm", new { username });
         }
 
+        /// <summary>Doğrulama kodu ile şifre sıfırlama.</summary>
         [HttpGet]
         public IActionResult ForgotPasswordConfirm(string username)
         {
@@ -299,6 +306,7 @@ namespace CeyPASS.Web.Controllers
             return View();
         }
 
+        /// <summary>Doğrulama kodu ile şifre sıfırlama.</summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult ForgotPasswordConfirm(string username, string kod, string yeniSifre, string yeniSifreTekrar)
@@ -321,6 +329,7 @@ namespace CeyPASS.Web.Controllers
             TempData["LoginSuccess"] = "Şifreniz başarıyla güncellendi. Yeni şifrenizle giriş yapabilirsiniz.";
             return RedirectToAction("Login");
         }
+        /// <summary>Şifre değiştirme.</summary>
         [HttpGet]
         public IActionResult ChangePassword()
         {
@@ -329,6 +338,7 @@ namespace CeyPASS.Web.Controllers
             return View();
         }
 
+        /// <summary>Şifre değiştirme.</summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult ChangePassword(string mevcutSifre, string yeniSifre, string yeniSifreTekrar)

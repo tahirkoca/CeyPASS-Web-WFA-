@@ -12,6 +12,7 @@ using System.Windows.Forms;
 
 namespace CeyPASS.WFA
 {
+    /// <summary>Ana uygulama giriş ekranı — kullanıcı doğrulama ve ana menüye geçiş.</summary>
     public partial class girisEkrani : Form
     {
         [DllImport("user32.dll", CharSet = CharSet.Auto)]
@@ -30,6 +31,7 @@ namespace CeyPASS.WFA
         private readonly IServiceProvider _sp;
         private readonly WinFormsFieldErrors _fieldErrors;
 
+        /// <summary>Oturum ve giriş akışı için gerekli servisleri enjekte eder.</summary>
         public girisEkrani(ISessionContext session,ICanliIzlemeService svc,ISifreService ssvc,IKullaniciService ksvc,IEmailService esvc,IKisiHareketService khsvc,IKisiDetayService kdsvc,IMisafirKartService mksvc, IKullaniciFirmaIsyeriYetkiService yetkiSvc, IServiceProvider sp)
         {
             InitializeComponent();

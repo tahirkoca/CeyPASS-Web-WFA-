@@ -8,6 +8,7 @@ using System.Windows.Forms;
 
 namespace CeyPASS.WFA.UserControls.Ayarlar
 {
+    /// <summary>Turnike/cihaz tanım CRUD; admin panelde tüm firmalar modu.</summary>
     public partial class ucCihazlar : UserControl
     {
         private enum ScreenMode { List, Add, Edit }
@@ -27,6 +28,7 @@ namespace CeyPASS.WFA.UserControls.Ayarlar
         /// </summary>
         public bool AdminPanelMode { get; set; }
 
+        /// <summary>Yetki ve alan doğrulama yardımcılarını kurar.</summary>
         public ucCihazlar(ISessionContext session, ICihazService svc, IAuthorizationService auth, IKullaniciFirmaIsyeriYetkiService yetkiSvc)
         {
             InitializeComponent();
@@ -147,6 +149,7 @@ namespace CeyPASS.WFA.UserControls.Ayarlar
         /// <summary>
         /// Admin Panel'de AdminPanelMode set edildikten sonra listeyi filtresiz yeniden yüklemek için.
         /// </summary>
+        /// <summary>AdminPanelMode ve aktif firmaya göre grid'i yeniden doldurur.</summary>
         public void RefreshList()
         {
             LoadList();

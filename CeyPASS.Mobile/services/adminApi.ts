@@ -1,3 +1,4 @@
+/** Süper admin: kullanıcı-personel eşleme, üst yetkili, sürüm notları. */
 import api from "./api";
 
 export type ApiResult<T = any> = {
@@ -46,6 +47,7 @@ export type GuncellemeNotifikasyonDTO = {
   ekNotlar?: string;
 };
 
+/** /Admin panel ve yönetim POST’ları. */
 export const adminService = {
   async panel(): Promise<ApiResult<AdminPanelDto>> {
     const resp = await api.get("/Admin/panel", { timeout: 15000 });

@@ -23,13 +23,12 @@ using System.Windows.Forms;
 
 namespace CeyPASS.WFA
 {
+    /// <summary>WinForms uygulama girişi — DI, güncelleme kontrolü ve giriş ekranı.</summary>
     internal static class Program
     {
         private const string AppDisplayName = "CeyPASS PDKS";
 
-        /// <summary>
-        /// The main entry point for the application.
-        /// </summary>
+        /// <summary>Yapılandırma, servis kayıtları ve mesaj döngüsünü başlatır.</summary>
         [STAThread]
         static void Main()
         {
@@ -46,21 +45,23 @@ namespace CeyPASS.WFA
                 // Arşivin kökünde CeyPASS.WFA.exe ve tüm dll'ler olmalı; aksi halde dosyalar kurulum\net8.0-windows\ altına gider ve uygulama açılmaz.
                 try
                 {
-                    AutoUpdater.AppTitle = AppDisplayName;
-                    AutoUpdater.InstallationPath = Application.StartupPath ?? AppContext.BaseDirectory;
-                    AutoUpdater.Mandatory = false;
-                    AutoUpdater.UpdateMode = Mode.ForcedDownload;
-                    AutoUpdater.ShowSkipButton = true;
-                    AutoUpdater.ShowRemindLaterButton = true;
-                    AutoUpdater.ReportErrors = false;
-                    AutoUpdater.Synchronous = false;
-                    AutoUpdater.RunUpdateAsAdmin = true;
-                    AutoUpdater.ApplicationExitEvent += () =>
+                    if (!string.Equals(Environment.GetEnvironmentVariable("CEYPASS_SKIP_AUTOUPDATE"), "1", StringComparison.OrdinalIgnoreCase))
                     {
-                        try { Application.Exit(); } catch { }
-                    };               
-                    AutoUpdater.Start(@"http://192.168.0.23/CeyPASS-Updates/update.xml");
-                    
+                        AutoUpdater.AppTitle = AppDisplayName;
+                        AutoUpdater.InstallationPath = Application.StartupPath ?? AppContext.BaseDirectory;
+                        AutoUpdater.Mandatory = false;
+                        AutoUpdater.UpdateMode = Mode.ForcedDownload;
+                        AutoUpdater.ShowSkipButton = true;
+                        AutoUpdater.ShowRemindLaterButton = true;
+                        AutoUpdater.ReportErrors = false;
+                        AutoUpdater.Synchronous = false;
+                        AutoUpdater.RunUpdateAsAdmin = true;
+                        AutoUpdater.ApplicationExitEvent += () =>
+                        {
+                            try { Application.Exit(); } catch { }
+                        };
+                        AutoUpdater.Start(@"http://192.168.0.23/CeyPASS-Updates/update.xml");
+                    }
                 }
                 catch (Exception)
                 {
@@ -119,6 +120,7 @@ namespace CeyPASS.WFA
                 services.AddScoped<IPersonelVardiyaYemekYetkiRepository, PersonelVardiyaYemekYetkiRepositoryCore>();
                 services.AddScoped<ICalismaStatuRepository, CalismaStatuRepositoryCore>();
                 services.AddScoped<ICanliIzlemeRepository, CanliIzlemeRepositoryCore>();
+                services.AddScoped<ICanliIzlemeKartKomutRepository, CanliIzlemeKartKomutRepositoryCore>();
                 services.AddScoped<ICihazRepository, CihazRepositoryCore>();
                 services.AddScoped<IDashboardRepository, DashboardRepositoryCore>();
                 services.AddScoped<IDepartmanRepository, DepartmanRepositoryCore>();
@@ -133,6 +135,7 @@ namespace CeyPASS.WFA
                 services.AddScoped<IKullaniciFirmaIsyeriYetkiRepository, KullaniciFirmaIsyeriYetkiRepositoryCore>();
                 services.AddScoped<IKullaniciFirmaIsyeriYetkiService, KullaniciFirmaIsyeriYetkiService>();
                 services.AddScoped<IPuantajRepository, PuantajRepositoryCore>();
+                services.AddScoped<ICokluSicilRepository, CokluSicilRepositoryCore>();
                 services.AddScoped<IPuantajsizKartAtamaRepository, PuantajsizKartAtamaRepositoryCore>();
                 services.AddScoped<IRaporRepository, RaporRepositoryCore>();
                 services.AddScoped<IResmiTatilRepository, ResmiTatilRepositoryCore>();
@@ -151,6 +154,7 @@ namespace CeyPASS.WFA
                 services.AddScoped<IPersonelVardiyaYemekYetkiService, PersonelVardiyaYemekYetkiService>();
                 services.AddScoped<ICalismaStatuService, CalismaStatuService>();
                 services.AddScoped<ICanliIzlemeService, CanliIzlemeService>();
+                services.AddScoped<ICanliIzlemeKartKomutService, CanliIzlemeKartKomutService>();
                 services.AddScoped<ICihazService, CihazService>();
                 services.AddScoped<IDashboardService, DashboardService>();
                 services.AddScoped<IDepartmanService, DepartmanService>();
@@ -171,6 +175,7 @@ namespace CeyPASS.WFA
                 services.AddScoped<IAracKartiService, AracKartiService>();
                 services.AddScoped<IPozisyonService, PozisyonService>();
                 services.AddScoped<IPuantajService, PuantajService>();
+                services.AddScoped<ICokluSicilService, CokluSicilService>();
                 services.AddScoped<IRaporService, RaporService>();
                 services.AddScoped<IResmiTatilService, ResmiTatilService>();
                 services.AddScoped<ISifreService, SifreService>();
@@ -189,6 +194,7 @@ namespace CeyPASS.WFA
                 services.AddScoped<sifremiUnuttumEkrani>();
                 services.AddScoped<reddetmeEkrani>();
                 services.AddTransient<frmKisiAra>();
+                services.AddTransient<frmCokluSicilEslestirme>();
                 services.AddScoped<ucCihazlar>();
                 services.AddScoped<ucResmiTatiller>();
                 services.AddScoped<KisiKartKontrolu>();

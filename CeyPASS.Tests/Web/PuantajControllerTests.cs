@@ -13,6 +13,9 @@ using Xunit;
 
 namespace CeyPASS.Tests.Web
 {
+    /// <summary>
+    /// Puantaj MVC uç noktaları: yetki, dışa aktarım ve ay/gün düzenleme akışları.
+    /// </summary>
     public class PuantajControllerTests
     {
         private readonly Mock<IPuantajService> _puantajMock = new();
@@ -22,6 +25,7 @@ namespace CeyPASS.Tests.Web
         private readonly Mock<IKisiQueryService> _kisiQueryMock = new();
         private readonly Mock<ISessionContext> _sessionMock = new();
         private readonly Mock<IAuthorizationService> _authMock = new();
+        private readonly Mock<ICokluSicilService> _cokluSicilMock = new();
         private readonly PuantajController _sut;
 
         public PuantajControllerTests()
@@ -33,7 +37,8 @@ namespace CeyPASS.Tests.Web
                 _kisiMock.Object,
                 _kisiQueryMock.Object,
                 _sessionMock.Object,
-                _authMock.Object);
+                _authMock.Object,
+                _cokluSicilMock.Object);
 
             // AJAX mode: X-Requested-With header causes JSON responses
             var httpContext = new DefaultHttpContext();
@@ -53,6 +58,9 @@ namespace CeyPASS.Tests.Web
 
         // ─── Duzenle — TryParseSaat dolaylı testleri ─────────────────────────
 
+        /// <summary>
+        /// GeçersizSaat JsonHatadöner
+        /// </summary>
         [Fact]
         public void Duzenle_GecersizSaat_JsonHataDoner()
         {
@@ -62,6 +70,9 @@ namespace CeyPASS.Tests.Web
             SerializeJsonValue(json.Value).Should().Contain("\"success\":false");
         }
 
+        /// <summary>
+        /// VirguluSaat JsonBasarilidöner
+        /// </summary>
         [Fact]
         public void Duzenle_VirguluSaat_JsonBasariliDoner()
         {
@@ -72,6 +83,9 @@ namespace CeyPASS.Tests.Web
             SerializeJsonValue(json.Value).Should().Contain("\"success\":true");
         }
 
+        /// <summary>
+        /// IntegerSaat75 JsonBasarilidöner
+        /// </summary>
         [Fact]
         public void Duzenle_IntegerSaat75_JsonBasariliDoner()
         {
@@ -82,6 +96,9 @@ namespace CeyPASS.Tests.Web
             SerializeJsonValue(json.Value).Should().Contain("\"success\":true");
         }
 
+        /// <summary>
+        /// IntegerSaat750 JsonBasarilidöner
+        /// </summary>
         [Fact]
         public void Duzenle_IntegerSaat750_JsonBasariliDoner()
         {
@@ -94,6 +111,9 @@ namespace CeyPASS.Tests.Web
 
         // ─── Index ────────────────────────────────────────────────────────────
 
+        /// <summary>
+        /// Yetkisiz HomeIndexeYonlendirir
+        /// </summary>
         [Fact]
         public void Index_Yetkisiz_HomeIndexeYonlendirir()
         {
@@ -114,6 +134,9 @@ namespace CeyPASS.Tests.Web
             redirect.ControllerName.Should().Be("Home");
         }
 
+        /// <summary>
+        /// Yetkili Viewdöner
+        /// </summary>
         [Fact]
         public void Index_Yetkili_ViewDoner()
         {
@@ -124,7 +147,7 @@ namespace CeyPASS.Tests.Web
             _puantajMock.Setup(p => p.GetKullaniciFirmaIsyeriYetkileri(It.IsAny<int>())).Returns(new List<FirmaIsyeriYetkiDTO>());
             _firmaMock.Setup(f => f.GetPuantajFirmalar()).Returns(new List<Firma>());
             _isyeriMock.Setup(i => i.GetIsyerleriByFirma(It.IsAny<int>())).Returns(new List<IsyeriItem>());
-            _kisiQueryMock.Setup(q => q.GetAktifKisilerByFirma(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<bool?>(), It.IsAny<int?>(), It.IsAny<IReadOnlyList<int>>(), It.IsAny<bool>())).Returns(new List<KisiListItem>());
+            _kisiQueryMock.Setup(q => q.GetAktifKisilerByFirma(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<bool?>(), It.IsAny<int?>(), It.IsAny<IReadOnlyList<int>>(), It.IsAny<bool>(), It.IsAny<int?>())).Returns(new List<KisiListItem>());
             _puantajMock.Setup(p => p.GetPuantajTipleri()).Returns(new List<PuantajTipDTO>());
             _puantajMock.Setup(p => p.GetEkKayitGun()).Returns(0);
 
@@ -139,6 +162,9 @@ namespace CeyPASS.Tests.Web
 
         // ─── Onayla ───────────────────────────────────────────────────────────
 
+        /// <summary>
+        /// Yetkisiz JsonHatadöner
+        /// </summary>
         [Fact]
         public void Onayla_Yetkisiz_JsonHataDoner()
         {
@@ -152,6 +178,9 @@ namespace CeyPASS.Tests.Web
 
         // ─── Reddet ───────────────────────────────────────────────────────────
 
+        /// <summary>
+        /// Yetkisiz JsonHatadöner
+        /// </summary>
         [Fact]
         public void Reddet_Yetkisiz_JsonHataDoner()
         {
@@ -165,6 +194,9 @@ namespace CeyPASS.Tests.Web
 
         // ─── SetEkKayitGun ────────────────────────────────────────────────────
 
+        /// <summary>
+        /// Yetkisiz IndexeYonlendirir
+        /// </summary>
         [Fact]
         public void SetEkKayitGun_Yetkisiz_IndexeYonlendirir()
         {
@@ -183,6 +215,9 @@ namespace CeyPASS.Tests.Web
 
         // ─── CokluSicileAktar ─────────────────────────────────────────────────
 
+        /// <summary>
+        /// Yetkisiz IndexeYonlendirir
+        /// </summary>
         [Fact]
         public void CokluSicileAktar_Yetkisiz_IndexeYonlendirir()
         {
@@ -201,10 +236,13 @@ namespace CeyPASS.Tests.Web
 
         // ─── GetKisiler ───────────────────────────────────────────────────────
 
+        /// <summary>
+        /// IsyeriIdYok KisiQueryServiseçağrılır
+        /// </summary>
         [Fact]
         public void GetKisiler_IsyeriIdYok_KisiQueryServiseCagrilir()
         {
-            _kisiQueryMock.Setup(q => q.GetAktifKisilerByFirma(1, It.IsAny<string>(), It.IsAny<bool?>(), It.IsAny<int?>(), It.IsAny<IReadOnlyList<int>>(), It.IsAny<bool>()))
+            _kisiQueryMock.Setup(q => q.GetAktifKisilerByFirma(1, It.IsAny<string>(), It.IsAny<bool?>(), It.IsAny<int?>(), It.IsAny<IReadOnlyList<int>>(), It.IsAny<bool>(), It.IsAny<int?>()))
                 .Returns(new List<KisiListItem> { new KisiListItem { PersonelId = "P1", AdSoyad = "Ali Veli" } });
 
             var sonuc = _sut.GetKisiler(1, null, null, null);

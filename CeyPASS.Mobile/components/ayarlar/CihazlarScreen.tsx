@@ -1,3 +1,4 @@
+/** Turnike/cihaz kayıtları ve bağlantı ayarları. */
 import React, { useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, Modal, ScrollView, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
@@ -5,7 +6,8 @@ import { StatusPopup } from "../StatusPopup";
 import { PageHeader } from "../PageHeader";
 import { useHeaderQuickMenu } from "../HeaderQuickMenu";
 import { useNotificationsContext } from "../NotificationsProvider";
-import { ayarlarService, Cihaz, CihazListDTO, CihazTip } from "../../services/ayarlarApi";
+import { ayarlarService, Cihaz, CihazListDTO, CihazTip } from "../../services/ayarlarApi";
+import { toTrLower } from "../../services/turkishText";
 
 function pick<T = any>(obj: any, a: string, b?: string): T | undefined {
   if (!obj) return undefined;
@@ -140,7 +142,7 @@ export function CihazlarScreen(props: { user: any; abilities: any; onOpenMenu: (
   }, []);
 
   const rows = useMemo(() => {
-    const qq = q.trim().toLowerCase();
+    const qq = toTrLower(q).trim();
     const mapped = (items ?? []).map((x) => {
       const id = pick<number>(x, "cihazId", "CihazId") ?? 0;
       const ad = (pick<string>(x, "cihazAdi", "CihazAdi") ?? "").toString();
@@ -150,7 +152,7 @@ export function CihazlarScreen(props: { user: any; abilities: any; onOpenMenu: (
       const aktif = asBool(pick<any>(x, "aktifMi", "AktifMi"), true);
       return { id, ad, ip, port, firma, aktif, raw: x };
     });
-    const filtered = !qq ? mapped : mapped.filter((r) => `${r.id} ${r.ad} ${r.ip} ${r.port} ${r.firma} ${r.aktif ? "aktif" : "pasif"}`.toLowerCase().includes(qq));
+    const filtered = !qq ? mapped : mapped.filter((r) => toTrLower(`${r.id} ${r.ad} ${r.ip} ${r.port} ${r.firma} ${r.aktif ? "aktif" : "pasif"}`).includes(qq));
     return filtered.sort((a, b) => a.ad.localeCompare(b.ad, "tr"));
   }, [items, q]);
 

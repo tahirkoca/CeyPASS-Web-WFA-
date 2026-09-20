@@ -7,6 +7,7 @@ using CeyPASS.Models;
 
 namespace CeyPASS.Api.Controllers
 {
+    /// <summary>Terminal/cihaz tanımları; firma izolasyonu.</summary>
     [Authorize]
     [ApiController]
     [Route("api/v1/[controller]")]
@@ -27,6 +28,7 @@ namespace CeyPASS.Api.Controllers
             _authorizationService = authorizationService;
         }
 
+        /// <summary>Cihaz listesi; admin tüm firmalar.</summary>
         [HttpGet]
         public ActionResult<ApiResult<List<CihazListDTO>>> Get([FromQuery] bool sadeceAktif = false)
         {
@@ -37,6 +39,7 @@ namespace CeyPASS.Api.Controllers
             return Ok(ApiResult<List<CihazListDTO>>.Ok(list));
         }
 
+        /// <summary>Tek cihaz detayı (firma kontrolü).</summary>
         [HttpGet("{id}")]
         public ActionResult<ApiResult<Cihaz>> Get(int id)
         {
@@ -51,6 +54,8 @@ namespace CeyPASS.Api.Controllers
             return Ok(ApiResult<Cihaz>.Ok(item));
         }
 
+        
+        /// <summary>Yeni cihaz.</summary>
         [HttpPost]
         public ActionResult<ApiResult<int>> Post([FromBody] Cihaz cihaz)
         {
@@ -62,6 +67,8 @@ namespace CeyPASS.Api.Controllers
             return Ok(ApiResult<int>.Ok(id, "Cihaz başarıyla eklendi."));
         }
 
+        
+        /// <summary>Cihaz güncelleme.</summary>
         [HttpPut("{id}")]
         public ActionResult<ApiResult> Put(int id, [FromBody] Cihaz cihaz)
         {
@@ -74,6 +81,8 @@ namespace CeyPASS.Api.Controllers
             return Ok(ApiResult.Ok("Cihaz güncellendi."));
         }
 
+        
+        /// <summary>Cihazı pasifleştirir.</summary>
         [HttpDelete("{id}")]
         public ActionResult<ApiResult> Delete(int id)
         {
@@ -83,6 +92,8 @@ namespace CeyPASS.Api.Controllers
             return Ok(ApiResult.Ok("Cihaz pasif yapıldı."));
         }
 
+        
+        /// <summary>Pasif cihazı aktifleştirir.</summary>
         [HttpPost("{id}/aktif")]
         public ActionResult<ApiResult> Activate(int id)
         {
@@ -92,6 +103,8 @@ namespace CeyPASS.Api.Controllers
             return Ok(ApiResult.Ok("Cihaz aktif yapıldı."));
         }
 
+        
+        /// <summary>Cihaz tip lookup.</summary>
         [HttpGet("tipler")]
         public ActionResult<ApiResult<List<CihazTip>>> GetTipler()
         {

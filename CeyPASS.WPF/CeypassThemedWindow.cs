@@ -5,6 +5,7 @@ using DevExpress.Xpf.Core;
 
 namespace CeyPASS.WPF;
 
+/// <summary>DevExpress ThemedWindow — CeyPASS başlık/tema kaynakları ve logo.</summary>
 public class CeypassThemedWindow : ThemedWindow
 {
     protected CeypassThemedWindow()
@@ -12,6 +13,10 @@ public class CeypassThemedWindow : ThemedWindow
         ControlBoxButtonSet = ControlBoxButtons.None;
         ShowIcon = true;
         FontFamily = new FontFamily("Segoe UI");
+        Padding = new Thickness(0);
+        BorderThickness = new Thickness(0);
+        SnapsToDevicePixels = true;
+        UseLayoutRounding = true;
 
         try
         {

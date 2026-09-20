@@ -3,6 +3,7 @@ using System.Runtime.CompilerServices;
 
 namespace CeyPASS.WPF;
 
+/// <summary>ViewModel tabanı — SetProperty / RaisePropertyChanged.</summary>
 public abstract class ObservableObject : INotifyPropertyChanged
 {
     public event PropertyChangedEventHandler? PropertyChanged;

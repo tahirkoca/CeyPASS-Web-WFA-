@@ -6,6 +6,7 @@ using System.Windows.Forms;
 
 namespace CeyPASS.WFA.UserControls.Canlı_İzleme
 {
+    /// <summary>Araç puantajsız kart atama ve güncelleme formu.</summary>
     public partial class aracKartiAtama : UserControl
     {
         private enum EMode { Yeni, Guncelle }
@@ -16,6 +17,7 @@ namespace CeyPASS.WFA.UserControls.Canlı_İzleme
         private string _tamTc;
         private bool _suppressTcChange;
 
+        /// <summary>TC maskeleme ve geçmiş ziyaretçi paneli olaylarını bağlar.</summary>
         public aracKartiAtama(ISessionContext session, IAracKartiService svc)
         {
             InitializeComponent();
@@ -48,7 +50,7 @@ namespace CeyPASS.WFA.UserControls.Canlı_İzleme
         }
 
         private string ResolveTcForSave() =>
-            TcKimlikHelper.ResolveForSave(txtTCKimlikNo.Text, _tamTc);
+            TcKimlikHelper.ResolveTcOptionalForSave(txtTCKimlikNo.Text, _tamTc);
 
         private void GecmisZiyaretciPanel_ZiyaretciSecildi(GecmisZiyaretciItem item)
         {
@@ -56,8 +58,10 @@ namespace CeyPASS.WFA.UserControls.Canlı_İzleme
 
             txtAdSoyad.Text = item.AdSoyad ?? "";
             ShowMaskedTc(item.TCKimlikNo);
+            txtPasaportNo.Text = item.PasaportNo ?? "";
             txtPlaka.Text = item.Plaka ?? "";
             txtZiyaretEdilenKisi.Text = item.ZiyaretEdilenKisi ?? "";
+            txtAciklama.Text = item.Notlar ?? "";
             dtpGirisSaati.Value = DateTime.Now;
         }
 
@@ -88,6 +92,10 @@ namespace CeyPASS.WFA.UserControls.Canlı_İzleme
                     txtZiyaretEdilenKisi.Text = rec.ZiyaretEdilenKisi;
                 if (!string.IsNullOrEmpty(rec.Plaka) && string.IsNullOrWhiteSpace(txtPlaka.Text))
                     txtPlaka.Text = rec.Plaka;
+                if (!string.IsNullOrEmpty(rec.PasaportNo) && string.IsNullOrWhiteSpace(txtPasaportNo.Text))
+                    txtPasaportNo.Text = rec.PasaportNo;
+                if (!string.IsNullOrEmpty(rec.Notlar) && string.IsNullOrWhiteSpace(txtAciklama.Text))
+                    txtAciklama.Text = rec.Notlar;
             }
             catch
             {
@@ -105,6 +113,7 @@ namespace CeyPASS.WFA.UserControls.Canlı_İzleme
             try
             {
                 var tc = ResolveTcForSave();
+                var pasaport = string.IsNullOrWhiteSpace(txtPasaportNo.Text) ? null : txtPasaportNo.Text.Trim();
                 var kimeGeldigi = string.IsNullOrWhiteSpace(txtZiyaretEdilenKisi.Text) ? null : txtZiyaretEdilenKisi.Text.Trim();
                 var plaka = string.IsNullOrWhiteSpace(txtPlaka.Text) ? null : txtPlaka.Text.Trim();
                 if (string.IsNullOrWhiteSpace(plaka))
@@ -124,7 +133,8 @@ namespace CeyPASS.WFA.UserControls.Canlı_İzleme
                         aciklama: txtAciklama.Text,
                         tcKimlikNo: tc,
                         ziyaretEdilenKisi: kimeGeldigi,
-                        plaka: plaka);
+                        plaka: plaka,
+                        pasaportNo: pasaport);
 
                     MessageBox.Show("Kayıt başarıyla oluşturuldu.");
                     this.FindForm()?.Close();
@@ -143,7 +153,8 @@ namespace CeyPASS.WFA.UserControls.Canlı_İzleme
                         aciklama: txtAciklama.Text,
                         tcKimlikNo: tc,
                         ziyaretEdilenKisi: kimeGeldigi,
-                        plaka: plaka);
+                        plaka: plaka,
+                        pasaportNo: pasaport);
 
                     MessageBox.Show("Kayıt güncellendi.");
                     this.FindForm()?.Close();
@@ -171,13 +182,15 @@ namespace CeyPASS.WFA.UserControls.Canlı_İzleme
             txtAdSoyad.Text = a.MisafirAdSoyad ?? "";
             txtZiyaretEdilenKisi.Text = a.ZiyaretEdilenKisi ?? "";
             ShowMaskedTc(a.TCKimlikNo);
+            txtPasaportNo.Text = a.PasaportNo ?? "";
             txtPlaka.Text = a.Plaka ?? "";
             txtAciklama.Text = a.Notlar ?? "";
             dtpGirisSaati.Value = a.Baslangic;
             dtpCikisSaati.Value = DateTime.Now;
         }
 
-        public void InitYeni(int firmaId)
+        /// <summary>Boş kart listesi; preselectPersonelId ile grid satırındaki kart önceden seçilir.</summary>
+        public void InitYeni(int firmaId, string preselectPersonelId = null)
         {
             _mode = EMode.Yeni;
             lblHeader.Text = "Araç Kartı Ver";
@@ -191,9 +204,11 @@ namespace CeyPASS.WFA.UserControls.Canlı_İzleme
 
             if (cards != null && cards.Count > 0)
                 cmbPuantajsizKartlar.SelectedIndex = 0;
+            SelectKart(preselectPersonelId);
 
             txtAdSoyad.Clear();
             ShowMaskedTc(null);
+            txtPasaportNo.Clear();
             txtPlaka.Clear();
             txtZiyaretEdilenKisi.Clear();
             txtAciklama.Clear();
@@ -205,7 +220,8 @@ namespace CeyPASS.WFA.UserControls.Canlı_İzleme
             gecmisZiyaretciPanel.LoadListe(ad => _svc.SearchGecmisZiyaretciler(firmaId, ad));
         }
 
-        public void InitGuncelleme(int firmaId, DateTime now)
+        /// <summary>Aktif atamalar; preselectAtamaId ile çift tıklanan satır önceden seçilir.</summary>
+        public void InitGuncelleme(int firmaId, DateTime now, int? preselectAtamaId = null)
         {
             _mode = EMode.Guncelle;
             lblHeader.Text = "Verilen Araç Kartını Güncelle";
@@ -213,7 +229,7 @@ namespace CeyPASS.WFA.UserControls.Canlı_İzleme
 
             gecmisZiyaretciPanel.Visible = false;
 
-            var aktifler = _svc.GetTodayActiveAssignments(now, firmaId);
+            var aktifler = _svc.GetOpenActiveAssignments(firmaId);
             cmbPuantajsizKartlar.DataSource = aktifler;
             cmbPuantajsizKartlar.DisplayMember = "KartAdi";
             cmbPuantajsizKartlar.ValueMember = "KartId";
@@ -221,8 +237,36 @@ namespace CeyPASS.WFA.UserControls.Canlı_İzleme
 
             if (cmbPuantajsizKartlar.Items.Count > 0)
                 cmbPuantajsizKartlar.SelectedIndex = 0;
+            SelectAtama(preselectAtamaId);
 
             btnKaydet.Enabled = cmbPuantajsizKartlar.Items.Count > 0;
+        }
+
+        private void SelectKart(string personelId)
+        {
+            if (string.IsNullOrWhiteSpace(personelId)) return;
+            for (int i = 0; i < cmbPuantajsizKartlar.Items.Count; i++)
+            {
+                if (cmbPuantajsizKartlar.Items[i] is KisiListItem k
+                    && string.Equals(k.PersonelId, personelId.Trim(), StringComparison.OrdinalIgnoreCase))
+                {
+                    cmbPuantajsizKartlar.SelectedIndex = i;
+                    return;
+                }
+            }
+        }
+
+        private void SelectAtama(int? atamaId)
+        {
+            if (!atamaId.HasValue) return;
+            for (int i = 0; i < cmbPuantajsizKartlar.Items.Count; i++)
+            {
+                if (cmbPuantajsizKartlar.Items[i] is PuantajsizKartAtama a && a.AtamaId == atamaId.Value)
+                {
+                    cmbPuantajsizKartlar.SelectedIndex = i;
+                    return;
+                }
+            }
         }
     }
 }

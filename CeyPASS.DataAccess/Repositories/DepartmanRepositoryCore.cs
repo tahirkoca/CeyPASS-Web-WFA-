@@ -7,6 +7,7 @@ using System.Linq;
 
 namespace CeyPASS.DataAccess.Repositories
 {
+    /// <summary>Departman erişimi.</summary>
     public class DepartmanRepositoryCore : IDepartmanRepository
     {
         private readonly CeyPASSDataConnectionCore _context;
@@ -16,6 +17,7 @@ namespace CeyPASS.DataAccess.Repositories
             _context = context;
         }
 
+        /// <summary>By Firma sorgularını getirir.</summary>
         public List<LookupItem> GetByFirma(int? firmId = null)
         {
             return _context.Departmanlar
@@ -28,6 +30,7 @@ namespace CeyPASS.DataAccess.Repositories
                 .ToList();
         }
 
+        /// <summary>All sorgularını getirir.</summary>
         public DataTable GetAll()
         {
             var list = _context.Departmanlar
@@ -52,12 +55,14 @@ namespace CeyPASS.DataAccess.Repositories
             return dt;
         }
 
+        /// <summary>Next Id sorgularını getirir.</summary>
         public int GetNextId()
         {
             var max = _context.Departmanlar.Select(d => (int?)d.DepartmanId).Max();
             return (max ?? 0) + 1;
         }
 
+        /// <summary>Yeni kayıt ekler.</summary>
         public bool Insert(int id, string ad, string aciklama)
         {
             var entity = new CeyPASS.DataAccess.Departmanlar
@@ -71,6 +76,7 @@ namespace CeyPASS.DataAccess.Repositories
             return _context.SaveChanges() > 0;
         }
 
+        /// <summary>Kaydı günceller.</summary>
         public bool Update(int id, string ad, string aciklama)
         {
             var entity = _context.Departmanlar
@@ -85,6 +91,7 @@ namespace CeyPASS.DataAccess.Repositories
             return _context.SaveChanges() > 0;
         }
 
+        /// <summary>Kaydı siler.</summary>
         public bool Delete(int id)
         {
             var entity = _context.Departmanlar

@@ -21,12 +21,15 @@ namespace CeyPASS.WFA.UserControls.Izinler
             OgledenSonra = 1
         }
 
+        /// <summary>ComboBox görünen metni.</summary>
         public static string DilimComboText(Dilim d) =>
             d == Dilim.Sabah ? "Sabah (08:30-12:30)" : "Öğleden sonra (14:00-18:00)";
 
+        /// <summary>Kayıtta saklanan açıklama metni.</summary>
         public static string AciklamaMetni(Dilim d) =>
             (d == Dilim.Sabah ? AciklamaSabah : AciklamaOgledenSonra) + YarimGunAciklamaEki;
 
+        /// <summary>Seçilen dilime göre DB başlangıç/bitiş saatleri (225 dk).</summary>
         public static void KayitZamanlari(Dilim dilim, DateTime gun, out DateTime baslangic, out DateTime bitis)
         {
             gun = gun.Date;
@@ -42,6 +45,7 @@ namespace CeyPASS.WFA.UserControls.Izinler
             }
         }
 
+        /// <summary>Mevcut açıklamadan sabah/öğleden sonra dilimini çıkarır.</summary>
         public static bool TryDilimFromAciklama(string aciklama, out Dilim dilim)
         {
             dilim = Dilim.Sabah;
@@ -61,6 +65,7 @@ namespace CeyPASS.WFA.UserControls.Izinler
             return false;
         }
 
+        /// <summary>Kaydın yarım gün yıllık izin olup olmadığını doğrular.</summary>
         public static bool KayitYarimGunYillikIzinMi(int izinId, bool saatlikIzinMi, int sureDakika, string aciklama)
         {
             if (izinId != YillikIzinTipId || !saatlikIzinMi)
@@ -70,6 +75,7 @@ namespace CeyPASS.WFA.UserControls.Izinler
             return TryDilimFromAciklama(aciklama, out _);
         }
 
+        /// <summary>Süreyi tam güne (450 dk) oranlar.</summary>
         public static decimal GunEsdegeri(int sureDakika) =>
             sureDakika <= 0 ? 0m : Math.Round(sureDakika / (decimal)TamGunDakika, 2, MidpointRounding.AwayFromZero);
     }

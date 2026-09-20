@@ -30,11 +30,26 @@
         return requireValid(shown);
     }
 
+    function resolveTcOptionalForSave(displayText, tamTc) {
+        var shown = (displayText || "").trim();
+        if (!shown) return null;
+        if (looksMasked(shown)) {
+            var t = (tamTc || "").trim();
+            if (!t || looksMasked(t) || !isValid(t))
+                throw new Error("T.C. Kimlik No 11 haneli olmalıdır.");
+            return t;
+        }
+        if (!isValid(shown))
+            throw new Error("T.C. Kimlik No 11 haneli olmalıdır.");
+        return shown;
+    }
+
     global.TcKimlik = {
         isValid: isValid,
         looksMasked: looksMasked,
         mask: mask,
         requireValid: requireValid,
-        resolveForSave: resolveForSave
+        resolveForSave: resolveForSave,
+        resolveTcOptionalForSave: resolveTcOptionalForSave
     };
 })(window);

@@ -16,6 +16,9 @@ using Xunit;
 
 namespace CeyPASS.Tests.Web
 {
+    /// <summary>
+    /// Rapor export ve filtre MVC.
+    /// </summary>
     public class RaporControllerTests : IDisposable
     {
         private readonly Mock<IRaporService> _raporMock = new();
@@ -62,6 +65,9 @@ namespace CeyPASS.Tests.Web
             return sut;
         }
 
+        /// <summary>
+        /// Yetkisiz HomeIndexeYonlendirir
+        /// </summary>
         [Fact]
         public void Index_Yetkisiz_HomeIndexeYonlendirir()
         {
@@ -75,6 +81,9 @@ namespace CeyPASS.Tests.Web
             redirect.ControllerName.Should().Be("Home");
         }
 
+        /// <summary>
+        /// ProcedureAdiYok Goruntumunull
+        /// </summary>
         [Fact]
         public void Index_ProcedureAdiYok_GoruntumuNull()
         {
@@ -94,6 +103,9 @@ namespace CeyPASS.Tests.Web
             view.Model.Should().BeNull();
         }
 
+        /// <summary>
+        /// YetkiliIsyeri10 Sadece10Ve0Gonderilir
+        /// </summary>
         [Fact]
         public void Index_YetkiliIsyeri10_Sadece10Ve0Gonderilir()
         {
@@ -125,8 +137,11 @@ namespace CeyPASS.Tests.Web
             captured!["@IsyeriIdList"].Should().Be("10,0");
         }
 
+        /// <summary>
+        /// SeciliIsyeri20 Csv20
+        /// </summary>
         [Fact]
-        public void Index_SeciliIsyeri20_Csv10_20_0()
+        public void Index_SeciliIsyeri20_Csv20()
         {
             _authMock.Setup(a => a.ViewAbility("Raporlar")).Returns(true);
             _authMock.Setup(a => a.Can(It.IsAny<string>(), It.IsAny<string>())).Returns(true);
@@ -156,9 +171,12 @@ namespace CeyPASS.Tests.Web
             var sut = CreateSut();
             sut.Index(procedureAdi: "sp_test", isyeriIds: "20");
 
-            captured!["@IsyeriIdList"].Should().Be("20,0");
+            captured!["@IsyeriIdList"].Should().Be("20");
         }
 
+        /// <summary>
+        /// Yetkisiz 403döner
+        /// </summary>
         [Fact]
         public void ExportExcel_Yetkisiz_403Doner()
         {
@@ -171,6 +189,9 @@ namespace CeyPASS.Tests.Web
             status.StatusCode.Should().Be(403);
         }
 
+        /// <summary>
+        /// SesyonboşSerialized 400döner
+        /// </summary>
         [Fact]
         public void ExportExcel_SesyonBosSerialized_400Doner()
         {
@@ -188,6 +209,9 @@ namespace CeyPASS.Tests.Web
             status.StatusCode.Should().Be(400);
         }
 
+        /// <summary>
+        /// Yetkisiz 403döner
+        /// </summary>
         [Fact]
         public void ExportPdf_Yetkisiz_403Doner()
         {

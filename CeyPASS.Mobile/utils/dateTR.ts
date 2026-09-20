@@ -1,3 +1,4 @@
+/** Tarihi tr-TR gg.aa.yyyy; yyyy-MM-dd timezone kayması yapmaz. */
 export function formatDateTR(v: any): string {
   if (!v) return "";
 
@@ -20,6 +21,7 @@ export function formatDateTR(v: any): string {
   return `${dd}.${mm}.${yyyy}`;
 }
 
+/** Tarih+saat tr-TR (gg.aa.yyyy ss:dd:ss). */
 export function formatDateTimeTRLoose(v: any): string {
   if (!v) return "";
   const d = new Date(v);

@@ -8,6 +8,9 @@ using Xunit;
 
 namespace CeyPASS.Tests.Unit
 {
+    /// <summary>
+    /// Modül/yetki kontrolü: süper roller (1–2) bypass, diğer kullanıcılar için CheckPermission ve ability kısayolları.
+    /// </summary>
     public class AuthorizationServiceTests
     {
         private readonly Mock<ISessionContext> _sessionMock = new();
@@ -21,6 +24,9 @@ namespace CeyPASS.Tests.Unit
 
         // ─── Can() ────────────────────────────────────────────────────────────
 
+        /// <summary>
+        /// Oturum yokken tüm yetki kontrolleri reddedilir.
+        /// </summary>
         [Fact]
         public void Can_AktifKullaniciYok_FalseDoner()
         {
@@ -29,6 +35,9 @@ namespace CeyPASS.Tests.Unit
             _sut.Can("Personel", YetkiTipleri.View).Should().BeFalse();
         }
 
+        /// <summary>
+        /// Geçersiz kullanıcı ID (0) ile yetki verilmez.
+        /// </summary>
         [Fact]
         public void Can_KullaniciIdSifir_FalseDoner()
         {
@@ -37,6 +46,9 @@ namespace CeyPASS.Tests.Unit
             _sut.Can("Personel", YetkiTipleri.View).Should().BeFalse();
         }
 
+        /// <summary>
+        /// Rol 1 (süper admin) tüm modüllerde bypass; CheckPermission çağrılmaz.
+        /// </summary>
         [Fact]
         public void Can_RolId1_HerZamanTrue_RepoCagrilmaz()
         {
@@ -47,6 +59,9 @@ namespace CeyPASS.Tests.Unit
             _repoMock.Verify(r => r.CheckPermission(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
         }
 
+        /// <summary>
+        /// Rol 2 tüm modüllerde bypass; CheckPermission çağrılmaz.
+        /// </summary>
         [Fact]
         public void Can_RolId2_HerZamanTrue_RepoCagrilmaz()
         {
@@ -57,6 +72,9 @@ namespace CeyPASS.Tests.Unit
             _repoMock.Verify(r => r.CheckPermission(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
         }
 
+        /// <summary>
+        /// NormalKullanici RepoyuSorgulaTrue Truedöner
+        /// </summary>
         [Fact]
         public void Can_NormalKullanici_RepoyuSorgulaTrue_TrueDoner()
         {
@@ -67,6 +85,9 @@ namespace CeyPASS.Tests.Unit
             _sut.Can("Personel", YetkiTipleri.View).Should().BeTrue();
         }
 
+        /// <summary>
+        /// NormalKullanici RepoyuSorgulaFalse Falsedöner
+        /// </summary>
         [Fact]
         public void Can_NormalKullanici_RepoyuSorgulaFalse_FalseDoner()
         {
@@ -79,6 +100,9 @@ namespace CeyPASS.Tests.Unit
 
         // ─── Ability kısayolları ──────────────────────────────────────────────
 
+        /// <summary>
+        /// ViewYetkiKoduyleçağrılır
+        /// </summary>
         [Fact]
         public void ViewAbility_ViewYetkiKoduyleCagrilir()
         {
@@ -90,6 +114,9 @@ namespace CeyPASS.Tests.Unit
             _repoMock.Verify(r => r.CheckPermission(10, "Personel", YetkiTipleri.View), Times.Once);
         }
 
+        /// <summary>
+        /// CreateYetkiKoduyleçağrılır
+        /// </summary>
         [Fact]
         public void CreateAbility_CreateYetkiKoduyleCagrilir()
         {
@@ -101,6 +128,9 @@ namespace CeyPASS.Tests.Unit
             _repoMock.Verify(r => r.CheckPermission(10, "Personel", YetkiTipleri.Create), Times.Once);
         }
 
+        /// <summary>
+        /// DeleteYetkiKoduyleçağrılır
+        /// </summary>
         [Fact]
         public void DeleteAbility_DeleteYetkiKoduyleCagrilir()
         {
@@ -112,6 +142,9 @@ namespace CeyPASS.Tests.Unit
             _repoMock.Verify(r => r.CheckPermission(10, "Personel", YetkiTipleri.Delete), Times.Once);
         }
 
+        /// <summary>
+        /// ExportYetkiKoduyleçağrılır
+        /// </summary>
         [Fact]
         public void ExportAbility_ExportYetkiKoduyleCagrilir()
         {
@@ -123,6 +156,9 @@ namespace CeyPASS.Tests.Unit
             _repoMock.Verify(r => r.CheckPermission(10, "Rapor", YetkiTipleri.Export), Times.Once);
         }
 
+        /// <summary>
+        /// ApproveYetkiKoduyleçağrılır
+        /// </summary>
         [Fact]
         public void ApproveAbility_ApproveYetkiKoduyleCagrilir()
         {
@@ -134,6 +170,9 @@ namespace CeyPASS.Tests.Unit
             _repoMock.Verify(r => r.CheckPermission(10, "Puantaj", YetkiTipleri.Approve), Times.Once);
         }
 
+        /// <summary>
+        /// UpdateYetkiKoduyleçağrılır
+        /// </summary>
         [Fact]
         public void UpdateAbility_UpdateYetkiKoduyleCagrilir()
         {

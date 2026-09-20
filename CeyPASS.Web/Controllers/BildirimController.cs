@@ -5,6 +5,7 @@ using System.Linq;
 
 namespace CeyPASS.Web.Controllers
 {
+    /// <summary>Uygulama ici bildirim listesi.</summary>
     public class BildirimController : Controller
     {
         private readonly IBildirimService _bildirimService;
@@ -16,6 +17,7 @@ namespace CeyPASS.Web.Controllers
             _session = session;
         }
 
+        /// <summary>GetMyNotifications lookup/JSON verisi.</summary>
         [HttpGet]
         public IActionResult GetMyNotifications()
         {
@@ -38,6 +40,7 @@ namespace CeyPASS.Web.Controllers
             return Json(new { items = list, unreadCount });
         }
 
+        /// <summary>MarkAsRead islemi.</summary>
         [HttpPost]
         public IActionResult MarkAsRead(int id)
         {
@@ -45,6 +48,7 @@ namespace CeyPASS.Web.Controllers
             return Ok();
         }
 
+        /// <summary>MarkAllAsRead islemi.</summary>
         [HttpPost]
         public IActionResult MarkAllAsRead()
         {
@@ -52,6 +56,7 @@ namespace CeyPASS.Web.Controllers
             return Ok();
         }
 
+        /// <summary>GetAllNotifications lookup/JSON verisi.</summary>
         [HttpGet]
         public IActionResult GetAllNotifications(int page = 1, int pageSize = 10)
         {

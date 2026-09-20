@@ -8,6 +8,7 @@ using System.Linq;
 
 namespace CeyPASS.DataAccess.Repositories
 {
+    /// <summary>Kisiler master erişimi.</summary>
     public class KisiRepositoryCore : IKisiRepository
     {
         private readonly CeyPASSDataConnectionCore _context;
@@ -17,11 +18,13 @@ namespace CeyPASS.DataAccess.Repositories
             _context = context;
         }
 
+        /// <summary>Exists işlemini gerçekleştirir.</summary>
         public bool Exists(string personelId)
         {
             return _context.Kisiler.Any(k => k.PersonelId == personelId);
         }
 
+        /// <summary>Find By Personel Id işlemini gerçekleştirir.</summary>
         public KisiAdSoyad FindByPersonelId(string personelId)
         {
             if (string.IsNullOrWhiteSpace(personelId)) return null;
@@ -30,6 +33,7 @@ namespace CeyPASS.DataAccess.Repositories
             return MapAdSoyad(k);
         }
 
+        /// <summary>Find By Tc Kimlik No işlemini gerçekleştirir.</summary>
         public KisiAdSoyad FindByTcKimlikNo(string tcKimlikNo)
         {
             if (string.IsNullOrWhiteSpace(tcKimlikNo)) return null;
@@ -38,6 +42,7 @@ namespace CeyPASS.DataAccess.Repositories
             return MapAdSoyad(k);
         }
 
+        /// <summary>Find By Kart No işlemini gerçekleştirir.</summary>
         public KisiAdSoyad FindByKartNo(string kartNo)
         {
             if (string.IsNullOrWhiteSpace(kartNo)) return null;
@@ -57,7 +62,8 @@ namespace CeyPASS.DataAccess.Repositories
             };
         }
 
-        public List<KisiListItem> GetAktifByFirma(int firmId, string search = null, bool? puantajYapilirMi = true, int? isyeriId = null, IReadOnlyList<int> isyeriIdIn = null, bool? ziyaretciMi = null, bool? aracKartiMi = null, bool sadeceIstenCikanlar = false)
+        /// <summary>Aktif By Firma sorgularını getirir; isteğe bağlı bölüm filtresi.</summary>
+        public List<KisiListItem> GetAktifByFirma(int firmId, string search = null, bool? puantajYapilirMi = true, int? isyeriId = null, IReadOnlyList<int> isyeriIdIn = null, bool? ziyaretciMi = null, bool? aracKartiMi = null, bool sadeceIstenCikanlar = false, int? bolumId = null)
         {
             var q = _context.Kisiler.Where(k => k.FirmaId == firmId);
 
@@ -70,6 +76,9 @@ namespace CeyPASS.DataAccess.Repositories
 
             q = ApplyIsyeriFilter(q, isyeriId, isyeriIdIn);
 
+            if (bolumId.HasValue && bolumId.Value > 0)
+                q = q.Where(k => k.BolumId == bolumId.Value);
+
             if (ziyaretciMi.HasValue)
                 q = q.Where(k => k.ZiyaretciMi == ziyaretciMi.Value);
 
@@ -81,6 +90,7 @@ namespace CeyPASS.DataAccess.Repositories
                     q = q.Where(k => k.Ad == "ARAÇ");
             }
 
+            // Metin araması SQL Contains ile yapılır; Türkçe İ/ı için DB collation Turkish_CI_* beklenir.
             if (!string.IsNullOrWhiteSpace(search))
             {
                 search = search.Trim();
@@ -104,7 +114,8 @@ namespace CeyPASS.DataAccess.Repositories
                 .ToList();
         }
 
-        public List<KisiListItem> GetAktifByFirmaPaged(int firmId, string search, bool? puantajYapilirMi, int? isyeriId, IReadOnlyList<int> isyeriIdIn, bool sadeceIstenCikanlar, int page, int pageSize, out int totalCount)
+        /// <summary>Aktif By Firma Paged sorgularını getirir; isteğe bağlı bölüm filtresi.</summary>
+        public List<KisiListItem> GetAktifByFirmaPaged(int firmId, string search, bool? puantajYapilirMi, int? isyeriId, IReadOnlyList<int> isyeriIdIn, bool sadeceIstenCikanlar, int page, int pageSize, out int totalCount, int? bolumId = null)
         {
             if (page < 1) page = 1;
             if (pageSize < 1) pageSize = 20;
@@ -120,6 +131,10 @@ namespace CeyPASS.DataAccess.Repositories
 
             q = ApplyIsyeriFilter(q, isyeriId, isyeriIdIn);
 
+            if (bolumId.HasValue && bolumId.Value > 0)
+                q = q.Where(k => k.BolumId == bolumId.Value);
+
+            // Metin araması SQL Contains; Türkçe İ/ı için DB collation Turkish_CI_* beklenir.
             if (!string.IsNullOrWhiteSpace(search))
             {
                 search = search.Trim();
@@ -147,6 +162,7 @@ namespace CeyPASS.DataAccess.Repositories
                 .ToList();
         }
 
+        /// <summary>Search By Firma Paged işlemini gerçekleştirir.</summary>
         public List<KisiSearchResultItem> SearchByFirmaPaged(KisiSearchFilter filter, int page, int pageSize, out int totalCount)
         {
             if (filter == null)
@@ -161,8 +177,6 @@ namespace CeyPASS.DataAccess.Repositories
                 join i in _context.Isyerler.AsNoTracking()
                     on new { k.IsyeriId, k.FirmaId } equals new { IsyeriId = i.IsyeriId, FirmaId = i.FirmaId } into ij
                 from i in ij.DefaultIfEmpty()
-                join d in _context.Departmanlar.AsNoTracking() on k.DepartmanId equals d.DepartmanId into dj
-                from d in dj.DefaultIfEmpty()
                 join p in _context.Pozisyonlar.AsNoTracking() on k.PozisyonId equals p.PozisyonId into pj
                 from p in pj.DefaultIfEmpty()
                 select new
@@ -173,7 +187,6 @@ namespace CeyPASS.DataAccess.Repositories
                     k.KartNo,
                     k.TcKimlikNo,
                     IsyeriAdi = i != null ? i.IsyeriAdi : null,
-                    DepartmanAdi = d != null ? d.DepartmanAdi : null,
                     PozisyonAdi = p != null ? p.PozisyonAdi : null
                 };
 
@@ -191,7 +204,6 @@ namespace CeyPASS.DataAccess.Repositories
                     KartNo = x.KartNo ?? "",
                     TcKimlikNo = x.TcKimlikNo ?? "",
                     IsyeriAdi = x.IsyeriAdi ?? "",
-                    DepartmanAdi = x.DepartmanAdi ?? "",
                     PozisyonAdi = x.PozisyonAdi ?? ""
                 })
                 .ToList();
@@ -244,11 +256,11 @@ namespace CeyPASS.DataAccess.Repositories
                 q = q.Where(k => (k.Email ?? "").Contains(t));
             }
 
-            if (filter.DepartmanId.HasValue && filter.DepartmanId.Value > 0)
-                q = q.Where(k => k.DepartmanId == filter.DepartmanId.Value);
-
             if (filter.PozisyonId.HasValue && filter.PozisyonId.Value > 0)
                 q = q.Where(k => k.PozisyonId == filter.PozisyonId.Value);
+
+            if (filter.BolumId.HasValue && filter.BolumId.Value > 0)
+                q = q.Where(k => k.BolumId == filter.BolumId.Value);
 
             if (filter.CalismaStatuId.HasValue && filter.CalismaStatuId.Value > 0)
             {
@@ -274,6 +286,7 @@ namespace CeyPASS.DataAccess.Repositories
             return q;
         }
 
+        /// <summary>Detay sorgularını getirir.</summary>
         public KisiDetay GetDetay(string personelId)
         {
             var k = _context.Kisiler.AsNoTracking().FirstOrDefault(x => x.PersonelId == personelId);
@@ -327,7 +340,6 @@ namespace CeyPASS.DataAccess.Repositories
                 KartNo = k.KartNo,
                 TcKimlikNo = k.TcKimlikNo,
                 PozisyonId = k.PozisyonId,
-                DepartmanId = k.DepartmanId,
                 FirmaId = (int)k.FirmaId,
                 IsyeriId = k.IsyeriId,
                 BolumId = k.BolumId,
@@ -356,6 +368,7 @@ namespace CeyPASS.DataAccess.Repositories
             return detay;
         }
 
+        /// <summary>Isten Cikis Tarihi değerini ayarlar.</summary>
         public void SetIstenCikisTarihi(string personelId, DateTime tarih)
         {
             var sql = @"
@@ -370,6 +383,7 @@ UPDATE dbo.Kisiler
             ClearChangeTracker();
         }
 
+        /// <summary>Tekrar Aktif Et işlemini gerçekleştirir.</summary>
         public bool TekrarAktifEt(string personelId, bool puantajYapilirMi)
         {
             var sql = @"
@@ -401,6 +415,7 @@ UPDATE dbo.Kisiler
             }
         }
 
+        /// <summary>Kisiler For Puantaj sorgularını getirir.</summary>
         public List<Kisi> GetKisilerForPuantaj(int firmaId, int isyeriId, int yil, int ay)
         {
             var ayBasi = new DateTime(yil, ay, 1);
@@ -422,7 +437,7 @@ UPDATE dbo.Kisiler
                 Soyad = k.Soyad,
                 FirmaId = (int)k.FirmaId,
                 IsyeriId = k.IsyeriId ?? 0,
-                IseGirisTarihi = (DateTime)k.IseGirisTarihi,
+                IseGirisTarihi = k.IseGirisTarihi,
                 IstenCikisTarihi = k.IstenCikisTarihi
             }).ToList();
         }
@@ -480,6 +495,7 @@ UPDATE dbo.Kisiler
             }
         }
 
+        /// <summary>Kaydı günceller.</summary>
         public bool Update(Kisi k, string originalPersonelId, bool fotoDirty, string firmaDisiKartNo = null)
         {
             if (k == null) throw new ArgumentNullException(nameof(k));
@@ -514,21 +530,20 @@ UPDATE dbo.Kisiler
        TcKimlikNo       = @p5,
        PozisyonId       = @p6,
        DogumTarihi      = @p7,
-       DepartmanId      = @p8,
-       IseGirisTarihi   = @p9,
-       IstenCikisTarihi = @p10,
-       CalismaStatusu   = @p11,
-       FirmaId          = @p12,
-       IsyeriId         = @p13,
-       BolumId          = @p14,
-       CalismaSekli     = @p15,
-       CepTel           = @p16,
-       Email            = @p17,
-       PuantajYapilirMi = @p18,
-       ZiyaretciMi      = @p19z,
-       AracKartiMi      = @p20z,
-       TaseronCalisanMi = @p21z,
-       Fotograf         = CASE WHEN @p19 = 1 THEN @p20 ELSE Fotograf END
+       IseGirisTarihi   = @p8,
+       IstenCikisTarihi = @p9,
+       CalismaStatusu   = @p10,
+       FirmaId          = @p11,
+       IsyeriId         = @p12,
+       BolumId          = @p13,
+       CalismaSekli     = @p14,
+       CepTel           = @p15,
+       Email            = @p16,
+       PuantajYapilirMi = @p17,
+       ZiyaretciMi      = @p18z,
+       AracKartiMi      = @p19z,
+       TaseronCalisanMi = @p20z,
+       Fotograf         = CASE WHEN @p18 = 1 THEN @p19 ELSE Fotograf END
  WHERE PersonelId = @p0";
 
                     var parameters = new[]
@@ -541,22 +556,21 @@ UPDATE dbo.Kisiler
                         new Microsoft.Data.SqlClient.SqlParameter("@p5", SqlDbType.NVarChar) { Value = k.TcKimlikNo ?? (object)DBNull.Value },
                         new Microsoft.Data.SqlClient.SqlParameter("@p6", SqlDbType.Int) { Value = k.PozisyonId ?? (object)DBNull.Value },
                         new Microsoft.Data.SqlClient.SqlParameter("@p7", SqlDbType.DateTime) { Value = k.DogumTarihi ?? (object)DBNull.Value },
-                        new Microsoft.Data.SqlClient.SqlParameter("@p8", SqlDbType.Int) { Value = k.DepartmanId ?? (object)DBNull.Value },
-                        new Microsoft.Data.SqlClient.SqlParameter("@p9", SqlDbType.DateTime) { Value = (object)k.IseGirisTarihi },
-                        new Microsoft.Data.SqlClient.SqlParameter("@p10", SqlDbType.DateTime) { Value = k.IstenCikisTarihi ?? (object)DBNull.Value },
-                        new Microsoft.Data.SqlClient.SqlParameter("@p11", SqlDbType.NVarChar) { Value = k.CalismaStatusu ?? (object)DBNull.Value },
-                        new Microsoft.Data.SqlClient.SqlParameter("@p12", SqlDbType.Int) { Value = k.FirmaId },
-                        new Microsoft.Data.SqlClient.SqlParameter("@p13", SqlDbType.Int) { Value = k.IsyeriId ?? (object)DBNull.Value },
-                        new Microsoft.Data.SqlClient.SqlParameter("@p14", SqlDbType.Int) { Value = k.BolumId ?? (object)DBNull.Value },
-                        new Microsoft.Data.SqlClient.SqlParameter("@p15", SqlDbType.NVarChar) { Value = k.CalismaSekli ?? (object)DBNull.Value },
-                        new Microsoft.Data.SqlClient.SqlParameter("@p16", SqlDbType.NVarChar) { Value = k.CepTel ?? (object)DBNull.Value },
-                        new Microsoft.Data.SqlClient.SqlParameter("@p17", SqlDbType.NVarChar) { Value = k.Email ?? (object)DBNull.Value },
-                        new Microsoft.Data.SqlClient.SqlParameter("@p18", SqlDbType.Bit) { Value = k.PuantajYapilirMi },
-                        new Microsoft.Data.SqlClient.SqlParameter("@p19z", SqlDbType.Bit) { Value = k.ZiyaretciMi ?? false },
-                        new Microsoft.Data.SqlClient.SqlParameter("@p20z", SqlDbType.Bit) { Value = k.AracKartiMi ?? false },
-                        new Microsoft.Data.SqlClient.SqlParameter("@p21z", SqlDbType.Bit) { Value = k.TaseronCalisanMi ?? false },
-                        new Microsoft.Data.SqlClient.SqlParameter("@p19", SqlDbType.Bit) { Value = fotoDirty ? 1 : 0 },
-                        new Microsoft.Data.SqlClient.SqlParameter("@p20", SqlDbType.Image) { Value = k.Fotograf ?? (object)DBNull.Value }
+                        new Microsoft.Data.SqlClient.SqlParameter("@p8", SqlDbType.DateTime) { Value = k.IseGirisTarihi ?? (object)DBNull.Value },
+                        new Microsoft.Data.SqlClient.SqlParameter("@p9", SqlDbType.DateTime) { Value = k.IstenCikisTarihi ?? (object)DBNull.Value },
+                        new Microsoft.Data.SqlClient.SqlParameter("@p10", SqlDbType.NVarChar) { Value = k.CalismaStatusu ?? (object)DBNull.Value },
+                        new Microsoft.Data.SqlClient.SqlParameter("@p11", SqlDbType.Int) { Value = k.FirmaId },
+                        new Microsoft.Data.SqlClient.SqlParameter("@p12", SqlDbType.Int) { Value = k.IsyeriId ?? (object)DBNull.Value },
+                        new Microsoft.Data.SqlClient.SqlParameter("@p13", SqlDbType.Int) { Value = k.BolumId ?? (object)DBNull.Value },
+                        new Microsoft.Data.SqlClient.SqlParameter("@p14", SqlDbType.NVarChar) { Value = k.CalismaSekli ?? (object)DBNull.Value },
+                        new Microsoft.Data.SqlClient.SqlParameter("@p15", SqlDbType.NVarChar) { Value = k.CepTel ?? (object)DBNull.Value },
+                        new Microsoft.Data.SqlClient.SqlParameter("@p16", SqlDbType.NVarChar) { Value = k.Email ?? (object)DBNull.Value },
+                        new Microsoft.Data.SqlClient.SqlParameter("@p17", SqlDbType.Bit) { Value = k.PuantajYapilirMi },
+                        new Microsoft.Data.SqlClient.SqlParameter("@p18z", SqlDbType.Bit) { Value = k.ZiyaretciMi ?? false },
+                        new Microsoft.Data.SqlClient.SqlParameter("@p19z", SqlDbType.Bit) { Value = k.AracKartiMi ?? false },
+                        new Microsoft.Data.SqlClient.SqlParameter("@p20z", SqlDbType.Bit) { Value = k.TaseronCalisanMi ?? false },
+                        new Microsoft.Data.SqlClient.SqlParameter("@p18", SqlDbType.Bit) { Value = fotoDirty ? 1 : 0 },
+                        new Microsoft.Data.SqlClient.SqlParameter("@p19", SqlDbType.Image) { Value = k.Fotograf ?? (object)DBNull.Value }
                     };
 
                     _context.Database.ExecuteSqlRaw(sql, parameters);
@@ -593,6 +607,7 @@ UPDATE dbo.Kisiler
             }
         }
 
+        /// <summary>Yeni kayıt ekler.</summary>
         public void Insert(Kisi k, string firmaDisiKartNo = null)
         {
             var entity = new CeyPASS.DataAccess.Kisiler
@@ -604,7 +619,6 @@ UPDATE dbo.Kisiler
                 TcKimlikNo = k.TcKimlikNo,
                 PozisyonId = k.PozisyonId,
                 DogumTarihi = k.DogumTarihi,
-                DepartmanId = k.DepartmanId,
                 IseGirisTarihi = k.IseGirisTarihi,
                 IstenCikisTarihi = k.IstenCikisTarihi,
                 CalismaStatusu = k.CalismaStatusu,
@@ -632,6 +646,7 @@ UPDATE dbo.Kisiler
             _context.SaveChanges();
         }
 
+        /// <summary>Ad Soyad By Personel Id sorgularını getirir.</summary>
         public KisiAdSoyad GetAdSoyadByPersonelId(string personelId)
         {
             var k = _context.Kisiler.FirstOrDefault(x => x.PersonelId == personelId);
@@ -645,6 +660,7 @@ UPDATE dbo.Kisiler
             };
         }
 
+        /// <summary>Aktif Kartli Personeller For Sync sorgularını getirir.</summary>
         public List<PersonelCihazItem> GetAktifKartliPersonellerForSync()
         {
             var q = _context.Kisiler
@@ -658,6 +674,7 @@ UPDATE dbo.Kisiler
             }).ToList();
         }
 
+        /// <summary>Aktif Personeller Id Ad sorgularını getirir.</summary>
         public List<PersonelAdSoyad> GetAktifPersonellerIdAd()
         {
             var raw = _context.Kisiler
@@ -682,6 +699,7 @@ UPDATE dbo.Kisiler
             return list;
         }
 
+        /// <summary>Kimliğe göre kaydı getirir.</summary>
         public KisiDetayDTO GetById(int kisiId)
         {
             string pid = kisiId.ToString();
@@ -689,11 +707,11 @@ UPDATE dbo.Kisiler
             var k = _context.Kisiler.FirstOrDefault(x => x.PersonelId == pid);
             if (k == null) return null;
 
-            CeyPASS.DataAccess.Departmanlar? dept = null;
             CeyPASS.DataAccess.Pozisyonlar? poz = null;
+            CeyPASS.DataAccess.Isyerler? isyeri = null;
 
-            if (k.DepartmanId.HasValue)
-                dept = _context.Departmanlar.FirstOrDefault(d => d.DepartmanId == k.DepartmanId.Value);
+            if (k.IsyeriId.HasValue && k.FirmaId.HasValue)
+                isyeri = _context.Isyerler.FirstOrDefault(i => i.IsyeriId == k.IsyeriId.Value && i.FirmaId == k.FirmaId.Value);
 
             if (k.PozisyonId.HasValue)
                 poz = _context.Pozisyonlar.FirstOrDefault(p => p.PozisyonId == k.PozisyonId.Value);
@@ -702,11 +720,12 @@ UPDATE dbo.Kisiler
             {
                 AdSoyad = $"{(k.Ad ?? "")} {(k.Soyad ?? "")}".Trim(),
                 Unvan = poz?.PozisyonAdi,
-                Departman = dept?.DepartmanAdi,
+                Isyeri = isyeri?.IsyeriAdi,
                 Foto = k.Fotograf
             };
         }
 
+        /// <summary>By Login Identifier sorgularını getirir.</summary>
         public Kisi GetByLoginIdentifier(string identifier)
         {
             if (string.IsNullOrWhiteSpace(identifier)) return null;

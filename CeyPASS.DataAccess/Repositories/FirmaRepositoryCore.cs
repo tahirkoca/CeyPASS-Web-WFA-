@@ -8,6 +8,7 @@ using System.Linq;
 
 namespace CeyPASS.DataAccess.Repositories
 {
+    /// <summary>Firma erişimi.</summary>
     public class FirmaRepositoryCore : IFirmaRepository
     {
         private readonly CeyPASSDataConnectionCore _context;
@@ -17,6 +18,7 @@ namespace CeyPASS.DataAccess.Repositories
             _context = context;
         }
 
+        /// <summary>Firmalar sorgularını getirir.</summary>
         public DataTable GetFirmalar()
         {
             var sql = @"
@@ -38,6 +40,7 @@ ORDER BY FirmaAdi";
             return dt;
         }
 
+        /// <summary>Puantaj Firmalari sorgularını getirir.</summary>
         public List<Firma> GetPuantajFirmalari()
         {
             var sql = @"
@@ -53,6 +56,7 @@ ORDER BY FirmaAdi";
                 .ToList();
         }
 
+        /// <summary>Single sorgularını getirir.</summary>
         public List<LookupItem> GetSingle(int firmId)
         {
             var sql = @"
@@ -68,6 +72,7 @@ WHERE  FirmaId = @p0";
                 .ToList();
         }
 
+        /// <summary>All sorgularını getirir.</summary>
         public List<Firma> GetAll()
         {
             return _context.Firmalar
@@ -81,6 +86,7 @@ WHERE  FirmaId = @p0";
                 .ToList();
         }
 
+        /// <summary>Yeni kayıt ekler.</summary>
         public bool Insert(Firma f)
         {
             var sql = @"
@@ -95,6 +101,7 @@ VALUES (@p0, @p1, @p2)";
             return affected > 0;
         }
 
+        /// <summary>Kaydı günceller.</summary>
         public bool Update(Firma f)
         {
             var sql = @"
@@ -111,6 +118,7 @@ UPDATE Firmalar
             return affected > 0;
         }
 
+        /// <summary>Kaydı siler.</summary>
         public bool Delete(int id)
         {
             var sql = @"DELETE FROM Firmalar WHERE FirmaId = @p0";
@@ -121,6 +129,7 @@ UPDATE Firmalar
             return affected > 0;
         }
 
+        /// <summary>Max Id sorgularını getirir.</summary>
         public int? GetMaxId()
         {
             var sql = @"SELECT MAX(FirmaId) FROM Firmalar";

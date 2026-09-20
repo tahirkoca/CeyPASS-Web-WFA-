@@ -8,6 +8,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace CeyPASS.WPF.ViewModels;
 
+/// <summary>Sürüm güncelleme duyurusu metni oluşturma (yalnızca yetkili roller).</summary>
 public sealed class GuncellemeBildirimViewModel : ObservableObject
 {
     private const string PageName = "Guncelleme";

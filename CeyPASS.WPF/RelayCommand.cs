@@ -2,17 +2,20 @@ using System.Windows.Input;
 
 namespace CeyPASS.WPF;
 
+/// <summary>ICommand uygulaması; CanExecuteChanged CommandManager.RequerySuggested ile senkron.</summary>
 public sealed class RelayCommand : ICommand
 {
     private readonly Action<object?> _execute;
     private readonly Func<object?, bool>? _canExecute;
 
+    /// <summary>Parametreli komut.</summary>
     public RelayCommand(Action<object?> execute, Func<object?, bool>? canExecute = null)
     {
         _execute = execute;
         _canExecute = canExecute;
     }
 
+    /// <summary>Parametresiz komut.</summary>
     public RelayCommand(Action execute, Func<bool>? canExecute = null)
         : this(_ => execute(), canExecute is null ? null : _ => canExecute())
     {

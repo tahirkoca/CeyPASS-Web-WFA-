@@ -9,6 +9,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace CeyPASS.WPF.ViewModels;
 
+/// <summary>Ana sayfa KPI ve listeler; firma seçimi admin dışı kullanıcıda gizlenebilir.</summary>
 public sealed class DashboardViewModel : ObservableObject
 {
     private readonly IServiceScopeFactory _scopeFactory;

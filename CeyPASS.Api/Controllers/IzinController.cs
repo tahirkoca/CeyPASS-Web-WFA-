@@ -12,6 +12,7 @@ using System.Linq;
 
 namespace CeyPASS.Api.Controllers
 {
+    /// <summary>İK izin kayıtları ve izin talep onay akışı (<c>Izinler</c> / <c>IzinTalepleri</c> yetkileri).</summary>
     [Authorize]
     [ApiController]
     [Route("api/v1/[controller]")]
@@ -23,6 +24,7 @@ namespace CeyPASS.Api.Controllers
         private readonly IKisiQueryService _kisiQueryService;
         private readonly IPuantajService _puantajService;
         private readonly IFirmaService _firmaService;
+        private readonly IKisiEkraniLookUpService _lookupService;
         private readonly ISessionContext _sessionContext;
         private readonly IAuthorizationService _authorizationService;
         
@@ -45,6 +47,7 @@ namespace CeyPASS.Api.Controllers
             IKisiQueryService kisiQueryService,
             IPuantajService puantajService,
             IFirmaService firmaService,
+            IKisiEkraniLookUpService lookupService,
             ISessionContext sessionContext,
             IAuthorizationService authorizationService)
         {
@@ -54,14 +57,17 @@ namespace CeyPASS.Api.Controllers
             _kisiQueryService = kisiQueryService;
             _puantajService = puantajService;
             _firmaService = firmaService;
+            _lookupService = lookupService;
             _sessionContext = sessionContext;
             _authorizationService = authorizationService;
         }
 
+        /// <summary>Firma bazlı onaylı izin kayıtları (sayfalı); isteğe bağlı işyeri kapsamı.</summary>
         [HttpGet]
         public ActionResult<ApiResult<PagedResponse<KisiIzinListRow>>> GetRecords(
             [FromQuery] string? personelId,
             [FromQuery] int? izinTipId,
+            [FromQuery] int? isyeriId,
             [FromQuery] DateTime? baslangic,
             [FromQuery] DateTime? bitis,
             [FromQuery] int page = 1,
@@ -73,6 +79,13 @@ namespace CeyPASS.Api.Controllers
             DateTime start = baslangic ?? new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
             DateTime end = bitis ?? start.AddMonths(1).AddDays(-1);
 
+            bool isAdmin = _sessionContext.IsAdmin();
+            List<FirmaIsyeriYetkiDTO> yetkiler = null;
+            if (!isAdmin && _sessionContext.AktifKullaniciId.HasValue)
+                yetkiler = _puantajService.GetKullaniciFirmaIsyeriYetkileri((int)_sessionContext.AktifKullaniciId);
+            var (isyeriFilterId, isyeriIdIn) = FirmaIsyeriYetkiHelper.ResolveKisiQueryIsyeriFilter(
+                firmaId, isyeriId, yetkiler, isAdmin);
+
             int totalCount;
             var items = _kisiIzinService.GetTumIzinlerPaged(
                 firmaId,
@@ -82,7 +95,9 @@ namespace CeyPASS.Api.Controllers
                 end,
                 page,
                 pageSize,
-                out totalCount
+                out totalCount,
+                isyeriFilterId,
+                isyeriIdIn
             );
 
             var totalPages = pageSize <= 0 ? 1 : (int)Math.Ceiling(totalCount / (double)pageSize);
@@ -100,8 +115,9 @@ namespace CeyPASS.Api.Controllers
             return Ok(ApiResult<PagedResponse<KisiIzinListRow>>.Ok(resp));
         }
 
+        /// <summary>İzin ekranı firma/işyeri/personel/izin tipi listeleri; firma yetkisine göre kısıtlı.</summary>
         [HttpGet("lookups")]
-        public ActionResult<ApiResult<object>> Lookups([FromQuery] int? firmaId = null)
+        public ActionResult<ApiResult<object>> Lookups([FromQuery] int? firmaId = null, [FromQuery] int? isyeriId = null)
         {
             if (!_authorizationService.ViewAbility(PageName)) return Forbid();
 
@@ -122,9 +138,14 @@ namespace CeyPASS.Api.Controllers
                 effectiveFirmaId = _sessionContext.AktifFirmaId ?? effectiveFirmaId;
 
             bool isAdmin = _sessionContext.IsAdmin();
-            var (isyeriId, isyeriIdIn) = FirmaIsyeriYetkiHelper.ResolveKisiQueryIsyeriFilter(
-                effectiveFirmaId, null, yetkiler, isAdmin);
-            var kisiler = _kisiQueryService.GetAktifKisilerByFirma(effectiveFirmaId, isyeriId: isyeriId, isyeriIdIn: isyeriIdIn);
+            var isyerleri = FirmaIsyeriYetkiHelper.FilterIsyeriLookup(
+                _lookupService.GetIsyerleri(effectiveFirmaId) ?? new List<LookupItem>(),
+                effectiveFirmaId,
+                yetkiler,
+                isAdmin);
+            var (resolvedIsyeriId, isyeriIdIn) = FirmaIsyeriYetkiHelper.ResolveKisiQueryIsyeriFilter(
+                effectiveFirmaId, isyeriId, yetkiler, isAdmin);
+            var kisiler = _kisiQueryService.GetAktifKisilerByFirma(effectiveFirmaId, isyeriId: resolvedIsyeriId, isyeriIdIn: isyeriIdIn);
             var izinTipleri = _izinTipService.GetAktif();
 
             var aktifFirma = firmalar.FirstOrDefault(f => f.FirmaId == effectiveFirmaId);
@@ -133,6 +154,7 @@ namespace CeyPASS.Api.Controllers
             {
                 Firmalar = firmalar,
                 AktifFirma = aktifFirma == null ? null : new { aktifFirma.FirmaId, aktifFirma.FirmaAdi },
+                Isyerleri = isyerleri,
                 Kisiler = kisiler,
                 IzinTipleri = izinTipleri
             }));
@@ -153,6 +175,7 @@ namespace CeyPASS.Api.Controllers
             public string? Aciklama { get; set; }
         }
 
+        /// <summary>Manuel izin kaydı oluşturur (validasyon serviste).</summary>
         [HttpPost]
         public ActionResult<ApiResult> Create([FromBody] IzinUpsertRequest request)
         {
@@ -200,6 +223,7 @@ namespace CeyPASS.Api.Controllers
             return ok ? Ok(ApiResult.Ok("İzin başarıyla eklendi.")) : BadRequest(ApiResult.Failure("İzin eklenemedi."));
         }
 
+        /// <summary>Mevcut izin kaydını günceller.</summary>
         [HttpPut("{id}")]
         public ActionResult<ApiResult> Update(int id, [FromBody] IzinUpsertRequest request)
         {
@@ -240,6 +264,7 @@ namespace CeyPASS.Api.Controllers
             return ok ? Ok(ApiResult.Ok("İzin başarıyla güncellendi.")) : BadRequest(ApiResult.Failure("İzin güncellenemedi."));
         }
 
+        /// <summary>İzin kaydını pasifleştirir (soft delete).</summary>
         [HttpDelete("{id}")]
         public ActionResult<ApiResult> Delete(int id)
         {
@@ -248,6 +273,7 @@ namespace CeyPASS.Api.Controllers
             return ok ? Ok(ApiResult.Ok("İzin başarıyla silindi.")) : BadRequest(ApiResult.Failure("İzin silinemedi."));
         }
 
+        /// <summary>Pasif izin kaydını tekrar aktif eder.</summary>
         [HttpPost("{id}/aktif")]
         public ActionResult<ApiResult> Aktif(int id)
         {
@@ -271,6 +297,7 @@ namespace CeyPASS.Api.Controllers
             return null;
         }
 
+        /// <summary>İK onayı bekleyen izin talepleri; admin olmayan için firma filtresi uygulanır.</summary>
         [HttpGet("talepler")]
         public ActionResult<ApiResult<List<IzinTalepListItem>>> GetTalepler()
         {
@@ -329,6 +356,7 @@ namespace CeyPASS.Api.Controllers
             public string? Aciklama { get; set; }
         }
 
+        /// <summary>İK tarafında izin talebini onaylar.</summary>
         [HttpPost("onayla/{id}")]
         public ActionResult<ApiResult> Onayla(int id, [FromBody] TalepActionRequest? request)
         {
@@ -339,6 +367,7 @@ namespace CeyPASS.Api.Controllers
             return ok ? Ok(ApiResult.Ok("Talep onaylandı.")) : BadRequest(ApiResult.Failure("Talep onaylanamadı."));
         }
 
+        /// <summary>İK tarafında izin talebini reddeder.</summary>
         [HttpPost("reddet/{id}")]
         public ActionResult<ApiResult> Reddet(int id, [FromBody] TalepActionRequest? request)
         {
@@ -349,6 +378,7 @@ namespace CeyPASS.Api.Controllers
             return ok ? Ok(ApiResult.Ok("Talep reddedildi.")) : BadRequest(ApiResult.Failure("Talep reddedilemedi."));
         }
 
+        /// <summary>Personelin dönüş imzası atabilmesi için talebi açar.</summary>
         [HttpPost("donus-imzasina-ac/{id}")]
         public ActionResult<ApiResult> DonusImzasinaAc(int id)
         {
@@ -359,6 +389,7 @@ namespace CeyPASS.Api.Controllers
             return ok ? Ok(ApiResult.Ok("Dönüş imzasına açıldı.")) : BadRequest(ApiResult.Failure("İşlem başarısız."));
         }
 
+        /// <summary>Aktif izin tipleri.</summary>
         [HttpGet("tipler")]
         public ActionResult<ApiResult<List<IzinTip>>> GetIzinTipleri()
         {

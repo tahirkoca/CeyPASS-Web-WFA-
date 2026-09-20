@@ -16,13 +16,13 @@ namespace CeyPASS.Web.Controllers
     /// Admin paneli - sadece RolId 1 (süper admin) kullanıcılar erişebilir.
     /// Sekmeli yapıda tüm verilerin tam listesi ve CRUD işlemleri (mevcut sayfa akışları değişmez).
     /// </summary>
+    /// <summary>Sistem yonetim paneli ve kullanici islemleri.</summary>
     public class AdminController : Controller
     {
         private readonly ISessionContext _sessionContext;
         private readonly IFirmaService _firmaService;
         private readonly IIsyeriService _isyeriService;
         private readonly ICihazService _cihazService;
-        private readonly IDepartmanService _departmanService;
         private readonly IPozisyonService _pozisyonService;
         private readonly IResmiTatilService _resmiTatilService;
         private readonly ICalismaStatuService _calismaStatuService;
@@ -38,7 +38,6 @@ namespace CeyPASS.Web.Controllers
             IFirmaService firmaService,
             IIsyeriService isyeriService,
             ICihazService cihazService,
-            IDepartmanService departmanService,
             IPozisyonService pozisyonService,
             IResmiTatilService resmiTatilService,
             ICalismaStatuService calismaStatuService,
@@ -53,7 +52,6 @@ namespace CeyPASS.Web.Controllers
             _firmaService = firmaService;
             _isyeriService = isyeriService;
             _cihazService = cihazService;
-            _departmanService = departmanService;
             _pozisyonService = pozisyonService;
             _resmiTatilService = resmiTatilService;
             _calismaStatuService = calismaStatuService;
@@ -65,6 +63,7 @@ namespace CeyPASS.Web.Controllers
             _env = env;
         }
 
+        /// <summary>Liste veya ana ekran.</summary>
         public IActionResult Index(string tab)
         {
             if (_sessionContext.CurrentUser == null)
@@ -81,7 +80,6 @@ namespace CeyPASS.Web.Controllers
                 Firmalar = (_firmaService.GetAll() ?? new List<Firma>()).OrderBy(x => x.FirmaAdi).ToList(),
                 Isyeriler = _isyeriService.GetListForAdmin() ?? new List<IsyeriItem>(),
                 Cihazlar = _cihazService.GetListe(sadeceAktif: false, firmaId: null) ?? new List<CihazListDTO>(),
-                Departmanlar = _departmanService.GetListForAdmin() ?? new List<DepartmanListDTO>(),
                 Pozisyonlar = _pozisyonService.GetListForAdmin() ?? new List<PozisyonListDTO>(),
                 ResmiTatiller = (_resmiTatilService.GetList(yil: null) ?? new List<ResmiTatilDTO>()).OrderBy(x => x.Tarih).ToList(),
                 CalismaStatuleri = _calismaStatuService.GetAll() ?? new List<LookupItem>(),
@@ -95,6 +93,7 @@ namespace CeyPASS.Web.Controllers
             return View(model);
         }
 
+        /// <summary>KullaniciPersonelGuncelle islemi.</summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult KullaniciPersonelGuncelle(int kullaniciId, int? personelId)
@@ -107,6 +106,7 @@ namespace CeyPASS.Web.Controllers
             return RedirectToAction("Index", new { tab = "kullanicilar" });
         }
 
+        /// <summary>UstYetkiliGuncelle islemi.</summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult UstYetkiliGuncelle(string personelId, string? ustYetkiliPersonelId)

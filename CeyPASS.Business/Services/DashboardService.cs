@@ -6,6 +6,7 @@ using System.Collections.Generic;
 
 namespace CeyPASS.Business.Services
 {
+    /// <summary>Dashboard veri toplama.</summary>
     public class DashboardService : IDashboardService
     {
         private readonly IDashboardRepository _repo;
@@ -14,11 +15,13 @@ namespace CeyPASS.Business.Services
         {
             _repo = repo;
         }
+        /// <inheritdoc />
         public DashboardResult GetDashboard(IEnumerable<int> firmaIdList, DateTime gun, DateTime ayBas, DateTime aySon, double tolBasSaat, double tolBitSaat, int anlikLimit)
         {
             string firmaCsv = string.Join(",", firmaIdList ?? Array.Empty<int>());
             return _repo.ExecuteDashboard(firmaCsv, gun, ayBas, aySon, tolBasSaat, tolBitSaat, anlikLimit);
         }
+        /// <inheritdoc />
         public DashboardResult GetDashboardForToday(int firmaId)
         {
             var today = DateTime.Today;

@@ -2,12 +2,14 @@
 
 namespace CeyPASS.Entities.Concrete
 {
+    /// <summary>İzin raporu export/liste satırı.</summary>
     public class IzinRaporuRow
     {
         public int KisiIzinId { get; set; }
         public string SicilNo { get; set; }
         public string AdSoyad { get; set; }
         public string FirmaAdi { get; set; }
+        public string IsyeriAdi { get; set; }
         public string IzinTipi { get; set; }
         public DateTime BaslangicTarihi { get; set; }
         public DateTime BitisTarihi { get; set; }

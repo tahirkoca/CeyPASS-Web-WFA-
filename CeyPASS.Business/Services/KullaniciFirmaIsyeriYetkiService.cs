@@ -6,6 +6,7 @@ using System.Linq;
 
 namespace CeyPASS.Business.Services
 {
+    /// <summary>Kullanıcı firma/işyeri yetkileri.</summary>
     public class KullaniciFirmaIsyeriYetkiService : IKullaniciFirmaIsyeriYetkiService
     {
         private readonly IKullaniciFirmaIsyeriYetkiRepository _repo;
@@ -15,8 +16,10 @@ namespace CeyPASS.Business.Services
             _repo = repo;
         }
 
+        /// <inheritdoc />
         public List<FirmaIsyeriYetkiDTO> GetYetkiler(int kullaniciId) => _repo.GetYetkiler(kullaniciId);
 
+        /// <inheritdoc />
         public string BuildIsyeriIdListCsv(int firmaId, List<FirmaIsyeriYetkiDTO> yetkiler, bool isAdmin, IReadOnlyList<int> firmaIsyeriIds)
         {
             var allIds = firmaIsyeriIds?.ToList() ?? new List<int>();

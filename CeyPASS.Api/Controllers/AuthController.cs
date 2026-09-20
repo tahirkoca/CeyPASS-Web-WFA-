@@ -13,6 +13,7 @@ using IAuthorizationService = CeyPASS.Business.Abstractions.IAuthorizationServic
 
 namespace CeyPASS.Api.Controllers
 {
+    /// <summary>Mobil oturum: kurumsal kullanıcı, personel portalı ve yetki özeti.</summary>
     [ApiController]
     [Route("api/v1/[controller]")]
     public class AuthController : ControllerBase
@@ -49,6 +50,7 @@ namespace CeyPASS.Api.Controllers
             _configuration = configuration;
         }
 
+        /// <summary>Web ile aynı sıra: kurumsal giriş → kimlik ile kurumsal eşleşme → personel web şifresi.</summary>
         [HttpPost("login")]
         public ActionResult<ApiResult<LoginResponse>> Login([FromBody] LoginRequest request)
         {
@@ -131,6 +133,7 @@ namespace CeyPASS.Api.Controllers
             public string? RolAdi { get; set; }
         }
 
+        /// <summary>Sayfa görüntüleme ve CRUD/Export/Approve yetkilerini mobil menü için döner.</summary>
         [Authorize]
         [HttpGet("abilities")]
         public ActionResult<ApiResult<AbilitiesResponse>> GetAbilities()
@@ -198,6 +201,7 @@ namespace CeyPASS.Api.Controllers
             public string? Username { get; set; }
         }
 
+        /// <summary>Şifre sıfırlama kodunu e-posta ile başlatır (adres maskelenmiş döner).</summary>
         [HttpPost("forgot-password")]
         public ActionResult<ApiResult<object>> ForgotPassword([FromBody] ForgotPasswordStartRequest request)
         {
@@ -225,6 +229,7 @@ namespace CeyPASS.Api.Controllers
             public string? YeniSifreTekrar { get; set; }
         }
 
+        /// <summary>Doğrulama kodu ile yeni şifreyi kaydeder.</summary>
         [HttpPost("forgot-password/confirm")]
         public ActionResult<ApiResult<object>> ForgotPasswordConfirm([FromBody] ForgotPasswordConfirmRequest request)
         {

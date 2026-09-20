@@ -7,6 +7,7 @@ using System.Globalization;
 
 namespace CeyPASS.Api.Controllers
 {
+    /// <summary>Uygulama içi bildirimler.</summary>
     [Authorize]
     [ApiController]
     [Route("api/v1/[controller]")]
@@ -23,6 +24,8 @@ namespace CeyPASS.Api.Controllers
             _sessionContext = sessionContext;
         }
 
+        
+        /// <summary>Son bildirimler.</summary>
         [HttpGet]
         public ActionResult<ApiResult<List<Bildirim>>> Get()
         {
@@ -51,6 +54,8 @@ namespace CeyPASS.Api.Controllers
             public int PageSize { get; set; }
         }
 
+        
+        /// <summary>Sayfalı bildirim geçmişi.</summary>
         [HttpGet("history")]
         public ActionResult<ApiResult<NotificationHistoryResponse>> GetHistory([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
         {
@@ -96,6 +101,8 @@ namespace CeyPASS.Api.Controllers
             return Ok(ApiResult<NotificationHistoryResponse>.Ok(res));
         }
 
+        
+        /// <summary>Okunmamış bildirim sayısı.</summary>
         [HttpGet("unread-count")]
         public ActionResult<ApiResult<int>> GetUnreadCount()
         {
@@ -105,6 +112,8 @@ namespace CeyPASS.Api.Controllers
             return Ok(ApiResult<int>.Ok(count));
         }
 
+        
+        /// <summary>Tek bildirimi okundu işaretler.</summary>
         [HttpPost("read/{id}")]
         public ActionResult<ApiResult> MarkAsRead(int id)
         {
@@ -112,6 +121,8 @@ namespace CeyPASS.Api.Controllers
             return Ok(ApiResult.Ok("Bildirim okundu olarak işaretlendi."));
         }
 
+        
+        /// <summary>Tümünü okundu işaretler.</summary>
         [HttpPost("read-all")]
         public ActionResult<ApiResult> MarkAllAsRead()
         {
@@ -121,6 +132,8 @@ namespace CeyPASS.Api.Controllers
             return Ok(ApiResult.Ok("Tüm bildirimleriniz okundu olarak işaretlendi."));
         }
 
+        
+        /// <summary>Cihaz kaydı (genişletme için stub).</summary>
         [HttpPost("register-device")]
         public ActionResult<ApiResult> RegisterDevice([FromBody] string deviceToken)
         {

@@ -4,6 +4,7 @@ using CeyPASS.Entities.Concrete;
 
 namespace CeyPASS.WPF.Views;
 
+/// <summary>Kart atama diyaloglarında geçmiş ziyaretçi arama ve forma aktarma paneli.</summary>
 public partial class GecmisZiyaretciPanel : UserControl
 {
     private Func<string, List<GecmisZiyaretciItem>>? _search;
@@ -53,6 +54,7 @@ public partial class GecmisZiyaretciPanel : UserControl
             items = new List<GecmisZiyaretciItem>();
         }
 
+        // ItemsSource değişimi TextChanged tetiklemesin (sonsuz arama döngüsü önlemi).
         _suppressSearch = true;
         LstGecmis.ItemsSource = items;
         _suppressSearch = false;

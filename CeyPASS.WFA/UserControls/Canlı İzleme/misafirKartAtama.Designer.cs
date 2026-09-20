@@ -32,6 +32,8 @@ namespace CeyPASS.WFA.UserControls.Canlı_İzleme
             this.txtMisafirAdSoyad = new System.Windows.Forms.TextBox();
             this.lblTCKimlikNo = new System.Windows.Forms.Label();
             this.txtTCKimlikNo = new System.Windows.Forms.TextBox();
+            this.lblPasaportNo = new System.Windows.Forms.Label();
+            this.txtPasaportNo = new System.Windows.Forms.TextBox();
             this.lblKimeGeldigi = new System.Windows.Forms.Label();
             this.txtZiyaretEdilenKisi = new System.Windows.Forms.TextBox();
             this.lblTcBilgi = new System.Windows.Forms.Label();
@@ -86,20 +88,24 @@ namespace CeyPASS.WFA.UserControls.Canlı_İzleme
             this.tlpForm.Controls.Add(this.txtMisafirAdSoyad, 0, 3);
             this.tlpForm.Controls.Add(this.lblTCKimlikNo, 0, 4);
             this.tlpForm.Controls.Add(this.txtTCKimlikNo, 0, 5);
-            this.tlpForm.Controls.Add(this.lblKimeGeldigi, 0, 6);
-            this.tlpForm.Controls.Add(this.txtZiyaretEdilenKisi, 0, 7);
-            this.tlpForm.Controls.Add(this.lblTcBilgi, 0, 8);
-            this.tlpForm.Controls.Add(this.label4, 0, 9);
-            this.tlpForm.Controls.Add(this.dtpGirisSaati, 0, 10);
-            this.tlpForm.Controls.Add(this.label5, 0, 11);
-            this.tlpForm.Controls.Add(this.dtpCikisSaati, 0, 12);
-            this.tlpForm.Controls.Add(this.label6, 0, 13);
-            this.tlpForm.Controls.Add(this.txtAciklama, 0, 14);
+            this.tlpForm.Controls.Add(this.lblPasaportNo, 0, 6);
+            this.tlpForm.Controls.Add(this.txtPasaportNo, 0, 7);
+            this.tlpForm.Controls.Add(this.lblKimeGeldigi, 0, 8);
+            this.tlpForm.Controls.Add(this.txtZiyaretEdilenKisi, 0, 9);
+            this.tlpForm.Controls.Add(this.lblTcBilgi, 0, 10);
+            this.tlpForm.Controls.Add(this.label4, 0, 11);
+            this.tlpForm.Controls.Add(this.dtpGirisSaati, 0, 12);
+            this.tlpForm.Controls.Add(this.label5, 0, 13);
+            this.tlpForm.Controls.Add(this.dtpCikisSaati, 0, 14);
+            this.tlpForm.Controls.Add(this.label6, 0, 15);
+            this.tlpForm.Controls.Add(this.txtAciklama, 0, 16);
             this.tlpForm.Dock = System.Windows.Forms.DockStyle.Fill;
             this.tlpForm.Location = new System.Drawing.Point(0, 50);
             this.tlpForm.Name = "tlpForm";
             this.tlpForm.Padding = new System.Windows.Forms.Padding(20, 10, 20, 0);
-            this.tlpForm.RowCount = 15;
+            this.tlpForm.RowCount = 17;
+            this.tlpForm.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 22F));
+            this.tlpForm.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 35F));
             this.tlpForm.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 22F));
             this.tlpForm.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 35F));
             this.tlpForm.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 22F));
@@ -173,7 +179,7 @@ namespace CeyPASS.WFA.UserControls.Canlı_İzleme
             this.lblTCKimlikNo.Name = "lblTCKimlikNo";
             this.lblTCKimlikNo.Size = new System.Drawing.Size(109, 20);
             this.lblTCKimlikNo.TabIndex = 4;
-            this.lblTCKimlikNo.Text = "T.C. Kimlik No *";
+            this.lblTCKimlikNo.Text = "T.C. Kimlik No";
             // 
             // txtTCKimlikNo
             // 
@@ -186,16 +192,39 @@ namespace CeyPASS.WFA.UserControls.Canlı_İzleme
             this.txtTCKimlikNo.Size = new System.Drawing.Size(534, 30);
             this.txtTCKimlikNo.TabIndex = 5;
             // 
+            // lblPasaportNo
+            // 
+            this.lblPasaportNo.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.lblPasaportNo.AutoSize = true;
+            this.lblPasaportNo.Font = new System.Drawing.Font("Segoe UI Semibold", 9F, System.Drawing.FontStyle.Bold);
+            this.lblPasaportNo.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
+            this.lblPasaportNo.Location = new System.Drawing.Point(23, 183);
+            this.lblPasaportNo.Name = "lblPasaportNo";
+            this.lblPasaportNo.Size = new System.Drawing.Size(90, 20);
+            this.lblPasaportNo.TabIndex = 6;
+            this.lblPasaportNo.Text = "Pasaport No";
+            // 
+            // txtPasaportNo
+            // 
+            this.txtPasaportNo.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.txtPasaportNo.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.txtPasaportNo.Font = new System.Drawing.Font("Segoe UI", 10F);
+            this.txtPasaportNo.Location = new System.Drawing.Point(23, 206);
+            this.txtPasaportNo.MaxLength = 50;
+            this.txtPasaportNo.Name = "txtPasaportNo";
+            this.txtPasaportNo.Size = new System.Drawing.Size(534, 30);
+            this.txtPasaportNo.TabIndex = 7;
+            // 
             // lblKimeGeldigi
             // 
             this.lblKimeGeldigi.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.lblKimeGeldigi.AutoSize = true;
             this.lblKimeGeldigi.Font = new System.Drawing.Font("Segoe UI Semibold", 9F, System.Drawing.FontStyle.Bold);
             this.lblKimeGeldigi.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
-            this.lblKimeGeldigi.Location = new System.Drawing.Point(23, 183);
+            this.lblKimeGeldigi.Location = new System.Drawing.Point(23, 240);
             this.lblKimeGeldigi.Name = "lblKimeGeldigi";
             this.lblKimeGeldigi.Size = new System.Drawing.Size(97, 20);
-            this.lblKimeGeldigi.TabIndex = 6;
+            this.lblKimeGeldigi.TabIndex = 8;
             this.lblKimeGeldigi.Text = "Kime Geldiği";
             // 
             // txtZiyaretEdilenKisi
@@ -203,10 +232,10 @@ namespace CeyPASS.WFA.UserControls.Canlı_İzleme
             this.txtZiyaretEdilenKisi.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.txtZiyaretEdilenKisi.Dock = System.Windows.Forms.DockStyle.Fill;
             this.txtZiyaretEdilenKisi.Font = new System.Drawing.Font("Segoe UI", 10F);
-            this.txtZiyaretEdilenKisi.Location = new System.Drawing.Point(23, 206);
+            this.txtZiyaretEdilenKisi.Location = new System.Drawing.Point(23, 263);
             this.txtZiyaretEdilenKisi.Name = "txtZiyaretEdilenKisi";
             this.txtZiyaretEdilenKisi.Size = new System.Drawing.Size(534, 30);
-            this.txtZiyaretEdilenKisi.TabIndex = 7;
+            this.txtZiyaretEdilenKisi.TabIndex = 9;
             // 
             // lblTcBilgi
             // 
@@ -214,12 +243,12 @@ namespace CeyPASS.WFA.UserControls.Canlı_İzleme
             this.lblTcBilgi.AutoSize = true;
             this.lblTcBilgi.Font = new System.Drawing.Font("Segoe UI", 8.25F);
             this.lblTcBilgi.ForeColor = System.Drawing.Color.Gray;
-            this.lblTcBilgi.Location = new System.Drawing.Point(23, 239);
+            this.lblTcBilgi.Location = new System.Drawing.Point(23, 296);
             this.lblTcBilgi.MaximumSize = new System.Drawing.Size(534, 0);
             this.lblTcBilgi.Name = "lblTcBilgi";
             this.lblTcBilgi.Size = new System.Drawing.Size(420, 19);
-            this.lblTcBilgi.TabIndex = 8;
-            this.lblTcBilgi.Text = "T.C. Kimlik No zorunludur (11 hane); elle ya da barkodla giriş yapabilirsiniz. T.C. girip alandan çıkınca veya Enter'a basınca boş alanlar otomatik doldurulur, dolu alanlar değiştirilmez.";
+            this.lblTcBilgi.TabIndex = 10;
+            this.lblTcBilgi.Text = "T.C. Kimlik No veya Pasaport No'dan en az biri zorunludur. T.C. girildiyse 11 hane olmalıdır. T.C. girip alandan çıkınca veya Enter'a basınca boş alanlar otomatik doldurulur.";
             this.lblTcBilgi.UseMnemonic = false;
             // 
             // label4
@@ -384,6 +413,8 @@ namespace CeyPASS.WFA.UserControls.Canlı_İzleme
         private System.Windows.Forms.TextBox txtMisafirAdSoyad;
         private System.Windows.Forms.Label lblTCKimlikNo;
         private System.Windows.Forms.TextBox txtTCKimlikNo;
+        private System.Windows.Forms.Label lblPasaportNo;
+        private System.Windows.Forms.TextBox txtPasaportNo;
         private System.Windows.Forms.Label lblKimeGeldigi;
         private System.Windows.Forms.TextBox txtZiyaretEdilenKisi;
         private System.Windows.Forms.Label lblTcBilgi;

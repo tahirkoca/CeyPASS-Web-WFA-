@@ -12,10 +12,10 @@
     <ApplicationTitle>CeyPASS PDKS</ApplicationTitle>
     <AssemblyTitle>CeyPASS PDKS</AssemblyTitle>
     <Product>CeyPASS PDKS</Product>
-    <Version>3.0.0.7</Version>
-    <AssemblyVersion>3.0.0.7</AssemblyVersion>
-    <FileVersion>3.0.0.7</FileVersion>
-    <InformationalVersion>3.0.0.7</InformationalVersion>
+    <Version>3.0.2.0</Version>
+    <AssemblyVersion>3.0.2.0</AssemblyVersion>
+    <FileVersion>3.0.2.0</FileVersion>
+    <InformationalVersion>3.0.2.0</InformationalVersion>
     <!-- Masaüstü PDF/Playwright kullanmaz; sürücülerin publish/zip'e girmesini engeller (Web/Api etkilenmez). -->
     <PlaywrightPlatform>none</PlaywrightPlatform>
   </PropertyGroup>

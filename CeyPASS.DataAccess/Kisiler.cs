@@ -21,7 +21,6 @@ namespace CeyPASS.DataAccess
         public string TcKimlikNo { get; set; }
         public Nullable<int> PozisyonId { get; set; }
         public Nullable<System.DateTime> DogumTarihi { get; set; }
-        public Nullable<int> DepartmanId { get; set; }
         public Nullable<System.DateTime> IseGirisTarihi { get; set; }
         public Nullable<System.DateTime> IstenCikisTarihi { get; set; }
         public string CalismaStatusu { get; set; }

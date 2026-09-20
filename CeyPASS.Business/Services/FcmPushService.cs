@@ -12,6 +12,7 @@ using System.Threading.Tasks;
 
 namespace CeyPASS.Business.Services
 {
+    /// <summary>Firebase push bildirim gönderimi.</summary>
     public class FcmPushService : IPushNotificationService
     {
         private readonly IUserDeviceTokenRepository _tokenRepository;
@@ -35,6 +36,7 @@ namespace CeyPASS.Business.Services
             _configuration = configuration;
         }
 
+        /// <inheritdoc />
         public async Task SendPushToUserAsync(string? personelId, string? kullaniciId, string title, string body, object? data = null)
         {
             var tokens = _tokenRepository.GetTokensByUser(personelId, kullaniciId);

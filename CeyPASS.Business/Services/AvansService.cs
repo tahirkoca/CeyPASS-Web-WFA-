@@ -6,6 +6,7 @@ using System.Collections.Generic;
 
 namespace CeyPASS.Business.Services
 {
+    /// <summary>Avans talep ve onay iş kuralları.</summary>
     public class AvansService : IAvansService
     {
         private readonly IAvansRepository _repo;
@@ -17,6 +18,7 @@ namespace CeyPASS.Business.Services
             _bildirimService = bildirimService;
         }
 
+        /// <inheritdoc />
         public int TalepOlustur(string personelId, decimal miktar, string? aciklama)
         {
             if (string.IsNullOrWhiteSpace(personelId))
@@ -46,10 +48,13 @@ namespace CeyPASS.Business.Services
             return id;
         }
 
+        /// <inheritdoc />
         public List<AvansTalep> PersonelTalepleri(string personelId) => _repo.GetByPersonel(personelId);
 
+        /// <inheritdoc />
         public List<AvansTalep> TumTalepler() => _repo.GetAll();
 
+        /// <inheritdoc />
         public bool Onayla(int avansId, int onaylayanKullaniciId, string? aciklama)
         {
             var t = _repo.GetById(avansId);
@@ -62,6 +67,7 @@ namespace CeyPASS.Business.Services
             return ok;
         }
 
+        /// <inheritdoc />
         public bool Reddet(int avansId, int onaylayanKullaniciId, string? aciklama)
         {
             var t = _repo.GetById(avansId);
@@ -74,8 +80,10 @@ namespace CeyPASS.Business.Services
             return ok;
         }
 
+        /// <inheritdoc />
         public bool IptalEt(int avansId) => _repo.Sil(avansId);
 
+        /// <inheritdoc />
         public bool Guncelle(int avansId, decimal miktar, string? aciklama) => _repo.Guncelle(avansId, miktar, aciklama);
     }
 }

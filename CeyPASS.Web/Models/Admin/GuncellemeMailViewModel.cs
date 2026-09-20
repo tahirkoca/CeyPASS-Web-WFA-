@@ -7,6 +7,7 @@ namespace CeyPASS.Web.Models.Admin
     /// Admin paneli - Güncelleme bildirimi mail formu.
     /// WinForms ucGuncellemeMailEkrani ile aynı veri yapısı.
     /// </summary>
+    /// <summary>Toplu guncelleme e-posta form modeli.</summary>
     public class GuncellemeMailViewModel
     {
         [Required(ErrorMessage = "Versiyon numarası giriniz.")]

@@ -15,6 +15,7 @@ internal static class UiUserPrefs
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase
     };
 
+    /// <summary>%LocalAppData%\CeyPASS klasör yolu (yoksa oluşturulur).</summary>
     public static string RootDir
     {
         get
@@ -27,6 +28,7 @@ internal static class UiUserPrefs
         }
     }
 
+    /// <summary>UTF-8 metin dosyası okur; yoksa null.</summary>
     public static string? ReadText(string fileName)
     {
         try
@@ -40,6 +42,7 @@ internal static class UiUserPrefs
         }
     }
 
+    /// <summary>UTF-8 metin dosyası yazar (hata yutulur).</summary>
     public static void WriteText(string fileName, string value)
     {
         try
@@ -52,6 +55,7 @@ internal static class UiUserPrefs
         }
     }
 
+    /// <summary>JSON dosyasını camelCase ile deserialize eder.</summary>
     public static T? ReadJson<T>(string fileName) where T : class
     {
         try
@@ -66,6 +70,7 @@ internal static class UiUserPrefs
         }
     }
 
+    /// <summary>Nesneyi JSON olarak kaydeder.</summary>
     public static void WriteJson<T>(string fileName, T value)
     {
         try

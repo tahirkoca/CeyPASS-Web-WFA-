@@ -8,6 +8,7 @@ using System.Linq;
 
 namespace CeyPASS.DataAccess.Repositories
 {
+    /// <summary>İşyeri erişimi.</summary>
     public class IsyeriRepositoryCore : IIsyeriRepository
     {
         private readonly CeyPASSDataConnectionCore _context;
@@ -17,21 +18,21 @@ namespace CeyPASS.DataAccess.Repositories
             _context = context;
         }
 
+        /// <summary>By Firma sorgularını getirir.</summary>
         public List<LookupItem> GetByFirma(int firmId)
         {
-            var sql = @"
-SELECT IsyeriId AS Id, IsyeriAdi AS Ad
-FROM   Isyerler
-WHERE  FirmaId = @p0
-ORDER BY IsyeriAdi";
-
-            return _context.Database
-                .SqlQueryRaw<LookupItem>(sql,
-                    new Microsoft.Data.SqlClient.SqlParameter("@p0", firmId))
-                .AsEnumerable()
+            return _context.Isyerler.AsNoTracking()
+                .Where(i => i.FirmaId == firmId)
+                .OrderBy(i => i.IsyeriAdi)
+                .Select(i => new LookupItem
+                {
+                    Id = i.IsyeriId ?? 0,
+                    Ad = i.IsyeriAdi
+                })
                 .ToList();
         }
 
+        /// <summary>Isyerleri By Firma sorgularını getirir.</summary>
         public List<IsyeriItem> GetIsyerleriByFirma(int firmaId)
         {
             var sql = @"
@@ -57,6 +58,7 @@ ORDER BY IsyeriAdi";
             return list;
         }
 
+        /// <summary>All sorgularını getirir.</summary>
         public DataTable GetAll()
         {
             var sql = @"
@@ -80,6 +82,7 @@ ORDER BY FirmaId, IsyeriId";
             return dt;
         }
 
+        /// <summary>Insert Manual işlemini ekler.</summary>
         public bool InsertManual(int firmaId, int isyeriId, string isyeriAdi)
         {
             var sql = @"
@@ -94,6 +97,7 @@ VALUES (@p0, @p1, @p2)";
             return affected > 0;
         }
 
+        /// <summary>Kaydı günceller.</summary>
         public bool Update(int firmaId, int isyeriId, string isyeriAdi)
         {
             var sql = @"
@@ -110,6 +114,7 @@ UPDATE dbo.Isyerler
             return affected > 0;
         }
 
+        /// <summary>Kaydı siler.</summary>
         public bool Delete(int firmaId, int isyeriId)
         {
             var sql = @"

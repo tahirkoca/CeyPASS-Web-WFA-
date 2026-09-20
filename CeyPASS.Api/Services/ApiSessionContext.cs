@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Http;
 
 namespace CeyPASS.Api.Services
 {
+    /// <summary>JWT claim'lerinden <see cref="ISessionContext"/>; Web oturumunun API karşılığı.</summary>
     public class ApiSessionContext : ISessionContext
     {
         private readonly IHttpContextAccessor _httpContextAccessor;
@@ -56,7 +57,7 @@ namespace CeyPASS.Api.Services
         public string? UserInitials { get; set; }
         public bool? IsSupervisor { get; set; }
 
-        // Keep consistent with server-side SessionContext (RolId 1 or 2 are admin-level)
+        /// <summary>RolId 1/2 veya Admin rol adı — Web SessionContext ile uyumlu.</summary>
         public bool IsAdmin() => RolId == 1 || RolId == 2 || RolAdi == "Admin";
 
         public AuthUserDTO CurrentUser => new AuthUserDTO

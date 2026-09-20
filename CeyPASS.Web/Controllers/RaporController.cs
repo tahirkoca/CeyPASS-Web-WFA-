@@ -11,6 +11,7 @@ using System.Xml;
 
 namespace CeyPASS.Web.Controllers
 {
+    /// <summary>Rapor olusturma ve disa aktarma.</summary>
     public class RaporController : Controller
     {
         private readonly IRaporService _raporService;
@@ -48,6 +49,7 @@ namespace CeyPASS.Web.Controllers
             _cache = cache;
         }
 
+        /// <summary>Liste veya ana ekran.</summary>
         public IActionResult Index(string? procedureAdi = null, DateTime? tarihBaslangic = null, DateTime? tarihBitis = null, int? firmaId = null, string? isyeriIds = null, string? cihazIds = null, int page = 1, int pageSize = DefaultPageSize)
         {
             if (!_authorizationService.ViewAbility(PageName))
@@ -206,6 +208,7 @@ namespace CeyPASS.Web.Controllers
             return View(raporData);
         }
 
+        /// <summary>Disa aktarma islemi.</summary>
         [HttpPost]
         public IActionResult ExportExcel()
         {
@@ -247,6 +250,7 @@ namespace CeyPASS.Web.Controllers
             }
         }
 
+        /// <summary>Disa aktarma islemi.</summary>
         [HttpPost]
         public IActionResult ExportPdf()
         {

@@ -4,6 +4,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace CeyPASS.Entities.Concrete
 {
+    /// <summary>Uygulama içi bildirim (mobil push ile ilişkili kayıt olabilir).</summary>
     [Table("Bildirimler")]
     public class Bildirim
     {
@@ -28,6 +29,7 @@ namespace CeyPASS.Entities.Concrete
         
         public DateTime OlusturmaTarihi { get; set; }
         
+        /// <summary>İzin, avans vb. yönlendirme tipi.</summary>
         [StringLength(50)]
         public string Tipi { get; set; }
         

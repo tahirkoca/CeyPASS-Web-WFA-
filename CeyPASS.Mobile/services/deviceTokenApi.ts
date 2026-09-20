@@ -1,3 +1,4 @@
+/** FCM/APNs cihaz token kaydı (push bildirimleri). */
 import api from "./api";
 
 export type ApiResult<T> = { success: boolean; message?: string; data?: T };

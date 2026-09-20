@@ -12,6 +12,7 @@ using System.Globalization;
 
 namespace CeyPASS.Api.Controllers
 {
+    /// <summary>Personel kartı CRUD; firma/işyeri yetkisi ve IDOR kontrolleri.</summary>
     [Authorize]
     [ApiController]
     [Route("api/v1/[controller]")]
@@ -40,7 +41,6 @@ namespace CeyPASS.Api.Controllers
         {
             public string? FirmaAdi { get; set; }
             public string? IsyeriAdi { get; set; }
-            public string? DepartmanAdi { get; set; }
             public string? PozisyonAdi { get; set; }
             public string? BolumAdi { get; set; }
         }
@@ -55,7 +55,6 @@ namespace CeyPASS.Api.Controllers
             public string? KartNo { get; set; }
             public string? TcKimlikNo { get; set; }
             public int? PozisyonId { get; set; }
-            public int? DepartmanId { get; set; }
             public int? FirmaId { get; set; }
             public int? IsyeriId { get; set; }
             public int? BolumId { get; set; }
@@ -158,11 +157,13 @@ namespace CeyPASS.Api.Controllers
             _puantajService = puantajService;
         }
 
+        /// <summary>Sayfalı personel listesi; admin firma seçebilir, diğerleri işyeri yetkisine göre filtrelenir; isteğe bağlı bölüm filtresi.</summary>
         [HttpGet]
         public ActionResult<ApiResult<PagedResponse<KisiListItem>>> Get(
             [FromQuery] string? search,
             [FromQuery] int? firmaId,
             [FromQuery] int? isyeriId,
+            [FromQuery] int? bolumId,
             [FromQuery] bool? puantajYapilirMi,
             [FromQuery] bool sadeceIstenCikanlar = false,
             [FromQuery] int page = 1,
@@ -190,7 +191,7 @@ namespace CeyPASS.Api.Controllers
             int totalCount;
             bool? effectivePuantaj = sadeceIstenCikanlar ? null : (puantajYapilirMi ?? true);
             var items = _kisiQueryService.GetAktifKisilerByFirmaPaged(
-                effectiveFirmaId, search, effectivePuantaj, queryIsyeriId, queryIsyeriIdIn, sadeceIstenCikanlar, page, pageSize, out totalCount);
+                effectiveFirmaId, search, effectivePuantaj, queryIsyeriId, queryIsyeriIdIn, sadeceIstenCikanlar, page, pageSize, out totalCount, bolumId);
 
             var totalPages = pageSize <= 0 ? 1 : (int)Math.Ceiling(totalCount / (double)pageSize);
             if (totalPages < 1) totalPages = 1;
@@ -207,6 +208,7 @@ namespace CeyPASS.Api.Controllers
             return Ok(ApiResult<PagedResponse<KisiListItem>>.Ok(resp));
         }
 
+        /// <summary>Yeni personel kaydı ve puantaj/yemek/kart bayrakları.</summary>
         [HttpPost]
         public ActionResult<ApiResult<object>> Create([FromBody] PersonelCreateRequest request)
         {
@@ -223,7 +225,6 @@ namespace CeyPASS.Api.Controllers
                 KartNo = (k.KartNo ?? string.Empty).Trim(),
                 TcKimlikNo = (k.TcKimlikNo ?? string.Empty).Trim(),
                 PozisyonId = k.PozisyonId,
-                DepartmanId = k.DepartmanId,
                 FirmaId = firmaId,
                 IsyeriId = k.IsyeriId,
                 BolumId = k.BolumId,
@@ -285,6 +286,7 @@ namespace CeyPASS.Api.Controllers
             }
         }
 
+        /// <summary>Personel güncelleme; eksik alanlar mevcut kayıttan korunur.</summary>
         [HttpPut]
         public ActionResult<ApiResult<object>> Update([FromBody] PersonelUpdateRequest request)
         {
@@ -314,12 +316,11 @@ namespace CeyPASS.Api.Controllers
                 KartNo = Coalesce(k.KartNo, existing.KartNo),
                 TcKimlikNo = Coalesce(k.TcKimlikNo, existing.TcKimlikNo),
                 PozisyonId = CoalesceInt(k.PozisyonId, existing.PozisyonId),
-                DepartmanId = CoalesceInt(k.DepartmanId, existing.DepartmanId),
                 FirmaId = effectiveFirmaId,
                 IsyeriId = CoalesceInt(k.IsyeriId, existing.IsyeriId),
                 BolumId = CoalesceInt(k.BolumId, existing.BolumId),
                 DogumTarihi = k.DogumTarihi ?? existing.DogumTarihi,
-                IseGirisTarihi = k.IseGirisTarihi ?? existing.IseGirisTarihi ?? DateTime.Today,
+                IseGirisTarihi = k.IseGirisTarihi,
                 IstenCikisTarihi = k.IstenCikisTarihi ?? existing.IstenCikisTarihi,
                 CalismaSekli = Coalesce((k.CalismaSekli ?? k.CalismaSekliCsv), existing.CalismaSekliCsv),
                 CepTel = Coalesce(k.CepTel, existing.CepTel),
@@ -345,7 +346,7 @@ namespace CeyPASS.Api.Controllers
                     request.FirmaPersoneli,
                     request.PuantajYapilabilir,
                     request.YemekHakkiVar,
-                    request.GunlukYemekAdedi > 0 ? request.GunlukYemekAdedi : request.GunlukYemekLimiti,
+                    ResolveGunlukYemekAdedi(request.YemekHakkiVar, request.GunlukYemekAdedi, request.GunlukYemekLimiti, existing.GunlukYemekAdedi),
                     (request.FirmaDisiKartNo ?? string.Empty).Trim(),
                     fotoDegisti
                 );
@@ -358,6 +359,7 @@ namespace CeyPASS.Api.Controllers
             }
         }
 
+        /// <summary>İşten çıkış tarihi ve opsiyonel firma dışı kart no.</summary>
         [HttpPost("isten-cikar")]
         public ActionResult<ApiResult<object>> IstenCikar([FromBody] PersonelIstenCikarRequest request)
         {
@@ -412,6 +414,7 @@ namespace CeyPASS.Api.Controllers
             public string? CihazUyarisiMesaji { get; set; }
         }
 
+        /// <summary>İşten çıkan personeli tekrar aktifleştirir; cihaz uyarısı dönebilir.</summary>
         [HttpPost("tekrar-aktif-et")]
         public ActionResult<ApiResult<PersonelTekrarAktifResponse>> TekrarAktifEt([FromBody] PersonelTekrarAktifRequest request)
         {
@@ -448,6 +451,7 @@ namespace CeyPASS.Api.Controllers
             }
         }
 
+        /// <summary>Personel detayı; aktif firmadan farklı kayıt admin dışında Forbid.</summary>
         [HttpGet("{id}")]
         public ActionResult<ApiResult<PersonelDetailsDto>> GetDetails(string id)
         {
@@ -462,7 +466,6 @@ namespace CeyPASS.Api.Controllers
 
             var firma = _firmaService.GetAll().FirstOrDefault(f => f.FirmaId == kisi.FirmaId);
             var isyeri = _lookupService.GetIsyerleri(kisi.FirmaId)?.FirstOrDefault(i => i.Id == (kisi.IsyeriId ?? 0));
-            var departman = _lookupService.GetDepartmanlar(kisi.FirmaId)?.FirstOrDefault(d => d.Id == (kisi.DepartmanId ?? 0));
             var pozisyon = _lookupService.GetPozisyonlar(kisi.FirmaId)?.FirstOrDefault(p => p.Id == (kisi.PozisyonId ?? 0));
             var bolum = _lookupService.GetBolumler(kisi.FirmaId)?.FirstOrDefault(b => b.Id == (kisi.BolumId ?? 0));
             var statu = _lookupService.GetCalismaStatuleri(kisi.FirmaId)?.FirstOrDefault(s => s.Id == (kisi.CalismaStatusuId ?? 0));
@@ -475,7 +478,6 @@ namespace CeyPASS.Api.Controllers
                 KartNo = kisi.KartNo,
                 TcKimlikNo = kisi.TcKimlikNo,
                 PozisyonId = kisi.PozisyonId,
-                DepartmanId = kisi.DepartmanId,
                 FirmaId = kisi.FirmaId,
                 IsyeriId = kisi.IsyeriId,
                 BolumId = kisi.BolumId,
@@ -499,7 +501,6 @@ namespace CeyPASS.Api.Controllers
 
                 FirmaAdi = firma?.FirmaAdi,
                 IsyeriAdi = isyeri?.Ad,
-                DepartmanAdi = departman?.Ad,
                 PozisyonAdi = pozisyon?.Ad,
                 BolumAdi = bolum?.Ad,
             };
@@ -507,6 +508,7 @@ namespace CeyPASS.Api.Controllers
             return Ok(ApiResult<PersonelDetailsDto>.Ok(dto));
         }
 
+        /// <summary>Personel formu lookup verileri (işyeri listesi yetkiye göre kısıtlanır).</summary>
         [HttpGet("lookups")]
         public ActionResult<ApiResult<object>> GetLookups([FromQuery] int? firmaId)
         {
@@ -535,7 +537,6 @@ namespace CeyPASS.Api.Controllers
                     ? _firmaService.GetAll().OrderBy(f => f.FirmaAdi).ToList()
                     : null,
                 Isyerleri = isyerleri,
-                Departmanlar = _lookupService.GetDepartmanlar(effectiveFirmaId),
                 Pozisyonlar = _lookupService.GetPozisyonlar(effectiveFirmaId),
                 Bolumler = _lookupService.GetBolumler(effectiveFirmaId),
                 CalismaStatuleri = _lookupService.GetCalismaStatuleri(effectiveFirmaId),
@@ -543,6 +544,14 @@ namespace CeyPASS.Api.Controllers
             };
 
             return Ok(ApiResult<object>.Ok(lookups));
+        }
+
+        private static int ResolveGunlukYemekAdedi(bool yemekHakkiVar, int adedi, int limiti, int? existing)
+        {
+            if (!yemekHakkiVar) return 0;
+            if (adedi > 0) return adedi;
+            if (limiti > 0) return limiti;
+            return existing ?? 0;
         }
     }
 }

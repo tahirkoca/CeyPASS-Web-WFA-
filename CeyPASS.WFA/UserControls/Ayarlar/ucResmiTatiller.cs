@@ -7,6 +7,7 @@ using System.Windows.Forms;
 
 namespace CeyPASS.WFA.UserControls.Ayarlar
 {
+    /// <summary>Resmi tatil takvimi ve sabit tatil aktarımı.</summary>
     public partial class ucResmiTatiller : UserControl
     {
         private readonly ISessionContext _session;
@@ -16,6 +17,7 @@ namespace CeyPASS.WFA.UserControls.Ayarlar
         private const string PageName = "ResmiTatiller";
         private const string PageNameUI = "Resmi Tatiller";
 
+        /// <summary>Yetki etiketlerini onay/güncelleme butonlarına bağlar.</summary>
         public ucResmiTatiller(ISessionContext session, IResmiTatilService rsvc, IAuthorizationService auth)
         {
             InitializeComponent();

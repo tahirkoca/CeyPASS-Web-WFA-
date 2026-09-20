@@ -5,6 +5,7 @@ using System.Linq;
 
 namespace CeyPASS.DataAccess.Repositories
 {
+    /// <summary>Bildirim tablosu erişimi.</summary>
     public class BildirimRepositoryCore : IBildirimRepository
     {
         private readonly CeyPASSDataConnectionCore _context;
@@ -14,12 +15,14 @@ namespace CeyPASS.DataAccess.Repositories
             _context = context;
         }
 
+        /// <summary>Ekle işlemini ekler.</summary>
         public void Ekle(Bildirim bildirim)
         {
             _context.Bildirimler.Add(bildirim);
             _context.SaveChanges();
         }
 
+        /// <summary>For User sorgularını getirir.</summary>
         public List<Bildirim> GetForUser(string? personelId, int? kullaniciId)
         {
             var q = _context.Bildirimler.AsQueryable();
@@ -34,6 +37,7 @@ namespace CeyPASS.DataAccess.Repositories
             return q.OrderByDescending(b => b.OlusturmaTarihi).ToList();
         }
 
+        /// <summary>Mark As Read işlemini okundu işaretler.</summary>
         public void MarkAsRead(int bildirimId)
         {
             var b = _context.Bildirimler.Find(bildirimId);
@@ -44,6 +48,7 @@ namespace CeyPASS.DataAccess.Repositories
             }
         }
 
+        /// <summary>Unread Count sorgularını getirir.</summary>
         public int GetUnreadCount(string? personelId, int? kullaniciId)
         {
             var q = _context.Bildirimler.Where(b => !b.OkunduMu);
@@ -59,6 +64,7 @@ namespace CeyPASS.DataAccess.Repositories
             return q.Count();
         }
 
+        /// <summary>Mark All As Read işlemini tümünü okundu işaretler.</summary>
         public void MarkAllAsRead(string? personelId, int? kullaniciId)
         {
             var q = _context.Bildirimler.Where(b => !b.OkunduMu);

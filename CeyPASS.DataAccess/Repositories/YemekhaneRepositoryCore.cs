@@ -4,6 +4,7 @@ using System.Linq;
 
 namespace CeyPASS.DataAccess.Repositories
 {
+    /// <summary>Yemekhane modülü veri erişimi.</summary>
     public class YemekhaneRepositoryCore : IYemekhaneRepository
     {
         private readonly CeyPASSDataConnectionCore _context;
@@ -13,6 +14,7 @@ namespace CeyPASS.DataAccess.Repositories
             _context = context;
         }
 
+        /// <summary>Insert Limit işlemini ekler.</summary>
         public void InsertLimit(string personelId, int gunlukLimit)
         {
             var sql1 = @"
@@ -32,6 +34,7 @@ VALUES (@p0, @p1, GETDATE(), 1)";
                 new Microsoft.Data.SqlClient.SqlParameter("@p1", gunlukLimit));
         }
 
+        /// <summary>Upsert Limit işlemini yazar veya günceller.</summary>
         public void UpsertLimit(string personelId, int gunlukLimit)
         {
             var sql = @"
@@ -54,6 +57,7 @@ END";
                 new Microsoft.Data.SqlClient.SqlParameter("@p1", gunlukLimit));
         }
 
+        /// <summary>Pasif Et By Personel işlemini gerçekleştirir.</summary>
         public void PasifEtByPersonel(string personelId)
         {
             var sql = @"
@@ -65,6 +69,7 @@ UPDATE dbo.YemekhaneGirisLimitler
                 new Microsoft.Data.SqlClient.SqlParameter("@p0", personelId));
         }
 
+        /// <summary>Move Personel Id işlemini gerçekleştirir.</summary>
         public void MovePersonelId(string oldPersonelId, string newPersonelId)
         {
             var sql = @"
@@ -77,6 +82,7 @@ UPDATE dbo.YemekhaneGirisLimitler
                 new Microsoft.Data.SqlClient.SqlParameter("@p1", newPersonelId));
         }
 
+        /// <summary>Son Gunluk Limit sorgularını getirir.</summary>
         public int? GetSonGunlukLimit(string personelId)
         {
             var limit = _context.YemekhaneGirisLimitler

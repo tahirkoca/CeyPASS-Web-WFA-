@@ -7,6 +7,7 @@ using System.Linq;
 
 namespace CeyPASS.DataAccess.Repositories
 {
+    /// <summary>Pozisyon erişimi.</summary>
     public class PozisyonRepositoryCore : IPozisyonRepository
     {
         private readonly CeyPASSDataConnectionCore _context;
@@ -16,6 +17,7 @@ namespace CeyPASS.DataAccess.Repositories
             _context = context;
         }
 
+        /// <summary>By Firma sorgularını getirir.</summary>
         public List<LookupItem> GetByFirma(int? firmId = null)
         {
             return _context.Pozisyonlar
@@ -29,6 +31,7 @@ namespace CeyPASS.DataAccess.Repositories
                 .ToList();
         }
 
+        /// <summary>All sorgularını getirir.</summary>
         public List<LookupItem> GetAll()
         {
             return _context.Pozisyonlar
@@ -42,6 +45,7 @@ namespace CeyPASS.DataAccess.Repositories
                 .ToList();
         }
 
+        /// <summary>List For Admin sorgularını getirir.</summary>
         public List<PozisyonListDTO> GetListForAdmin()
         {
             return _context.Pozisyonlar
@@ -56,6 +60,7 @@ namespace CeyPASS.DataAccess.Repositories
                 .ToList();
         }
 
+        /// <summary>Kimliğe göre kaydı getirir.</summary>
         public DataRow GetById(int id)
         {
             var entity = _context.Pozisyonlar
@@ -74,6 +79,7 @@ namespace CeyPASS.DataAccess.Repositories
             return dt.Rows[0];
         }
 
+        /// <summary>Yeni kayıt ekler.</summary>
         public bool Insert(string ad, string aciklama)
         {
             var entity = new CeyPASS.DataAccess.Pozisyonlar
@@ -86,6 +92,7 @@ namespace CeyPASS.DataAccess.Repositories
             return _context.SaveChanges() > 0;
         }
 
+        /// <summary>Kaydı günceller.</summary>
         public bool Update(int id, string ad, string aciklama)
         {
             var entity = _context.Pozisyonlar
@@ -100,6 +107,7 @@ namespace CeyPASS.DataAccess.Repositories
             return _context.SaveChanges() > 0;
         }
 
+        /// <summary>Kaydı siler.</summary>
         public bool Delete(int id)
         {
             var entity = _context.Pozisyonlar

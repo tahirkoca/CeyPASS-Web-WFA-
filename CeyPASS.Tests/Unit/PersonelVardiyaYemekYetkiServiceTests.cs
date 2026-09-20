@@ -10,6 +10,9 @@ using Xunit;
 
 namespace CeyPASS.Tests.Unit
 {
+    /// <summary>
+    /// Personel vardiya ve yemek yetki atamaları.
+    /// </summary>
     public class PersonelVardiyaYemekYetkiServiceTests
     {
         private readonly Mock<IPersonelVardiyaYemekYetkiRepository> _repo = new();
@@ -31,6 +34,9 @@ namespace CeyPASS.Tests.Unit
             AktifMi = true
         };
 
+        /// <summary>
+        /// BitisBaslangictanKucuk reddedilir
+        /// </summary>
         [Fact]
         public void Add_BitisBaslangictanKucuk_Red()
         {
@@ -44,6 +50,9 @@ namespace CeyPASS.Tests.Unit
             _repo.Verify(r => r.Insert(It.IsAny<PersonelVardiyaYemekYetki>()), Times.Never);
         }
 
+        /// <summary>
+        /// CihazSecilmedi reddedilir
+        /// </summary>
         [Fact]
         public void Add_CihazSecilmedi_Red()
         {
@@ -57,6 +66,9 @@ namespace CeyPASS.Tests.Unit
             _repo.Verify(r => r.Insert(It.IsAny<PersonelVardiyaYemekYetki>()), Times.Never);
         }
 
+        /// <summary>
+        /// AyniCihazVar reddedilir
+        /// </summary>
         [Fact]
         public void Add_AyniCihazVar_Red()
         {
@@ -70,6 +82,9 @@ namespace CeyPASS.Tests.Unit
             _repo.Verify(r => r.Insert(It.IsAny<PersonelVardiyaYemekYetki>()), Times.Never);
         }
 
+        /// <summary>
+        /// Geçerli InsertCagirilir
+        /// </summary>
         [Fact]
         public void Add_Gecerli_InsertCagirilir()
         {
@@ -84,6 +99,9 @@ namespace CeyPASS.Tests.Unit
             _repo.Verify(r => r.Insert(item), Times.Once);
         }
 
+        /// <summary>
+        /// DuplicateCihazExcludeSelf kabul edilir
+        /// </summary>
         [Fact]
         public void Update_DuplicateCihazExcludeSelf_Ok()
         {
@@ -97,6 +115,9 @@ namespace CeyPASS.Tests.Unit
             error.Should().BeNull();
         }
 
+        /// <summary>
+        /// RepoSonucunudöner
+        /// </summary>
         [Fact]
         public void FirmaHasSaatPenceresiAktif_RepoSonucunuDoner()
         {
@@ -104,6 +125,9 @@ namespace CeyPASS.Tests.Unit
             _sut.FirmaHasSaatPenceresiAktif(101).Should().BeTrue();
         }
 
+        /// <summary>
+        /// Listeyidöner
+        /// </summary>
         [Fact]
         public void GetByCalismaSekliId_ListeyiDoner()
         {

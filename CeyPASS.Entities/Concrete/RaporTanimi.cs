@@ -1,5 +1,6 @@
 ﻿namespace CeyPASS.Entities.Concrete
 {
+    /// <summary>Dinamik rapor kataloğu; çalıştırılacak stored procedure adı.</summary>
     public class RaporTanimi
     {
         public int Id { get; set; }

@@ -5,6 +5,7 @@ using System.Windows.Forms;
 
 namespace CeyPASS.WFA.Forms
 {
+    /// <summary>Canlı İzleme giriş ekranı — bölge, kullanıcı ve şifre ile oturum açar.</summary>
     public partial class canliIzlemeGirisEkrani : Form
     {
         [DllImport("user32.dll", CharSet = CharSet.Auto)]
@@ -17,8 +18,10 @@ namespace CeyPASS.WFA.Forms
         private readonly IKisiDetayService _kdsvc;
         private readonly IMisafirKartService _msvc;
         private readonly IAracKartiService _aracSvc;
+        private readonly ICanliIzlemeKartKomutService _kartKomutSvc;
 
-        public canliIzlemeGirisEkrani(girisEkrani girisFormu, ISessionContext session, ICanliIzlemeService svc, IKisiHareketService khsvc, IKisiDetayService kdsvc, IMisafirKartService msvc, IAracKartiService aracSvc)
+        /// <summary>DI ile servisleri alır; giriş butonunu varsayılan kabul tuşu yapar.</summary>
+        public canliIzlemeGirisEkrani(girisEkrani girisFormu, ISessionContext session, ICanliIzlemeService svc, IKisiHareketService khsvc, IKisiDetayService kdsvc, IMisafirKartService msvc, IAracKartiService aracSvc, ICanliIzlemeKartKomutService kartKomutSvc)
         {
             InitializeComponent();
             SendMessage(canliEkranSifre.Handle, EM_SETCUEBANNER, 0, "Şifrenizi giriniz");
@@ -29,6 +32,31 @@ namespace CeyPASS.WFA.Forms
             _kdsvc = kdsvc;
             _msvc = msvc;
             _aracSvc = aracSvc;
+            _kartKomutSvc = kartKomutSvc;
+            // İş kuralı: Enter ile giriş (AcceptButton); combo açıkken Enter sadece listeyi kapatır, login tetiklenmez.
+            AcceptButton = canliEkranGirisButon;
+            KeyPreview = true;
+            KeyDown += CanliIzlemeGiris_KeyDown;
+        }
+
+        // İş kuralı: Combo DroppedDown iken Enter login değil, dropdown kapatma.
+        private void CanliIzlemeGiris_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode != Keys.Enter && e.KeyCode != Keys.Return)
+                return;
+            if (canliIzlemeBolgeBox.DroppedDown)
+            {
+                canliIzlemeBolgeBox.DroppedDown = false;
+                e.Handled = true;
+                e.SuppressKeyPress = true;
+                return;
+            }
+            if (canliEkranKullaniciAdi.DroppedDown)
+            {
+                canliEkranKullaniciAdi.DroppedDown = false;
+                e.Handled = true;
+                e.SuppressKeyPress = true;
+            }
         }
         private void canliIzlemeGirisEkrani_Load(object sender, EventArgs e)
         {
@@ -92,7 +120,7 @@ namespace CeyPASS.WFA.Forms
 
             girisFormuRef?.Hide();
             this.Hide();
-            new canliIzlemeVeriEkrani(_session, _svc, _khsvc, _kdsvc, _msvc, _aracSvc).Show();
+            new canliIzlemeVeriEkrani(_session, _svc, _khsvc, _kdsvc, _msvc, _aracSvc, _kartKomutSvc).Show();
         }
     }
 }

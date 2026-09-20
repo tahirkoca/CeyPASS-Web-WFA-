@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using CeyPASS.Business.Abstractions;
 using CeyPASS.DataAccess.Abstractions;
 using CeyPASS.Entities.Concrete;
+using CeyPASS.Entities.Helpers;
 using CeyPASS.Infrastructure.Helpers;
 using Microsoft.Extensions.Caching.Memory;
 using System;
@@ -13,6 +14,7 @@ using System.Drawing;
 
 namespace CeyPASS.Web.Controllers
 {
+    /// <summary>Personel listesi, CRUD, çoklu sicil ve firma/işyeri yetki filtreleri.</summary>
     public class PersonelController : Controller
     {
         private readonly IKisiService _kisiService;
@@ -23,6 +25,7 @@ namespace CeyPASS.Web.Controllers
         private readonly ICalismaSekliService _calismaSekliService;
         private readonly IFirmaService _firmaService;
         private readonly IPuantajService _puantajService;
+        private readonly ICokluSicilService _cokluSicilService;
         private readonly IMemoryCache _cache;
         private const string PageName = "Personeller";
         private const int DefaultPageSize = 20;
@@ -38,6 +41,7 @@ namespace CeyPASS.Web.Controllers
             ICalismaSekliService calismaSekliService,
             IFirmaService firmaService,
             IPuantajService puantajService,
+            ICokluSicilService cokluSicilService,
             IMemoryCache cache)
         {
             _kisiService = kisiService;
@@ -48,12 +52,14 @@ namespace CeyPASS.Web.Controllers
             _calismaSekliService = calismaSekliService;
             _firmaService = firmaService;
             _puantajService = puantajService;
+            _cokluSicilService = cokluSicilService;
             _cache = cache;
         }
 
+        /// <summary>Personel listesi; yetki, önbellek, sayfalama ve isteğe bağlı bölüm filtresi.</summary>
         /// <param name="kartTipi">puantaj = Puantaj Yapılan Kartlar (PuantajYapilirMi=1), puantajsiz = Puantaj Yapılmayan Kartlar (PuantajYapilirMi=0)</param>
         /// <param name="calismaDurumu">aktif = aktif çalışanlar, cikan = işten çıkanlar</param>
-        public IActionResult Index(string search = null, int? firmaId = null, int? isyeriId = null, string kartTipi = null, string calismaDurumu = "aktif", int page = 1, int pageSize = DefaultPageSize)
+        public IActionResult Index(string search = null, int? firmaId = null, int? isyeriId = null, int? bolumId = null, string kartTipi = null, string calismaDurumu = "aktif", int page = 1, int pageSize = DefaultPageSize)
         {
             // Check authorization
             if (!_authorizationService.ViewAbility(PageName))
@@ -94,12 +100,13 @@ namespace CeyPASS.Web.Controllers
             var (queryIsyeriId, queryIsyeriIdIn) = FirmaIsyeriYetkiHelper.ResolveKisiQueryIsyeriFilter(
                 selectedFirmaId, isyeriId, yetkiler, isAdmin);
 
-            var cacheKey = $"personel_list_{selectedFirmaId}_v{ver}_{IsyeriFilterCacheSegment(queryIsyeriId, queryIsyeriIdIn)}_{(sadeceIstenCikanlar ? "cikan" : (puantajYapilan ? "puantaj" : "puantajsiz"))}_{searchNorm}_p{page}_s{pageSize}";
+            int? queryBolumId = bolumId.HasValue && bolumId.Value > 0 ? bolumId : null;
+            var cacheKey = $"personel_list_{selectedFirmaId}_v{ver}_{IsyeriFilterCacheSegment(queryIsyeriId, queryIsyeriIdIn)}_b{queryBolumId?.ToString() ?? "all"}_{(sadeceIstenCikanlar ? "cikan" : (puantajYapilan ? "puantaj" : "puantajsiz"))}_{searchNorm}_p{page}_s{pageSize}";
             if (!_cache.TryGetValue(cacheKey, out PersonelListCacheValue cached))
             {
                 int totalCount;
                 var items = _kisiQueryService.GetAktifKisilerByFirmaPaged(
-                    selectedFirmaId, search, puantajYapilirMi, queryIsyeriId, queryIsyeriIdIn, sadeceIstenCikanlar, page, pageSize, out totalCount);
+                    selectedFirmaId, search, puantajYapilirMi, queryIsyeriId, queryIsyeriIdIn, sadeceIstenCikanlar, page, pageSize, out totalCount, queryBolumId);
                 cached = new PersonelListCacheValue(items, totalCount);
                 _cache.Set(cacheKey, cached, TimeSpan.FromMinutes(2));
             }
@@ -113,14 +120,17 @@ namespace CeyPASS.Web.Controllers
             // Load lookup data for filters
             var firmalar = isAdmin ? _firmaService.GetAll().OrderBy(f => f.FirmaAdi).ToList() : null;
             var isyerleri = GetYetkiliIsyeriLookups(selectedFirmaId);
+            var bolumler = _lookupService.GetBolumler(selectedFirmaId);
 
             ViewBag.Search = search;
             ViewBag.SelectedFirmaId = selectedFirmaId;
             ViewBag.SelectedIsyeriId = isyeriId;
+            ViewBag.SelectedBolumId = queryBolumId;
             ViewBag.CalismaDurumu = sadeceIstenCikanlar ? "cikan" : "aktif";
             ViewBag.KartTipi = puantajYapilan ? "puantaj" : "puantajsiz";
             ViewBag.Firmalar = firmalar;
             ViewBag.Isyerleri = isyerleri;
+            ViewBag.Bolumler = bolumler;
             ViewBag.IsAdmin = isAdmin;
             ViewBag.CanCreate = _authorizationService.Can(PageName, YetkiTipleri.Create);
             ViewBag.CanUpdate = _authorizationService.Can(PageName, YetkiTipleri.Update);
@@ -133,6 +143,7 @@ namespace CeyPASS.Web.Controllers
             return View(personelList);
         }
 
+        /// <summary>Yeni kayit formu ve kaydetme.</summary>
         [HttpGet]
         public IActionResult Create()
         {
@@ -153,6 +164,7 @@ namespace CeyPASS.Web.Controllers
             return View(model);
         }
 
+        /// <summary>Yeni kayit formu ve kaydetme.</summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult Create(Kisi kisi, bool firmaPersoneli, bool puantajYapilabilir, bool yemekHakkiVar, int gunlukYemekLimiti, string puantajsizKartId, string puantajsizKartNo, string puantajsizKartAdi, IFormFile fotograf, bool ziyaretciMi, bool aracKartiMi, bool taseronCalisanMi)
@@ -176,7 +188,8 @@ namespace CeyPASS.Web.Controllers
                 KartNo = kisi.KartNo,
                 TaseronCalisanMi = taseronCalisanMi,
                 ZiyaretciMi = ziyaretciMi,
-                AracKartiMi = aracKartiMi
+                AracKartiMi = aracKartiMi,
+                IsyeriId = kisi.IsyeriId
             };
 
             var validation = _kisiService.ValidateKisiKayit(validationDto);
@@ -220,6 +233,7 @@ namespace CeyPASS.Web.Controllers
             }
         }
 
+        /// <summary>Kayit guncelleme.</summary>
         [HttpGet]
         public IActionResult Edit(string id, string kartTipi, int? firmaId, int page = 1, int pageSize = DefaultPageSize, string search = null, int? isyeriId = null, string calismaDurumu = "aktif")
         {
@@ -258,6 +272,7 @@ namespace CeyPASS.Web.Controllers
             return View(kisi);
         }
 
+        /// <summary>Eski puantajsiz kart duzenleme yonlendirmesi.</summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult EditPuantajsiz(string kartId, string kartAdi, string kartNo, string calismaSekli, string kartTipi, int? firmaId)
@@ -266,6 +281,7 @@ namespace CeyPASS.Web.Controllers
             return RedirectToAction("Index", new { kartTipi, firmaId });
         }
 
+        /// <summary>Kayit guncelleme.</summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult Edit(string originalPersonelId, KisiDetay kisiDetay, bool firmaPersoneli, bool puantajYapilabilir, bool yemekHakkiVar, int gunlukYemekAdedi, string firmaDisiKartNo, bool fotoDegisti, IFormFile fotograf, string kartTipi, int? firmaId, int page = 1, int pageSize = DefaultPageSize, string search = null, int? isyeriId = null)
@@ -295,12 +311,11 @@ namespace CeyPASS.Web.Controllers
                     KartNo = kisiDetay.KartNo,
                     TcKimlikNo = kisiDetay.TcKimlikNo,
                     PozisyonId = kisiDetay.PozisyonId,
-                    DepartmanId = kisiDetay.DepartmanId,
                     FirmaId = kisiDetay.FirmaId,
                     IsyeriId = kisiDetay.IsyeriId,
                     BolumId = kisiDetay.BolumId,
                     DogumTarihi = kisiDetay.DogumTarihi,
-                    IseGirisTarihi = kisiDetay.IseGirisTarihi ?? DateTime.Today,
+                    IseGirisTarihi = kisiDetay.IseGirisTarihi,
                     IstenCikisTarihi = kisiDetay.IstenCikisTarihi,
                     CepTel = kisiDetay.CepTel,
                     Email = kisiDetay.Email,
@@ -325,7 +340,7 @@ namespace CeyPASS.Web.Controllers
                     }
                 }
 
-                bool success = _kisiService.KisiGuncelle(kisi, originalPersonelId, firmaPersoneli, puantajYapilabilir, yemekHakkiVar, gunlukYemekAdedi, firmaDisiKartNo, fotoDegisti);
+                bool success = _kisiService.KisiGuncelle(kisi, originalPersonelId, firmaPersoneli, puantajYapilabilir, yemekHakkiVar, ResolveGunlukYemekAdedi(yemekHakkiVar, gunlukYemekAdedi, existing.GunlukYemekAdedi), firmaDisiKartNo, fotoDegisti);
                 if (success)
                 {
                     TempData["Success"] = "Personel başarıyla güncellendi.";
@@ -361,6 +376,7 @@ namespace CeyPASS.Web.Controllers
             }
         }
 
+        /// <summary>Kayit silme veya pasiflestirme.</summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult Delete(string id, DateTime? cikisTarihi, string? firmaDisiKartNo, string kartTipi, int? firmaId, int page = 1, int pageSize = DefaultPageSize, string search = null, int? isyeriId = null)
@@ -408,6 +424,7 @@ namespace CeyPASS.Web.Controllers
             return RedirectToAction("Index", new { kartTipi, firmaId, page, pageSize, search, isyeriId, calismaDurumu = "aktif" });
         }
 
+        /// <summary>Isten cikan personeli tekrar aktif eder.</summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult TekrarAktifEt(string id, bool puantajYapilirMi, string kartTipi, int? firmaId, int page = 1, int pageSize = DefaultPageSize, string search = null, int? isyeriId = null, string calismaDurumu = "cikan")
@@ -448,6 +465,7 @@ namespace CeyPASS.Web.Controllers
             return RedirectToAction("Index", new { kartTipi, firmaId, page, pageSize, search, isyeriId, calismaDurumu = "aktif" });
         }
 
+        /// <summary>Kayit detay gorunumu.</summary>
         [HttpGet]
         public IActionResult Details(string id, string kartTipi, int? firmaId, int page = 1, int pageSize = DefaultPageSize, string search = null, int? isyeriId = null)
         {
@@ -487,13 +505,14 @@ namespace CeyPASS.Web.Controllers
             _cache.Set(verKey, ver, TimeSpan.FromHours(1));
         }
 
+        /// <summary>Önbellek anahtarı için arama metnini tr-TR küçük harfe çevirir.</summary>
         private static string NormalizeSearch(string s)
         {
             if (string.IsNullOrWhiteSpace(s)) return "";
             s = s.Trim();
             while (s.Contains("  "))
                 s = s.Replace("  ", " ");
-            return s.ToLowerInvariant();
+            return CeyPASS.Entities.Helpers.TurkishText.ToLower(s);
         }
 
         private sealed class PersonelListCacheValue
@@ -513,37 +532,34 @@ namespace CeyPASS.Web.Controllers
 
             var firmalar = _firmaService.GetAll();
             var firma = firmalar?.FirstOrDefault(f => f.FirmaId == kisi.FirmaId);
-            ViewBag.FirmaAdi = firma?.FirmaAdi ?? "-";
+            ViewBag.FirmaAdi = KisiDisplayHelper.TextOrMissing(firma?.FirmaAdi);
 
             var isyerleri = _lookupService.GetIsyerleri(kisi.FirmaId);
             var isyeri = isyerleri?.FirstOrDefault(i => i.Id == (kisi.IsyeriId ?? 0));
-            ViewBag.IsyeriAdi = isyeri?.Ad ?? "-";
-
-            var departmanlar = _lookupService.GetDepartmanlar();
-            var departman = departmanlar?.FirstOrDefault(d => d.Id == (kisi.DepartmanId ?? 0));
-            ViewBag.DepartmanAdi = departman?.Ad ?? "-";
+            ViewBag.IsyeriAdi = kisi.IsyeriId.HasValue ? KisiDisplayHelper.TextOrMissing(isyeri?.Ad) : KisiDisplayHelper.Missing;
 
             var pozisyonlar = _lookupService.GetPozisyonlar();
             var pozisyon = pozisyonlar?.FirstOrDefault(p => p.Id == (kisi.PozisyonId ?? 0));
-            ViewBag.PozisyonAdi = pozisyon?.Ad ?? "-";
+            ViewBag.PozisyonAdi = kisi.PozisyonId.HasValue ? KisiDisplayHelper.TextOrMissing(pozisyon?.Ad) : KisiDisplayHelper.Missing;
 
             var bolumler = _lookupService.GetBolumler(kisi.FirmaId);
             var bolum = bolumler?.FirstOrDefault(b => b.Id == (kisi.BolumId ?? 0));
-            ViewBag.BolumAdi = bolum?.Ad ?? "-";
+            ViewBag.BolumAdi = kisi.BolumId.HasValue ? KisiDisplayHelper.TextOrMissing(bolum?.Ad) : KisiDisplayHelper.Missing;
 
             var statuler = _lookupService.GetCalismaStatuleri();
             var st = statuler?.FirstOrDefault(s => s.Id == (kisi.CalismaStatusuId ?? 0));
-            kisi.CalismaStatusuText = st?.Ad ?? (kisi.CalismaStatusuText ?? "-");
+            kisi.CalismaStatusuText = KisiDisplayHelper.TextOrMissing(st?.Ad ?? kisi.CalismaStatusuText);
+        }
+
+        private static int ResolveGunlukYemekAdedi(bool yemekHakkiVar, int adedi, int? existing)
+        {
+            if (!yemekHakkiVar) return 0;
+            if (adedi > 0) return adedi;
+            return existing ?? 0;
         }
 
         // AJAX endpoints for lookups
-        [HttpGet]
-        public IActionResult GetDepartmanlar()
-        {
-            var departmanlar = _lookupService.GetDepartmanlar(_sessionContext.AktifFirmaId);
-            return Json(departmanlar);
-        }
-
+        /// <summary>GetPozisyonlar lookup/JSON verisi.</summary>
         [HttpGet]
         public IActionResult GetPozisyonlar()
         {
@@ -551,17 +567,103 @@ namespace CeyPASS.Web.Controllers
             return Json(pozisyonlar);
         }
 
+        /// <summary>GetIsyerleri lookup/JSON verisi.</summary>
         [HttpGet]
         public IActionResult GetIsyerleri(int firmaId)
         {
             return Json(GetYetkiliIsyeriLookups(firmaId));
         }
 
+        /// <summary>GetBolumler lookup/JSON verisi.</summary>
         [HttpGet]
         public IActionResult GetBolumler(int firmaId)
         {
             var bolumler = _lookupService.GetBolumler(firmaId);
             return Json(bolumler);
+        }
+
+        /// <summary>Coklu sicil: CokluSicilOzet.</summary>
+        [HttpGet]
+        public IActionResult CokluSicilOzet(int personelId)
+        {
+            if (!_authorizationService.ViewAbility(PageName)) return Forbid();
+            if (personelId <= 0) return Json(new CokluSicilOzetDTO());
+            return Json(_cokluSicilService.GetOzet(personelId));
+        }
+
+        /// <summary>Coklu sicil: CokluSicilListe.</summary>
+        [HttpGet]
+        public IActionResult CokluSicilListe(int personelId)
+        {
+            if (!_authorizationService.ViewAbility(PageName)) return Forbid();
+            return Json(new
+            {
+                baglantilar = _cokluSicilService.GetByAnaPersonelId(personelId),
+                ozet = _cokluSicilService.GetOzet(personelId)
+            });
+        }
+
+        /// <summary>Coklu sicil: CokluSicilHedefAdaylari.</summary>
+        [HttpGet]
+        public IActionResult CokluSicilHedefAdaylari(int personelId)
+        {
+            if (!_authorizationService.Can(PageName, YetkiTipleri.Update)) return Forbid();
+            var detay = _kisiQueryService.GetKisiDetay(personelId.ToString());
+            if (detay == null) return NotFound(new { message = "Personel bulunamadı." });
+            return Json(_cokluSicilService.GetHedefAdaylari(personelId, detay.TcKimlikNo ?? ""));
+        }
+
+        /// <summary>Coklu sicil: CokluSicilUpsert.</summary>
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult CokluSicilUpsert(int personelId, [FromBody] CokluSicilUpsertRequest request)
+        {
+            if (!_authorizationService.Can(PageName, YetkiTipleri.Update)) return Forbid();
+            try
+            {
+                var detay = _kisiQueryService.GetKisiDetay(personelId.ToString());
+                if (detay == null) return BadRequest(new { message = "Personel bulunamadı." });
+                _cokluSicilService.Upsert(personelId, detay.TcKimlikNo ?? "", request, _sessionContext.AktifKullaniciId);
+                return Json(new { success = true, message = "Kaydedildi." });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { success = false, message = ex.Message });
+            }
+        }
+
+        /// <summary>Coklu sicil: CokluSicilSetAktif.</summary>
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult CokluSicilSetAktif(int personelId, int hedefPersonelId, bool aktif)
+        {
+            if (!_authorizationService.Can(PageName, YetkiTipleri.Update)) return Forbid();
+            try
+            {
+                _cokluSicilService.SetAktif(personelId, hedefPersonelId, aktif, _sessionContext.AktifKullaniciId);
+                return Json(new { success = true, message = aktif ? "Bağlantı aktifleştirildi." : "Bağlantı pasifleştirildi." });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { success = false, message = ex.Message });
+            }
+        }
+
+        /// <summary>Coklu sicil: CokluSicilPasiflestirTumunu.</summary>
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult CokluSicilPasiflestirTumunu(int personelId)
+        {
+            if (!_authorizationService.Can(PageName, YetkiTipleri.Update)) return Forbid();
+            try
+            {
+                _cokluSicilService.PasifleştirTümünü(personelId, _sessionContext.AktifKullaniciId);
+                return Json(new { success = true, message = "Tüm bağlantılar pasifleştirildi." });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { success = false, message = ex.Message });
+            }
         }
 
         private void LoadLookupData(object kisiOrDetay)
@@ -580,7 +682,6 @@ namespace CeyPASS.Web.Controllers
                 firmaId = (int)_sessionContext.AktifFirmaId;
             }
 
-            ViewBag.Departmanlar = _lookupService.GetDepartmanlar(firmaId);
             ViewBag.Pozisyonlar = _lookupService.GetPozisyonlar(firmaId);
             ViewBag.Isyerleri = GetYetkiliIsyeriLookups(firmaId);
             ViewBag.Bolumler = _lookupService.GetBolumler(firmaId);

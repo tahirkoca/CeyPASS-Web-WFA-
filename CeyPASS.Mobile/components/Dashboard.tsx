@@ -1,3 +1,4 @@
+/** Ana sayfa: geç kalanlar, doğum günleri, bildirim kısayolu. */
 import React, { useEffect, useMemo, useState } from 'react';
 import { Modal, TextInput, View, Text, ScrollView, TouchableOpacity, ActivityIndicator, StyleSheet, RefreshControl } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';

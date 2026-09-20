@@ -4,6 +4,7 @@ using CeyPASS.WPF.ViewModels;
 
 namespace CeyPASS.WPF.Views;
 
+/// <summary>Seçili çalışma şekli / vardiya için yemek saati detayları.</summary>
 public partial class YemekSaatleriDetailWindow : Window
 {
     public YemekSaatleriDetailWindow(int calismaSekliId, string vardiyaAd)

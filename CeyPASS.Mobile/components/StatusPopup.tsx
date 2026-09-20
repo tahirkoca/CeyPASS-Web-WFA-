@@ -1,3 +1,4 @@
+/** Başarı/hata toast veya modal; isteğe bağlı geri al. */
 import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Animated, Modal, TouchableOpacity } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';

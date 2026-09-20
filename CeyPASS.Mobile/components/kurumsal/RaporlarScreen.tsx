@@ -1,3 +1,4 @@
+/** Tanımlı raporları parametreyle çalıştırma ve tablo/export. */
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, FlatList, Modal, Platform, ScrollView, Text, TextInput, TouchableOpacity, View } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
@@ -12,7 +13,8 @@ import * as Sharing from "expo-sharing";
 import { Buffer } from "buffer";
 import { PdfPreviewModal } from "../PdfPreviewModal";
 import { BusyOverlay } from "../BusyOverlay";
-import { pageFilterPrefs, parsePrefDate } from "../../services/pageFilterPrefs";
+import { pageFilterPrefs, parsePrefDate } from "../../services/pageFilterPrefs";
+import { toTrLower } from "../../services/turkishText";
 
 function pick<T = any>(obj: any, a: string, b?: string): T | undefined {
   if (!obj) return undefined;
@@ -267,7 +269,8 @@ export function RaporlarScreen(props: { user: any; abilities: any; onOpenMenu: (
               id: Number(pick<any>(x, "id", "Id") ?? 0),
               ad: String(pick<any>(x, "ad", "Ad") ?? ""),
             }))
-            .filter((x) => x.id > 0 && x.ad)
+            .filter((x) => Number.isFinite(x.id) && x.id >= 0)
+            .map((x) => ({ ...x, ad: x.ad.trim() || `İşyeri ${x.id}` }))
         );
       } else setIsyeriList([]);
       if (cz?.success) {
@@ -403,9 +406,9 @@ export function RaporlarScreen(props: { user: any; abilities: any; onOpenMenu: (
   const filteredRows = useMemo(() => {
     const cols = (table?.columns ?? table?.Columns ?? []) as string[];
     const rows = (table?.rows ?? table?.Rows ?? []) as (string | null)[][];
-    const qq = q.trim().toLowerCase();
+    const qq = toTrLower(q).trim();
     if (!qq) return { cols, rows };
-    const out = rows.filter((r) => r.some((cell) => (cell ?? "").toString().toLowerCase().includes(qq)));
+    const out = rows.filter((r) => r.some((cell) => toTrLower(cell).includes(qq)));
     return { cols, rows: out };
   }, [table, q]);
 

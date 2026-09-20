@@ -13,6 +13,7 @@ using System.Windows.Forms;
 
 namespace CeyPASS.WFA.UserControls.EO
 {
+    /// <summary>Aylık puantaj gridi, onay ve Excel dışa aktarım ekranı.</summary>
     public partial class ucAylikPuantajEkrani : UserControl
     {
         private readonly ISessionContext _session;
@@ -22,7 +23,10 @@ namespace CeyPASS.WFA.UserControls.EO
         private readonly IIsyeriService _isvc;
         private readonly IKisiService _ksvc;
         private readonly IAuthorizationService _auth;
+        private readonly ICokluSicilService _cokluSicilSvc;
         AuthorizationHelper authHelp;
+        private int _cokluSicilHedefSayisi;
+        private bool _canCokluSicileAktar;
         private int _seciliYil;
         private int _seciliAy;
         private int _seciliPersonelId;
@@ -35,7 +39,8 @@ namespace CeyPASS.WFA.UserControls.EO
         private const string PageNameUI = "Aylık Puantaj";
         private Button btnBuguneKadarOnayla;
 
-        public ucAylikPuantajEkrani(ISessionContext session, IPuantajService psvc, IFirmaService fsvc, IIsyeriService isvc, IKisiService ksvc, IAuthorizationService auth, IKullaniciFirmaIsyeriYetkiService yetkiSvc)
+        /// <summary>Yetki kontrolü ve isteğe bağlı toplu onay butonunu kurar.</summary>
+        public ucAylikPuantajEkrani(ISessionContext session, IPuantajService psvc, IFirmaService fsvc, IIsyeriService isvc, IKisiService ksvc, IAuthorizationService auth, IKullaniciFirmaIsyeriYetkiService yetkiSvc, ICokluSicilService cokluSicilSvc)
         {
             InitializeComponent();
             _session = session;
@@ -45,6 +50,7 @@ namespace CeyPASS.WFA.UserControls.EO
             _isvc = isvc;
             _ksvc = ksvc;
             _auth = auth;
+            _cokluSicilSvc = cokluSicilSvc;
             authHelp = new AuthorizationHelper(_session, _auth);
             WinFormsAuthHelper.ApplyPageAuthorization(_auth, _session, PageName, this);
             btnEkKayitAyarla.Tag = YetkiTipleri.Update;
@@ -353,7 +359,23 @@ namespace CeyPASS.WFA.UserControls.EO
                 int.TryParse(txtEkKayitGunu.Text, out ekGun);
                 ApplyLocksAndGreyRows(_ekKayitGun);
             }
+            RefreshCokluSicilButton(personelId);
             PersistFilters();
+        }
+
+        private void RefreshCokluSicilButton(int personelId)
+        {
+            if (personelId <= 0)
+            {
+                _canCokluSicileAktar = false;
+                _cokluSicilHedefSayisi = 0;
+            }
+            else
+            {
+                _canCokluSicileAktar = _cokluSicilSvc.IsAnaSicil(personelId);
+                _cokluSicilHedefSayisi = _cokluSicilSvc.GetAktifHedefSayisi(personelId);
+            }
+            btnCokluSicileAktar.Enabled = _canCokluSicileAktar;
         }
         private void Grid_CellContentClick(object sender, DataGridViewCellEventArgs e)
         {
@@ -517,12 +539,18 @@ namespace CeyPASS.WFA.UserControls.EO
                 return;
             }
 
+            if (!_canCokluSicileAktar)
+            {
+                MessageBox.Show("Seçili personel ana sicil değil veya aktif hedef bağlantısı yok.", "Uyarı", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
             int anaPersonelId = _seciliPersonelId;
             int yil = _seciliYil;
             int ay = _seciliAy;
 
             var onay = UiConfirm.Confirm(this,
-                $"Seçili kişinin bağlı tüm sicillerine {yil}-{ay:D2} ayının SON GÜNÜNE 'NG 7,5' yazılacak.\n" +
+                $"Seçili kişinin {_cokluSicilHedefSayisi} hedef siciline {yil}-{ay:D2} ayı için Aktarım Gün Sayısı kadar 'NG 7,5' yazılacak.\n" +
                 "Ayrıca ana personelin ayın SON GÜNÜNDEKİ kayıtları kaldırılacaktır. Onaylıyor musunuz?",
                 "Onay", "Onayla", "Vazgeç");
 
@@ -696,6 +724,7 @@ namespace CeyPASS.WFA.UserControls.EO
                     Yetkiler = _kullaniciYetkileri
                 };
 
+                // İş kuralı: veri PrepareMonthlyExport ile hazırlanır; dosya ExcelHelper.ExceleDonustur ile yazılır.
                 var exportData = _psvc.PrepareMonthlyExport(request);
 
                 SaveFileDialog saveFileDialog = new SaveFileDialog

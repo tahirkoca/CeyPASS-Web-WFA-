@@ -5,12 +5,14 @@ using CeyPASS.WPF.Views;
 
 namespace CeyPASS.WPF.Controls;
 
+/// <summary>Pencere üst şerit görünümü (açık / cam).</summary>
 public enum CeypassChromeVariant
 {
     Light,
     Glass
 }
 
+/// <summary>Özel minimize/büyüt/kapat; MainWindow kapatılınca uygulama sonlanır.</summary>
 public partial class CeypassWindowChrome : UserControl
 {
     public static readonly DependencyProperty ShowMinimizeProperty =

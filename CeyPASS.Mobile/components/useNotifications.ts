@@ -1,7 +1,9 @@
+/** Push / yerel bildirim dinleyicisi ve okunmamış sayacı poll. */
 import { AppState, AppStateStatus } from "react-native";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { notificationService } from "../services/notificationApi";
 
+/** Bildirim geçmişi satır modeli. */
 export type NotificationItem = {
   id: number;
   baslik?: string | null;
@@ -16,6 +18,7 @@ function asInt(v: any, def = 0) {
   return Number.isFinite(n) ? n : def;
 }
 
+/** Periyodik unread-count ve yeni bildirim callback. */
 export function useNotifications(opts?: {
   pollMs?: number;
   onNewNotification?: (n: NotificationItem) => void;

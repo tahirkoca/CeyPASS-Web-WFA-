@@ -21,86 +21,107 @@
 
             <!-- Filtreler -->
             <Border Grid.Row="0" Style="{StaticResource Card}" Padding="14,12" Margin="0,0,0,10">
-                <WrapPanel>
-                    <StackPanel Width="200" Margin="0,0,12,8">
-                        <TextBlock Text="Firma" Style="{StaticResource FieldLabel}"/>
-                        <ComboBox ItemsSource="{Binding Firmalar}"
-                                  SelectedItem="{Binding SelectedFirma}"
-                                  DisplayMemberPath="FirmaAdi"
-                                  Style="{StaticResource FieldCombo}"
-                                  IsEnabled="{Binding FiltersEnabled}"
-                                  DropDownOpened="Firma_DropDownOpened"/>
-                    </StackPanel>
-                    <StackPanel Width="240" Margin="0,0,12,8">
-                        <TextBlock Text="Kişi" Style="{StaticResource FieldLabel}"/>
-                        <ComboBox ItemsSource="{Binding Kisiler}"
-                                  SelectedItem="{Binding SelectedKisi}"
-                                  DisplayMemberPath="AdSoyad"
-                                  Style="{StaticResource FieldCombo}"
-                                  IsEnabled="{Binding FiltersEnabled}"
-                                  wpf:FieldValidation.Error="{Binding Errors[Kisi]}"
-                                  DropDownOpened="Kisi_DropDownOpened"/>
-                    </StackPanel>
-                    <StackPanel Width="200" Margin="0,0,12,8">
-                        <TextBlock Text="İzin tipi" Style="{StaticResource FieldLabel}"/>
-                        <ComboBox ItemsSource="{Binding IzinTipleri}"
-                                  SelectedItem="{Binding SelectedIzinTip}"
-                                  DisplayMemberPath="Ad"
-                                  Style="{StaticResource FieldCombo}"
-                                  IsEnabled="{Binding IzinTipEnabled}"
-                                  wpf:FieldValidation.Error="{Binding Errors[IzinTip]}"
-                                  DropDownOpened="IzinTip_DropDownOpened"/>
-                    </StackPanel>
-                    <StackPanel Width="140" Margin="0,0,12,8">
-                        <TextBlock Text="Başlangıç" Style="{StaticResource FieldLabel}"/>
-                        <DatePicker SelectedDate="{Binding BaslangicTarihi}"
-                                    Style="{StaticResource FieldDatePicker}"
-                                    wpf:FieldValidation.Error="{Binding Errors[BaslangicTarihi]}"/>
-                    </StackPanel>
-                    <StackPanel Width="140" Margin="0,0,12,8">
-                        <TextBlock Text="Bitiş" Style="{StaticResource FieldLabel}"/>
-                        <DatePicker SelectedDate="{Binding BitisTarihi}"
-                                    Style="{StaticResource FieldDatePicker}"
-                                    wpf:FieldValidation.Error="{Binding Errors[BitisTarihi]}"/>
-                    </StackPanel>
-                    <StackPanel Width="90" Margin="0,0,12,8">
-                        <TextBlock Text="Baş. saat" Style="{StaticResource FieldLabel}"/>
-                        <TextBox Text="{Binding BaslangicSaatText, UpdateSourceTrigger=LostFocus}"
-                                 Style="{StaticResource FieldBox}"
-                                 IsEnabled="{Binding SaatEnabled}"
-                                 wpf:FieldValidation.Error="{Binding Errors[BaslangicSaat]}"/>
-                    </StackPanel>
-                    <StackPanel Width="90" Margin="0,0,12,8">
-                        <TextBlock Text="Bit. saat" Style="{StaticResource FieldLabel}"/>
-                        <TextBox Text="{Binding BitisSaatText, UpdateSourceTrigger=LostFocus}"
-                                 Style="{StaticResource FieldBox}"
-                                 IsEnabled="{Binding SaatEnabled}"
-                                 wpf:FieldValidation.Error="{Binding Errors[BitisSaat]}"/>
-                    </StackPanel>
-                    <StackPanel Width="180" Margin="0,0,12,8" VerticalAlignment="Bottom">
-                        <CheckBox Content="Saatlik izin"
-                                  IsChecked="{Binding SaatlikIzinMi}"
-                                  IsEnabled="{Binding SaatlikCheckEnabled}"
-                                  Margin="0,0,0,6"/>
-                        <CheckBox Content="Yarım gün yıllık izin"
-                                  IsChecked="{Binding YarimGunYillikIzin}"/>
-                    </StackPanel>
-                    <StackPanel Width="200" Margin="0,0,12,8">
-                        <TextBlock Text="Yarım gün dilimi" Style="{StaticResource FieldLabel}"/>
-                        <ComboBox ItemsSource="{Binding YarimGunDilimler}"
-                                  SelectedIndex="{Binding YarimGunDilimIndex}"
-                                  Style="{StaticResource FieldCombo}"
-                                  IsEnabled="{Binding YarimGunDilimEnabled}"
-                                  wpf:FieldValidation.Error="{Binding Errors[YarimGunDilim]}"/>
-                    </StackPanel>
-                    <StackPanel Width="280" Margin="0,0,12,8">
-                        <TextBlock Text="Açıklama" Style="{StaticResource FieldLabel}"/>
-                        <TextBox Text="{Binding Aciklama, UpdateSourceTrigger=PropertyChanged}"
-                                 Style="{StaticResource FieldBox}"
-                                 IsReadOnly="{Binding AciklamaReadOnly}"
-                                 IsEnabled="{Binding FormEnabled}"/>
-                    </StackPanel>
-                </WrapPanel>
+                <StackPanel>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" MinWidth="160"/>
+                            <ColumnDefinition Width="*" MinWidth="160"/>
+                            <ColumnDefinition Width="1.2*" MinWidth="180"/>
+                            <ColumnDefinition Width="*" MinWidth="160"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0" Margin="0,0,12,8">
+                            <TextBlock Text="Firma" Style="{StaticResource FieldLabel}"/>
+                            <ComboBox ItemsSource="{Binding Firmalar}"
+                                      SelectedItem="{Binding SelectedFirma}"
+                                      DisplayMemberPath="FirmaAdi"
+                                      Style="{StaticResource FieldCombo}"
+                                      IsEnabled="{Binding FiltersEnabled}"
+                                      DropDownOpened="Firma_DropDownOpened"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Margin="0,0,12,8">
+                            <TextBlock Text="İşyeri" Style="{StaticResource FieldLabel}"/>
+                            <ComboBox ItemsSource="{Binding Isyerleri}"
+                                      SelectedItem="{Binding SelectedIsyeri, UpdateSourceTrigger=PropertyChanged}"
+                                      SelectedValuePath="Id"
+                                      DisplayMemberPath="Ad"
+                                      Style="{StaticResource FieldCombo}"
+                                      IsEnabled="{Binding FiltersEnabled}"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="2" Margin="0,0,12,8">
+                            <TextBlock Text="Kişi" Style="{StaticResource FieldLabel}"/>
+                            <ComboBox ItemsSource="{Binding Kisiler}"
+                                      SelectedItem="{Binding SelectedKisi}"
+                                      DisplayMemberPath="AdSoyad"
+                                      Style="{StaticResource FieldCombo}"
+                                      IsEnabled="{Binding FiltersEnabled}"
+                                      wpf:FieldValidation.Error="{Binding Errors[Kisi]}"
+                                      DropDownOpened="Kisi_DropDownOpened"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="3" Margin="0,0,0,8">
+                            <TextBlock Text="İzin tipi" Style="{StaticResource FieldLabel}"/>
+                            <ComboBox ItemsSource="{Binding IzinTipleri}"
+                                      SelectedItem="{Binding SelectedIzinTip}"
+                                      DisplayMemberPath="Ad"
+                                      Style="{StaticResource FieldCombo}"
+                                      IsEnabled="{Binding IzinTipEnabled}"
+                                      wpf:FieldValidation.Error="{Binding Errors[IzinTip]}"
+                                      DropDownOpened="IzinTip_DropDownOpened"/>
+                        </StackPanel>
+                    </Grid>
+                    <DockPanel LastChildFill="True">
+                        <WrapPanel DockPanel.Dock="Left">
+                            <StackPanel Width="140" Margin="0,0,12,8">
+                                <TextBlock Text="Başlangıç" Style="{StaticResource FieldLabel}"/>
+                                <DatePicker SelectedDate="{Binding BaslangicTarihi}"
+                                            Style="{StaticResource FieldDatePicker}"
+                                            wpf:FieldValidation.Error="{Binding Errors[BaslangicTarihi]}"/>
+                            </StackPanel>
+                            <StackPanel Width="140" Margin="0,0,12,8">
+                                <TextBlock Text="Bitiş" Style="{StaticResource FieldLabel}"/>
+                                <DatePicker SelectedDate="{Binding BitisTarihi}"
+                                            Style="{StaticResource FieldDatePicker}"
+                                            wpf:FieldValidation.Error="{Binding Errors[BitisTarihi]}"/>
+                            </StackPanel>
+                            <StackPanel Width="90" Margin="0,0,12,8">
+                                <TextBlock Text="Baş. saat" Style="{StaticResource FieldLabel}"/>
+                                <TextBox Text="{Binding BaslangicSaatText, UpdateSourceTrigger=LostFocus}"
+                                         Style="{StaticResource FieldBox}"
+                                         IsEnabled="{Binding SaatEnabled}"
+                                         wpf:FieldValidation.Error="{Binding Errors[BaslangicSaat]}"/>
+                            </StackPanel>
+                            <StackPanel Width="90" Margin="0,0,12,8">
+                                <TextBlock Text="Bit. saat" Style="{StaticResource FieldLabel}"/>
+                                <TextBox Text="{Binding BitisSaatText, UpdateSourceTrigger=LostFocus}"
+                                         Style="{StaticResource FieldBox}"
+                                         IsEnabled="{Binding SaatEnabled}"
+                                         wpf:FieldValidation.Error="{Binding Errors[BitisSaat]}"/>
+                            </StackPanel>
+                            <StackPanel Width="180" Margin="0,0,12,8" VerticalAlignment="Bottom">
+                                <CheckBox Content="Saatlik izin"
+                                          IsChecked="{Binding SaatlikIzinMi}"
+                                          IsEnabled="{Binding SaatlikCheckEnabled}"
+                                          Margin="0,0,0,6"/>
+                                <CheckBox Content="Yarım gün yıllık izin"
+                                          IsChecked="{Binding YarimGunYillikIzin}"/>
+                            </StackPanel>
+                            <StackPanel Width="200" Margin="0,0,12,8">
+                                <TextBlock Text="Yarım gün dilimi" Style="{StaticResource FieldLabel}"/>
+                                <ComboBox ItemsSource="{Binding YarimGunDilimler}"
+                                          SelectedIndex="{Binding YarimGunDilimIndex}"
+                                          Style="{StaticResource FieldCombo}"
+                                          IsEnabled="{Binding YarimGunDilimEnabled}"
+                                          wpf:FieldValidation.Error="{Binding Errors[YarimGunDilim]}"/>
+                            </StackPanel>
+                        </WrapPanel>
+                        <StackPanel Margin="0,0,0,8" MinWidth="180">
+                            <TextBlock Text="Açıklama" Style="{StaticResource FieldLabel}"/>
+                            <TextBox Text="{Binding Aciklama, UpdateSourceTrigger=PropertyChanged}"
+                                     Style="{StaticResource FieldBox}"
+                                     IsReadOnly="{Binding AciklamaReadOnly}"
+                                     IsEnabled="{Binding FormEnabled}"/>
+                        </StackPanel>
+                    </DockPanel>
+                </StackPanel>
             </Border>
 
             <!-- Toolbar -->
@@ -138,6 +159,7 @@
                             <dxg:GridColumn FieldName="SicilNo" Header="Sicil No" Width="90"/>
                             <dxg:GridColumn FieldName="AdSoyad" Header="Adı Soyadı" Width="160"/>
                             <dxg:GridColumn FieldName="FirmaAdi" Header="Firma Adı" Width="110"/>
+                            <dxg:GridColumn FieldName="IsyeriAdi" Header="İşyeri" Width="160"/>
                             <dxg:GridColumn FieldName="IzinTipi" Header="İzin Tipi" Width="110"/>
                             <dxg:GridColumn FieldName="Başlangıç Tarihi" Header="Başlangıç Tarihi" Width="130">
                                 <dxg:GridColumn.EditSettings>

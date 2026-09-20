@@ -8,6 +8,7 @@ using System.Linq;
 
 namespace CeyPASS.DataAccess.Repositories
 {
+    /// <summary>KisiIzinler erişimi.</summary>
     public class KisiIzinlerRepositoryCore : IKisiIzinlerRepository
     {
         private readonly CeyPASSDataConnectionCore _context;
@@ -17,6 +18,7 @@ namespace CeyPASS.DataAccess.Repositories
             _context = context;
         }
 
+        /// <summary>Izinleri sorgularını getirir.</summary>
         public DataTable GetIzinleri(string personelId, DateTime baslangic, DateTime bitis)
         {
             var sql = @"
@@ -112,6 +114,7 @@ ORDER BY ki.Baslangic DESC";
             return dt;
         }
 
+        /// <summary>Kimliğe göre kaydı getirir.</summary>
         public KisiIzin GetById(int kisiIzinId)
         {
             var entity = _context.KisiIzinler
@@ -132,6 +135,7 @@ ORDER BY ki.Baslangic DESC";
             };
         }
 
+        /// <summary>Yeni kayıt ekler.</summary>
         public bool Insert(KisiIzin x)
         {
             var entity = new CeyPASS.DataAccess.KisiIzinler
@@ -156,6 +160,7 @@ ORDER BY ki.Baslangic DESC";
             return true;
         }
 
+        /// <summary>Kaydı günceller.</summary>
         public bool Update(KisiIzin x)
         {
             if (!x.KisiIzinId.HasValue)
@@ -178,6 +183,7 @@ ORDER BY ki.Baslangic DESC";
             return true;
         }
 
+        /// <summary>Pasif Yap işlemini gerçekleştirir.</summary>
         public bool PasifYap(int kisiIzinId)
         {
             var entity = _context.KisiIzinler
@@ -193,6 +199,7 @@ ORDER BY ki.Baslangic DESC";
             return true;
         }
 
+        /// <summary>Aktif Yap işlemini gerçekleştirir.</summary>
         public bool AktifYap(int kisiIzinId)
         {
             var entity = _context.KisiIzinler
@@ -208,6 +215,7 @@ ORDER BY ki.Baslangic DESC";
             return true;
         }
 
+        /// <summary>By Person sorgularını getirir.</summary>
         public DataTable GetByPerson(string personelId, DateTime? bas = null, DateTime? bit = null)
         {
             var sql = @"
@@ -270,7 +278,8 @@ WHERE PersonelId = @p0 AND AktifMi = 1";
             return dt;
         }
 
-        public DataTable GetIzinRaporu(int? firmaId, string personelId, int? izinTipId, DateTime bas, DateTime bit)
+        /// <summary>Izin Raporu sorgularını getirir; isteğe bağlı işyeri filtresi.</summary>
+        public DataTable GetIzinRaporu(int? firmaId, string personelId, int? izinTipId, DateTime bas, DateTime bit, int? isyeriId = null, IReadOnlyList<int> isyeriIdIn = null)
         {
             var sql = @"
 SELECT
@@ -278,6 +287,7 @@ SELECT
     k.PersonelId                         AS SicilNo,
     (k.Ad + ' ' + k.Soyad)               AS AdSoyad,
     f.FirmaAdi                           AS FirmaAdi,
+    iy.IsyeriAdi                         AS IsyeriAdi,
     it.Adi                               AS IzinTipi,
     ki.Baslangic                         AS BaslangicTarihi,
     ki.Bitis                             AS BitisTarihi,
@@ -295,7 +305,8 @@ SELECT
     ki.SaatlikIzinMi                     AS SaatlikIzinMi,
     ki.Aciklama                          AS Aciklama
 FROM KisiIzinler ki
-JOIN Kisiler      k  ON k.PersonelId = ki.PersonelId
+JOIN Kisiler      k  ON k.PersonelId = ki.PersonelId AND k.FirmaId = ki.FirmaId
+LEFT JOIN Isyerler iy ON iy.IsyeriId = k.IsyeriId AND iy.FirmaId = k.FirmaId
 JOIN Firmalar     f  ON f.FirmaId    = ki.FirmaId
 JOIN IzinTipleri  it ON it.IzinTipId = ki.IzinId
 CROSS APPLY (
@@ -361,6 +372,8 @@ WHERE ki.AktifMi = 1
                 parameters.Add(new Microsoft.Data.SqlClient.SqlParameter("@p" + parameters.Count, izinTipId.Value));
             }
 
+            AppendIsyeriSqlFilter(ref sql, parameters, isyeriId, isyeriIdIn);
+
             sql += " ORDER BY ki.Baslangic";
 
             var rows = _context.Database
@@ -372,6 +385,7 @@ WHERE ki.AktifMi = 1
             dt.Columns.Add("SicilNo", typeof(string));
             dt.Columns.Add("AdSoyad", typeof(string));
             dt.Columns.Add("FirmaAdi", typeof(string));
+            dt.Columns.Add("IsyeriAdi", typeof(string));
             dt.Columns.Add("IzinTipi", typeof(string));
             dt.Columns.Add("Başlangıç Tarihi", typeof(DateTime));
             dt.Columns.Add("Bitiş Tarihi", typeof(DateTime));
@@ -389,6 +403,7 @@ WHERE ki.AktifMi = 1
                     r.SicilNo ?? "",
                     r.AdSoyad ?? "",
                     r.FirmaAdi ?? "",
+                    r.IsyeriAdi ?? "",
                     r.IzinTipi ?? "",
                     r.BaslangicTarihi,
                     r.BitisTarihi,
@@ -403,7 +418,8 @@ WHERE ki.AktifMi = 1
             return dt;
         }
 
-        public List<KisiIzinListRow> GetIzinRaporuPaged(int? firmaId, string personelId, int? izinTipId, DateTime bas, DateTime bit, int page, int pageSize, out int totalCount)
+        /// <summary>Izin Raporu Paged sorgularını getirir; isteğe bağlı işyeri filtresi.</summary>
+        public List<KisiIzinListRow> GetIzinRaporuPaged(int? firmaId, string personelId, int? izinTipId, DateTime bas, DateTime bit, int page, int pageSize, out int totalCount, int? isyeriId = null, IReadOnlyList<int> isyeriIdIn = null)
         {
             if (page < 1) page = 1;
             if (pageSize < 1) pageSize = 20;
@@ -431,7 +447,7 @@ SELECT
     ki.OlusturmaTarihi                   AS IslenmeTarihi,
     ki.GuncellemeTarihi                  AS GuncellemeTarihi
 FROM KisiIzinler ki
-JOIN Kisiler      k  ON k.PersonelId = ki.PersonelId
+JOIN Kisiler      k  ON k.PersonelId = ki.PersonelId AND k.FirmaId = ki.FirmaId
 JOIN Firmalar     f  ON f.FirmaId    = ki.FirmaId
 JOIN IzinTipleri  it ON it.IzinTipId = ki.IzinId
 CROSS APPLY (
@@ -497,6 +513,8 @@ WHERE ki.AktifMi = 1
                 parameters.Add(new Microsoft.Data.SqlClient.SqlParameter("@p" + parameters.Count, izinTipId.Value));
             }
 
+            AppendIsyeriSqlFilter(ref sql, parameters, isyeriId, isyeriIdIn);
+
             sql += " ORDER BY ki.Baslangic OFFSET @po ROWS FETCH NEXT @pf ROWS ONLY";
             parameters.Add(new Microsoft.Data.SqlClient.SqlParameter("@po", (page - 1) * pageSize));
             parameters.Add(new Microsoft.Data.SqlClient.SqlParameter("@pf", pageSize));
@@ -522,6 +540,40 @@ WHERE ki.AktifMi = 1
                 IslenmeTarihi = r.IslenmeTarihi,
                 GuncellemeTarihi = r.GuncellemeTarihi
             }).ToList();
+        }
+
+        /// <summary>Yetki/işyeri filtresini k.IsyeriId üzerinden SQL'e ekler.</summary>
+        private static void AppendIsyeriSqlFilter(
+            ref string sql,
+            List<Microsoft.Data.SqlClient.SqlParameter> parameters,
+            int? isyeriId,
+            IReadOnlyList<int> isyeriIdIn)
+        {
+            if (isyeriId.HasValue)
+            {
+                const string name = "@filterIsyeriId";
+                sql += "  AND k.IsyeriId = " + name;
+                parameters.Add(new Microsoft.Data.SqlClient.SqlParameter(name, isyeriId.Value));
+                return;
+            }
+
+            if (isyeriIdIn == null)
+                return;
+
+            if (isyeriIdIn.Count == 0)
+            {
+                sql += "  AND 1=0";
+                return;
+            }
+
+            var names = new List<string>(isyeriIdIn.Count);
+            for (var i = 0; i < isyeriIdIn.Count; i++)
+            {
+                var name = "@filterIsyeriIn" + i;
+                names.Add(name);
+                parameters.Add(new Microsoft.Data.SqlClient.SqlParameter(name, isyeriIdIn[i]));
+            }
+            sql += "  AND k.IsyeriId IN (" + string.Join(",", names) + ")";
         }
 
         private sealed class IzinRaporuPagedRow

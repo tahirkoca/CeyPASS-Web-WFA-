@@ -4,6 +4,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace CeyPASS.Entities.Concrete
 {
+    /// <summary>FCM push token; mobil oturum ile eşleşir.</summary>
     [Table("MobilUygulamaTokenleri")]
     public class UserDeviceToken
     {

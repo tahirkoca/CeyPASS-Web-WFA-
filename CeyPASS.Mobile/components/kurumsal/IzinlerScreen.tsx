@@ -1,3 +1,4 @@
+/** Kurumsal kişi izin kayıtları yönetimi. */
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, FlatList, Modal, Platform, ScrollView, Text, TextInput, TouchableOpacity, View } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
@@ -48,6 +49,7 @@ function normalizeDateOnly(d: Date) {
 type LookupKisi = { personelId: string; adSoyad: string };
 type LookupIzinTip = { izinTipId: number; ad: string };
 type LookupFirma = { firmaId: number; firmaAdi: string };
+type LookupIsyeri = { id: number; ad: string };
 
 function SelectModal(props: {
   visible: boolean;
@@ -131,6 +133,8 @@ export function IzinlerScreen(props: { user: any; abilities: any; onOpenMenu: ()
   const [izinTipleri, setIzinTipleri] = useState<LookupIzinTip[]>([]);
 
   const [selectedFirmaId, setSelectedFirmaId] = useState<number | null>(null);
+  const [isyeriId, setIsyeriId] = useState<number | null>(null);
+  const [isyeriList, setIsyeriList] = useState<LookupIsyeri[]>([]);
   const [personelId, setPersonelId] = useState<string>("ALL");
   const [izinTipId, setIzinTipId] = useState<number>(0);
 
@@ -144,6 +148,7 @@ export function IzinlerScreen(props: { user: any; abilities: any; onOpenMenu: ()
   const [totalPages, setTotalPages] = useState(1);
 
   const [firmaModal, setFirmaModal] = useState(false);
+  const [isyeriModal, setIsyeriModal] = useState(false);
   const [personelModal, setPersonelModal] = useState(false);
   const [izinTipModal, setIzinTipModal] = useState(false);
   const [pageSizeModal, setPageSizeModal] = useState(false);
@@ -194,8 +199,10 @@ export function IzinlerScreen(props: { user: any; abilities: any; onOpenMenu: ()
 
   const firstLoadRef = useRef(false);
 
-  const loadLookups = async (firmaId?: number | null) => {
-    const r = await izinService.lookups({ firmaId: firmaId ?? selectedFirmaId });
+  const loadLookups = async (firmaId?: number | null, desiredIsyeriId?: number | null) => {
+    const fId = firmaId ?? selectedFirmaId;
+    const iId = desiredIsyeriId !== undefined ? desiredIsyeriId : isyeriId;
+    const r = await izinService.lookups({ firmaId: fId, isyeriId: iId ?? undefined });
     if (!r?.success) throw new Error(r?.message ?? "Lookups alınamadı.");
     const data = r.data ?? (r as any).Data ?? {};
     const f = (data.Firmalar ?? data.firmalar ?? []).map((x: any) => ({
@@ -212,11 +219,16 @@ export function IzinlerScreen(props: { user: any; abilities: any; onOpenMenu: ()
       izinTipId: Number(pick<any>(x, "izinTipId", "IzinTipId")),
       ad: (pick<any>(x, "ad", "Ad") ?? "").toString(),
     })).filter((x: any) => x.izinTipId && x.ad);
+    const isy = (data.Isyerleri ?? data.isyerleri ?? []).map((x: any) => ({
+      id: Number(pick<any>(x, "id", "Id") ?? 0),
+      ad: (pick<any>(x, "ad", "Ad") ?? "").toString(),
+    })).filter((x: any) => x.id > 0 && x.ad);
 
     setFirmalar(f);
     setAktifFirma(afObj);
     setKisiler(k);
     setIzinTipleri(it);
+    setIsyeriList(isy);
     if (!selectedFirmaId && afObj?.firmaId) setSelectedFirmaId(afObj.firmaId);
   };
 
@@ -224,6 +236,7 @@ export function IzinlerScreen(props: { user: any; abilities: any; onOpenMenu: ()
     const r = await izinService.list({
       personelId,
       izinTipId,
+      isyeriId: isyeriId ?? undefined,
       baslangic: fmtIsoDate(baslangic),
       bitis: fmtIsoDate(bitis),
       page,
@@ -272,13 +285,19 @@ export function IzinlerScreen(props: { user: any; abilities: any; onOpenMenu: ()
       }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedFirmaId, personelId, izinTipId, baslangic.getTime(), bitis.getTime(), page, pageSize]);
+  }, [selectedFirmaId, isyeriId, personelId, izinTipId, baslangic.getTime(), bitis.getTime(), page, pageSize]);
 
   const personelLabel = useMemo(() => {
     if (!personelId || personelId === "ALL") return "-- TÜMÜ --";
     const f = kisiler.find((x) => x.personelId === personelId);
     return f?.adSoyad ?? personelId;
   }, [personelId, kisiler]);
+
+  const isyeriLabel = useMemo(() => {
+    if (!isyeriId) return "Tümü";
+    const found = isyeriList.find((x) => x.id === isyeriId);
+    return found?.ad ?? `#${isyeriId}`;
+  }, [isyeriId, isyeriList]);
 
   const izinTipLabel = useMemo(() => {
     if (!izinTipId || izinTipId === 0) return "-- TÜMÜ --";
@@ -450,6 +469,10 @@ export function IzinlerScreen(props: { user: any; abilities: any; onOpenMenu: ()
   );
   const pageSizeItems = useMemo(() => [20, 50, 100, 200].map((n) => ({ key: String(n), label: String(n) })), []);
   const firmaItems = useMemo(() => firmalar.map((f) => ({ key: String(f.firmaId), label: f.firmaAdi })), [firmalar]);
+  const isyeriItems = useMemo(
+    () => [{ key: "", label: "Tümü" }, ...isyeriList.map((i) => ({ key: String(i.id), label: i.ad }))],
+    [isyeriList]
+  );
 
   if (loading && !items.length && !error) {
     return (
@@ -476,6 +499,10 @@ export function IzinlerScreen(props: { user: any; abilities: any; onOpenMenu: ()
           <View className="p-4">
             <TouchableOpacity onPress={() => setFirmaModal(true)} className="px-3 py-3 rounded-xl border border-[#e2e8f0] bg-white">
               <RowLabel label="Firma" value={firmaLabel} />
+            </TouchableOpacity>
+            <View className="h-3" />
+            <TouchableOpacity onPress={() => setIsyeriModal(true)} className="px-3 py-3 rounded-xl border border-[#e2e8f0] bg-white">
+              <RowLabel label="İşyeri" value={isyeriLabel} />
             </TouchableOpacity>
             <View className="h-3" />
             <TouchableOpacity onPress={() => setPersonelModal(true)} className="px-3 py-3 rounded-xl border border-[#e2e8f0] bg-white">
@@ -624,9 +651,25 @@ export function IzinlerScreen(props: { user: any; abilities: any; onOpenMenu: ()
             const id = Number(key);
             if (Number.isFinite(id) && id > 0) {
               setSelectedFirmaId(id);
+              setIsyeriId(null);
               setPersonelId("ALL");
               setPage(1);
             }
+          }}
+        />
+      ) : null}
+
+      {isyeriModal ? (
+        <SelectModal
+          visible={isyeriModal}
+          title="İşyeri Seç"
+          items={isyeriItems}
+          onClose={() => setIsyeriModal(false)}
+          onPick={(key) => {
+            const id = key ? Number(key) : null;
+            setIsyeriId(id != null && Number.isFinite(id) && id >= 0 ? id : null);
+            setPersonelId("ALL");
+            setPage(1);
           }}
         />
       ) : null}
@@ -927,6 +970,7 @@ export function IzinlerScreen(props: { user: any; abilities: any; onOpenMenu: ()
             const id = Number(key);
             if (Number.isFinite(id) && id > 0) {
               setSelectedFirmaId(id);
+              setIsyeriId(null);
               setFPersonelId("");
             }
           }}

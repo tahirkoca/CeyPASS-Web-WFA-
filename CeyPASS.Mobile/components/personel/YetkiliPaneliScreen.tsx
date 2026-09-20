@@ -1,3 +1,4 @@
+/** Süpervizör: ast personel özeti ve onay bekleyen işler. */
 import React, { useEffect, useMemo, useState } from "react";
 import { Modal, ScrollView, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";

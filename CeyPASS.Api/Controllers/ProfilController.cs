@@ -11,6 +11,7 @@ using System.Text.RegularExpressions;
 
 namespace CeyPASS.Api.Controllers
 {
+    /// <summary>Personel self-servis: profil, izin/avans talepleri ve amir onayları.</summary>
     [Authorize]
     [ApiController]
     [Route("api/v1/[controller]")]
@@ -63,7 +64,7 @@ namespace CeyPASS.Api.Controllers
             public string SicilNo { get; set; } = "";
             public KisiDetay Personel { get; set; } = null!;
             public string? FotografDataUrl { get; set; }
-            public string? DepartmanAdi { get; set; }
+            public string? IsyeriAdi { get; set; }
             public string? PozisyonAdi { get; set; }
             public List<string> CalismaSekliAdlari { get; set; } = new();
             public bool IsSupervisor { get; set; }
@@ -73,6 +74,7 @@ namespace CeyPASS.Api.Controllers
             public int? GunlukYemekAdedi { get; set; }
         }
 
+        /// <summary>Oturumdaki personelin detaylı profil özeti.</summary>
         [HttpGet]
         public ActionResult<ApiResult<ProfilDetailResponse>> Get()
         {
@@ -96,8 +98,8 @@ namespace CeyPASS.Api.Controllers
 
             try
             {
-                if (kisi?.DepartmanId != null)
-                    model.DepartmanAdi = _lookupService.GetDepartmanlar().FirstOrDefault(x => x.Id == kisi.DepartmanId)?.Ad;
+                if (kisi?.IsyeriId != null && kisi.FirmaId > 0)
+                    model.IsyeriAdi = _lookupService.GetIsyerleri(kisi.FirmaId).FirstOrDefault(x => x.Id == kisi.IsyeriId)?.Ad;
             }
             catch { }
             try
@@ -164,6 +166,7 @@ namespace CeyPASS.Api.Controllers
             public int PageSize { get; set; }
         }
 
+        /// <summary>Son 7 gün kişisel geçiş hareketleri (sayfalı).</summary>
         [HttpGet("hareketlerim")]
         public ActionResult<ApiResult<HareketlerimResponse>> Hareketlerim([FromQuery] int page = 1, [FromQuery] int pageSize = 20)
         {
@@ -211,6 +214,7 @@ namespace CeyPASS.Api.Controllers
             }));
         }
 
+        /// <summary>İzin talep formu için aktif izin tipleri.</summary>
         [HttpGet("izin-tipleri")]
         public ActionResult<ApiResult<List<IzinTip>>> IzinTipleri([FromServices] IIzinTipService izinTipService)
         {
@@ -231,6 +235,7 @@ namespace CeyPASS.Api.Controllers
             public string? TelefonNo { get; set; }
         }
 
+        /// <summary>Personel izin talebi oluşturur (üst yetkili onay zinciri başlar).</summary>
         [HttpPost("izin-talep")]
         public ActionResult<ApiResult> IzinTalep([FromBody] IzinTalepRequest request)
         {
@@ -261,6 +266,7 @@ namespace CeyPASS.Api.Controllers
             public int TalepId { get; set; }
         }
 
+        /// <summary>İzin dönüş imzasını kaydeder (İK önce açmış olmalı).</summary>
         [HttpPost("kullanim-imza")]
         public ActionResult<ApiResult> KullanimImza([FromBody] KullanimImzaRequest request)
         {
@@ -280,6 +286,7 @@ namespace CeyPASS.Api.Controllers
             public string? Aciklama { get; set; }
         }
 
+        /// <summary>Avans talebi oluşturur.</summary>
         [HttpPost("avans-talep")]
         public ActionResult<ApiResult<int>> AvansTalep([FromBody] AvansTalepRequest request)
         {
@@ -297,6 +304,7 @@ namespace CeyPASS.Api.Controllers
             public string? Aciklama { get; set; }
         }
 
+        /// <summary>Bekleyen avans talebini günceller.</summary>
         [HttpPost("avans-guncelle")]
         public ActionResult<ApiResult> AvansGuncelle([FromBody] AvansUpdateRequest request)
         {
@@ -315,6 +323,7 @@ namespace CeyPASS.Api.Controllers
             public int AvansId { get; set; }
         }
 
+        /// <summary>Bekleyen avans talebini iptal eder.</summary>
         [HttpPost("avans-iptal")]
         public ActionResult<ApiResult> AvansIptal([FromBody] AvansCancelRequest request)
         {
@@ -328,6 +337,7 @@ namespace CeyPASS.Api.Controllers
             return ok ? Ok(ApiResult.Ok("Avans talebiniz iptal edildi.")) : BadRequest(ApiResult.Failure("Talep iptal edilirken bir hata oluştu."));
         }
 
+        /// <summary>Personel web portal şifresini günceller.</summary>
         [HttpPost("sifre-degistir")]
         public ActionResult<ApiResult> ChangePassword([FromBody] SifreDegistirRequest request)
         {
@@ -337,6 +347,7 @@ namespace CeyPASS.Api.Controllers
             return success ? Ok(ApiResult.Ok("Şifreniz başarıyla güncellendi.")) : BadRequest(ApiResult.Failure("İşlem başarısız."));
         }
 
+        /// <summary>Üst yetkili (supervisor) için onay bekleyen izin talepleri.</summary>
         [HttpGet("amir-onay-bekleyenler")]
         public ActionResult<ApiResult<List<IzinTalep>>> GetAmirBekleyenler()
         {
@@ -347,6 +358,7 @@ namespace CeyPASS.Api.Controllers
             return Ok(ApiResult<List<IzinTalep>>.Ok(items));
         }
 
+        /// <summary>Supervisor'a bağlı personel listesi.</summary>
         [HttpGet("bagli-personellerim")]
         public ActionResult<ApiResult<List<KisiDetay>>> GetBagliPersonellerim()
         {
@@ -374,6 +386,7 @@ namespace CeyPASS.Api.Controllers
             public string YeniSifre { get; set; } = null!;
         }
 
+        /// <summary>Supervisor, bağlı personelin portal şifresini sıfırlar.</summary>
         [HttpPost("subordinate-sifre-sifirla")]
         public ActionResult<ApiResult> ResetSubordinatePassword([FromBody] SubordinateResetPasswordRequest request)
         {
@@ -387,6 +400,7 @@ namespace CeyPASS.Api.Controllers
             return ok ? Ok(ApiResult.Ok("Şifre başarıyla güncellendi.")) : BadRequest(ApiResult.Failure("Şifre güncellenemedi."));
         }
 
+        /// <summary>Üst yetkili izin talebini onaylar.</summary>
         [HttpPost("amir-onayla")]
         public ActionResult<ApiResult> SupervisorApprove([FromBody] AmirOnayRequest request)
         {
@@ -396,6 +410,7 @@ namespace CeyPASS.Api.Controllers
             return success ? Ok(ApiResult.Ok("Talep amir tarafında onaylandı.")) : BadRequest(ApiResult.Failure("İşlem başarısız."));
         }
 
+        /// <summary>Üst yetkili izin talebini reddeder.</summary>
         [HttpPost("amir-reddet")]
         public ActionResult<ApiResult> SupervisorReject([FromBody] AmirOnayRequest request)
         {
@@ -422,6 +437,7 @@ namespace CeyPASS.Api.Controllers
             public bool SaatlikIzinMi { get; set; }
         }
 
+        /// <summary>Personelin talep ve onaylı izin geçmişi.</summary>
         [HttpGet("izinlerim")]
         public ActionResult<ApiResult<IzinlerimResponse>> Izinlerim()
         {
@@ -455,6 +471,7 @@ namespace CeyPASS.Api.Controllers
             return Ok(ApiResult<IzinlerimResponse>.Ok(res));
         }
 
+        /// <summary>Personelin avans talep geçmişi.</summary>
         [HttpGet("avanslarim")]
         public ActionResult<ApiResult<List<AvansTalep>>> Avanslarim()
         {

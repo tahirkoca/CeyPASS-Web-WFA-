@@ -6,6 +6,7 @@ using System.Linq;
 
 namespace CeyPASS.DataAccess.Repositories
 {
+    /// <summary>Cihaz tanım erişimi.</summary>
     public class CihazRepositoryCore : ICihazRepository
     {
         private readonly CeyPASSDataConnectionCore _context;
@@ -15,6 +16,7 @@ namespace CeyPASS.DataAccess.Repositories
             _context = context;
         }
 
+        /// <summary>List sorgularını getirir.</summary>
         public List<CihazListDTO> GetList(bool sadeceAktif, int? firmaId = null)
         {
             var query =
@@ -39,6 +41,7 @@ namespace CeyPASS.DataAccess.Repositories
             return query.ToList();
         }
 
+        /// <summary>Kimliğe göre kaydı getirir.</summary>
         public Cihaz GetById(int id)
         {
             var e = _context.Cihazlar
@@ -68,6 +71,7 @@ namespace CeyPASS.DataAccess.Repositories
             };
         }
 
+        /// <summary>Yeni kayıt ekler.</summary>
         public int Insert(Cihaz c)
         {
             var entity = new CeyPASS.DataAccess.Cihazlar
@@ -94,6 +98,7 @@ namespace CeyPASS.DataAccess.Repositories
             return entity.CihazId;
         }
 
+        /// <summary>Kaydı günceller.</summary>
         public void Update(Cihaz c)
         {
             var entity = _context.Cihazlar
@@ -118,6 +123,7 @@ namespace CeyPASS.DataAccess.Repositories
             _context.SaveChanges();
         }
 
+        /// <summary>Aktif değerini ayarlar.</summary>
         public void SetAktif(int id, bool aktif)
         {
             var entity = _context.Cihazlar
@@ -130,6 +136,7 @@ namespace CeyPASS.DataAccess.Repositories
             _context.SaveChanges();
         }
 
+        /// <summary>Tips sorgularını getirir.</summary>
         public List<CihazTip> GetTips()
         {
             return _context.CihazTipler

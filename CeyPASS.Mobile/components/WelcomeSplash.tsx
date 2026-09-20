@@ -1,3 +1,4 @@
+/** Oturum açılışında kısa karşılama animasyonu. */
 import React, { useEffect, useRef } from "react";
 import { ActivityIndicator, Animated, Easing, Image, Text, TouchableOpacity, View } from "react-native";
 

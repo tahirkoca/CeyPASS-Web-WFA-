@@ -3,6 +3,7 @@ using System.Configuration;
 
 namespace CeyPASS.Infrastructure.Configuration
 {
+    /// <summary>SMTP ayarlarını app.config üzerinden okur.</summary>
     public class SmtpConfiguration
     {
         public string Host { get; }
@@ -13,6 +14,7 @@ namespace CeyPASS.Infrastructure.Configuration
         public string FromAddress { get; }
         public string FromName { get; }
 
+        /// <summary>AppSettings anahtarlarından SMTP yapılandırmasını yükler.</summary>
         public SmtpConfiguration()
         {
             Host = ConfigurationManager.AppSettings["SmtpHost"] ?? string.Empty;
@@ -26,6 +28,7 @@ namespace CeyPASS.Infrastructure.Configuration
             FromName = ConfigurationManager.AppSettings["EmailFromName"] ?? string.Empty;
         }
 
+        /// <summary>Test veya DI için açık alanlarla yapılandırma.</summary>
         public SmtpConfiguration(
             string host,
             int port,
@@ -44,6 +47,7 @@ namespace CeyPASS.Infrastructure.Configuration
             FromName = fromName ?? string.Empty;
         }
 
+        /// <summary>Zorunlu SMTP alanlarının dolu olduğunu doğrular.</summary>
         public void Validate()
         {
             if (string.IsNullOrWhiteSpace(Host))

@@ -7,6 +7,7 @@ using System.Linq;
 
 namespace CeyPASS.DataAccess.Repositories
 {
+    /// <summary>Çalışma statüsü tanım erişimi.</summary>
     public class CalismaStatuRepositoryCore : ICalismaStatuRepository
     {
         private readonly CeyPASSDataConnectionCore _context;
@@ -16,6 +17,7 @@ namespace CeyPASS.DataAccess.Repositories
             _context = context;
         }
 
+        /// <summary>By Firma sorgularını getirir.</summary>
         public List<LookupItem> GetByFirma(int? firmId = null)
         {
             return _context.CalismaStatusu
@@ -28,6 +30,7 @@ namespace CeyPASS.DataAccess.Repositories
                 .ToList();
         }
 
+        /// <summary>Next Id sorgularını getirir.</summary>
         public int GetNextId()
         {
             var sql = @"
@@ -42,6 +45,7 @@ SELECT @n";
                 .Single();
         }
 
+        /// <summary>Yeni kayıt ekler.</summary>
         public bool Insert(int id, string ad)
         {
             var sql = @"
@@ -55,6 +59,7 @@ VALUES (@p0, @p1)";
             return affected > 0;
         }
 
+        /// <summary>Kaydı günceller.</summary>
         public bool Update(int id, string ad)
         {
             var sql = @"
@@ -69,6 +74,7 @@ WHERE CalismaStatuId = @p0";
             return affected > 0;
         }
 
+        /// <summary>Kaydı siler.</summary>
         public bool Delete(int id)
         {
             var sql = @"DELETE FROM dbo.CalismaStatusu WHERE CalismaStatuId = @p0";

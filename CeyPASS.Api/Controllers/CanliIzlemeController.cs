@@ -13,6 +13,7 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace CeyPASS.Api.Controllers
 {
+    /// <summary>Canlı izleme uygulaması: ayrı login, geçiş ve hareket akışları.</summary>
     [Authorize]
     [ApiController]
     [Route("api/v1/[controller]")]
@@ -44,6 +45,7 @@ namespace CeyPASS.Api.Controllers
             public string Ad { get; set; } = "";
         }
 
+        /// <summary>Canlı izleme giriş ekranı için firma listesi (kimlik doğrulama gerekmez).</summary>
         [AllowAnonymous]
         [HttpGet("firmalar")]
         public ActionResult<ApiResult<List<FirmaOption>>> GetFirmalar()
@@ -66,6 +68,7 @@ namespace CeyPASS.Api.Controllers
             return Ok(ApiResult<List<FirmaOption>>.Ok(list));
         }
 
+        /// <summary>Seçilen firmaya tanımlı canlı izleme kullanıcı adları.</summary>
         [AllowAnonymous]
         [HttpGet("kullanicilar")]
         public ActionResult<ApiResult<List<string>>> GetKullanicilar([FromQuery] int firmaId)
@@ -82,6 +85,7 @@ namespace CeyPASS.Api.Controllers
             public string? Sifre { get; set; }
         }
 
+        /// <summary>Firma bazlı canlı izleme oturumu açar; JWT içinde <c>AuthKind=CanliIzleme</c> claim'i üretilir.</summary>
         [AllowAnonymous]
         [HttpPost("login")]
         public ActionResult<ApiResult<object>> Login([FromBody] CanliIzlemeLoginRequest request)
@@ -134,6 +138,8 @@ namespace CeyPASS.Api.Controllers
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
 
+        /// <summary>Son geçiş kayıtları; rol (araç/yemekhane/danışma) kaynağı değişir.</summary>
+        /// <param name="take">Döndürülecek kayıt üst sınırı.</param>
         [HttpGet("son-gecisler")]
         public ActionResult<ApiResult<List<dynamic>>> GetSonGecisler([FromQuery] int take = 10)
         {
@@ -156,7 +162,7 @@ namespace CeyPASS.Api.Controllers
             {
                 personelId = x.PersonelId,
                 adSoyad = x.AdSoyad,
-                departmanAdi = x.DepartmanAdi,
+                isyeriAdi = x.IsyeriAdi,
                 unvan = x.Unvan,
                 zaman = x.Zaman,
                 terminalAdi = x.TerminalAdi,
@@ -167,6 +173,7 @@ namespace CeyPASS.Api.Controllers
             return Ok(ApiResult<List<dynamic>>.Ok(result));
         }
 
+        /// <summary>Son kişi hareketleri; araç/yemekhane rollerinde filtreli servis kullanılır.</summary>
         [HttpGet("son-hareketler")]
         public ActionResult<ApiResult<List<dynamic>>> GetSonHareketler([FromQuery] int take = 15)
         {
@@ -186,7 +193,7 @@ namespace CeyPASS.Api.Controllers
             {
                 tarih = x.Tarih,
                 adSoyad = x.AdSoyad,
-                departman = x.Departman,
+                isyeri = x.Isyeri,
                 unvan = x.Unvan,
                 cihazAdi = x.CihazAdi,
                 personelId = x.PersonelId
@@ -195,6 +202,7 @@ namespace CeyPASS.Api.Controllers
             return Ok(ApiResult<List<dynamic>>.Ok(result));
         }
 
+        /// <summary>Geçişte seçilen kişinin özet bilgisi ve fotoğrafı.</summary>
         [HttpGet("kisi-detay")]
         public ActionResult<ApiResult<object>> KisiDetay([FromQuery] int kisiId)
         {
@@ -209,7 +217,7 @@ namespace CeyPASS.Api.Controllers
             {
                 adSoyad = dto.AdSoyad,
                 unvan = dto.Unvan,
-                departman = dto.Departman,
+                isyeri = dto.Isyeri,
                 fotoBase64 = (dto.Foto != null && dto.Foto.Length > 0) ? Convert.ToBase64String(dto.Foto) : null
             }));
         }

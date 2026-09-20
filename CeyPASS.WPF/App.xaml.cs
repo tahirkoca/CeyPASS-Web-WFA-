@@ -1,3 +1,4 @@
+using System.IO;
 using System.Windows;
 using AutoUpdaterDotNET;
 using Microsoft.Extensions.DependencyInjection;
@@ -12,8 +13,9 @@ public partial class App : System.Windows.Application
 
     private void Application_Startup(object sender, System.Windows.StartupEventArgs e)
     {
-        TryStartAutoUpdater();
+        DispatcherUnhandledException += OnDispatcherUnhandledException;
 
+        TryStartAutoUpdater();
         CeypassDxLocalization.Apply();
         CeypassTheme.ApplySaved();
 
@@ -34,6 +36,9 @@ public partial class App : System.Windows.Application
 
     private static void TryStartAutoUpdater()
     {
+        if (string.Equals(Environment.GetEnvironmentVariable("CEYPASS_SKIP_AUTOUPDATE"), "1", StringComparison.OrdinalIgnoreCase))
+            return;
+
         // WFA Program.cs ile aynı kanal / ayarlar
         try
         {
@@ -56,5 +61,21 @@ public partial class App : System.Windows.Application
         {
             // Güncelleme kontrolü başarısız olsa bile program açılsın
         }
+    }
+
+    private static void OnDispatcherUnhandledException(object sender, System.Windows.Threading.DispatcherUnhandledExceptionEventArgs e)
+    {
+        try
+        {
+            var logPath = Path.Combine(AppContext.BaseDirectory, "startup.log");
+            File.AppendAllText(logPath, $"[{DateTime.Now:O}] {e.Exception}\r\n");
+        }
+        catch
+        {
+            // ignore
+        }
+
+        e.Handled = true;
+        UiDialog.Error(e.Exception.Message, "CeyPASS");
     }
 }

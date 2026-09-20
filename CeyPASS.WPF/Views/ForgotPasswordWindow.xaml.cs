@@ -3,6 +3,7 @@ using CeyPASS.Business.Abstractions;
 
 namespace CeyPASS.WPF.Views;
 
+/// <summary>E-posta doğrulama kodu ile şifre sıfırlama (kod gönderimi Loaded'da başlar).</summary>
 public partial class ForgotPasswordWindow : Window
 {
     private readonly string _kullaniciAdi;

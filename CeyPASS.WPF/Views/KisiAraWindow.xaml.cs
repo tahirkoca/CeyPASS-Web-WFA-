@@ -5,6 +5,7 @@ using CeyPASS.WPF.ViewModels;
 
 namespace CeyPASS.WPF.Views;
 
+/// <summary>Personel arama seçim diyaloğu; <see cref="SelectedPersonelId"/> ve bağlam sonuçta okunur.</summary>
 public partial class KisiAraWindow : Window
 {
     private readonly KisiAraViewModel _vm;

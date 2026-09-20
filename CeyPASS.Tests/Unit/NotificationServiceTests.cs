@@ -10,6 +10,9 @@ using Xunit;
 
 namespace CeyPASS.Tests.Unit
 {
+    /// <summary>
+    /// Uygulama içi bildirim oluşturma ve okundu işaretleme.
+    /// </summary>
     public class NotificationServiceTests
     {
         private readonly Mock<IMailService> _mailServiceMock = new();
@@ -102,6 +105,9 @@ namespace CeyPASS.Tests.Unit
 
         // ─── AliciGrupGetir ───────────────────────────────────────────────────
 
+        /// <summary>
+        /// MevcutGrup Listeyidöner
+        /// </summary>
         [Fact]
         public void AliciGrupGetir_MevcutGrup_ListeyiDoner()
         {
@@ -112,6 +118,9 @@ namespace CeyPASS.Tests.Unit
             sonuc.Should().ContainSingle(e => e == "yoneticiler@test.com");
         }
 
+        /// <summary>
+        /// YoktuGrup boşListedöner
+        /// </summary>
         [Fact]
         public void AliciGrupGetir_YoktuGrup_BosListeDoner()
         {
@@ -124,6 +133,9 @@ namespace CeyPASS.Tests.Unit
 
         // ─── OnizlemeHtmlOlustur ──────────────────────────────────────────────
 
+        /// <summary>
+        /// DtoVerilir HtmlIcerirVersiyonBilgisi
+        /// </summary>
         [Fact]
         public void OnizlemeHtmlOlustur_DtoVerilir_HtmlIcerirVersiyonBilgisi()
         {

@@ -11,6 +11,9 @@ using Xunit;
 
 namespace CeyPASS.Tests.Web
 {
+    /// <summary>
+    /// Ana sayfa dashboard ve aktif firma seçimi.
+    /// </summary>
     public class HomeControllerTests
     {
         private readonly Mock<IDashboardService> _dashboardMock = new();
@@ -42,6 +45,9 @@ namespace CeyPASS.Tests.Web
 
         // ─── SetFirma ─────────────────────────────────────────────────────────
 
+        /// <summary>
+        /// FirmaIdListedeYoksa MevcutSessionFirmayaFallback
+        /// </summary>
         [Fact]
         public void SetFirma_FirmaIdListedeYoksa_MevcutSessionFirmayaFallback()
         {
@@ -66,6 +72,9 @@ namespace CeyPASS.Tests.Web
             _sessionMock.VerifySet(s => s.AktifFirmaId = 1, Times.Once);
         }
 
+        /// <summary>
+        /// GeçerliReturnUrl reddedilirirectdöner
+        /// </summary>
         [Fact]
         public void SetFirma_GecerliReturnUrl_RedirectDoner()
         {
@@ -81,6 +90,9 @@ namespace CeyPASS.Tests.Web
                  .Which.Url.Should().Be("/rapor");
         }
 
+        /// <summary>
+        /// KotuReturnUrl Indexereddedilirirect
+        /// </summary>
         [Fact]
         public void SetFirma_KotuReturnUrl_IndexeRedirect()
         {
@@ -98,6 +110,9 @@ namespace CeyPASS.Tests.Web
 
         // ─── GetFirmalarForUser (private) via Index ───────────────────────────
 
+        /// <summary>
+        /// YetkisizKullaniciYetkisiZFirmalar nulldöner
+        /// </summary>
         [Fact]
         public void Index_YetkisizKullaniciYetkisiZFirmalar_NullDoner()
         {

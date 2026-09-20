@@ -3,14 +3,21 @@ using System.Collections.Generic;
 
 namespace CeyPASS.Infrastructure.Helpers
 {
+    /// <summary>Rapor stored procedure parametre adları ve çoklu seçim tespiti.</summary>
     public static class RaporParametreHelper
     {
+        /// <summary>SP parametresi: firma id listesi.</summary>
         public const string FirmaIdList = "@FirmaIdList";
+        /// <summary>SP parametresi: işyeri id listesi.</summary>
         public const string IsyeriIdList = "@IsyeriIdList";
+        /// <summary>SP parametresi: cihaz id listesi.</summary>
         public const string CihazIdList = "@CihazIdList";
+        /// <summary>SP parametresi: dönem başlangıç tarihi.</summary>
         public const string TarihBaslangic = "@TarihBaslangic";
+        /// <summary>SP parametresi: dönem bitiş tarihi.</summary>
         public const string TarihBitis = "@TarihBitis";
 
+        /// <summary>Rapor UI’da hangi çoklu seçim kontrolünün kullanılacağı.</summary>
         public enum MultiSelectKind
         {
             None,
@@ -18,6 +25,7 @@ namespace CeyPASS.Infrastructure.Helpers
             Cihaz
         }
 
+        /// <summary>Parametre adını @ ile başlayacak şekilde standartlaştırır.</summary>
         public static string Normalize(string name)
         {
             if (string.IsNullOrWhiteSpace(name))
@@ -28,6 +36,7 @@ namespace CeyPASS.Infrastructure.Helpers
             return n;
         }
 
+        /// <summary>Parametre listesinde verilen ad var mı (büyük/küçük harf duyarsız).</summary>
         public static bool HasParam(IEnumerable<string> names, string param)
         {
             if (names == null)
@@ -41,6 +50,7 @@ namespace CeyPASS.Infrastructure.Helpers
             return false;
         }
 
+        /// <summary>SP parametre setine göre işyeri veya cihaz çoklu seçim modunu döner.</summary>
         public static MultiSelectKind GetMultiSelect(IEnumerable<string> names)
         {
             if (HasParam(names, CihazIdList))

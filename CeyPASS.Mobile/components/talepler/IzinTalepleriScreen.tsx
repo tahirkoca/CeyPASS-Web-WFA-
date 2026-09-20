@@ -1,3 +1,4 @@
+/** Yönetici izin taleplerini onay/red. */
 import React, { useEffect, useMemo, useState } from "react";
 import { Modal, ScrollView, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
@@ -5,7 +6,8 @@ import { PersonelHeader } from "../personel/PersonelHeader";
 import { profilService } from "../../services/profilApi";
 import { downloadPdfFromApi } from "../../services/pdf";
 import { PdfPreviewModal } from "../PdfPreviewModal";
-import { StatusPopup } from "../StatusPopup";
+import { StatusPopup } from "../StatusPopup";
+import { toTrLower } from "../../services/turkishText";
 
 function fmtDT(v: any) {
   if (!v) return "";
@@ -83,7 +85,7 @@ export function IzinTalepleriScreen(props: { user: any; onOpenMenu?: () => void 
   }, []);
 
   const filtered = useMemo(() => {
-    const s = q.trim().toLowerCase();
+    const s = toTrLower(q).trim();
     if (!s) return items;
     return items.filter((t) => {
       const id = (t?.talepId ?? t?.TalepId ?? "").toString();
@@ -92,9 +94,9 @@ export function IzinTalepleriScreen(props: { user: any; onOpenMenu?: () => void 
       const tip = (t?.izinTipAdi ?? t?.IzinTipAdi ?? "").toString();
       return (
         id.includes(s) ||
-        pid.toLowerCase().includes(s) ||
-        pName.toLowerCase().includes(s) ||
-        tip.toLowerCase().includes(s)
+        toTrLower(pid).includes(s) ||
+        toTrLower(pName).includes(s) ||
+        toTrLower(tip).includes(s)
       );
     });
   }, [items, q]);

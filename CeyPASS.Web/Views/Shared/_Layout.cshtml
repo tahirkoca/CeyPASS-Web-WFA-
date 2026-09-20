@@ -43,6 +43,7 @@
                     var logoHref = Url.Action("Index", "Home");
                     var canDashboardForLogo = AuthorizationService.ViewAbility("Dashboard");
                     var canProfilForLogo = AuthorizationService.ViewAbility("Profil");
+                    /* Dashboard yetkisi yoksa sicilli personel logoyla Profile gider (yönetim ana sayfası yerine) */
                     if (!canDashboardForLogo && canProfilForLogo && !string.IsNullOrWhiteSpace(SessionContext.AktifSicilNo))
                     {
                         logoHref = Url.Action("Index", "Profil");
@@ -57,6 +58,7 @@
             
             <nav class="sidebar-nav">
                 @{
+                    /* ViewAbility: menü öğeleri modül bazlı görüntüleme yetkisine göre gizlenir */
                     var canDashboard = AuthorizationService.ViewAbility("Dashboard");
                     var canProfil = AuthorizationService.ViewAbility("Profil");
                     var canIzinTalepleri = AuthorizationService.ViewAbility("IzinTalepleri");
@@ -68,7 +70,6 @@
                     var canRapor = AuthorizationService.ViewAbility("Raporlar");
                     var canFirma = AuthorizationService.ViewAbility("Firmalar");
                     var canIsyeri = AuthorizationService.ViewAbility("Isyerler");
-                    var canDepartman = AuthorizationService.ViewAbility("Departmanlar");
                     var canPozisyon = AuthorizationService.ViewAbility("Pozisyonlar");
                     var canVardiya = AuthorizationService.ViewAbility("Vardiyalar");
                     var canCalismaStatu = AuthorizationService.ViewAbility("CalismaStatuleri");
@@ -108,6 +109,7 @@
                             </a>
                         </li>
                         @{
+                            /* Üst yetkili paneli: aktif sicil için bir kez supervisor sorgusu (SessionContext önbellek) */
                             if (!SessionContext.IsSupervisor.HasValue && !string.IsNullOrWhiteSpace(SessionContext.AktifSicilNo))
                             {
                                 SessionContext.IsSupervisor = IzinTalepService.IsSupervisor(SessionContext.AktifSicilNo);
@@ -238,7 +240,7 @@
                 </div>
                 }
 
-                @if (canFirma || canIsyeri || canDepartman || canPozisyon)
+                @if (canFirma || canIsyeri || canPozisyon)
                 {
                 <!-- Organizasyon -->
                 <div class="nav-section accordion-section">
@@ -265,16 +267,6 @@
                                asp-controller="Isyeri" asp-action="Index" title="İşyeri ve Şube Tanımlamaları">
                                 <i class="bi bi-geo-alt"></i>
                                 <span>İşyerleri</span>
-                            </a>
-                        </li>
-                        }
-                        @if (canDepartman)
-                        {
-                        <li class="nav-item">
-                            <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Departman" ? "active" : "")" 
-                               asp-controller="Departman" asp-action="Index" title="Departman Tanımlamaları ve Hiyerarşi">
-                                <i class="bi bi-diagram-3"></i>
-                                <span>Departmanlar</span>
                             </a>
                         </li>
                         }

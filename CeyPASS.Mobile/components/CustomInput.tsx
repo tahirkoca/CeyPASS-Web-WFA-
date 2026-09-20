@@ -1,5 +1,6 @@
+/** Etiketli metin girişi; isteğe bağlı klavye “Bitti/Gönder” ve submit callback. */
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ReturnKeyTypeOptions } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 interface CustomInputProps {
@@ -11,8 +12,13 @@ interface CustomInputProps {
   icon: keyof typeof MaterialCommunityIcons.glyphMap;
   className?: string;
   error?: string;
+  /** Klavye sağ alt tuş (ör. done → “Bitti”, go → “Git”). */
+  returnKeyType?: ReturnKeyTypeOptions;
+  /** returnKeyType tuşuna basınca çağrılır; verilirse blurOnSubmit açılır. */
+  onSubmitEditing?: () => void;
 }
 
+/** Form alanı: ikon, hata, şifre göster/gizle, klavye submit desteği. */
 export const CustomInput: React.FC<CustomInputProps> = ({
   label,
   placeholder,
@@ -22,6 +28,8 @@ export const CustomInput: React.FC<CustomInputProps> = ({
   icon,
   className,
   error,
+  returnKeyType,
+  onSubmitEditing,
 }) => {
   const [isFocused, setIsFocused] = useState(false);
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
@@ -56,6 +64,9 @@ export const CustomInput: React.FC<CustomInputProps> = ({
           onChangeText={onChangeText}
           numberOfLines={1}
           secureTextEntry={secureTextEntry && !isPasswordVisible}
+          returnKeyType={returnKeyType}
+          blurOnSubmit={!!onSubmitEditing}
+          onSubmitEditing={onSubmitEditing}
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
         />

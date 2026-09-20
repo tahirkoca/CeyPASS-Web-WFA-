@@ -8,6 +8,9 @@ using Xunit;
 
 namespace CeyPASS.Tests.Unit
 {
+    /// <summary>
+    /// Firma CRUD: önerilen ID, zorunlu alanlar, e-posta doğrulama ve mükerrer ID engeli.
+    /// </summary>
     public class FirmaServiceTests
     {
         private readonly Mock<IFirmaRepository> _repoMock = new();
@@ -20,6 +23,9 @@ namespace CeyPASS.Tests.Unit
 
         // ─── SuggestNextId ────────────────────────────────────────────────────
 
+        /// <summary>
+        /// Veritabanında firma yokken önerilen ilk FirmaId 101.
+        /// </summary>
         [Fact]
         public void SuggestNextId_MaxIdNull_101Doner()
         {
@@ -27,6 +33,9 @@ namespace CeyPASS.Tests.Unit
             _sut.SuggestNextId().Should().Be(101);
         }
 
+        /// <summary>
+        /// Mevcut en büyük ID'nin bir fazlası önerilir.
+        /// </summary>
         [Fact]
         public void SuggestNextId_MaxId200_201Doner()
         {
@@ -36,6 +45,9 @@ namespace CeyPASS.Tests.Unit
 
         // ─── Add — Validasyon ─────────────────────────────────────────────────
 
+        /// <summary>
+        /// FirmaId 0 ile ekleme reddedilir.
+        /// </summary>
         [Fact]
         public void Add_IdSifir_HataVerir()
         {
@@ -44,6 +56,9 @@ namespace CeyPASS.Tests.Unit
             msg.Should().NotBeNullOrWhiteSpace();
         }
 
+        /// <summary>
+        /// Firma adı boş/whitespace ise ekleme reddedilir.
+        /// </summary>
         [Fact]
         public void Add_AdBos_HataVerir()
         {
@@ -52,6 +67,9 @@ namespace CeyPASS.Tests.Unit
             msg.Should().NotBeNullOrWhiteSpace();
         }
 
+        /// <summary>
+        /// Geçersiz e-posta formatında ekleme reddedilir.
+        /// </summary>
         [Fact]
         public void Add_GecersizEmail_HataVerir()
         {
@@ -60,6 +78,9 @@ namespace CeyPASS.Tests.Unit
             msg.Should().NotBeNullOrWhiteSpace();
         }
 
+        /// <summary>
+        /// Aynı FirmaId zaten varsa ekleme reddedilir.
+        /// </summary>
         [Fact]
         public void Add_MukerrerFirmaId_HataVerir()
         {
@@ -73,6 +94,9 @@ namespace CeyPASS.Tests.Unit
             msg.Should().NotBeNullOrWhiteSpace();
         }
 
+        /// <summary>
+        /// Geçerli firma bilgisi Insert ile kaydedilir.
+        /// </summary>
         [Fact]
         public void Add_GecerliVeri_KayitGerceklesir()
         {
@@ -87,6 +111,9 @@ namespace CeyPASS.Tests.Unit
 
         // ─── Update — Validasyon ──────────────────────────────────────────────
 
+        /// <summary>
+        /// Adboş Hataverir
+        /// </summary>
         [Fact]
         public void Update_AdBos_HataVerir()
         {
@@ -95,6 +122,9 @@ namespace CeyPASS.Tests.Unit
             msg.Should().NotBeNullOrWhiteSpace();
         }
 
+        /// <summary>
+        /// GeçersizEmail Hataverir
+        /// </summary>
         [Fact]
         public void Update_GecersizEmail_HataVerir()
         {
@@ -103,6 +133,9 @@ namespace CeyPASS.Tests.Unit
             msg.Should().NotBeNullOrWhiteSpace();
         }
 
+        /// <summary>
+        /// GeçerliVeri KayitGuncellenir
+        /// </summary>
         [Fact]
         public void Update_GecerliVeri_KayitGuncellenir()
         {
@@ -116,6 +149,9 @@ namespace CeyPASS.Tests.Unit
 
         // ─── IsValidEmail (Add/Update üzerinden) ─────────────────────────────
 
+        /// <summary>
+        /// GeçerliEmail Kabul
+        /// </summary>
         [Fact]
         public void IsValidEmail_GecerliEmail_Kabul()
         {
@@ -126,6 +162,9 @@ namespace CeyPASS.Tests.Unit
             result.Should().BeTrue();
         }
 
+        /// <summary>
+        /// GeçersizEmail reddedilir
+        /// </summary>
         [Fact]
         public void IsValidEmail_GecersizEmail_Red()
         {
@@ -134,6 +173,9 @@ namespace CeyPASS.Tests.Unit
             msg.Should().NotBeNullOrWhiteSpace();
         }
 
+        /// <summary>
+        /// BoşEmail AtlanilirKayitGerceklesir
+        /// </summary>
         [Fact]
         public void IsValidEmail_BosEmail_AtlanilirKayitGerceklesir()
         {
@@ -145,6 +187,9 @@ namespace CeyPASS.Tests.Unit
             result.Should().BeTrue();
         }
 
+        /// <summary>
+        /// BirdenFazlaAt Geçersiz
+        /// </summary>
         [Fact]
         public void IsValidEmail_BirdenFazlaAt_Gecersiz()
         {

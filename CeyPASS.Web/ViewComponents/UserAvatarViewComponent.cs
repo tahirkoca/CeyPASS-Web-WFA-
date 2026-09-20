@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 
 namespace CeyPASS.Web.ViewComponents
 {
+    /// <summary>Navbar kullanıcı avatar/baş harf bileşeni.</summary>
     public class UserAvatarViewComponent : ViewComponent
     {
         private readonly ISessionContext _session;
@@ -16,9 +17,10 @@ namespace CeyPASS.Web.ViewComponents
             _kisiQueryService = kisiQueryService;
         }
 
+        /// <summary>Oturumdaki personel fotoğrafı veya baş harfini gösterir.</summary>
         public async Task<IViewComponentResult> InvokeAsync()
         {
-            // Try session cache first
+            // Foto/baş harf session'da önbelleklenir
             if (!string.IsNullOrEmpty(_session.UserInitials))
             {
                 ViewBag.PhotoUrl = _session.UserPhotoUrl;

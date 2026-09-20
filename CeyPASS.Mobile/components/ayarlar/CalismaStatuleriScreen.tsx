@@ -1,3 +1,4 @@
+/** Çalışma statü tanımları listesi ve düzenleme. */
 import React, { useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, Modal, ScrollView, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
@@ -6,7 +7,8 @@ import { PageHeader } from "../PageHeader";
 import { ayarlarService, LookupItem } from "../../services/ayarlarApi";
 import { useHeaderQuickMenu } from "../HeaderQuickMenu";
 import { useNotificationsContext } from "../NotificationsProvider";
-import { useUiPrefs } from "../../services/uiPrefs";
+import { useUiPrefs } from "../../services/uiPrefs";
+import { toTrLower } from "../../services/turkishText";
 
 function asInt(value: any, def = 0) {
   const n = Number(value);
@@ -69,13 +71,13 @@ export function CalismaStatuleriScreen(props: { user: any; abilities: any; onOpe
   }, []);
 
   const filtered = useMemo(() => {
-    const qq = q.trim().toLowerCase();
+    const qq = toTrLower(q).trim();
     const rows = (items ?? []).map((x: any) => ({
       id: asInt(x?.id ?? x?.Id, 0),
       ad: (x?.ad ?? x?.Ad ?? "").toString(),
     }));
     if (!qq) return rows.sort((a, b) => a.ad.localeCompare(b.ad, "tr"));
-    return rows.filter((r) => `${r.id} ${r.ad}`.toLowerCase().includes(qq)).sort((a, b) => a.ad.localeCompare(b.ad, "tr"));
+    return rows.filter((r) => toTrLower(`${r.id} ${r.ad}`).includes(qq)).sort((a, b) => a.ad.localeCompare(b.ad, "tr"));
   }, [items, q]);
 
   const [formVisible, setFormVisible] = useState(false);

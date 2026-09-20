@@ -8,9 +8,7 @@ using System.Net.Mail;
 
 namespace CeyPASS.Web.Services
 {
-    /// <summary>
-    /// ASP.NET Core için IConfiguration'dan SMTP ayarlarını okuyan EmailService
-    /// </summary>
+    /// <summary>Web katmanı SMTP e-posta gönderimi (IConfiguration).</summary>
     public class EmailServiceCore : IEmailService
     {
         private readonly string _host;
@@ -36,6 +34,8 @@ namespace CeyPASS.Web.Services
             _fromName = smtp["FromName"] ?? "CeyPASS Sistem";
         }
 
+        /// <summary>SendEmail islemi.</summary>
+        /// <summary>Düz metin e-posta gönderir.</summary>
         public void SendEmail(string toEmail, string subject, string body)
         {
             SendEmailInternal(toEmail, subject, body, isBodyHtml: false);
@@ -82,6 +82,8 @@ namespace CeyPASS.Web.Services
             }
         }
 
+        /// <summary>SendVerificationCode islemi.</summary>
+        /// <summary>Şifre sıfırlama doğrulama kodu (HTML şablon).</summary>
         public void SendVerificationCode(string toEmail, string code)
         {
             string subject = "CeyPASS Doğrulama Kodu";
@@ -161,6 +163,8 @@ namespace CeyPASS.Web.Services
 </html>";
         }
 
+        /// <summary>MaskEmail islemi.</summary>
+        /// <summary>E-posta adresini UI'da maskelemek için kısaltır.</summary>
         public string MaskEmail(string email)
         {
             if (string.IsNullOrWhiteSpace(email))

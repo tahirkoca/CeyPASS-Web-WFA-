@@ -5,6 +5,7 @@ using System.Linq;
 
 namespace CeyPASS.DataAccess.Repositories
 {
+    /// <summary>İzin tipi erişimi.</summary>
     public class IzinTipRepositoryCore : IIzinTipRepository
     {
         private readonly CeyPASSDataConnectionCore _context;
@@ -14,6 +15,7 @@ namespace CeyPASS.DataAccess.Repositories
             _context = context;
         }
 
+        /// <summary>Aktif Izin Tipleri sorgularını getirir.</summary>
         public List<IzinTip> GetAktifIzinTipleri()
         {
             return _context.IzinTipleri
@@ -31,6 +33,7 @@ namespace CeyPASS.DataAccess.Repositories
                 .ToList();
         }
 
+        /// <summary>Saatlik Kullanilabilir Tip Id sorgularını getirir.</summary>
         public int? GetSaatlikKullanilabilirTipId()
         {
             return _context.IzinTipleri

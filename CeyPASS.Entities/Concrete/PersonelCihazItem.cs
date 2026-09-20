@@ -1,5 +1,6 @@
 ﻿namespace CeyPASS.Entities.Concrete
 {
+    /// <summary>Cihaz-personel eşleme listesi satırı.</summary>
     public class PersonelCihazItem
     {
         public string SicilNo { get; set; }

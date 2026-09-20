@@ -1,3 +1,4 @@
+/** Vardiya (çalışma şekli) tanımları. */
 import React, { useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, Modal, ScrollView, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
@@ -6,7 +7,8 @@ import { PageHeader } from "../PageHeader";
 import { useHeaderQuickMenu } from "../HeaderQuickMenu";
 import { useNotificationsContext } from "../NotificationsProvider";
 import { ayarlarService, CalismaSekli } from "../../services/ayarlarApi";
-import { useUiPrefs } from "../../services/uiPrefs";
+import { useUiPrefs } from "../../services/uiPrefs";
+import { toTrLower } from "../../services/turkishText";
 
 function pick<T = any>(obj: any, a: string, b?: string): T | undefined {
   if (!obj) return undefined;
@@ -99,7 +101,7 @@ export function VardiyalarScreen(props: { user: any; abilities: any; onOpenMenu:
   }, []);
 
   const rows = useMemo(() => {
-    const qq = q.trim().toLowerCase();
+    const qq = toTrLower(q).trim();
     const mapped = (items ?? []).map((x: any) => {
       const id = pick<number>(x, "id", "Id") ?? 0;
       const ad = (pick<string>(x, "ad", "Ad") ?? "").toString();
@@ -110,7 +112,7 @@ export function VardiyalarScreen(props: { user: any; abilities: any; onOpenMenu:
       const yem = fmtTimeSpan(pick<any>(x, "yemekAktiflestirme", "YemekAktiflestirme"));
       return { id, ad, bas, bit, t1, t2, yem, raw: x as CalismaSekli };
     });
-    const filtered = !qq ? mapped : mapped.filter((r) => `${r.id} ${r.ad}`.toLowerCase().includes(qq));
+    const filtered = !qq ? mapped : mapped.filter((r) => toTrLower(`${r.id} ${r.ad}`).includes(qq));
     return filtered.sort((a, b) => a.ad.localeCompare(b.ad, "tr"));
   }, [items, q]);
 

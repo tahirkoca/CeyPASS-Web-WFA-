@@ -46,11 +46,44 @@
                               Style="{StaticResource FieldCombo}"
                               Margin="0,0,0,8"/>
 
+                    <TextBlock Text="Durum" Style="{StaticResource FieldLabel}"/>
+                    <ComboBox ItemsSource="{Binding CalismaDurumlari}"
+                              SelectedItem="{Binding CalismaDurumu}"
+                              Style="{StaticResource FieldCombo}"
+                              Margin="0,0,0,8"/>
+
                     <TextBlock Text="Kart Tipi" Style="{StaticResource FieldLabel}"/>
                     <ComboBox ItemsSource="{Binding KartTipleri}"
                               SelectedItem="{Binding KartTipi}"
+                              IsEnabled="{Binding KartTipiEnabled}"
                               Style="{StaticResource FieldCombo}"
                               Margin="0,0,0,8"/>
+
+                    <Border BorderBrush="{DynamicResource Brush.Border}"
+                            BorderThickness="1"
+                            Background="{DynamicResource Brush.FieldBg}"
+                            CornerRadius="6"
+                            Margin="0,4,0,0"
+                            Padding="6,4">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="&#xE721;"
+                                       FontFamily="Segoe MDL2 Assets"
+                                       FontSize="14"
+                                       VerticalAlignment="Center"
+                                       Margin="2,0,8,0"
+                                       Foreground="{DynamicResource Brush.TextSecondary}"/>
+                            <dxe:TextEdit Grid.Column="1"
+                                          EditValue="{Binding PersonSearch, UpdateSourceTrigger=PropertyChanged}"
+                                          NullText="Ad veya Sicil No'ya göre arayabilirsiniz"
+                                          ShowBorder="False"
+                                          VerticalContentAlignment="Center"
+                                          Height="28"/>
+                        </Grid>
+                    </Border>
                 </StackPanel>
 
                 <Button DockPanel.Dock="Bottom"
@@ -60,7 +93,7 @@
                         Command="{Binding LoadPersonsCommand}"/>
 
                 <Grid>
-                    <ListBox ItemsSource="{Binding Persons}"
+                    <ListBox ItemsSource="{Binding PersonsView}"
                              BorderBrush="{DynamicResource Brush.Border}"
                              Background="{DynamicResource Brush.FieldBg}"
                              Foreground="{DynamicResource Brush.FieldFg}"

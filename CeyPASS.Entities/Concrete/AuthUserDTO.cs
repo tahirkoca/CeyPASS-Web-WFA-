@@ -1,5 +1,6 @@
 namespace CeyPASS.Entities.Concrete
 {
+    /// <summary>Oturum sonrası kullanıcı özeti (Entities katmanı).</summary>
     public class AuthUserDTO
     {
         public int KullaniciId { get; set; }

@@ -35,7 +35,7 @@ namespace CeyPASS.WFA.Forms
             this.dgSonHareketler = new System.Windows.Forms.DataGridView();
             this.tableLayoutPanel3 = new System.Windows.Forms.TableLayoutPanel();
             this.lblSeciliUnvan = new System.Windows.Forms.Label();
-            this.lblSeciliDepartman = new System.Windows.Forms.Label();
+            this.lblSeciliIsyeri = new System.Windows.Forms.Label();
             this.lblSeciliAdSoyad = new System.Windows.Forms.Label();
             this.pbSeciliFoto = new System.Windows.Forms.PictureBox();
             this.tableLayoutPanel4 = new System.Windows.Forms.TableLayoutPanel();
@@ -83,11 +83,9 @@ namespace CeyPASS.WFA.Forms
             // 
             // tableLayoutPanel2
             // 
-            this.tableLayoutPanel2.ColumnCount = 2;
-            this.tableLayoutPanel2.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 61.14865F));
-            this.tableLayoutPanel2.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 38.85135F));
+            this.tableLayoutPanel2.ColumnCount = 1;
+            this.tableLayoutPanel2.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
             this.tableLayoutPanel2.Controls.Add(this.dgSonHareketler, 0, 0);
-            this.tableLayoutPanel2.Controls.Add(this.tableLayoutPanel3, 1, 0);
             this.tableLayoutPanel2.Dock = System.Windows.Forms.DockStyle.Fill;
             this.tableLayoutPanel2.Location = new System.Drawing.Point(3, 492);
             this.tableLayoutPanel2.Name = "tableLayoutPanel2";
@@ -109,7 +107,7 @@ namespace CeyPASS.WFA.Forms
             this.dgSonHareketler.RowHeadersWidth = 51;
             this.dgSonHareketler.RowTemplate.Height = 24;
             this.dgSonHareketler.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.dgSonHareketler.Size = new System.Drawing.Size(1080, 404);
+            this.dgSonHareketler.Size = new System.Drawing.Size(1770, 404);
             this.dgSonHareketler.TabIndex = 2;
             this.dgSonHareketler.CellClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgSonHareketler_CellClick);
             this.dgSonHareketler.SelectionChanged += new System.EventHandler(this.dgSonHareketler_SelectionChanged);
@@ -120,7 +118,7 @@ namespace CeyPASS.WFA.Forms
             this.tableLayoutPanel3.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
             this.tableLayoutPanel3.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 20F));
             this.tableLayoutPanel3.Controls.Add(this.lblSeciliUnvan, 0, 3);
-            this.tableLayoutPanel3.Controls.Add(this.lblSeciliDepartman, 0, 2);
+            this.tableLayoutPanel3.Controls.Add(this.lblSeciliIsyeri, 0, 2);
             this.tableLayoutPanel3.Controls.Add(this.lblSeciliAdSoyad, 0, 1);
             this.tableLayoutPanel3.Controls.Add(this.pbSeciliFoto, 0, 0);
             this.tableLayoutPanel3.Dock = System.Windows.Forms.DockStyle.Fill;
@@ -145,16 +143,16 @@ namespace CeyPASS.WFA.Forms
             this.lblSeciliUnvan.Text = "Unvan";
             this.lblSeciliUnvan.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
-            // lblSeciliDepartman
-            // 
-            this.lblSeciliDepartman.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right)));
-            this.lblSeciliDepartman.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Italic, System.Drawing.GraphicsUnit.Point, ((byte)(162)));
-            this.lblSeciliDepartman.Location = new System.Drawing.Point(3, 311);
-            this.lblSeciliDepartman.Name = "lblSeciliDepartman";
-            this.lblSeciliDepartman.Size = new System.Drawing.Size(678, 20);
-            this.lblSeciliDepartman.TabIndex = 5;
-            this.lblSeciliDepartman.Text = "Departman";
-            this.lblSeciliDepartman.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            // lblSeciliIsyeri
+            //
+            this.lblSeciliIsyeri.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right)));
+            this.lblSeciliIsyeri.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Italic, System.Drawing.GraphicsUnit.Point, ((byte)(162)));
+            this.lblSeciliIsyeri.Location = new System.Drawing.Point(3, 311);
+            this.lblSeciliIsyeri.Name = "lblSeciliIsyeri";
+            this.lblSeciliIsyeri.Size = new System.Drawing.Size(678, 20);
+            this.lblSeciliIsyeri.TabIndex = 5;
+            this.lblSeciliIsyeri.Text = "İşyeri";
+            this.lblSeciliIsyeri.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
             // lblSeciliAdSoyad
             // 
@@ -294,7 +292,7 @@ namespace CeyPASS.WFA.Forms
         private System.Windows.Forms.TableLayoutPanel tableLayoutPanel3;
         private System.Windows.Forms.PictureBox pbSeciliFoto;
         private System.Windows.Forms.Label lblSeciliUnvan;
-        private System.Windows.Forms.Label lblSeciliDepartman;
+        private System.Windows.Forms.Label lblSeciliIsyeri;
         private System.Windows.Forms.Label lblSeciliAdSoyad;
         private System.Windows.Forms.TableLayoutPanel tableLayoutPanel4;
         private System.Windows.Forms.FlowLayoutPanel flpKartButonlari;

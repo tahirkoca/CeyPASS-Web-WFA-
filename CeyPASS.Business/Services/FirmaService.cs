@@ -7,6 +7,7 @@ using System.Net.Mail;
 
 namespace CeyPASS.Business.Services
 {
+    /// <summary>Firma tanım işlemleri.</summary>
     public class FirmaService:IFirmaService
     {
         private readonly IFirmaRepository _repo;
@@ -15,13 +16,17 @@ namespace CeyPASS.Business.Services
         {
             _repo = repo;
         }
+        /// <inheritdoc />
         public List<Firma> GetAll() => _repo.GetAll();
+        /// <inheritdoc />
         public List<LookupItem> GetLookup()=> GetAll().Select(x => new LookupItem { Id = x.FirmaId, Ad = x.FirmaAdi }).ToList();
+        /// <inheritdoc />
         public int SuggestNextId()
         {
             var max = _repo.GetMaxId();
             return (max ?? 100) + 1;
         }
+        /// <inheritdoc />
         public bool Add(int id, string ad, string itMail, out string msg)
         {
             msg = string.Empty;
@@ -41,6 +46,7 @@ namespace CeyPASS.Business.Services
 
             return _repo.Insert(new Firma { FirmaId = id, FirmaAdi = ad.Trim(), ITBirimMail = itMail?.Trim() ?? string.Empty });
         }
+        /// <inheritdoc />
         public bool Update(int id, string ad, string itMail, out string msg)
         {
             msg = string.Empty;
@@ -50,12 +56,14 @@ namespace CeyPASS.Business.Services
 
             return _repo.Update(new Firma { FirmaId = id, FirmaAdi = ad.Trim(), ITBirimMail = itMail?.Trim() ?? string.Empty });
         }
+        /// <inheritdoc />
         public bool Delete(int id) => _repo.Delete(id);
         private bool IsValidEmail(string mail)
         {
             try { var _ = new MailAddress(mail); return true; }
             catch { return false; }
         }
+        /// <inheritdoc />
         public List<Firma> GetPuantajFirmalar()
         {
             return _repo.GetPuantajFirmalari();

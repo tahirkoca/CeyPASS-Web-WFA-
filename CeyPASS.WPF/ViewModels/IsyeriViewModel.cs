@@ -8,6 +8,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace CeyPASS.WPF.ViewModels;
 
+/// <summary>İşyeri tanım CRUD; firma bağlantılı liste (sayfa: Isyerler).</summary>
 public sealed class IsyeriViewModel : ObservableObject
 {
     private enum ScreenMode { List, Add, Edit }
@@ -417,7 +418,7 @@ public sealed class IsyeriViewModel : ObservableObject
             return false;
         }
 
-        if (!int.TryParse(IsyeriIdText, out isyeriId) || isyeriId <= 0)
+        if (!int.TryParse(IsyeriIdText, out isyeriId) || isyeriId < 0)
         {
             Errors.Set("IsyeriId", "Geçerli bir İşyeri Id giriniz.");
             return false;

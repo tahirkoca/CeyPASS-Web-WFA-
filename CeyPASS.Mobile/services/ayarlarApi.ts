@@ -1,3 +1,4 @@
+/** Vardiya, çalışma statüsü, cihaz ve resmi tatil ayarları. */
 import api, { cachedGet } from "./api";
 import { invalidate } from "./httpCache";
 
@@ -54,6 +55,7 @@ export type ResmiTatilDTO = {
   [key: string]: any;
 };
 
+/** CalismaSekli, CalismaStatu, Cihaz, ResmiTatil API’leri. */
 export const ayarlarService = {
   // Vardiyalar (CalismaSekli)
   async listVardiyalar(opts?: { forceRefresh?: boolean }): Promise<ApiResult<CalismaSekli[]>> {

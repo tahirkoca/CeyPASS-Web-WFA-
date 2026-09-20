@@ -7,6 +7,7 @@ using System.Data;
 
 namespace CeyPASS.Business.Services
 {
+    /// <summary>Personel izin kayıtları.</summary>
     public class KisiIzinService : IKisiIzinService
     {
         private readonly IKisiIzinlerRepository _repo;
@@ -15,14 +16,22 @@ namespace CeyPASS.Business.Services
         {
             _repo=repo;
         }
+        /// <inheritdoc />
         public bool Ekle(KisiIzin izin) => _repo.Insert(izin);
+        /// <inheritdoc />
         public bool Guncelle(KisiIzin izin) => _repo.Update(izin);
+        /// <inheritdoc />
         public KisiIzin GetById(int kisiIzinId) => _repo.GetById(kisiIzinId);
+        /// <inheritdoc />
         public bool PasifYap(int kisiIzinId) => _repo.PasifYap(kisiIzinId);
+        /// <inheritdoc />
         public bool AktifYap(int kisiIzinId) => _repo.AktifYap(kisiIzinId);
-        public DataTable GetTumIzinler(int? firmaId, string personelId, int? izinTipId, DateTime bas, DateTime bit) => _repo.GetIzinRaporu(firmaId, personelId, izinTipId, bas, bit);
-        public List<KisiIzinListRow> GetTumIzinlerPaged(int? firmaId, string personelId, int? izinTipId, DateTime bas, DateTime bit, int page, int pageSize, out int totalCount)
-            => _repo.GetIzinRaporuPaged(firmaId, personelId, izinTipId, bas, bit, page, pageSize, out totalCount);
+        /// <inheritdoc />
+        public DataTable GetTumIzinler(int? firmaId, string personelId, int? izinTipId, DateTime bas, DateTime bit, int? isyeriId = null, IReadOnlyList<int>? isyeriIdIn = null)
+            => _repo.GetIzinRaporu(firmaId, personelId, izinTipId, bas, bit, isyeriId, isyeriIdIn);
+        /// <inheritdoc />
+        public List<KisiIzinListRow> GetTumIzinlerPaged(int? firmaId, string personelId, int? izinTipId, DateTime bas, DateTime bit, int page, int pageSize, out int totalCount, int? isyeriId = null, IReadOnlyList<int>? isyeriIdIn = null)
+            => _repo.GetIzinRaporuPaged(firmaId, personelId, izinTipId, bas, bit, page, pageSize, out totalCount, isyeriId, isyeriIdIn);
         public (bool IsValid, string? Message) ValidateKayit(IzinKayitValidasyonDTO dto)
         {
             if (string.IsNullOrWhiteSpace(dto.PersonelId))

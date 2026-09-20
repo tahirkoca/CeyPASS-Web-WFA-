@@ -6,6 +6,7 @@ using System.Collections.Generic;
 
 namespace CeyPASS.Business.Services
 {
+    /// <summary>Resmi tatil takvimi.</summary>
     public class ResmiTatilService : IResmiTatilService
     {
         private readonly IResmiTatilRepository _repo;
@@ -14,6 +15,7 @@ namespace CeyPASS.Business.Services
         {
             _repo = repo;
         }
+        /// <inheritdoc />
         public void DoldurSabit(int baslangicYili, int bitisYili)
         {
             if (bitisYili < baslangicYili)
@@ -21,6 +23,7 @@ namespace CeyPASS.Business.Services
 
             _repo.DoldurSabit(baslangicYili, bitisYili);
         }
+        /// <inheritdoc />
         public void KaydetTekil(DateTime tarih, string ad, decimal? calismaSaati)
         {
             if (string.IsNullOrWhiteSpace(ad))
@@ -30,7 +33,9 @@ namespace CeyPASS.Business.Services
 
             _repo.EkleVeyaGuncelle(tarih, ad.Trim(), calismaSaati);
         }
+        /// <inheritdoc />
         public List<ResmiTatilDTO> GetList(int? yil = null) => _repo.GetList(yil);
+        /// <inheritdoc />
         public void EkleVeyaGuncelle(DateTime tarih, string ad, decimal? calismaSaat)
         {
             _repo.EkleVeyaGuncelle(tarih, ad, calismaSaat);

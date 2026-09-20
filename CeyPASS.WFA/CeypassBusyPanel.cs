@@ -7,6 +7,7 @@ public static class CeypassBusyPanel
 {
     private const string TagKey = "CeypassBusyPanel";
 
+    /// <summary>Host kontrol üzerine busy overlay gösterir.</summary>
     public static void ShowOn(Control host, string title, string? message = null)
     {
         if (host == null || host.IsDisposed) return;
@@ -80,6 +81,7 @@ public static class CeypassBusyPanel
         Application.DoEvents();
     }
 
+    /// <summary>Host üzerindeki busy overlay'i kaldırır.</summary>
     public static void HideFrom(Control host)
     {
         if (host == null || host.IsDisposed) return;

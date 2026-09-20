@@ -1,3 +1,4 @@
+/** Oturum açmış personelin profil, izin, hareket ve bildirim geçmişi. */
 import api from "./api";
 
 export type ApiResult<T> = { success: boolean; message?: string; data?: T };
@@ -43,6 +44,7 @@ export type NotificationHistoryResponse = {
   pageSize: number;
 };
 
+/** /Profil ve ilişkili self-servis uçları. */
 export const profilService = {
   async getProfil(): Promise<ApiResult<ProfilModel>> {
     const res = await api.get("/Profil");

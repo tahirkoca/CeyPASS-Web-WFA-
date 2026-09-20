@@ -8,6 +8,7 @@ using System.Collections.Generic;
 
 namespace CeyPASS.Web.Controllers
 {
+    /// <summary>Pozisyon tanim CRUD (POY).</summary>
     public class PozisyonController : Controller
     {
         private readonly IPozisyonService _pozisyonService;
@@ -22,6 +23,7 @@ namespace CeyPASS.Web.Controllers
             _lookupService = lookupService;
         }
 
+        /// <summary>Liste veya ana ekran.</summary>
         public IActionResult Index()
         {
             if (!_authorizationService.ViewAbility(PageName))
@@ -37,6 +39,7 @@ namespace CeyPASS.Web.Controllers
             return View(list);
         }
 
+        /// <summary>Yeni kayit formu ve kaydetme.</summary>
         [HttpGet]
         public IActionResult Create(string returnUrl = null)
         {
@@ -49,6 +52,7 @@ namespace CeyPASS.Web.Controllers
             return View(new PozisyonFormModel { ReturnUrl = returnUrl });
         }
 
+        /// <summary>Yeni kayit formu ve kaydetme.</summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult Create(PozisyonFormModel model)
@@ -82,6 +86,7 @@ namespace CeyPASS.Web.Controllers
             return RedirectToAction("Index");
         }
 
+        /// <summary>Kayit guncelleme.</summary>
         [HttpGet]
         public IActionResult Edit(int id, string returnUrl = null)
         {
@@ -104,6 +109,7 @@ namespace CeyPASS.Web.Controllers
             return View(model);
         }
 
+        /// <summary>Kayit guncelleme.</summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult Edit(PozisyonFormModel model)
@@ -135,6 +141,7 @@ namespace CeyPASS.Web.Controllers
             return RedirectToAction("Index");
         }
 
+        /// <summary>Kayit silme veya pasiflestirme.</summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult Delete(int id, string returnUrl = null)

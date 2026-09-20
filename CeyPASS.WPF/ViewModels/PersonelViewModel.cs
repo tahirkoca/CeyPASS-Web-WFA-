@@ -6,6 +6,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using CeyPASS.Business.Abstractions;
 using CeyPASS.Entities.Concrete;
+using CeyPASS.Entities.Helpers;
 using CeyPASS.Infrastructure.Helpers;
 using CeyPASS.WPF.Views;
 using Microsoft.Extensions.DependencyInjection;
@@ -13,6 +14,7 @@ using Microsoft.Win32;
 
 namespace CeyPASS.WPF.ViewModels;
 
+/// <summary>Personel formunda çoklu vardiya seçim satırı.</summary>
 public sealed class VardiyaCheckItem : ObservableObject
 {
     private int _id;
@@ -39,6 +41,9 @@ public sealed class VardiyaCheckItem : ObservableObject
     }
 }
 
+/// <summary>
+/// Personel tanım, işten çıkış/aktif etme, çoklu sicil ve gelişmiş arama — firma/işyeri yetkilerine göre filtrelenir.
+/// </summary>
 public sealed class PersonelViewModel : ObservableObject
 {
     private enum ScreenMode { View, Add, Edit, Exit }
@@ -67,13 +72,10 @@ public sealed class PersonelViewModel : ObservableObject
     private string _firmaDisiKartNo = "";
     private string _email = "";
     private string _cepTel = "";
-    private DateTime _iseGiris = DateTime.Today;
+    private DateTime? _iseGiris = DateTime.Today;
     private DateTime? _istenCikis;
     private DateTime? _dogumTarihi;
-    private bool _hasDogum;
-    private bool _hasIstenCikis;
 
-    private LookupItem? _selectedDepartman;
     private LookupItem? _selectedBolum;
     private LookupItem? _selectedPozisyon;
     private LookupItem? _selectedIsyeri;
@@ -86,7 +88,12 @@ public sealed class PersonelViewModel : ObservableObject
     private bool _ziyaretci;
     private bool _aracKarti;
     private bool _taseron;
-    private int _yemekAdedi;
+    private bool _isAnaSicil;
+    private int _cokluSicilHedefSayisi;
+    private string? _hedefSicilBilgi;
+    private bool _isHedefSicilOnly;
+    private bool _isApplyingDetay;
+    private int? _yemekAdedi;
 
     private bool _fieldsReadOnly = true;
     private bool _listEnabled = true;
@@ -102,6 +109,7 @@ public sealed class PersonelViewModel : ObservableObject
     private string? _status;
     private string? _error;
 
+    /// <param name="root">DI kökü; scope ile servis çözümlemesi.</param>
     public PersonelViewModel(IServiceProvider root)
     {
         _scopes = root.GetRequiredService<IServiceScopeFactory>();
@@ -110,7 +118,6 @@ public sealed class PersonelViewModel : ObservableObject
         Firmalar = new ObservableCollection<Firma>();
         Isyerler = new ObservableCollection<LookupItem>();
         Kisiler = new ObservableCollection<KisiListItem>();
-        Departmanlar = new ObservableCollection<LookupItem>();
         Bolumler = new ObservableCollection<LookupItem>();
         Pozisyonlar = new ObservableCollection<LookupItem>();
         IsyerleriForm = new ObservableCollection<LookupItem>();
@@ -128,6 +135,8 @@ public sealed class PersonelViewModel : ObservableObject
         AddPhotoCommand = new RelayCommand(AddPhoto, () => CanPhoto);
         RemovePhotoCommand = new RelayCommand(RemovePhoto, () => CanPhoto);
         SearchPersonCommand = new RelayCommand(OpenKisiAra, () => ListEnabled && _mode == ScreenMode.View);
+        OpenCokluSicilCommand = new RelayCommand(OpenCokluSicil, () => CanOpenCokluSicil);
+        ClearDogumCommand = new RelayCommand(ClearDogum, () => !FieldsReadOnly);
 
         Refresh();
     }
@@ -135,7 +144,6 @@ public sealed class PersonelViewModel : ObservableObject
     public ObservableCollection<Firma> Firmalar { get; }
     public ObservableCollection<LookupItem> Isyerler { get; }
     public ObservableCollection<KisiListItem> Kisiler { get; }
-    public ObservableCollection<LookupItem> Departmanlar { get; }
     public ObservableCollection<LookupItem> Bolumler { get; }
     public ObservableCollection<LookupItem> Pozisyonlar { get; }
     public ObservableCollection<LookupItem> IsyerleriForm { get; }
@@ -170,6 +178,7 @@ public sealed class PersonelViewModel : ObservableObject
         }
     }
 
+    /// <summary>Listeyi aktif veya işten çıkan personelle sınırlar.</summary>
     public bool IstenCikanlar
     {
         get => _istenCikanlar;
@@ -189,6 +198,7 @@ public sealed class PersonelViewModel : ObservableObject
         }
     }
 
+    /// <summary>Durum combo indeksi (0=aktif, 1=işten çıkan).</summary>
     public int DurumIndex
     {
         get => IstenCikanlar ? 1 : 0;
@@ -236,22 +246,58 @@ public sealed class PersonelViewModel : ObservableObject
 
     public string AdSoyad { get => _adSoyad; set => SetProperty(ref _adSoyad, value ?? ""); }
     public string SicilNo { get => _sicilNo; set => SetProperty(ref _sicilNo, value ?? ""); }
-    public string KartNo { get => _kartNo; set => SetProperty(ref _kartNo, value ?? ""); }
-    public string TcKimlikNo { get => _tcKimlikNo; set => SetProperty(ref _tcKimlikNo, value ?? ""); }
-    public string FirmaDisiKartNo { get => _firmaDisiKartNo; set => SetProperty(ref _firmaDisiKartNo, value ?? ""); }
-    public string Email { get => _email; set => SetProperty(ref _email, value ?? ""); }
-    public string CepTel { get => _cepTel; set => SetProperty(ref _cepTel, value ?? ""); }
+    public string KartNo
+    {
+        get => FieldsReadOnly ? KisiDisplayHelper.TextOrMissing(_kartNo) : _kartNo;
+        set => SetProperty(ref _kartNo, value ?? "");
+    }
+    public string TcKimlikNo
+    {
+        get => FieldsReadOnly ? KisiDisplayHelper.TextOrMissing(_tcKimlikNo) : _tcKimlikNo;
+        set
+        {
+            var v = value ?? "";
+            if (_tcKimlikNo == v) return;
+            SetProperty(ref _tcKimlikNo, v);
+            RaiseCokluSicilUi();
+        }
+    }
+    public string FirmaDisiKartNo
+    {
+        get => FieldsReadOnly ? KisiDisplayHelper.TextOrMissing(_firmaDisiKartNo) : _firmaDisiKartNo;
+        set => SetProperty(ref _firmaDisiKartNo, value ?? "");
+    }
+    public string Email
+    {
+        get => FieldsReadOnly ? KisiDisplayHelper.TextOrMissing(_email) : _email;
+        set => SetProperty(ref _email, value ?? "");
+    }
+    public string CepTel
+    {
+        get => FieldsReadOnly ? KisiDisplayHelper.TextOrMissing(_cepTel) : _cepTel;
+        set => SetProperty(ref _cepTel, value ?? "");
+    }
 
-    public DateTime IseGiris
+    public DateTime? IseGiris
     {
         get => _iseGiris;
-        set => SetProperty(ref _iseGiris, value);
+        set
+        {
+            if (_iseGiris == value) return;
+            SetProperty(ref _iseGiris, value);
+            RaiseDependentUi();
+        }
     }
 
     public DateTime? IstenCikis
     {
         get => _istenCikis;
-        set => SetProperty(ref _istenCikis, value);
+        set
+        {
+            if (_istenCikis == value) return;
+            SetProperty(ref _istenCikis, value);
+            RaiseDependentUi();
+        }
     }
 
     public DateTime? DogumTarihi
@@ -260,24 +306,10 @@ public sealed class PersonelViewModel : ObservableObject
         set => SetProperty(ref _dogumTarihi, value);
     }
 
-    public bool HasDogum
-    {
-        get => _hasDogum;
-        set => SetProperty(ref _hasDogum, value);
-    }
+    public bool ShowIseGirisMissingText => FieldsReadOnly && !IseGiris.HasValue;
+    public string IseGirisMissingText => KisiDisplayHelper.Missing;
+    public bool IsIstenCikmis => IstenCikis.HasValue;
 
-    public bool HasIstenCikis
-    {
-        get => _hasIstenCikis;
-        set
-        {
-            if (_hasIstenCikis == value) return;
-            SetProperty(ref _hasIstenCikis, value);
-            RaiseDependentUi();
-        }
-    }
-
-    public LookupItem? SelectedDepartman { get => _selectedDepartman; set => SetProperty(ref _selectedDepartman, value); }
     public LookupItem? SelectedBolum { get => _selectedBolum; set => SetProperty(ref _selectedBolum, value); }
     public LookupItem? SelectedPozisyon { get => _selectedPozisyon; set => SetProperty(ref _selectedPozisyon, value); }
     public LookupItem? SelectedIsyeri { get => _selectedIsyeri; set => SetProperty(ref _selectedIsyeri, value); }
@@ -313,8 +345,9 @@ public sealed class PersonelViewModel : ObservableObject
         {
             if (_yemekHakki == value) return;
             SetProperty(ref _yemekHakki, value);
-            if (!value && YemekAdedi != 0)
-                YemekAdedi = 0;
+            if (!value && _yemekAdedi.HasValue)
+                _yemekAdedi = null;
+            RaisePropertyChanged(nameof(YemekAdediText));
             RaiseDependentUi();
         }
     }
@@ -323,11 +356,105 @@ public sealed class PersonelViewModel : ObservableObject
     public bool AracKarti { get => _aracKarti; set => SetProperty(ref _aracKarti, value); }
     public bool Taseron { get => _taseron; set => SetProperty(ref _taseron, value); }
 
-    public int YemekAdedi
+    public bool IsAnaSicil => _isAnaSicil;
+
+    public int CokluSicilHedefSayisi
     {
-        get => _yemekAdedi;
-        set => SetProperty(ref _yemekAdedi, value);
+        get => _cokluSicilHedefSayisi;
+        private set
+        {
+            if (_cokluSicilHedefSayisi == value) return;
+            SetProperty(ref _cokluSicilHedefSayisi, value);
+            RaisePropertyChanged(nameof(CokluSicilDurumText));
+            RaisePropertyChanged(nameof(ShowCokluSicilDurum));
+            RaiseCokluSicilUi();
+        }
     }
+
+    public string? HedefSicilBilgi
+    {
+        get => _hedefSicilBilgi;
+        private set
+        {
+            if (_hedefSicilBilgi == value) return;
+            SetProperty(ref _hedefSicilBilgi, value);
+            RaisePropertyChanged(nameof(CokluSicilDurumText));
+            RaisePropertyChanged(nameof(ShowCokluSicilDurum));
+        }
+    }
+
+    public bool IsHedefSicilOnly
+    {
+        get => _isHedefSicilOnly;
+        private set
+        {
+            if (_isHedefSicilOnly == value) return;
+            SetProperty(ref _isHedefSicilOnly, value);
+            RaisePropertyChanged(nameof(CokluSicilDurumText));
+            RaisePropertyChanged(nameof(ShowCokluSicilDurum));
+            RaiseCokluSicilUi();
+        }
+    }
+
+    public bool ShowCokluSicilDurum => IsHedefSicilOnly || _isAnaSicil;
+
+    public string CokluSicilDurumText
+    {
+        get
+        {
+            if (IsHedefSicilOnly && !string.IsNullOrWhiteSpace(HedefSicilBilgi))
+                return HedefSicilBilgi!;
+            if (_isAnaSicil)
+                return CokluSicilHedefSayisi > 0
+                    ? $"Ana sicil · {CokluSicilHedefSayisi} hedef bağlı"
+                    : "Ana sicil · bağlantı yok";
+            return "";
+        }
+    }
+
+    public bool CanOpenCokluSicil => _mode != ScreenMode.Add
+        && !IstenCikanlar
+        && PuantajYapilir
+        && !IsHedefSicilOnly
+        && int.TryParse(SicilNo, out var id) && id > 0
+        && !string.IsNullOrWhiteSpace(TcKimlikNo);
+    public string CokluSicilOpenTooltip
+    {
+        get
+        {
+            if (_mode == ScreenMode.Add) return "Önce personeli kaydedin.";
+            if (IstenCikanlar) return "İşten çıkan personelde kullanılamaz.";
+            if (!PuantajYapilir) return "Puantaj Yapılır işaretlenmelidir.";
+            if (IsHedefSicilOnly) return "Bu sicil yalnızca hedef sicildir.";
+            if (string.IsNullOrWhiteSpace(TcKimlikNo)) return "TC kimlik numarası girilmelidir.";
+            if (!int.TryParse(SicilNo, out var pid) || pid <= 0) return "Kayıtlı personel seçin.";
+            return "Hedef sicil eşleştirmeleri";
+        }
+    }
+
+    public ICommand OpenCokluSicilCommand { get; }
+    public ICommand ClearDogumCommand { get; }
+
+    public string YemekAdediText
+    {
+        get
+        {
+            if (FieldsReadOnly)
+                return !YemekHakki ? KisiDisplayHelper.Missing : KisiDisplayHelper.NumberOrMissing(_yemekAdedi);
+            return _yemekAdedi.HasValue ? _yemekAdedi.Value.ToString() : "";
+        }
+        set
+        {
+            int? next = string.IsNullOrWhiteSpace(value)
+                ? null
+                : int.TryParse(value.Trim(), out var n) ? n : _yemekAdedi;
+            if (_yemekAdedi == next) return;
+            _yemekAdedi = next;
+            RaisePropertyChanged(nameof(YemekAdediText));
+        }
+    }
+
+    private int YemekAdediForSave => _yemekAdedi ?? 0;
 
     public bool FieldsReadOnly
     {
@@ -336,8 +463,10 @@ public sealed class PersonelViewModel : ObservableObject
         {
             if (_fieldsReadOnly == value) return;
             SetProperty(ref _fieldsReadOnly, value);
+            RefreshReadOnlyFieldDisplays();
             RaisePropertyChanged(nameof(YemekAdediEnabled));
             RaisePropertyChanged(nameof(VardiyaEditable));
+            RaiseCokluSicilUi();
         }
     }
 
@@ -392,13 +521,15 @@ public sealed class PersonelViewModel : ObservableObject
     }
 
     public string DeleteButtonText => IstenCikanlar ? "Aktif Et" : "İşten Çıkar";
+    /// <summary>İşten çıkanlar listesinde kart tipi filtresini kilitler.</summary>
     public bool KartTipiEnabled => !IstenCikanlar;
+    /// <summary>İşten çıkanlar modunda puantaj filtresini kapatır.</summary>
     public bool PuantajFilterEnabled => ListEnabled && !IstenCikanlar;
 
     /// <summary>İşten çıkış tarihi yoksa WFA'daki gibi "Aktif Çalışıyor..." gösterilir.</summary>
-    public bool ShowAktifCalisiyorText => !HasIstenCikis && _mode != ScreenMode.Exit;
-    public bool ShowIstenCikisDatePicker => HasIstenCikis || _mode == ScreenMode.Exit;
-    public string CalismaDurumuText => HasIstenCikis ? "İşten çıkmış" : "Aktif çalışıyor";
+    public bool ShowAktifCalisiyorText => !IstenCikis.HasValue && _mode != ScreenMode.Exit;
+    public bool ShowIstenCikisDatePicker => IstenCikis.HasValue || _mode == ScreenMode.Exit;
+    public string CalismaDurumuText => IstenCikis.HasValue ? "İşten çıkmış" : "Aktif çalışıyor";
     public string AktifCalisiyorPlaceholder => "Aktif Çalışıyor...";
 
     public bool FirmaDisiEnabled
@@ -443,10 +574,7 @@ public sealed class PersonelViewModel : ObservableObject
         => SelectedFirma?.FirmaId ?? _session.AktifFirmaId ?? 0;
 
     private int? GetSeciliIsyeriFilterId()
-    {
-        var id = SelectedIsyeriFilter?.Id ?? 0;
-        return id <= 0 ? null : id;
-    }
+        => FirmaIsyeriYetkiHelper.ToIsyeriQueryFilterId(SelectedIsyeriFilter?.Id);
 
     private void Refresh()
     {
@@ -559,16 +687,15 @@ public sealed class PersonelViewModel : ObservableObject
                 ? yetkiSvc.GetYetkiler(_session.AktifKullaniciId.Value) ?? new List<FirmaIsyeriYetkiDTO>()
                 : new List<FirmaIsyeriYetkiDTO>();
 
-            Replace(Departmanlar, lookup.GetDepartmanlar(firmaId) ?? new List<LookupItem>());
-            Replace(Bolumler, lookup.GetBolumler(firmaId) ?? new List<LookupItem>());
-            Replace(Pozisyonlar, lookup.GetPozisyonlar(firmaId) ?? new List<LookupItem>());
-            Replace(IsyerleriForm, lookup.GetIsyerleri(firmaId) ?? new List<LookupItem>());
+            Replace(Bolumler, WithComboPlaceholder(lookup.GetBolumler(firmaId)));
+            Replace(Pozisyonlar, WithComboPlaceholder(lookup.GetPozisyonlar(firmaId)));
+            Replace(IsyerleriForm, WithComboPlaceholder(lookup.GetIsyerleri(firmaId)));
             Replace(FirmalarForm, lookup.GetFirma(firmaId) ?? new List<LookupItem>());
-            Replace(CalismaStatuleri, lookup.GetCalismaStatuleri(firmaId) ?? new List<LookupItem>());
+            Replace(CalismaStatuleri, WithComboPlaceholder(lookup.GetCalismaStatuleri(firmaId)));
 
             var isyeriFilter = lookup.GetIsyerleri(firmaId) ?? new List<LookupItem>();
             isyeriFilter = FirmaIsyeriYetkiHelper.FilterIsyeriLookup(isyeriFilter, firmaId, yetkiler, isAdmin);
-            var filterData = new List<LookupItem> { new LookupItem { Id = 0, Ad = "Tümü" } };
+            var filterData = new List<LookupItem> { FirmaIsyeriYetkiHelper.CreateIsyeriFilterTumuItem() };
             filterData.AddRange(isyeriFilter);
 
             _suppressFilter = true;
@@ -577,7 +704,7 @@ public sealed class PersonelViewModel : ObservableObject
                 Isyerler.Add(it);
             var prefs = PageFilterPrefsStore.Load(PageName);
             var preferredIsyeri = prefs?.IsyeriId;
-            _selectedIsyeriFilter = (preferredIsyeri.HasValue
+            _selectedIsyeriFilter = (preferredIsyeri.HasValue && preferredIsyeri.Value >= 0
                     ? Isyerler.FirstOrDefault(x => x.Id == preferredIsyeri.Value)
                     : null)
                 ?? Isyerler.FirstOrDefault();
@@ -595,11 +722,10 @@ public sealed class PersonelViewModel : ObservableObject
                 });
             }
 
-            SelectedDepartman = Departmanlar.FirstOrDefault();
-            SelectedBolum = Bolumler.FirstOrDefault();
-            SelectedPozisyon = Pozisyonlar.FirstOrDefault();
-            SelectedIsyeri = IsyerleriForm.FirstOrDefault();
-            SelectedCalismaStatu = CalismaStatuleri.FirstOrDefault();
+            SelectedBolum = ComboPlaceholderItem(Bolumler);
+            SelectedPozisyon = ComboPlaceholderItem(Pozisyonlar);
+            SelectedIsyeri = ComboPlaceholderItem(IsyerleriForm);
+            SelectedCalismaStatu = ComboPlaceholderItem(CalismaStatuleri);
             SelectedFirmaDetail = FirmalarForm.FirstOrDefault(x => x.Id == firmaId) ?? FirmalarForm.FirstOrDefault();
         }
         catch (Exception ex)
@@ -690,7 +816,7 @@ public sealed class PersonelViewModel : ObservableObject
 
     private string BosListeUyariMesaji(int? seciliIsyeriId)
     {
-        bool isyeriVar = seciliIsyeriId.HasValue && seciliIsyeriId.Value > 0;
+        bool isyeriVar = seciliIsyeriId.HasValue;
         string? isyeriAd = isyeriVar ? SelectedIsyeriFilter?.Ad?.Trim() : null;
         if (isyeriVar)
         {
@@ -744,41 +870,148 @@ public sealed class PersonelViewModel : ObservableObject
 
     private void ApplyDetay(KisiDetay d)
     {
-        AdSoyad = ((d.Ad ?? "") + " " + (d.Soyad ?? "")).Trim();
-        SicilNo = d.PersonelId ?? "";
-        KartNo = d.KartNo ?? "";
-        TcKimlikNo = d.TcKimlikNo ?? "";
-        CepTel = d.CepTel ?? "";
-        Email = d.Email ?? "";
-        FirmaDisiKartNo = d.TaseronKartNo ?? "";
+        _isApplyingDetay = true;
+        try
+        {
+            AdSoyad = ((d.Ad ?? "") + " " + (d.Soyad ?? "")).Trim();
+            SicilNo = d.PersonelId ?? "";
+            KartNo = d.KartNo ?? "";
+            TcKimlikNo = d.TcKimlikNo ?? "";
+            CepTel = d.CepTel ?? "";
+            Email = d.Email ?? "";
+            FirmaDisiKartNo = d.TaseronKartNo ?? "";
 
-        IseGiris = d.IseGirisTarihi ?? DateTime.Today;
-        HasIstenCikis = d.IstenCikisTarihi.HasValue;
-        IstenCikis = d.IstenCikisTarihi;
-        HasDogum = d.DogumTarihi.HasValue;
-        DogumTarihi = d.DogumTarihi;
+            IseGiris = d.IseGirisTarihi;
+            IstenCikis = d.IstenCikisTarihi;
+            DogumTarihi = d.DogumTarihi;
 
-        SelectedPozisyon = FindLookup(Pozisyonlar, d.PozisyonId);
-        SelectedDepartman = FindLookup(Departmanlar, d.DepartmanId);
-        SelectedIsyeri = FindLookup(IsyerleriForm, d.IsyeriId, allowMissingZero: true);
-        SelectedFirmaDetail = FindLookup(FirmalarForm, d.FirmaId);
-        SelectedBolum = FindLookup(Bolumler, d.BolumId);
-        SelectedCalismaStatu = d.CalismaStatusuId.HasValue
-            ? FindLookup(CalismaStatuleri, d.CalismaStatusuId)
-            : CalismaStatuleri.FirstOrDefault();
+            SelectedPozisyon = FindLookup(Pozisyonlar, d.PozisyonId);
+            SelectedIsyeri = FindLookup(IsyerleriForm, d.IsyeriId, allowMissingZero: true);
+            SelectedFirmaDetail = FindLookup(FirmalarForm, d.FirmaId);
+            SelectedBolum = FindLookup(Bolumler, d.BolumId);
+            SelectedCalismaStatu = FindLookup(CalismaStatuleri, d.CalismaStatusuId);
 
-        VardiyalariIsaretle(d.CalismaSekliCsv ?? "");
+            VardiyalariIsaretle(d.CalismaSekliCsv ?? "");
 
-        YemekHakki = d.YemekHakkiVar;
-        YemekAdedi = d.GunlukYemekAdedi ?? 0;
-        FirmaPersoneli = d.FirmaPersoneli;
-        PuantajYapilir = d.PuantajYapilabilir;
-        Ziyaretci = d.ZiyaretciMi;
-        AracKarti = d.AracKartiMi;
-        Taseron = d.TaseronCalisanMi;
+            YemekHakki = d.YemekHakkiVar;
+            _yemekAdedi = d.GunlukYemekAdedi;
+            RaisePropertyChanged(nameof(YemekAdediText));
+            FirmaPersoneli = d.FirmaPersoneli;
+            Ziyaretci = d.ZiyaretciMi;
+            AracKarti = d.AracKartiMi;
+            Taseron = d.TaseronCalisanMi;
 
-        SetFoto(d.Fotograf, dirty: false);
+            _isAnaSicil = false;
+            CokluSicilHedefSayisi = 0;
+            HedefSicilBilgi = null;
+            IsHedefSicilOnly = false;
+
+            PuantajYapilir = d.PuantajYapilabilir;
+
+            SetFoto(d.Fotograf, dirty: false);
+            RefreshCokluSicilState(d.PersonelId, d.TcKimlikNo);
+        }
+        finally
+        {
+            _isApplyingDetay = false;
+        }
+
         RaiseDependentUi();
+    }
+
+    private void RefreshCokluSicilState(string personelId, string? tcKimlikNo)
+    {
+        HedefSicilBilgi = null;
+        IsHedefSicilOnly = false;
+        SetProperty(ref _isAnaSicil, false);
+        RaisePropertyChanged(nameof(IsAnaSicil));
+        RaisePropertyChanged(nameof(CokluSicilDurumText));
+        RaisePropertyChanged(nameof(ShowCokluSicilDurum));
+
+        var pid = ResolvePersonelId(personelId);
+        if (pid <= 0)
+            pid = ResolvePersonelId(SicilNo);
+        if (pid <= 0)
+        {
+            CokluSicilHedefSayisi = 0;
+            RaiseCokluSicilUi();
+            return;
+        }
+
+        try
+        {
+            using var scope = _scopes.CreateScope();
+            var svc = scope.ServiceProvider.GetRequiredService<ICokluSicilService>();
+            var ozet = svc.GetOzet(pid);
+
+            CokluSicilHedefSayisi = ozet.AktifHedefSayisi;
+            IsHedefSicilOnly = ozet.IsHedefSicil && !ozet.IsAnaSicil;
+            if (IsHedefSicilOnly && ozet.AnaPersonelId.HasValue)
+                HedefSicilBilgi = $"Hedef sicil — ana: {ozet.AnaPersonelId.Value}";
+
+            SetProperty(ref _isAnaSicil, ozet.IsAnaSicil);
+            RaisePropertyChanged(nameof(IsAnaSicil));
+            RaisePropertyChanged(nameof(CokluSicilDurumText));
+            RaisePropertyChanged(nameof(ShowCokluSicilDurum));
+        }
+        catch (Exception ex)
+        {
+            LogHelper.Error(PageName, "RefreshCokluSicilState", $"Çoklu sicil durumu okunamadı (PersonelId={pid})", ex);
+            CokluSicilHedefSayisi = 0;
+            SetProperty(ref _isAnaSicil, false);
+            RaisePropertyChanged(nameof(IsAnaSicil));
+        }
+
+        RaiseCokluSicilUi();
+    }
+
+    private static int ResolvePersonelId(string? personelId)
+    {
+        if (string.IsNullOrWhiteSpace(personelId)) return 0;
+        return int.TryParse(personelId.Trim(), out var pid) ? pid : 0;
+    }
+
+    private void OpenCokluSicil()
+    {
+        if (!CanOpenCokluSicil) return;
+        if (!int.TryParse(SicilNo, out var pid) || pid <= 0)
+        {
+            UiDialog.Warning("Önce personeli kaydedin.", PageName);
+            return;
+        }
+
+        using var scope = _scopes.CreateScope();
+        var auth = scope.ServiceProvider.GetRequiredService<IAuthorizationService>();
+        if (!auth.Can(PageName, YetkiTipleri.Update))
+        {
+            UiDialog.Warning("Bu işlem için yetkiniz yok.", PageName);
+            return;
+        }
+
+        try
+        {
+            var dlg = new CokluSicilEslestirmeWindow(pid, TcKimlikNo, AdSoyad)
+            {
+                Owner = Application.Current?.Windows.OfType<Window>().FirstOrDefault(w => w.IsActive)
+                        ?? Application.Current?.MainWindow
+            };
+            dlg.ShowDialog();
+            RefreshCokluSicilState(SicilNo, TcKimlikNo);
+        }
+        catch (Exception ex)
+        {
+            LogHelper.Error(PageName, "OpenCokluSicil", $"PersonelId={pid}", ex);
+            UiDialog.Error("Çoklu sicil ekranı açılamadı:\n" + ex.Message, PageName);
+        }
+    }
+
+    private void RaiseCokluSicilUi()
+    {
+        RaisePropertyChanged(nameof(CanOpenCokluSicil));
+        RaisePropertyChanged(nameof(CokluSicilOpenTooltip));
+        RaisePropertyChanged(nameof(CokluSicilDurumText));
+        RaisePropertyChanged(nameof(ShowCokluSicilDurum));
+        CommandManager.InvalidateRequerySuggested();
     }
 
     private void VardiyalariIsaretle(string csvIds)
@@ -827,12 +1060,26 @@ public sealed class PersonelViewModel : ObservableObject
     private static LookupItem? FindLookup(ObservableCollection<LookupItem> items, int? id, bool allowMissingZero = false)
     {
         if (!id.HasValue)
-            return items.FirstOrDefault();
+            return ComboPlaceholderItem(items);
         var found = items.FirstOrDefault(x => x.Id == id.Value);
         if (found != null) return found;
         if (allowMissingZero && id.Value == 0)
-            return items.FirstOrDefault(x => x.Id == 0) ?? items.FirstOrDefault();
-        return items.FirstOrDefault();
+            return items.FirstOrDefault(x => x.Id == 0) ?? ComboPlaceholderItem(items);
+        return ComboPlaceholderItem(items);
+    }
+
+    private static LookupItem? ComboPlaceholderItem(ObservableCollection<LookupItem> items) =>
+        items.FirstOrDefault(x => x.Id < 0) ?? items.FirstOrDefault();
+
+    private static List<LookupItem> WithComboPlaceholder(IEnumerable<LookupItem>? items)
+    {
+        var list = new List<LookupItem>
+        {
+            new LookupItem { Id = -1, Ad = KisiDisplayHelper.ComboPlaceholder }
+        };
+        if (items != null)
+            list.AddRange(items);
+        return list;
     }
 
     private void EnterViewMode()
@@ -960,7 +1207,6 @@ public sealed class PersonelViewModel : ObservableObject
             }
 
             _mode = ScreenMode.Exit;
-            HasIstenCikis = true;
             if (!IstenCikis.HasValue || IstenCikis.Value.Year < 2000)
                 IstenCikis = DateTime.Today;
 
@@ -1091,7 +1337,7 @@ public sealed class PersonelViewModel : ObservableObject
             return;
         }
 
-        if (!HasIstenCikis || !IstenCikis.HasValue)
+        if (!IstenCikis.HasValue)
         {
             UiDialog.Warning("İşten çıkış tarihini seçiniz.", PageName);
             return;
@@ -1137,6 +1383,8 @@ public sealed class PersonelViewModel : ObservableObject
         Error = null;
         Errors.Require("SicilNo", SicilNo, "Sicil No zorunludur.");
         Errors.Require("AdSoyad", AdSoyad, "Ad Soyad zorunludur.");
+        if (!IseGiris.HasValue)
+            Errors.Set("IseGiris", "İşe giriş tarihi zorunludur.");
         if (Errors.HasErrors)
         {
             Error = Errors.FirstMessage;
@@ -1152,7 +1400,7 @@ public sealed class PersonelViewModel : ObservableObject
             FirmaPersoneli,
             PuantajYapilir,
             YemekHakki,
-            YemekAdedi,
+            YemekAdediForSave,
             (FirmaDisiKartNo ?? "").Trim(),
             fotoDegisti: _fotoDirty);
 
@@ -1174,6 +1422,8 @@ public sealed class PersonelViewModel : ObservableObject
         Error = null;
         Errors.Require("SicilNo", SicilNo, "Sicil No zorunludur.");
         Errors.Require("AdSoyad", AdSoyad, "Ad Soyad zorunludur.");
+        if (!IseGiris.HasValue)
+            Errors.Set("IseGiris", "İşe giriş tarihi zorunludur.");
         if (Errors.HasErrors)
         {
             Error = Errors.FirstMessage;
@@ -1186,19 +1436,24 @@ public sealed class PersonelViewModel : ObservableObject
             FirmaPersoneli = FirmaPersoneli,
             PuantajYapilir = PuantajYapilir,
             YemekHakkiVar = YemekHakki,
-            YemekAdedi = YemekAdedi,
+            YemekAdedi = YemekAdediForSave,
             FirmaDisiKartNo = (FirmaDisiKartNo ?? "").Trim(),
             TcKimlikNo = (TcKimlikNo ?? "").Trim(),
             KartNo = (KartNo ?? "").Trim(),
             TaseronCalisanMi = Taseron,
             ZiyaretciMi = Ziyaretci,
-            AracKartiMi = AracKarti
+            AracKartiMi = AracKarti,
+            IsyeriId = GetNullableId(SelectedIsyeri, allowZero: true)
         };
 
         var validasyonSonuc = kisiSvc.ValidateKisiKayit(validasyonDto);
         if (!validasyonSonuc.IsValid)
         {
-            Errors.Set("SicilNo", validasyonSonuc.Message ?? "Doğrulama başarısız.");
+            var msg = validasyonSonuc.Message ?? "Doğrulama başarısız.";
+            if (msg.IndexOf("İşyeri", StringComparison.OrdinalIgnoreCase) >= 0)
+                Errors.Set("Isyeri", msg);
+            else
+                Errors.Set("SicilNo", msg);
             Error = Errors.FirstMessage;
             return;
         }
@@ -1217,7 +1472,7 @@ public sealed class PersonelViewModel : ObservableObject
             FirmaPersoneli,
             PuantajYapilir,
             YemekHakki,
-            YemekAdedi,
+            YemekAdediForSave,
             kartId,
             kartNo,
             kartAdi);
@@ -1238,14 +1493,13 @@ public sealed class PersonelViewModel : ObservableObject
             KartNo = (KartNo ?? "").Trim(),
             TcKimlikNo = (TcKimlikNo ?? "").Trim(),
             PozisyonId = GetNullableId(SelectedPozisyon),
-            DepartmanId = GetNullableId(SelectedDepartman),
             IsyeriId = GetNullableId(SelectedIsyeri, allowZero: true),
             BolumId = GetNullableId(SelectedBolum),
             FirmaId = GetNullableId(SelectedFirmaDetail) ?? GetSeciliFirmaId(),
-            IseGirisTarihi = IseGiris.Date,
-            IstenCikisTarihi = HasIstenCikis ? IstenCikis?.Date : null,
-            DogumTarihi = HasDogum ? DogumTarihi?.Date : null,
-            CalismaStatusu = SelectedCalismaStatu?.Id.ToString() ?? "",
+            IseGirisTarihi = IseGiris?.Date,
+            IstenCikisTarihi = IstenCikis?.Date,
+            DogumTarihi = DogumTarihi?.Date,
+            CalismaStatusu = GetNullableId(SelectedCalismaStatu)?.ToString() ?? "",
             CalismaSekli = SecilenVardiyaIds(),
             CepTel = (CepTel ?? "").Trim(),
             Email = (Email ?? "").Trim(),
@@ -1267,16 +1521,13 @@ public sealed class PersonelViewModel : ObservableObject
         Email = "";
         FirmaDisiKartNo = "";
         IseGiris = DateTime.Today;
-        HasDogum = false;
         DogumTarihi = null;
-        HasIstenCikis = false;
         IstenCikis = null;
 
-        SelectedDepartman = Departmanlar.FirstOrDefault();
-        SelectedPozisyon = Pozisyonlar.FirstOrDefault();
-        SelectedIsyeri = IsyerleriForm.FirstOrDefault();
-        SelectedBolum = Bolumler.FirstOrDefault();
-        SelectedCalismaStatu = CalismaStatuleri.FirstOrDefault();
+        SelectedPozisyon = ComboPlaceholderItem(Pozisyonlar);
+        SelectedIsyeri = ComboPlaceholderItem(IsyerleriForm);
+        SelectedBolum = ComboPlaceholderItem(Bolumler);
+        SelectedCalismaStatu = ComboPlaceholderItem(CalismaStatuleri);
         int filterFirmaId = GetSeciliFirmaId();
         SelectedFirmaDetail = filterFirmaId > 0
             ? FirmalarForm.FirstOrDefault(x => x.Id == filterFirmaId) ?? FirmalarForm.FirstOrDefault()
@@ -1291,9 +1542,17 @@ public sealed class PersonelViewModel : ObservableObject
         Ziyaretci = false;
         AracKarti = false;
         Taseron = false;
-        YemekAdedi = 0;
+        _yemekAdedi = null;
+        RaisePropertyChanged(nameof(YemekAdediText));
         SetFoto(null, dirty: false);
-        RaiseDependentUi();
+        _isAnaSicil = false;
+        CokluSicilHedefSayisi = 0;
+        HedefSicilBilgi = null;
+        IsHedefSicilOnly = false;
+        RaisePropertyChanged(nameof(IsAnaSicil));
+        RaisePropertyChanged(nameof(CokluSicilDurumText));
+        RaisePropertyChanged(nameof(ShowCokluSicilDurum));
+        RaiseCokluSicilUi();
     }
 
     private void RefreshToolbar(IAuthorizationService? auth = null)
@@ -1335,7 +1594,28 @@ public sealed class PersonelViewModel : ObservableObject
         RaisePropertyChanged(nameof(VardiyaEditable));
         RaisePropertyChanged(nameof(ShowAktifCalisiyorText));
         RaisePropertyChanged(nameof(ShowIstenCikisDatePicker));
+        RaisePropertyChanged(nameof(ShowIseGirisMissingText));
+        RaisePropertyChanged(nameof(IseGirisMissingText));
         RaisePropertyChanged(nameof(CalismaDurumuText));
+        RaisePropertyChanged(nameof(IsIstenCikmis));
+        RaiseCokluSicilUi();
+    }
+
+    private void RefreshReadOnlyFieldDisplays()
+    {
+        RaisePropertyChanged(nameof(KartNo));
+        RaisePropertyChanged(nameof(TcKimlikNo));
+        RaisePropertyChanged(nameof(FirmaDisiKartNo));
+        RaisePropertyChanged(nameof(Email));
+        RaisePropertyChanged(nameof(CepTel));
+        RaisePropertyChanged(nameof(YemekAdediText));
+        RaisePropertyChanged(nameof(ShowIseGirisMissingText));
+    }
+
+    private void ClearDogum()
+    {
+        if (FieldsReadOnly) return;
+        DogumTarihi = null;
     }
 
     private void SetFoto(byte[]? bytes, bool dirty)
@@ -1462,11 +1742,12 @@ public sealed class PersonelViewModel : ObservableObject
                 LoadLookups();
             }
 
-            if (ctx.IsyeriId.HasValue && ctx.IsyeriId.Value > 0)
+            if (ctx.IsyeriId.HasValue && ctx.IsyeriId.Value >= 0)
                 SelectedIsyeriFilter = Isyerler.FirstOrDefault(x => x.Id == ctx.IsyeriId.Value)
                                        ?? Isyerler.FirstOrDefault();
             else
-                SelectedIsyeriFilter = Isyerler.FirstOrDefault(x => x.Id == 0) ?? Isyerler.FirstOrDefault();
+                SelectedIsyeriFilter = Isyerler.FirstOrDefault(x => x.Id == FirmaIsyeriYetkiHelper.IsyeriFilterTumuId)
+                                       ?? Isyerler.FirstOrDefault();
 
             IstenCikanlar = ctx.SadeceIstenCikanlar;
             if (!ctx.SadeceIstenCikanlar)

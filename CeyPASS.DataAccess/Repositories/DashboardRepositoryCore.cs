@@ -7,6 +7,7 @@ using System.Globalization;
 
 namespace CeyPASS.DataAccess.Repositories
 {
+    /// <summary>Dashboard özet sorguları.</summary>
     public class DashboardRepositoryCore : IDashboardRepository
     {
         private static readonly CultureInfo Tr = CultureInfo.GetCultureInfo("tr-TR");
@@ -81,6 +82,7 @@ namespace CeyPASS.DataAccess.Repositories
             ad = ad[..idx].Trim();
         }
 
+        /// <summary>Execute Dashboard işlemini çalıştırır.</summary>
         public DashboardResult ExecuteDashboard(string firmaIdCsv, DateTime gun, DateTime ayBas, DateTime aySon, double tolBasSaat, double tolBitSaat, int anlikLimit)
         {
             var result = new DashboardResult();

@@ -1,3 +1,4 @@
+/** Kurumsal kişi izinleri: sayfalı liste, CRUD, önbellekli lookup’lar. */
 import api, { cachedGet } from "./api";
 import { invalidate } from "./httpCache";
 
@@ -54,8 +55,9 @@ export type IzinUpsertRequest = {
   aciklama?: string | null;
 };
 
+/** Kişi izin kayıtları ve talep entegrasyonu. */
 export const izinService = {
-  async lookups(params?: { firmaId?: number | null }): Promise<ApiResult<any>> {
+  async lookups(params?: { firmaId?: number | null; isyeriId?: number | null }): Promise<ApiResult<any>> {
     return await cachedGet<ApiResult<any>>("/Izin/lookups", {
       params,
       timeout: 15000,
@@ -68,6 +70,7 @@ export const izinService = {
   async list(params: {
     personelId?: string;
     izinTipId?: number;
+    isyeriId?: number | null;
     baslangic?: string; // yyyy-MM-dd
     bitis?: string; // yyyy-MM-dd
     page?: number;

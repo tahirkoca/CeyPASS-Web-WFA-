@@ -2,6 +2,7 @@ using System;
 
 namespace CeyPASS.Entities.Concrete
 {
+    /// <summary>İzin listesi grid satırı.</summary>
     public class KisiIzinListRow
     {
         public int KisiIzinId { get; set; }

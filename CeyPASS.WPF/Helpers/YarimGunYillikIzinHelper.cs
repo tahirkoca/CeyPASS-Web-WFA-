@@ -24,6 +24,7 @@ internal static class YarimGunYillikIzinHelper
     public static string AciklamaMetni(Dilim d) =>
         (d == Dilim.Sabah ? AciklamaSabah : AciklamaOgledenSonra) + YarimGunAciklamaEki;
 
+    // Bitiş saati 15 dk erken: puantaj/vardiya çakışmasını önlemek için WFA ile aynı pencere.
     public static void KayitZamanlari(Dilim dilim, DateTime gun, out DateTime baslangic, out DateTime bitis)
     {
         gun = gun.Date;

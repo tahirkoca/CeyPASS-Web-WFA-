@@ -7,6 +7,7 @@
     var bitisTarih = ViewBag.BitisTarih as DateTime? ?? DateTime.Today;
     var selectedFirmaId = ViewBag.SelectedFirmaId as int? ?? 0;
     var firmalar = ViewBag.Firmalar as List<CeyPASS.Entities.Concrete.LookupItem> ?? new List<CeyPASS.Entities.Concrete.LookupItem>();
+    /* CanExport: Excel/PDF indirme; export mevcut filtre + prosedür parametreleriyle POST edilir */
     var canExport = ViewBag.CanExport as bool? ?? false;
     var selectedRapor = ViewBag.SelectedRapor as CeyPASS.Entities.Concrete.RaporTanimi;
     var currentPage = ViewBag.Page as int? ?? 1;
@@ -21,6 +22,7 @@
     var cihazIdsParam = ViewBag.CihazIdsParam as string ?? "";
     var selectedCihazIds = ViewBag.SelectedCihazIds as List<int> ?? new List<int>();
     var cihazlar = ViewBag.Cihazlar as List<CeyPASS.Entities.Concrete.CihazListDTO> ?? new List<CeyPASS.Entities.Concrete.CihazListDTO>();
+    /* multiKind: seçili SP işyeri mi cihaz mı çoklu parametre ister; hidden alanda virgülle birleşik id gider */
     var multiKind = ViewBag.MultiSelectKind as CeyPASS.Infrastructure.Helpers.RaporParametreHelper.MultiSelectKind?
                     ?? CeyPASS.Infrastructure.Helpers.RaporParametreHelper.MultiSelectKind.None;
 }
@@ -206,12 +208,12 @@
                                 <div class="col-12">
                                     <label class="form-label">İşyerleri <small class="text-muted">(hiç seçilmezse yetkili tüm işyerleri)</small></label>
                                     <div class="d-flex flex-wrap gap-3 border rounded p-2 bg-light">
-                                        @foreach (var iy in isyerleri.Where(i => i.Id > 0))
+                                        @foreach (var iy in isyerleri.Where(i => i.Id >= 0))
                                         {
                                             var checkedAttr = selectedIsyeriIds.Contains(iy.Id) ? "checked" : "";
                                             <div class="form-check">
                                                 <input class="form-check-input multi-chk" type="checkbox" value="@iy.Id" id="isyeri_@iy.Id" @checkedAttr />
-                                                <label class="form-check-label" for="isyeri_@iy.Id">@iy.Ad</label>
+                                                <label class="form-check-label" for="isyeri_@iy.Id">@(string.IsNullOrWhiteSpace(iy.Ad) ? $"İşyeri {iy.Id}" : iy.Ad)</label>
                                             </div>
                                         }
                                     </div>
@@ -414,6 +416,7 @@
             this.closest('form')?.submit();
         });
 
+        // Rapor prosedürü değişince önceki işyeri/cihaz çoklu seçimi geçersiz — hidden temizlenir
         document.getElementById('procedureAdi')?.addEventListener('change', function () {
             var form = this.closest('form');
             if (!form) return;
@@ -451,13 +454,13 @@
 
         // Tablo filtreleme
         $('#filterInput').on('keyup', function() {
-            var value = $(this).val().toLowerCase();
+            var value = $(this).val().toLocaleLowerCase('tr');
             $('#raporTable tbody tr').filter(function() {
-                $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1);
+                $(this).toggle($(this).text().toLocaleLowerCase('tr').indexOf(value) > -1);
             });
         });
 
-        // Excel export
+        // Excel/PDF: yanıt blob; hata gövdesi JSON ise readBlobAsJson ile kullanıcıya mesaj
         function exportExcel() {
             $.ajax({
                 url: '@Url.Action("ExportExcel")',

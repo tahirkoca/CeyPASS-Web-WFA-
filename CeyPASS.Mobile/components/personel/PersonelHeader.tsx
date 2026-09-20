@@ -1,3 +1,4 @@
+/** Personel modülü alt sayfa başlığı (profil özeti). */
 import React from "react";
 import { PageHeader } from "../PageHeader";
 import { useHeaderQuickMenu } from "../HeaderQuickMenu";

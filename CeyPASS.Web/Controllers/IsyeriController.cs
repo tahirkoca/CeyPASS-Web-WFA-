@@ -9,6 +9,7 @@ using System.Linq;
 
 namespace CeyPASS.Web.Controllers
 {
+    /// <summary>Isyeri tanim CRUD (POY).</summary>
     public class IsyeriController : Controller
     {
         private readonly IIsyeriService _isyeriService;
@@ -29,6 +30,7 @@ namespace CeyPASS.Web.Controllers
             _lookupService = lookupService;
         }
 
+        /// <summary>Liste veya ana ekran.</summary>
         public IActionResult Index(int? firmaId = null)
         {
             if (!_authorizationService.ViewAbility(PageName))
@@ -52,6 +54,7 @@ namespace CeyPASS.Web.Controllers
             return View(all.OrderBy(x => x.FirmaId).ThenBy(x => x.Ad).ToList());
         }
 
+        /// <summary>Yeni kayit formu ve kaydetme.</summary>
         [HttpGet]
         public IActionResult Create(int? firmaId = null, string returnUrl = null)
         {
@@ -65,6 +68,7 @@ namespace CeyPASS.Web.Controllers
             return View(new IsyeriFormModel { FirmaId = firmaId ?? 0, ReturnUrl = returnUrl });
         }
 
+        /// <summary>Yeni kayit formu ve kaydetme.</summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult Create(IsyeriFormModel model)
@@ -76,7 +80,7 @@ namespace CeyPASS.Web.Controllers
             }
 
             if (model.FirmaId <= 0) ModelState.AddModelError(nameof(model.FirmaId), "Firma seçiniz.");
-            if (model.IsyeriId <= 0) ModelState.AddModelError(nameof(model.IsyeriId), "İşyeri Id giriniz.");
+            if (model.IsyeriId < 0) ModelState.AddModelError(nameof(model.IsyeriId), "İşyeri Id giriniz.");
             if (string.IsNullOrWhiteSpace(model.IsyeriAdi)) ModelState.AddModelError(nameof(model.IsyeriAdi), "İşyeri adı boş olamaz.");
 
             if (!ModelState.IsValid)
@@ -99,6 +103,7 @@ namespace CeyPASS.Web.Controllers
             return RedirectToAction("Index", new { firmaId = model.FirmaId });
         }
 
+        /// <summary>Kayit guncelleme.</summary>
         [HttpGet]
         public IActionResult Edit(int firmaId, int isyeriId, string returnUrl = null)
         {
@@ -123,6 +128,7 @@ namespace CeyPASS.Web.Controllers
             return View(model);
         }
 
+        /// <summary>Kayit guncelleme.</summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult Edit(IsyeriFormModel model)
@@ -134,7 +140,7 @@ namespace CeyPASS.Web.Controllers
             }
 
             if (model.FirmaId <= 0) ModelState.AddModelError(nameof(model.FirmaId), "Firma seçiniz.");
-            if (model.IsyeriId <= 0) ModelState.AddModelError(nameof(model.IsyeriId), "İşyeri Id geçersiz.");
+            if (model.IsyeriId < 0) ModelState.AddModelError(nameof(model.IsyeriId), "İşyeri Id geçersiz.");
             if (string.IsNullOrWhiteSpace(model.IsyeriAdi)) ModelState.AddModelError(nameof(model.IsyeriAdi), "İşyeri adı boş olamaz.");
 
             if (!ModelState.IsValid)
@@ -157,6 +163,7 @@ namespace CeyPASS.Web.Controllers
             return RedirectToAction("Index", new { firmaId = model.FirmaId });
         }
 
+        /// <summary>Kayit silme veya pasiflestirme.</summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult Delete(int firmaId, int isyeriId, string returnUrl = null)

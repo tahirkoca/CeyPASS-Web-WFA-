@@ -2,6 +2,7 @@ using System;
 
 namespace CeyPASS.Entities.Concrete
 {
+    /// <summary>Self-servis veya İK üzerinden izin talebi; çok aşamalı onay.</summary>
     public class IzinTalep
     {
         public int TalepId { get; set; }
@@ -29,6 +30,7 @@ namespace CeyPASS.Entities.Concrete
         public DateTime? IkOnayTarihi { get; set; }
         public string? IkAciklama { get; set; }
 
+        /// <summary>Onay sonrası oluşan KisiIzin kaydı.</summary>
         public int? SonucKisiIzinId { get; set; }
 
         public bool KullanimImzaIstenen { get; set; }

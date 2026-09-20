@@ -9,6 +9,9 @@ using Xunit;
 
 namespace CeyPASS.Tests.Unit
 {
+    /// <summary>
+    /// Dashboard SP çağrısında ay başı/sonu tarihleri ve firma ID CSV formatı.
+    /// </summary>
     public class DashboardServiceTests
     {
         private readonly Mock<IDashboardRepository> _repoMock = new();
@@ -19,6 +22,9 @@ namespace CeyPASS.Tests.Unit
             _sut = new DashboardService(_repoMock.Object);
         }
 
+        /// <summary>
+        /// AyBas AyinIlkGunuOlmali
+        /// </summary>
         [Fact]
         public void GetDashboardForToday_AyBas_AyinIlkGunuOlmali()
         {
@@ -37,6 +43,9 @@ namespace CeyPASS.Tests.Unit
             capturedAyBas.Should().Be(new DateTime(bugun.Year, bugun.Month, 1));
         }
 
+        /// <summary>
+        /// NullFirmaIdList boşStringGonderilir
+        /// </summary>
         [Fact]
         public void GetDashboard_NullFirmaIdList_BosStringGonderilir()
         {
@@ -54,6 +63,9 @@ namespace CeyPASS.Tests.Unit
             capturedFirmaCsv.Should().Be("");
         }
 
+        /// <summary>
+        /// CokluFirma VirgulylaAyrılmisStringGonderilir
+        /// </summary>
         [Fact]
         public void GetDashboard_CokluFirma_VirgulylaAyrılmisStringGonderilir()
         {
@@ -71,6 +83,9 @@ namespace CeyPASS.Tests.Unit
             capturedFirmaCsv.Should().Be("1,2,3");
         }
 
+        /// <summary>
+        /// AySon AyinSonGunuOlmali
+        /// </summary>
         [Fact]
         public void GetDashboardForToday_AySon_AyinSonGunuOlmali()
         {

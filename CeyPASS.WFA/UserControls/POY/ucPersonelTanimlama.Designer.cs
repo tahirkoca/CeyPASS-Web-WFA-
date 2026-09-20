@@ -1073,8 +1073,8 @@ namespace CeyPASS.WFA.UserControls
             dtpIseGiris = new DateTimePicker();
             lblIstenCikis = new Label();
             dtpIstenCikis = new DateTimePicker();
-            lblDepartman = new Label();
-            cmbDepartman = new ComboBox();
+            lblIsyeri = new Label();
+            cmbIsyeri = new ComboBox();
             lblBolum = new Label();
             cmbBolum = new ComboBox();
             lblPozisyon = new Label();
@@ -1100,8 +1100,6 @@ namespace CeyPASS.WFA.UserControls
             txtCepTel = new TextBox();
             lblDogum = new Label();
             dtpDogumGunu = new DateTimePicker();
-            lblIsyeri = new Label();
-            cmbIsyeri = new ComboBox();
             lblStatu = new Label();
             cmbCalismaStatu = new ComboBox();
             lblYemek = new Label();
@@ -1226,8 +1224,8 @@ namespace CeyPASS.WFA.UserControls
             tlpTab1.Controls.Add(dtpIseGiris, 1, 1);
             tlpTab1.Controls.Add(lblIstenCikis, 1, 2);
             tlpTab1.Controls.Add(dtpIstenCikis, 1, 3);
-            tlpTab1.Controls.Add(lblDepartman, 1, 4);
-            tlpTab1.Controls.Add(cmbDepartman, 1, 5);
+            tlpTab1.Controls.Add(lblIsyeri, 1, 4);
+            tlpTab1.Controls.Add(cmbIsyeri, 1, 5);
             tlpTab1.Controls.Add(lblBolum, 1, 6);
             tlpTab1.Controls.Add(cmbBolum, 1, 7);
             tlpTab1.Controls.Add(lblPozisyon, 1, 8);
@@ -1429,33 +1427,33 @@ namespace CeyPASS.WFA.UserControls
             dtpIstenCikis.Location = new Point(368, 116);
             dtpIstenCikis.Margin = new Padding(3, 4, 3, 4);
             dtpIstenCikis.Name = "dtpIstenCikis";
-            dtpIstenCikis.ShowCheckBox = true;
+            dtpIstenCikis.ShowCheckBox = false;
             dtpIstenCikis.Size = new Size(359, 30);
             dtpIstenCikis.TabIndex = 13;
             // 
-            // lblDepartman
+            // lblIsyeri
             // 
-            lblDepartman.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
-            lblDepartman.AutoSize = true;
-            lblDepartman.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
-            lblDepartman.ForeColor = Color.Gray;
-            lblDepartman.Location = new Point(368, 173);
-            lblDepartman.Name = "lblDepartman";
-            lblDepartman.Size = new Size(88, 20);
-            lblDepartman.TabIndex = 14;
-            lblDepartman.Text = "Departman";
+            lblIsyeri.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
+            lblIsyeri.AutoSize = true;
+            lblIsyeri.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            lblIsyeri.ForeColor = Color.Gray;
+            lblIsyeri.Location = new Point(368, 173);
+            lblIsyeri.Name = "lblIsyeri";
+            lblIsyeri.Size = new Size(47, 20);
+            lblIsyeri.TabIndex = 14;
+            lblIsyeri.Text = "İşyeri";
             // 
-            // cmbDepartman
+            // cmbIsyeri
             // 
-            cmbDepartman.Dock = DockStyle.Fill;
-            cmbDepartman.DropDownStyle = ComboBoxStyle.DropDownList;
-            cmbDepartman.Font = new Font("Segoe UI", 10F);
-            cmbDepartman.FormattingEnabled = true;
-            cmbDepartman.Location = new Point(368, 197);
-            cmbDepartman.Margin = new Padding(3, 4, 3, 4);
-            cmbDepartman.Name = "cmbDepartman";
-            cmbDepartman.Size = new Size(359, 31);
-            cmbDepartman.TabIndex = 15;
+            cmbIsyeri.Dock = DockStyle.Fill;
+            cmbIsyeri.DropDownStyle = ComboBoxStyle.DropDownList;
+            cmbIsyeri.Font = new Font("Segoe UI", 10F);
+            cmbIsyeri.FormattingEnabled = true;
+            cmbIsyeri.Location = new Point(368, 197);
+            cmbIsyeri.Margin = new Padding(3, 4, 3, 4);
+            cmbIsyeri.Name = "cmbIsyeri";
+            cmbIsyeri.Size = new Size(359, 31);
+            cmbIsyeri.TabIndex = 15;
             // 
             // lblBolum
             // 
@@ -1692,12 +1690,10 @@ namespace CeyPASS.WFA.UserControls
             tlpTab2.Controls.Add(txtCepTel, 0, 3);
             tlpTab2.Controls.Add(lblDogum, 0, 4);
             tlpTab2.Controls.Add(dtpDogumGunu, 0, 5);
-            tlpTab2.Controls.Add(lblIsyeri, 0, 6);
-            tlpTab2.Controls.Add(cmbIsyeri, 0, 7);
-            tlpTab2.Controls.Add(lblStatu, 0, 8);
-            tlpTab2.Controls.Add(cmbCalismaStatu, 0, 9);
-            tlpTab2.Controls.Add(lblYemek, 0, 10);
-            tlpTab2.Controls.Add(nudYemekAdedi, 0, 11);
+            tlpTab2.Controls.Add(lblStatu, 0, 6);
+            tlpTab2.Controls.Add(cmbCalismaStatu, 0, 7);
+            tlpTab2.Controls.Add(lblYemek, 0, 8);
+            tlpTab2.Controls.Add(nudYemekAdedi, 0, 9);
             tlpTab2.Controls.Add(lblVardiya, 1, 0);
             tlpTab2.Controls.Add(chkVardiyalar, 1, 1);
             tlpTab2.Dock = DockStyle.Fill;
@@ -1786,30 +1782,6 @@ namespace CeyPASS.WFA.UserControls
             dtpDogumGunu.Name = "dtpDogumGunu";
             dtpDogumGunu.Size = new Size(547, 30);
             dtpDogumGunu.TabIndex = 5;
-            // 
-            // lblIsyeri
-            // 
-            lblIsyeri.AutoSize = true;
-            lblIsyeri.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
-            lblIsyeri.ForeColor = Color.Gray;
-            lblIsyeri.Location = new Point(3, 216);
-            lblIsyeri.Name = "lblIsyeri";
-            lblIsyeri.Padding = new Padding(0, 12, 0, 2);
-            lblIsyeri.Size = new Size(47, 34);
-            lblIsyeri.TabIndex = 6;
-            lblIsyeri.Text = "İşyeri";
-            // 
-            // cmbIsyeri
-            // 
-            cmbIsyeri.Dock = DockStyle.Top;
-            cmbIsyeri.DropDownStyle = ComboBoxStyle.DropDownList;
-            cmbIsyeri.Font = new Font("Segoe UI", 10F);
-            cmbIsyeri.FormattingEnabled = true;
-            cmbIsyeri.Location = new Point(3, 254);
-            cmbIsyeri.Margin = new Padding(3, 4, 3, 4);
-            cmbIsyeri.Name = "cmbIsyeri";
-            cmbIsyeri.Size = new Size(547, 31);
-            cmbIsyeri.TabIndex = 7;
             // 
             // lblStatu
             // 
@@ -2270,7 +2242,7 @@ namespace CeyPASS.WFA.UserControls
         private System.Windows.Forms.TextBox txtFirmaDisiKartNo;
         private System.Windows.Forms.DateTimePicker dtpIseGiris;
         private System.Windows.Forms.DateTimePicker dtpIstenCikis;
-        private System.Windows.Forms.ComboBox cmbDepartman;
+        private System.Windows.Forms.ComboBox cmbIsyeri;
         private System.Windows.Forms.ComboBox cmbBolum;
         private System.Windows.Forms.ComboBox cmbPozisyon;
         private System.Windows.Forms.Panel pnlRightCol;
@@ -2294,7 +2266,7 @@ namespace CeyPASS.WFA.UserControls
         private System.Windows.Forms.Label lblFirmaKart;
         private System.Windows.Forms.Label lblIseGiris;
         private System.Windows.Forms.Label lblIstenCikis;
-        private System.Windows.Forms.Label lblDepartman;
+        private System.Windows.Forms.Label lblIsyeri;
         private System.Windows.Forms.Label lblBolum;
         private System.Windows.Forms.Label lblPozisyon;
 
@@ -2309,13 +2281,11 @@ namespace CeyPASS.WFA.UserControls
         private System.Windows.Forms.DateTimePicker dtpDogumGunu;
         private System.Windows.Forms.CheckedListBox chkVardiyalar;
         private System.Windows.Forms.NumericUpDown nudYemekAdedi;
-        private System.Windows.Forms.ComboBox cmbIsyeri;
         private System.Windows.Forms.ComboBox cmbCalismaStatu;
 
         private System.Windows.Forms.Label lblEmail;
         private System.Windows.Forms.Label lblCep;
         private System.Windows.Forms.Label lblDogum;
-        private System.Windows.Forms.Label lblIsyeri;
         private System.Windows.Forms.Label lblStatu;
         private System.Windows.Forms.Label lblVardiya;
         private System.Windows.Forms.Label lblYemek;

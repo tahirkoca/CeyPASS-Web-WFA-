@@ -21,9 +21,11 @@ public static class CeypassGridPrint
             typeof(CeypassGridPrint),
             new PropertyMetadata(false, OnEnableChanged));
 
+    /// <summary>TableView için yazdır/Excel/PDF kısayollarını ve ipucunu açar.</summary>
     public static void SetEnable(DependencyObject element, bool value)
         => element.SetValue(EnableProperty, value);
 
+    /// <summary>Grid yazdır eklentisi etkin mi.</summary>
     public static bool GetEnable(DependencyObject element)
         => (bool)element.GetValue(EnableProperty);
 

@@ -9,26 +9,34 @@ using System.Linq;
 
 namespace CeyPASS.Business.Services
 {
+    /// <summary>
+    /// Puantaj onay akışı, FM hesapları ve Logo Excel dışa aktarım formülleri.
+    /// </summary>
     public class PuantajService : IPuantajService
     {
         private readonly IPuantajRepository _repo;
 
+        /// <summary>Depo katmanı enjekte edilir.</summary>
         public PuantajService(IPuantajRepository repo)
         {
             _repo = repo;
         }
+
+        /// <summary>FM dakikalarını 30'ar dakikaya yuvarlar (Logo/WFA uyumu).</summary>
         private int Yuvarla30(int dakika)
         {
             if (dakika <= 0) return 0;
             return (int)Math.Round(dakika / 30.0, MidpointRounding.AwayFromZero) * 30;
         }
+
+        /// <inheritdoc />
         public List<PuantajGunSatirDTO> GetAy(int personelId, int yil, int ay)
         {
             var rows = _repo.SpPuantajAyOzet(personelId, yil, ay);
 
             foreach (var r in rows)
             {
-                // Erken Giriş
+                // Erken giriş: vardiya başlangıcından önceki süre
                 if (r.IlkGiris.HasValue && r.VardiyaBaslangic.HasValue)
                 {
                     var ilk = r.IlkGiris.Value;
@@ -37,7 +45,7 @@ namespace CeyPASS.Business.Services
                 }
                 else r.ErkenGirisDakika = 0;
 
-                // Geç Çıkış
+                // Geç çıkış: vardiya bitişinden sonraki süre
                 if (r.SonCikis.HasValue && r.VardiyaBitis.HasValue)
                 {
                     var son = r.SonCikis.Value;
@@ -46,6 +54,7 @@ namespace CeyPASS.Business.Services
                 }
                 else r.GecCikisDakika = 0;
 
+                // Sistem FM = yuvarlanmış erken giriş + yuvarlanmış geç çıkış
                 r.SistemFMDakika = Yuvarla30(r.ErkenGirisDakika) + Yuvarla30(r.GecCikisDakika);
 
                 if (r.DuzenlenenFMDakika < 0) r.DuzenlenenFMDakika = 0;
@@ -53,6 +62,8 @@ namespace CeyPASS.Business.Services
 
             return rows;
         }
+
+        /// <inheritdoc />
         public void Onayla(int personelId, DateTime tarih, int duzenlenmisFm, string aciklama, string calismaTipi, decimal saat, int kullaniciId)
         {
             _repo.ApproveAndWriteFinal(personelId, tarih,
@@ -64,6 +75,7 @@ namespace CeyPASS.Business.Services
                                      kullaniciId: kullaniciId);
         }
 
+        /// <inheritdoc />
         public void TopluOnayla(int personelId, int yil, int ay, int kullaniciId)
         {
             var gunler = GetAy(personelId, yil, ay);
@@ -79,6 +91,7 @@ namespace CeyPASS.Business.Services
             }
         }
 
+        /// <inheritdoc />
         public void TopluOnaylaKadar(int personelId, int yil, int ay, DateTime hedefGun, int kullaniciId)
         {
             var gunler = GetAy(personelId, yil, ay);
@@ -97,18 +110,37 @@ namespace CeyPASS.Business.Services
             }
         }
 
+        /// <inheritdoc />
         public void Reddet(int personelId, DateTime tarih, string aciklama, int kullaniciId) => _repo.OnayUpsert(personelId, tarih, (int)OnayDurumu.Reddedildi, 0, aciklama, kullaniciId);
+
+        /// <inheritdoc />
         public void Duzenle(int personelId, DateTime tarih, int duzenlenmisFm, string aciklama, int kullaniciId) => _repo.OnayUpsert(personelId, tarih, (int)OnayDurumu.Düzeltildi, duzenlenmisFm, aciklama, kullaniciId);
+
+        /// <inheritdoc />
         public List<PuantajTipDTO> GetPuantajTipleri() => _repo.GetPuantajTipleri();
+
+        /// <inheritdoc />
         public void DuzenleOnayla(int personelId, DateTime tarih, int duzenlenmisFm, string aciklama, string calismaTipi, decimal saat, int? kullaniciId)
         {
             _repo.ApproveAndWriteFinal(personelId, tarih, (int)OnayDurumu.Düzeltildi, duzenlenmisFm, aciklama, calismaTipi, saat, kullaniciId);
         }
+
+        /// <inheritdoc />
         public void CokluSicileAktar(int anaPersonelId, int yil, int ay, int? kullaniciId) => _repo.CokluSicileAktar(anaPersonelId, yil, ay, kullaniciId);
+
+        /// <inheritdoc />
         public int GetHedefSicilSayisi(int anaSicilNo) => _repo.GetHedefSicilSayisi(anaSicilNo);
+
+        /// <inheritdoc />
         public bool IsAnaSicil(int sicilNo) => _repo.IsAnaSicil(sicilNo);
+
+        /// <inheritdoc />
         public int GetEkKayitGun() => _repo.GetEkKayitGun();
+
+        /// <inheritdoc />
         public void SetEkKayitGun(int gun, int uid) => _repo.SetEkKayitGun(gun, uid);
+
+        /// <inheritdoc />
         public int HesaplaFazlaMesaiDakika(string calismaTipiKod, decimal saat)
         {
             const decimal NormalGunSaati = 7.5m;
@@ -117,9 +149,12 @@ namespace CeyPASS.Business.Services
                 !calismaTipiKod.StartsWith("FM", StringComparison.OrdinalIgnoreCase))
                 return 0;
 
+            // FM tiplerinde günlük 7,5 saat üzeri kısım fazla mesai dakikasıdır
             var fazlaSaat = Math.Max(0m, saat - NormalGunSaati);
             return (int)Math.Round(fazlaSaat * 60m);
         }
+
+        /// <summary>Veri girişindeki saat alanını ondalık saate çevirir (Excel/100 formatı dahil).</summary>
         private decimal ParseSaatValue(object saatObj)
         {
             string saatStr = saatObj.ToString().Replace(",", ".");
@@ -130,22 +165,19 @@ namespace CeyPASS.Business.Services
             }
             return 0;
         }
+
+        /// <summary>Logo export satırı: tip kodlarından gün/saat toplamlarını formüllere uygular.</summary>
         private PuantajExportDTO HesaplaPuantajSatiri(DataRow sicilRow, IEnumerable<dynamic> toplamSaatler, DataTable calismaSaatleriTablosu, int yil, int ay)
         {
             string sicilNo = sicilRow["SicilNo"].ToString();
 
-            // 1. Kişinin saatlerini ve günlerini al
             var kisiSaatleri = toplamSaatler.Where(x => x.SicilNo == sicilNo);
             var saatGruplari = kisiSaatleri.ToDictionary(x => (string)x.CalismaTipi, x => (decimal)x.ToplamSaat);
             var gunGruplari = kisiSaatleri.ToDictionary(x => (string)x.CalismaTipi, x => (int)x.GunSayisi);
 
-            // 2. Saat bazında değerleri çek
             var saatler = ExtractSaatler(saatGruplari);
-
-            // 3. Gün bazında değerleri çek
             var gunler = ExtractGunler(gunGruplari);
 
-            // 4. DTO oluştur ve temel bilgileri doldur
             var dto = new PuantajExportDTO
             {
                 SicilNo = sicilNo,
@@ -156,49 +188,44 @@ namespace CeyPASS.Business.Services
                 Isyeri = sicilRow["Isyeri"].ToString()
             };
 
-            // 5. Hafta Tatili hesapla
+            // Logo: Hafta Tatili = HTM + HT
             dto.HaftaTatiliGun = gunler.HtmGun + gunler.HtGun;
 
-            // 6. Resmi Tatil hesapla
+            // Logo: Resmi Tatil gün = RT + B + BB + BBF + AAF
             dto.ResmiTatilGun = gunler.RtGun + gunler.BGun + gunler.BbGun + gunler.BbfGun + gunler.AafGun;
 
-            // 7. Ücretli İzin hesapla
             dto.UcretliIzinGun = gunler.YiGun;
 
-            // 8. Ücretsiz İzin hesapla
             dto.UcretsizIzinSaat = saatler.UiSaat + saatler.DSaat;
 
-            // 9. Rapor günlerini hesapla
             var raporTarihleri = GetRaporTarihleri(calismaSaatleriTablosu, sicilNo);
             var raporSonuc = HesaplaRaporGunleri(raporTarihleri);
             dto.RaporGun = raporSonuc.RaporGunSayisi + gunler.RrGun;
 
-            // 10. Normal saat hesapla
+            // Normal saat: raporun ilk 2 günü NG (7,5 saat/gün); AA ve FM1 günleri tam gün sayılır
             decimal raporKaynakliNgSaat = raporSonuc.NgGunSayisi * 7.5m;
             decimal normalSaat = saatler.ASaat + saatler.DiSaat + saatler.OiSaat + saatler.EiSaat +
                                  saatler.NgSaat + ((gunler.AaGun + gunler.Fm1Gun) * 7.5m) + raporKaynakliNgSaat;
             dto.NormalSaat = normalSaat;
 
-            // 11. Fazla Mesai hesapla
+            // Logo FM1: toplam FM1 saati − (FM1 gün × 7,5) = saf fazla mesai saati
             dto.FazlaMesaiSaat = saatler.Fm1Saat - (gunler.Fm1Gun * 7.5m);
 
-            // 12. Fazla Çalışma hesapla
             dto.FazlaCalismaSaat = HesaplaFazlaCalismaSaati(saatler, gunler);
 
-            // 13. Fazla Mesai %125 hesapla
             dto.FazlaMesai125Saat = HesaplaFazlaMesai125(sicilRow, gunler);
 
-            // 14. Resmi Tatil Saati hesapla
+            // Resmi tatil saati: AA + AAF gün×3,75 + BB + BBF gün×7,5
             dto.ResmiTatilSaat = saatler.AaSaat + (gunler.AafGun * 3.75m) + saatler.BbSaat + (gunler.BbfGun * 7.5m);
 
-            // 15. SSK Eksik Çalışma Nedeni hesapla
             dto.SskEksikNedeni = HesaplaSskEksikNedeni(gunler, raporSonuc.RaporGunSayisi);
 
-            // 16. İşkur Eksik Çalışma Nedeni hesapla
             dto.IskurEksikNedeni = HesaplaIskurEksikNedeni(gunler, raporSonuc.RaporGunSayisi);
 
             return dto;
         }
+
+        /// <summary>Çalışma tipi kodlarına göre aylık toplam saatler.</summary>
         private class SaatDegerleri
         {
             public decimal NgSaat { get; set; }
@@ -221,6 +248,8 @@ namespace CeyPASS.Business.Services
             public decimal AafSaat { get; set; }
             public decimal RrSaat { get; set; }
         }
+
+        /// <summary>Çalışma tipi kodlarına göre ay içi gün adetleri.</summary>
         private class GunDegerleri
         {
             public int NgGun { get; set; }
@@ -243,6 +272,7 @@ namespace CeyPASS.Business.Services
             public int AafGun { get; set; }
             public int RrGun { get; set; }
         }
+
         private SaatDegerleri ExtractSaatler(Dictionary<string, decimal> saatGruplari)
         {
             return new SaatDegerleri
@@ -268,6 +298,7 @@ namespace CeyPASS.Business.Services
                 RrSaat = saatGruplari.ContainsKey("RR") ? saatGruplari["RR"] : 0
             };
         }
+
         private GunDegerleri ExtractGunler(Dictionary<string, int> gunGruplari)
         {
             return new GunDegerleri
@@ -293,6 +324,7 @@ namespace CeyPASS.Business.Services
                 RrGun = gunGruplari.ContainsKey("RR") ? gunGruplari["RR"] : 0
             };
         }
+
         private List<DateTime> GetRaporTarihleri(DataTable calismaSaatleriTablosu, string sicilNo)
         {
             var raporTarihleri = new List<DateTime>();
@@ -310,17 +342,21 @@ namespace CeyPASS.Business.Services
 
             return raporTarihleri;
         }
+
+        /// <summary>Logo fazla çalışma: AAF/BBF eşikleri ve HTM saatleri.</summary>
         private decimal HesaplaFazlaCalismaSaati(SaatDegerleri saatler, GunDegerleri gunler)
         {
             decimal fazlaCalismaSaat = 0;
             decimal aafHesap = 0;
             decimal bbfHesap = 0;
 
+            // AAF: toplam saat ≥ 3,75 ise gün×3,75 düşülür
             if (saatler.AafSaat >= 3.75m)
             {
                 aafHesap = saatler.AafSaat - (gunler.AafGun * 3.75m);
             }
 
+            // BBF: toplam saat ≥ 7,5 ise gün×7,5 düşülür
             if (saatler.BbfSaat >= 7.5m)
             {
                 bbfHesap = saatler.BbfSaat - (gunler.BbfGun * 7.5m);
@@ -329,6 +365,8 @@ namespace CeyPASS.Business.Services
             fazlaCalismaSaat = aafHesap + bbfHesap + saatler.HtmSaat;
             return fazlaCalismaSaat;
         }
+
+        /// <summary>Doktor personeli için FM %125: (NG + FM1 gün) × 3.</summary>
         private string HesaplaFazlaMesai125(DataRow sicilRow, GunDegerleri gunler)
         {
             if (sicilRow.Table.Columns.Contains("DokPersoneliMi") &&
@@ -338,6 +376,8 @@ namespace CeyPASS.Business.Services
             }
             return " ";
         }
+
+        /// <summary>SSK eksik çalışma nedeni kodları: 21/1/15/12/0 (tekil ve kombinasyon kuralları).</summary>
         private string HesaplaSskEksikNedeni(GunDegerleri gunler, int raporluGun)
         {
             int uiGunVarlik = gunler.UiGun > 0 ? 1 : 0;
@@ -346,18 +386,20 @@ namespace CeyPASS.Business.Services
             int rrGunVarlik = gunler.RrGun > 0 ? 1 : 0;
 
             if (uiGunVarlik == 1 && rGunVarlik + dGunVarlik + rrGunVarlik == 0)
-                return "21";
+                return "21"; // yalnız ücretsiz izin
             else if (rGunVarlik == 1 && uiGunVarlik + dGunVarlik + rrGunVarlik == 0)
-                return "1";
+                return "1"; // yalnız rapor
             else if (rrGunVarlik == 1 && uiGunVarlik + dGunVarlik + rGunVarlik == 0)
-                return "1";
+                return "1"; // yalnız RR
             else if (dGunVarlik == 1 && uiGunVarlik + rGunVarlik + rrGunVarlik == 0)
-                return "15";
+                return "15"; // yalnız devamsızlık
             else if (uiGunVarlik + rGunVarlik + dGunVarlik + rrGunVarlik > 1)
-                return "12";
+                return "12"; // birden fazla eksik türü
             else
                 return "0";
         }
+
+        /// <summary>İşkur eksik çalışma nedeni: 1/2/0 (rapor, RR, UI+R kombinasyonları).</summary>
         private string HesaplaIskurEksikNedeni(GunDegerleri gunler, int raporluGun)
         {
             if (raporluGun >= 1)
@@ -365,12 +407,14 @@ namespace CeyPASS.Business.Services
             else if (gunler.RrGun > 0)
                 return "1";
             else if (gunler.UiGun > 0 && gunler.RGun <= 2)
-                return "2";
+                return "2"; // UI + kısa rapor (≤2 R günü)
             else if (gunler.RGun > 2 && gunler.UiGun > 0)
                 return "1";
             else
                 return "0";
         }
+
+        /// <inheritdoc />
         public RaporGunHesaplamaResult HesaplaRaporGunleri(List<DateTime> tarihler)
         {
             if (tarihler == null || tarihler.Count == 0)
@@ -378,7 +422,7 @@ namespace CeyPASS.Business.Services
 
             tarihler = tarihler.OrderBy(t => t).ToList();
 
-            // Ardışık günleri grupla
+            // Ardışık rapor günlerini bloklara ayır
             List<List<DateTime>> gruplar = new List<List<DateTime>>();
             List<DateTime> mevcutGrup = new List<DateTime> { tarihler[0] };
 
@@ -398,6 +442,7 @@ namespace CeyPASS.Business.Services
 
             int toplamGun = gruplar.Sum(g => g.Count);
 
+            // Toplam ≤2 gün: tamamı NG, rapor günü 0 (Logo kuralı)
             if (toplamGun <= 2)
             {
                 return new RaporGunHesaplamaResult
@@ -411,6 +456,7 @@ namespace CeyPASS.Business.Services
                 int raporGun = 0;
                 int ngGun = 0;
 
+                // Her blokta ilk 2 gün NG, kalan rapor günü
                 if (gruplar.Count == 1)
                 {
                     ngGun = Math.Min(2, gruplar[0].Count);
@@ -433,11 +479,12 @@ namespace CeyPASS.Business.Services
                 };
             }
         }
+
+        /// <summary>Çoklu sicilde aynı TC için ay günü denkleştirmesi (28/29/30/31).</summary>
         private void DenklestirmeYap(List<PuantajExportDTO> liste, Dictionary<int, string> tcMap, int yil, int ay)
         {
             int ayGunSayisi = DateTime.DaysInMonth(yil, ay);
 
-            // TC'ye göre grupla
             var tcGruplari = liste
                 .GroupBy(dto => GetTcFromMap(dto.SicilNo, tcMap))
                 .Where(g => !string.IsNullOrEmpty(g.Key))
@@ -445,18 +492,16 @@ namespace CeyPASS.Business.Services
 
             foreach (var grup in tcGruplari)
             {
-                // Toplam gün hesapla
                 int toplamGun = grup.Sum(dto =>
                 {
                     int normalGun = (int)Math.Floor(dto.NormalSaat / 7.5m);
                     return normalGun + dto.HaftaTatiliGun + dto.UcretliIzinGun + dto.ResmiTatilGun;
                 });
 
-                // Eğer toplam gün = ay günü değilse, denkleme yapma
+                // Toplam gün ay gün sayısına eşit değilse denkleştirme yapılmaz
                 if (toplamGun != ayGunSayisi)
                     continue;
 
-                // En yüksek değerlere sahip satırları bul
                 var ngMax = grup.OrderByDescending(dto => dto.NormalSaat).FirstOrDefault();
                 var htMax = grup.OrderByDescending(dto => dto.HaftaTatiliGun).FirstOrDefault();
                 var yiMax = grup.OrderByDescending(dto => dto.UcretliIzinGun).FirstOrDefault();
@@ -464,7 +509,7 @@ namespace CeyPASS.Business.Services
                 if (ngMax == null || htMax == null || yiMax == null)
                     continue;
 
-                // Denkleme uygula
+                // Öncelik: normal saat → hafta tatili → ücretli izin satırında düzeltme
                 if (ngMax.NormalSaat >= 7.5m)
                 {
                     UygulaDuzenleme_Normal(ngMax, ayGunSayisi);
@@ -479,6 +524,7 @@ namespace CeyPASS.Business.Services
                 }
             }
         }
+
         private string GetTcFromMap(string sicilNo, Dictionary<int, string> tcMap)
         {
             if (!int.TryParse(sicilNo, out int personelId))
@@ -486,6 +532,8 @@ namespace CeyPASS.Business.Services
 
             return tcMap.TryGetValue(personelId, out var tc) ? tc : null;
         }
+
+        /// <summary>Ay uzunluğuna göre normal saat düzeltmesi (Şubat +15, 29 günlük ay +7,5 vb.).</summary>
         private void UygulaDuzenleme_Normal(PuantajExportDTO dto, int ayGun)
         {
             if (ayGun == 28)
@@ -497,16 +545,20 @@ namespace CeyPASS.Business.Services
             else
                 dto.NormalSaat -= 7.5m;
         }
+
         private void UygulaDuzenleme_HaftaTatili(PuantajExportDTO dto, int ayGun)
         {
             int duzelt = (ayGun == 28) ? 2 : (ayGun == 29) ? 1 : (ayGun == 30) ? 0 : -1;
             dto.HaftaTatiliGun += duzelt;
         }
+
         private void UygulaDuzenleme_UcretliIzin(PuantajExportDTO dto, int ayGun)
         {
             int duzelt = (ayGun == 28) ? 2 : (ayGun == 29) ? 1 : (ayGun == 30) ? 0 : -1;
             dto.UcretliIzinGun += duzelt;
         }
+
+        /// <inheritdoc />
         public bool IsRowEditable(DateTime tarih, int ekKayitGun)
         {
             DateTime today = DateTime.Today;
@@ -516,7 +568,7 @@ namespace CeyPASS.Business.Services
 
             if (ekKayitGun < 0) ekKayitGun = 0;
 
-            // BUGFIX: Bugün ve gelecek tarihler onaylanamaz/düzenlenemez (WFA ile tam uyum)
+            // Bugün ve gelecek tarihler onaylanamaz/düzenlenemez (WFA ile tam uyum)
             if (tarih.Date >= today)
                 return false;
 
@@ -528,40 +580,47 @@ namespace CeyPASS.Business.Services
             if (tarih >= currMonthBeg && tarih < today)
                 return true;
 
-            // Geçen ay için deadline kontrolü
+            // Geçen ay: ay sonu + ekKayitGun deadline'ına kadar düzenlenebilir
             DateTime deadline = prevMonthEnd.AddDays(ekKayitGun);
             if (tarih >= prevMonthBeg && tarih <= prevMonthEnd)
                 return today <= deadline;
 
             return false;
         }
+
+        /// <inheritdoc />
         public decimal HesaplaFM1CalismaSaati(int fazlaMesaiDakika)
         {
             return Math.Round(7.5m + (decimal)fazlaMesaiDakika / 60m, 2);
         }
+
+        /// <inheritdoc />
         public List<FirmaIsyeriYetkiDTO> GetKullaniciFirmaIsyeriYetkileri(int kullaniciId)=> _repo.GetKullaniciFirmaIsyeriYetkileri(kullaniciId);
+
+        /// <inheritdoc />
         public DataTable GetSiciller(int yil, int ay, List<FirmaIsyeriYetkiDTO> yetkiler)
         {
             return _repo.GetSicillerAyIcin(yil, ay, yetkiler);
         }
+
+        /// <inheritdoc />
         public DataTable GetVeriGirisleri(int yil, int ay, List<FirmaIsyeriYetkiDTO> yetkiler)
         {
             return _repo.GetVeriGirisleriAyIcin(yil, ay, yetkiler);
         }
+
+        /// <inheritdoc />
         public List<PuantajExportDTO> PrepareMonthlyExport(PuantajExportRequest request)
         {
             var result = new List<PuantajExportDTO>();
 
-            // 1. Verileri çek - YENİ YÖNTEM: Yetkiler listesini kullan
             var sicillerTablosu = GetSiciller(request.Yil, request.Ay, request.Yetkiler);
             var calismaSaatleriTablosu = GetVeriGirisleri(request.Yil, request.Ay, request.Yetkiler);
 
-            // 2. TC Map oluştur
             var tcMap = sicillerTablosu.AsEnumerable()
                 .ToDictionary(r => Convert.ToInt32(r["SicilNo"]),
                               r => r["TcKimlikNo"] == DBNull.Value ? null : r["TcKimlikNo"].ToString());
 
-            // 3. Toplamları hesapla
             var toplamSaatler = calismaSaatleriTablosu.AsEnumerable()
                 .GroupBy(x => new
                 {
@@ -580,14 +639,13 @@ namespace CeyPASS.Business.Services
                     GunSayisi = grp.Select(x => x["Tarih"].ToString()).Distinct().Count()
                 }).ToList();
 
-            // 4. Her sicil için satır oluştur
             foreach (DataRow row in sicillerTablosu.Rows)
             {
                 var dto = HesaplaPuantajSatiri(row, toplamSaatler, calismaSaatleriTablosu, request.Yil, request.Ay);
                 result.Add(dto);
             }
 
-            // 5. Denklestirme yap
+            // Aynı TC'li çoklu sicil satırlarında ay günü denkleştirmesi
             DenklestirmeYap(result, tcMap, request.Yil, request.Ay);
 
             return result;

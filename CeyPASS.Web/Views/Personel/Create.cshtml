@@ -1,7 +1,6 @@
 @model CeyPASS.Entities.Concrete.Kisi
 @{
     ViewData["Title"] = "Yeni Personel Ekle";
-    var departmanlar = ViewBag.Departmanlar as List<CeyPASS.Entities.Concrete.LookupItem> ?? new List<CeyPASS.Entities.Concrete.LookupItem>();
     var pozisyonlar = ViewBag.Pozisyonlar as List<CeyPASS.Entities.Concrete.LookupItem> ?? new List<CeyPASS.Entities.Concrete.LookupItem>();
     var isyerleri = ViewBag.Isyerleri as List<CeyPASS.Entities.Concrete.LookupItem> ?? new List<CeyPASS.Entities.Concrete.LookupItem>();
     var bolumler = ViewBag.Bolumler as List<CeyPASS.Entities.Concrete.LookupItem> ?? new List<CeyPASS.Entities.Concrete.LookupItem>();
@@ -142,18 +141,6 @@
                         </div>
 
                         <div class="mb-3">
-                            <label asp-for="DepartmanId" class="form-label">Departman</label>
-                            <select asp-for="DepartmanId" class="form-select">
-                                <option value="">-- Seçiniz --</option>
-                                @foreach (var departman in departmanlar)
-                                {
-                                    <option value="@departman.Id">@departman.Ad</option>
-                                }
-                            </select>
-                            <span asp-validation-for="DepartmanId" class="text-danger"></span>
-                        </div>
-
-                        <div class="mb-3">
                             <label asp-for="PozisyonId" class="form-label">Pozisyon</label>
                             <select asp-for="PozisyonId" class="form-select">
                                 <option value="">-- Seçiniz --</option>
@@ -226,9 +213,12 @@
                         <div class="mb-3 form-check">
                             <input type="checkbox" class="form-check-input" name="puantajYapilabilir" id="puantajYapilabilir" value="true" checked />
                             <label class="form-check-label" for="puantajYapilabilir">
-                                Puantaj Yapılabilir
+                                Puantaj Yapılır
                             </label>
                         </div>
+
+                        <p class="small text-muted mb-3">Çoklu sicil eşleştirmesi kayıt sonrası düzenleme ekranından yapılır.</p>
+                        <hr class="my-2" />
 
                         <div class="mb-3 form-check">
                             <input type="checkbox" class="form-check-input" name="yemekHakkiVar" id="yemekHakkiVar" value="true" />
