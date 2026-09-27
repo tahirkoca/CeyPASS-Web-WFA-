@@ -4,6 +4,7 @@ using CeyPASS.Infrastructure.Helpers;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Linq;
 using System.Windows.Forms;
 
 namespace CeyPASS.WFA.UserControls.Ayarlar
@@ -22,14 +23,12 @@ namespace CeyPASS.WFA.UserControls.Ayarlar
         private const string PageName = "Cihazlar";
         private const string PageNameUI = "Cihazlar";
         private readonly WinFormsFieldErrors _fieldErrors;
-
-        /// <summary>
-        /// Admin Panel'den açıldığında true; tüm firmaların tüm cihazları (aktif/pasif) listelenir.
-        /// </summary>
-        public bool AdminPanelMode { get; set; }
+        private readonly IFirmaService _firmaSvc;
+        private ComboBox cmbFirmaFilter;
+        private bool _suppressFirmaFilter;
 
         /// <summary>Yetki ve alan doğrulama yardımcılarını kurar.</summary>
-        public ucCihazlar(ISessionContext session, ICihazService svc, IAuthorizationService auth, IKullaniciFirmaIsyeriYetkiService yetkiSvc)
+        public ucCihazlar(ISessionContext session, ICihazService svc, IAuthorizationService auth, IKullaniciFirmaIsyeriYetkiService yetkiSvc, IFirmaService firmaSvc)
         {
             InitializeComponent();
             _fieldErrors = new WinFormsFieldErrors(this);
@@ -37,8 +36,10 @@ namespace CeyPASS.WFA.UserControls.Ayarlar
             _svc = svc;
             _auth = auth;
             _yetkiSvc = yetkiSvc;
+            _firmaSvc = firmaSvc;
             authHelp = new AuthorizationHelper(_session, _auth);
             BeautifyList(chkCihazlar);
+            BuildFirmaFilterUi();
             WireEventsOnce();
             SetupAuthTags();
 
@@ -51,6 +52,7 @@ namespace CeyPASS.WFA.UserControls.Ayarlar
             }
             WinFormsAuthHelper.ApplyPageAuthorization(_auth, _session, PageName, this);
             LoadTypes();
+            LoadFirmalarFilter();
             LoadList();
             EnterListMode();
             LogHelper.Info(PageName, "Open", $"Ekran açıldı (FirmaId={(int)_session.AktifFirmaId}).");
@@ -60,6 +62,7 @@ namespace CeyPASS.WFA.UserControls.Ayarlar
         {
             AppTheme.ApplyToControl(this);
         }
+
         private void SetupAuthTags()
         {
             btnCihazEkle.Tag = YetkiTipleri.Create;
@@ -67,6 +70,7 @@ namespace CeyPASS.WFA.UserControls.Ayarlar
             btnCihazSil.Tag = YetkiTipleri.Delete;
             btnKaydet.Tag = YetkiTipleri.Create;
         }
+
         private void WireEventsOnce()
         {
             if (_wired) return;
@@ -93,6 +97,7 @@ namespace CeyPASS.WFA.UserControls.Ayarlar
 
             _wired = true;
         }
+
         private void BeautifyList(CheckedListBox list)
         {
             list.BorderStyle = BorderStyle.None;
@@ -100,6 +105,7 @@ namespace CeyPASS.WFA.UserControls.Ayarlar
             list.BackColor = Color.White;
             list.CheckOnClick = false;
         }
+
         private void LoadTypes()
         {
             var tips = _svc.GetCihazTipleri() ?? new List<CihazTip>();
@@ -107,25 +113,84 @@ namespace CeyPASS.WFA.UserControls.Ayarlar
             cmbCihazTipleri.ValueMember = nameof(CihazTip.TipId);
             cmbCihazTipleri.DataSource = tips;
         }
+
+        private void BuildFirmaFilterUi()
+        {
+            pnlLeftHeader.Height = 90;
+            if (labelListHeader != null)
+            {
+                labelListHeader.Dock = DockStyle.Top;
+                labelListHeader.Height = 40;
+            }
+            cmbFirmaFilter = new ComboBox
+            {
+                Name = "cmbFirmaFilter",
+                DropDownStyle = ComboBoxStyle.DropDownList,
+                Dock = DockStyle.Bottom,
+                Font = new Font("Segoe UI", 9.5f)
+            };
+            cmbFirmaFilter.SelectedIndexChanged += (s, e) =>
+            {
+                if (_suppressFirmaFilter) return;
+                if (_mode == ScreenMode.List) LoadList();
+            };
+            pnlLeftHeader.Controls.Add(cmbFirmaFilter);
+        }
+
+        private void LoadFirmalarFilter()
+        {
+            bool isAdmin = FirmaIsyeriYetkiHelper.IsAdmin(_session.RolId);
+            var yetkiler = _session.AktifKullaniciId.HasValue
+                ? (_yetkiSvc.GetYetkiler((int)_session.AktifKullaniciId.Value) ?? new List<FirmaIsyeriYetkiDTO>())
+                : new List<FirmaIsyeriYetkiDTO>();
+            var liste = FirmaIsyeriYetkiHelper.FilterFirmalar(_firmaSvc.GetAll() ?? new List<Firma>(), yetkiler, isAdmin);
+            var items = new List<LookupItem>();
+            if (isAdmin)
+                items.Add(FirmaIsyeriYetkiHelper.CreateFirmaFilterTumuItem());
+            foreach (var f in liste)
+                items.Add(new LookupItem { Id = f.FirmaId, Ad = f.FirmaAdi ?? ("Firma " + f.FirmaId) });
+
+            _suppressFirmaFilter = true;
+            cmbFirmaFilter.DisplayMember = nameof(LookupItem.Ad);
+            cmbFirmaFilter.ValueMember = nameof(LookupItem.Id);
+            cmbFirmaFilter.DataSource = items;
+            int prefer = _session.AktifFirmaId ?? 0;
+            var match = items.Find(x => x.Id == prefer);
+            cmbFirmaFilter.SelectedItem = match ?? (items.Count > 0 ? items[0] : null);
+            _suppressFirmaFilter = false;
+        }
+
+        private int? ResolveFilterFirmaId()
+        {
+            if (cmbFirmaFilter?.SelectedItem is LookupItem li)
+            {
+                if (FirmaIsyeriYetkiHelper.IsFirmaFilterTumu(li.Id)) return null;
+                if (li.Id > 0) return li.Id;
+            }
+            return _session.AktifFirmaId;
+        }
+
         private void LoadList()
         {
             try
             {
-                if (!AdminPanelMode)
+                var firmaId = ResolveFilterFirmaId();
+                bool isAdmin = FirmaIsyeriYetkiHelper.IsAdmin(_session.RolId);
+                if (!firmaId.HasValue && !isAdmin)
                 {
-                    int firmaId = (int)_session.AktifFirmaId;
-                    bool isAdmin = FirmaIsyeriYetkiHelper.IsAdmin(_session.RolId);
-                    var yetkiler = _yetkiSvc.GetYetkiler((int)_session.AktifKullaniciId);
-                    if (!FirmaIsyeriYetkiHelper.IsFirmaAuthorized(firmaId, yetkiler, isAdmin))
-                    {
-                        chkCihazlar.Items.Clear();
-                        return;
-                    }
+                    chkCihazlar.Items.Clear();
+                    return;
                 }
 
-                var raw = AdminPanelMode
-                    ? _svc.GetListe(sadeceAktif: false, firmaId: null)
-                    : _svc.GetListe(sadeceAktif: true, firmaId: (int)_session.AktifFirmaId);
+                if (firmaId.HasValue && _session.AktifKullaniciId.HasValue
+                    && !FirmaIsyeriYetkiHelper.IsFirmaAuthorized(firmaId.Value, _yetkiSvc.GetYetkiler((int)_session.AktifKullaniciId.Value), isAdmin))
+                {
+                    chkCihazlar.Items.Clear();
+                    return;
+                }
+
+                bool sadeceAktif = firmaId.HasValue;
+                var raw = _svc.GetListe(sadeceAktif: sadeceAktif, firmaId: firmaId);
 
                 chkCihazlar.BeginUpdate();
                 try
@@ -137,21 +202,19 @@ namespace CeyPASS.WFA.UserControls.Ayarlar
                 finally { chkCihazlar.EndUpdate(); }
 
                 FillInputsFromSelection();
-                LogHelper.Info(PageName, "ListLoad", $"Cihaz listesi yüklendi. Adet={raw?.Count ?? 0}", detayJson: AdminPanelMode ? "{\"AdminPanel\":true}" : $"{{\"FirmaId\":{(int)_session.AktifFirmaId}}}");
+                LogHelper.Info(PageName, "ListLoad", $"Cihaz listesi yüklendi. Adet={raw?.Count ?? 0}", detayJson: $"{{\"FirmaFilter\":{(firmaId.HasValue ? firmaId.Value.ToString() : "null")}}}");
             }
             catch (Exception ex)
             {
-                LogHelper.Error(PageName, "ListLoad", "Cihaz listesi yüklenirken hata", ex, detayJson: AdminPanelMode ? "{\"AdminPanel\":true}" : $"{{\"FirmaId\":{(int)_session.AktifFirmaId}}}");
+                LogHelper.Error(PageName, "ListLoad", "Cihaz listesi yüklenirken hata", ex);
                 throw;
             }
         }
 
-        /// <summary>
-        /// Admin Panel'de AdminPanelMode set edildikten sonra listeyi filtresiz yeniden yüklemek için.
-        /// </summary>
-        /// <summary>AdminPanelMode ve aktif firmaya göre grid'i yeniden doldurur.</summary>
+        /// <summary>Firma filtresine göre grid'i yeniden doldurur.</summary>
         public void RefreshList()
         {
+            LoadFirmalarFilter();
             LoadList();
         }
 

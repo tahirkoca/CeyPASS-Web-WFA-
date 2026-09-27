@@ -8,12 +8,15 @@ import { StatusPopup } from "../StatusPopup";
 import { PageHeader } from "../PageHeader";
 import { useHeaderQuickMenu } from "../HeaderQuickMenu";
 import { useNotificationsContext } from "../NotificationsProvider";
-import { puantajService, PuantajGunSatirDTO, PuantajLookupsDto, PuantajTipDTO } from "../../services/puantajApi";
+import { puantajService, PuantajGunSatirDTO, PuantajLookupsDto, PuantajTipDTO, PuantajVeriDurumuDto } from "../../services/puantajApi";
+import { personelService } from "../../services/personelApi";
 import * as FileSystem from "expo-file-system/legacy";
 import * as Sharing from "expo-sharing";
 import { getApiBaseUrl, getAuthToken } from "../../services/api";
 import { BusyOverlay } from "../BusyOverlay";
 import { pageFilterPrefs, parsePrefDate } from "../../services/pageFilterPrefs";
+
+type CokluSicilHedefSatir = { hedefPersonelId: number; hedefAdSoyad: string; aktarimGunSayisi: number };
 
 function pick<T = any>(obj: any, a: string, b?: string): T | undefined {
   if (!obj) return undefined;
@@ -291,6 +294,7 @@ export function PuantajScreen(props: { user: any; abilities: any; onOpenMenu: ()
   const [rows, setRows] = useState<PuantajGunSatirDTO[]>([]);
   const [rowsLoading, setRowsLoading] = useState(false);
   const [filterCollapsed, setFilterCollapsed] = useState(false);
+  const [veriDurumuText, setVeriDurumuText] = useState("");
 
   const [popupVisible, setPopupVisible] = useState(false);
   const [popupType, setPopupType] = useState<"success" | "error">("success");
@@ -319,6 +323,8 @@ export function PuantajScreen(props: { user: any; abilities: any; onOpenMenu: ()
   const [bulkVisible, setBulkVisible] = useState(false);
   const [cokluVisible, setCokluVisible] = useState(false);
   const [cokluSicilOzet, setCokluSicilOzet] = useState<{ isAnaSicil?: boolean; aktifHedefSayisi?: number }>({});
+  const [cokluHedefler, setCokluHedefler] = useState<CokluSicilHedefSatir[]>([]);
+  const [cokluLoading, setCokluLoading] = useState(false);
   const [ekGunVisible, setEkGunVisible] = useState(false);
   const [editMode, setEditMode] = useState<"edit" | "approve">("edit");
 
@@ -444,9 +450,58 @@ export function PuantajScreen(props: { user: any; abilities: any; onOpenMenu: ()
     }
   };
 
+  const formatVeriDurumu = (dto: PuantajVeriDurumuDto | null | undefined) => {
+    if (!dto) return "";
+    const toplamPersonel = asInt(pick(dto, "ToplamPersonel", "toplamPersonel"), 0);
+    const mesaj = (pick(dto, "Mesaj", "mesaj") ?? "").toString();
+    if (mesaj && toplamPersonel <= 0) return mesaj;
+
+    let s = `Personel: ${toplamPersonel} · Beklenen: ${asInt(pick(dto, "ToplamBeklenen", "toplamBeklenen"), 0)} · Girilen: ${asInt(
+      pick(dto, "ToplamGirilen", "toplamGirilen"),
+      0
+    )} · Eksik: ${asInt(pick(dto, "ToplamEksik", "toplamEksik"), 0)}`;
+
+    const secilenId = pick(dto, "SecilenPersonelId", "secilenPersonelId");
+    const kisiBeklenen = pick(dto, "KisiBeklenen", "kisiBeklenen");
+    if (secilenId != null && kisiBeklenen != null) {
+      s += `  |  ${(pick(dto, "SecilenAdSoyad", "secilenAdSoyad") ?? "").toString().trim()}: Beklenen ${asInt(
+        kisiBeklenen,
+        0
+      )} · Girilen ${asInt(pick(dto, "KisiGirilen", "kisiGirilen"), 0)} · Eksik ${asInt(pick(dto, "KisiEksik", "kisiEksik"), 0)}`;
+    }
+    return s;
+  };
+
+  const refreshVeriDurumu = async () => {
+    const fId = asInt(firmaId, 0);
+    const iId = asInt(isyeriId, 0);
+    if (!fId || !iId || !yil || !ay) {
+      setVeriDurumuText("");
+      return;
+    }
+    const pId = asInt(personelId, 0);
+    try {
+      const resp = await puantajService.getVeriDurumu({
+        firmaId: fId,
+        isyeriId: iId,
+        yil,
+        ay,
+        personelId: pId > 0 ? pId : null,
+      });
+      if (!resp?.success) {
+        setVeriDurumuText("Veri durumu alınamadı.");
+        return;
+      }
+      setVeriDurumuText(formatVeriDurumu(resp.data));
+    } catch {
+      setVeriDurumuText("Veri durumu alınamadı.");
+    }
+  };
+
   const loadRows = async () => {
     if (!personelId) {
       setRows([]);
+      void refreshVeriDurumu();
       return;
     }
     setRowsLoading(true);
@@ -461,6 +516,7 @@ export function PuantajScreen(props: { user: any; abilities: any; onOpenMenu: ()
         } catch { }
         setFilterCollapsed(true);
       }
+      void refreshVeriDurumu();
     } catch (e: any) {
       showPopup("error", getApiErrorMessage(e));
     } finally {
@@ -531,6 +587,12 @@ export function PuantajScreen(props: { user: any; abilities: any; onOpenMenu: ()
   }, [filtersHydrated, firmaId, isyeriId, yil, ay]);
 
   useEffect(() => {
+    if (!filtersHydrated) return;
+    void refreshVeriDurumu();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filtersHydrated, firmaId, isyeriId, yil, ay, personelId]);
+
+  useEffect(() => {
     if (!personelId) return;
     loadRows();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -540,12 +602,50 @@ export function PuantajScreen(props: { user: any; abilities: any; onOpenMenu: ()
     const pId = asInt(personelId, 0);
     if (!pId) {
       setCokluSicilOzet({});
+      setCokluHedefler([]);
       return;
     }
     puantajService.cokluSicilOzet(pId).then(setCokluSicilOzet).catch(() => setCokluSicilOzet({}));
   }, [personelId]);
 
   const canCokluSicileAktar = !!(cokluSicilOzet?.isAnaSicil ?? (cokluSicilOzet as any)?.IsAnaSicil);
+
+  const openCokluConfirm = async () => {
+    if (!canUpdate) return;
+    const pId = asInt(personelId, 0);
+    if (!pId) {
+      showPopup("error", "Lütfen personel seçiniz.");
+      return;
+    }
+    if (!canCokluSicileAktar) {
+      showPopup("error", "Seçili personel ana sicil değil veya aktif hedef bağlantısı yok.");
+      return;
+    }
+    setCokluLoading(true);
+    try {
+      const data = await personelService.cokluSicilListe(pId);
+      const baglantilar = (data?.baglantilar ?? data?.Baglantilar ?? []) as any[];
+      const aktif = baglantilar.filter((b) => {
+        const a = pick(b, "aktifMi", "AktifMi");
+        return a === true || a === 1 || a === "1" || a === undefined || a === null;
+      });
+      const rows: CokluSicilHedefSatir[] = aktif
+        .map((b) => ({
+          hedefPersonelId: asInt(pick(b, "hedefPersonelId", "HedefPersonelId"), 0),
+          hedefAdSoyad: (pick(b, "hedefAdSoyad", "HedefAdSoyad") ?? "(Adsız)").toString().trim() || "(Adsız)",
+          aktarimGunSayisi: asInt(pick(b, "aktarimGunSayisi", "AktarimGunSayisi"), 0),
+        }))
+        .filter((x) => x.hedefPersonelId > 0)
+        .sort((a, b) => a.hedefAdSoyad.localeCompare(b.hedefAdSoyad, "tr") || a.hedefPersonelId - b.hedefPersonelId);
+      setCokluHedefler(rows);
+      setAdvVisible(false);
+      setCokluVisible(true);
+    } catch (e: any) {
+      showPopup("error", getApiErrorMessage(e) || "Çoklu sicil listesi alınamadı.");
+    } finally {
+      setCokluLoading(false);
+    }
+  };
 
   const openRow = (r: any) => {
     setSelectedRow(r);
@@ -780,11 +880,13 @@ export function PuantajScreen(props: { user: any; abilities: any; onOpenMenu: ()
             UTI: "com.microsoft.excel.xlsx",
           } as any);
           showPopup("success", "Excel hazır.");
+          void refreshVeriDurumu();
           return;
         }
       }
 
       showPopup("success", `Excel indirildi: ${res.uri}`);
+      void refreshVeriDurumu();
     } catch (e: any) {
       showPopup("error", getApiErrorMessage(e));
     } finally {
@@ -1013,6 +1115,11 @@ export function PuantajScreen(props: { user: any; abilities: any; onOpenMenu: ()
       </View>
 
       <View className="flex-1 px-4 pt-4">
+        {!!veriDurumuText && (
+          <Text className="mb-2 text-[#64748b] font-semibold text-[11px]" numberOfLines={1}>
+            {veriDurumuText}
+          </Text>
+        )}
         <View className="bg-white rounded-2xl border border-[#e2e8f0] overflow-hidden flex-1">
           <View className="px-4 py-3 border-b border-[#f1f5f9] flex-row items-center justify-between">
             <Text className="text-[#0f172a] font-extrabold">Günler</Text>
@@ -1137,21 +1244,12 @@ export function PuantajScreen(props: { user: any; abilities: any; onOpenMenu: ()
                   </Text>
                   <TouchableOpacity
                     onPress={() => {
-                      if (!canUpdate) return;
-                      if (!personelId) {
-                        showPopup("error", "Lütfen personel seçiniz.");
-                        return;
-                      }
-                      if (!canCokluSicileAktar) {
-                        showPopup("error", "Seçili personel ana sicil değil veya aktif hedef bağlantısı yok.");
-                        return;
-                      }
-                      setAdvVisible(false);
-                      setCokluVisible(true);
+                      void openCokluConfirm();
                     }}
+                    disabled={cokluLoading}
                     className={`mt-3 px-4 py-3 rounded-xl items-center ${canUpdate && canCokluSicileAktar ? "bg-[#f59e0b]" : "bg-[#fde68a]"}`}
                   >
-                    <Text className="text-white font-extrabold">Çoklu Sicil Aktar</Text>
+                    <Text className="text-white font-extrabold">{cokluLoading ? "Yükleniyor..." : "Çoklu Sicil Aktar"}</Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -1391,8 +1489,27 @@ export function PuantajScreen(props: { user: any; abilities: any; onOpenMenu: ()
               <View className="p-4">
                 <Text className="text-[#334155] font-semibold">
                   {yil}/{String(ay).padStart(2, "0")} ayı için, seçili ana sicilin{" "}
-                  {Number(cokluSicilOzet?.aktifHedefSayisi ?? (cokluSicilOzet as any)?.AktifHedefSayisi ?? 0)} hedef siciline{" "}
-                  <Text className="text-[#0f172a] font-extrabold">Aktarım Gün Sayısı kadar gün NG 7,5</Text> aktarmak istiyor musunuz?
+                  {cokluHedefler.length ||
+                    Number(cokluSicilOzet?.aktifHedefSayisi ?? (cokluSicilOzet as any)?.AktifHedefSayisi ?? 0)}{" "}
+                  hedef siciline NG 7,5 aktarmak istiyor musunuz?
+                </Text>
+                {cokluHedefler.length > 0 ? (
+                  <View className="mt-3 rounded-xl border border-[#e2e8f0] overflow-hidden">
+                    {cokluHedefler.map((h) => (
+                      <View
+                        key={`cs_${h.hedefPersonelId}`}
+                        className="px-3 py-2 border-b border-[#f1f5f9] flex-row items-center justify-between"
+                      >
+                        <Text className="flex-1 text-[#0f172a] font-semibold pr-2" numberOfLines={2}>
+                          {h.hedefPersonelId} - {h.hedefAdSoyad}
+                        </Text>
+                        <Text className="text-[#0369a1] font-extrabold">{h.aktarimGunSayisi} gün</Text>
+                      </View>
+                    ))}
+                  </View>
+                ) : null}
+                <Text className="mt-3 text-[#64748b] font-semibold text-[12px]">
+                  Ana personel sicilindeki ayın son günündeki kayıtları da kaldırılacaktır.
                 </Text>
                 <View className="mt-4 flex-row gap-2">
                   <TouchableOpacity onPress={() => setCokluVisible(false)} className="flex-1 px-4 py-3 rounded-xl bg-[#f1f5f9] items-center">

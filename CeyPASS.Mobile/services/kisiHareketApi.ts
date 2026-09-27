@@ -35,6 +35,8 @@ export type KisiHareketRow = {
   KayitZamani?: string;
   aktifMi?: boolean;
   AktifMi?: boolean;
+  manuelMi?: boolean;
+  ManuelMi?: boolean;
 };
 
 /** /KisiHareket lookups, list, güncelle/sil. */

@@ -61,6 +61,29 @@ export type PuantajLookupsDto = {
   canExport: boolean;
 };
 
+export type PuantajVeriDurumuDto = {
+  toplamPersonel?: number;
+  ToplamPersonel?: number;
+  toplamBeklenen?: number;
+  ToplamBeklenen?: number;
+  toplamGirilen?: number;
+  ToplamGirilen?: number;
+  toplamEksik?: number;
+  ToplamEksik?: number;
+  secilenPersonelId?: number | null;
+  SecilenPersonelId?: number | null;
+  secilenAdSoyad?: string | null;
+  SecilenAdSoyad?: string | null;
+  kisiBeklenen?: number | null;
+  KisiBeklenen?: number | null;
+  kisiGirilen?: number | null;
+  KisiGirilen?: number | null;
+  kisiEksik?: number | null;
+  KisiEksik?: number | null;
+  mesaj?: string | null;
+  Mesaj?: string | null;
+};
+
 /** Puantaj ekranı ve export; POST sonrası `/Puantaj` önbelleği temizlenir. */
 export const puantajService = {
   /** Firma/işyeri/personel filtreleri ve canUpdate/canApprove/canExport vb. */
@@ -76,6 +99,26 @@ export const puantajService = {
       hardTtlMs: 10 * 60 * 1000,
       forceRefresh: !!opts?.forceRefresh,
     });
+  },
+
+  async getVeriDurumu(params: {
+    firmaId: number;
+    isyeriId?: number | null;
+    yil: number;
+    ay: number;
+    personelId?: number | null;
+  }): Promise<ApiResult<PuantajVeriDurumuDto>> {
+    const resp = await api.get("/Puantaj/veri-durumu", {
+      params: {
+        firmaId: params.firmaId,
+        isyeriId: params.isyeriId ?? undefined,
+        yil: params.yil,
+        ay: params.ay,
+        personelId: params.personelId ?? undefined,
+      },
+      timeout: 20000,
+    });
+    return resp.data;
   },
 
   async getAy(personelId: string | number, yil: number, ay: number): Promise<ApiResult<PuantajGunSatirDTO[]>> {

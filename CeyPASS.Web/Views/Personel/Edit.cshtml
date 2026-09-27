@@ -35,6 +35,15 @@
         </div>
     </div>
 
+    @if (!isDeparted)
+    {
+        <div class="alert alert-info small mb-3">
+            <strong>Zorunlu alanlar (*):</strong> Sicil No, Ad, Soyad, İşe Giriş, İşyeri (ve Firma) her zaman zorunludur.
+            Firma Personeli veya Taşeron → TC Kimlik No; Ziyaretçi veya Araç Kartı → Kart No; Yemek Hakkı → Yemek Adedi.
+            İlgili işaret kalkınca koşullu <code>*</code> de kalkar.
+        </div>
+    }
+
     @if (!ViewData.ModelState.IsValid)
     {
         <div class="alert alert-danger">
@@ -85,13 +94,13 @@
                         </div>
 
                         <div class="mb-3">
-                            <label asp-for="TcKimlikNo" class="form-label">TC Kimlik No</label>
+                            <label asp-for="TcKimlikNo" class="form-label">TC Kimlik No <span id="req-tc" class="text-danger d-none">*</span></label>
                             <input asp-for="TcKimlikNo" class="form-control" maxlength="11" />
                             <span asp-validation-for="TcKimlikNo" class="text-danger"></span>
                         </div>
 
                         <div class="mb-3">
-                            <label asp-for="KartNo" class="form-label">Kart No</label>
+                            <label asp-for="KartNo" class="form-label">Kart No <span id="req-kart" class="text-danger d-none">*</span></label>
                             <input asp-for="KartNo" class="form-control" />
                             <span asp-validation-for="KartNo" class="text-danger"></span>
                         </div>
@@ -166,7 +175,7 @@
                         </div>
 
                         <div class="mb-3">
-                            <label asp-for="IsyeriId" class="form-label">İşyeri</label>
+                            <label asp-for="IsyeriId" class="form-label">İşyeri <span class="text-danger">*</span></label>
                             <select asp-for="IsyeriId" class="form-select">
                                 <option value="">-- Seçiniz --</option>
                                 @foreach (var isyeri in isyerleri)
@@ -320,7 +329,7 @@
                         </div>
 
                         <div class="mb-3">
-                            <label for="gunlukYemekAdedi" class="form-label">Günlük Yemek Adedi</label>
+                            <label for="gunlukYemekAdedi" class="form-label">Günlük Yemek Adedi <span id="req-yemek" class="text-danger d-none">*</span></label>
                             <input type="number" name="gunlukYemekAdedi" id="gunlukYemekAdedi" class="form-control" min="0" 
                                    value="@(Model?.GunlukYemekAdedi.HasValue == true ? Model.GunlukYemekAdedi.Value.ToString() : "")" />
                         </div>
@@ -471,6 +480,7 @@
     <script src="https://cdn.jsdelivr.net/npm/jquery-validation@1.19.5/dist/jquery.validate.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jquery-validation-unobtrusive@3.2.12/dist/jquery.validate.unobtrusive.min.js"></script>
     
+    <script src="~/js/personel-required.js" asp-append-version="true"></script>
     <script>
         var cokluPersonelId = @cokluPidJs;
         var cokluTcKimlik = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model?.TcKimlikNo ?? ""));

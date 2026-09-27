@@ -59,5 +59,12 @@ namespace CeyPASS.Infrastructure.Helpers
                 return MultiSelectKind.Isyeri;
             return MultiSelectKind.None;
         }
+
+        /// <summary>Yemekhane cihaz bazlı raporlarda cihaz listesi yalnızca yemekhane tipiyle sınırlanır.</summary>
+        public static bool RequiresYemekhaneCihazFilter(string procedureAdi)
+        {
+            return !string.IsNullOrWhiteSpace(procedureAdi)
+                   && procedureAdi.IndexOf("Yemekhane", StringComparison.OrdinalIgnoreCase) >= 0;
+        }
     }
 }

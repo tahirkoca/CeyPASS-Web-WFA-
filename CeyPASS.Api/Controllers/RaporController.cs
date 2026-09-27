@@ -126,7 +126,9 @@ namespace CeyPASS.Api.Controllers
         
         /// <summary>Rapor filtresi cihazlar.</summary>
         [HttpGet("cihazlar")]
-        public ActionResult<ApiResult<List<LookupItem>>> GetCihazlar([FromQuery] int? firmaId = null)
+        public ActionResult<ApiResult<List<LookupItem>>> GetCihazlar(
+            [FromQuery] int? firmaId = null,
+            [FromQuery] string? procedureAdi = null)
         {
             if (!_authorizationService.ViewAbility(PageName)) return Forbid();
 
@@ -142,7 +144,8 @@ namespace CeyPASS.Api.Controllers
             if (!FirmaIsyeriYetkiHelper.IsFirmaAuthorized(resolved, yetkiler, isAdmin))
                 return Forbid();
 
-            var list = _cihazService.GetListe(true, resolved) ?? new List<CihazListDTO>();
+            bool sadeceYemekhane = RaporParametreHelper.RequiresYemekhaneCihazFilter(procedureAdi);
+            var list = _cihazService.GetListe(true, resolved, sadeceYemekhane) ?? new List<CihazListDTO>();
             var items = list.Select(c => new LookupItem { Id = c.CihazId, Ad = c.CihazAdi }).ToList();
             return Ok(ApiResult<List<LookupItem>>.Ok(items));
         }

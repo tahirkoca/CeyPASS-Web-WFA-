@@ -174,7 +174,8 @@ SELECT
         ELSE k.Tip
     END AS Tip,
     k.KayitZamani,
-    k.AktifMi
+    k.AktifMi,
+    k.ManuelMi
 FROM dbo.KisiHareketler AS k
 LEFT JOIN dbo.Kisiler  AS p ON p.PersonelId = k.PersonelId
 LEFT JOIN dbo.Cihazlar AS c ON c.CihazId   = k.CihazId
@@ -238,11 +239,12 @@ WHERE ");
             dt.Columns.Add("Tip", typeof(string));
             dt.Columns.Add("KayitZamani", typeof(DateTime));
             dt.Columns.Add("AktifMi", typeof(bool));
+            dt.Columns.Add("ManuelMi", typeof(bool));
 
             foreach (var r in rows)
             {
                 dt.Rows.Add(r.Id, r.Firma, r.SicilNo, r.AdSoyad,
-                            r.CihazAdi, r.Tarih, r.Tip, r.KayitZamani, r.AktifMi);
+                            r.CihazAdi, r.Tarih, r.Tip, r.KayitZamani, r.AktifMi, r.ManuelMi);
             }
             return dt;
         }
@@ -326,7 +328,8 @@ SELECT
         ELSE k.Tip
     END AS Tip,
     k.KayitZamani,
-    k.AktifMi
+    k.AktifMi,
+    k.ManuelMi
 ";
 
             var pageSql = new StringBuilder();
@@ -353,7 +356,8 @@ SELECT
                 Tip = tip,
                 KayitZamani = DateTime.Now,
                 AktifMi = true,
-                CihazId = 0
+                CihazId = 0,
+                ManuelMi = true
             };
 
             _context.KisiHareketler.Add(entity);
@@ -371,7 +375,7 @@ SELECT
 
             entity.Tarih = tarih;
             entity.Tip = tip;
-            entity.CihazId = 0;
+            entity.ManuelMi = true;
             entity.KayitZamani = DateTime.Now;
 
             return _context.SaveChanges() > 0;

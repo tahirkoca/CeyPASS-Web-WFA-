@@ -6,7 +6,8 @@ import { StatusPopup } from "../StatusPopup";
 import { PageHeader } from "../PageHeader";
 import { useHeaderQuickMenu } from "../HeaderQuickMenu";
 import { useNotificationsContext } from "../NotificationsProvider";
-import { ayarlarService, Cihaz, CihazListDTO, CihazTip } from "../../services/ayarlarApi";
+import { ayarlarService, Cihaz, CihazListDTO, CihazTip } from "../../services/ayarlarApi";
+import { personelService } from "../../services/personelApi";
 import { toTrLower } from "../../services/turkishText";
 
 function pick<T = any>(obj: any, a: string, b?: string): T | undefined {
@@ -73,12 +74,18 @@ export function CihazlarScreen(props: { user: any; abilities: any; onOpenMenu: (
   const canCreate = !!(actions?.Create ?? actions?.create);
   const canUpdate = !!(actions?.Update ?? actions?.update);
   const canDelete = !!(actions?.Delete ?? actions?.delete);
+  const rolId: number | null | undefined = props.abilities?.rolId ?? props.abilities?.RolId;
+  const isAdmin = !!(props.abilities?.isAdmin ?? props.abilities?.IsAdmin ?? (rolId === 1 || rolId === 2));
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [items, setItems] = useState<CihazListDTO[]>([]);
   const [tipler, setTipler] = useState<CihazTip[]>([]);
   const [q, setQ] = useState("");
+  const [firmalar, setFirmalar] = useState<any[]>([]);
+  const [filterFirmaId, setFilterFirmaId] = useState<number | null>(null);
+  const [firmaReady, setFirmaReady] = useState(false);
+  const [firmaModal, setFirmaModal] = useState(false);
 
   const [popupVisible, setPopupVisible] = useState(false);
   const [popupType, setPopupType] = useState<"success" | "error">("success");
@@ -99,12 +106,35 @@ export function CihazlarScreen(props: { user: any; abilities: any; onOpenMenu: (
   const quickMenu = useHeaderQuickMenu();
   const notif = useNotificationsContext();
 
-  const refresh = async () => {
+  const firmaOptions = useMemo(() => {
+    const list = (firmalar ?? [])
+      .map((f) => ({
+        key: String(pick<any>(f, "firmaId", "FirmaId") ?? ""),
+        label: (pick<any>(f, "firmaAdi", "FirmaAdi") ?? "").toString(),
+      }))
+      .filter((x) => x.key && x.key !== "0" && x.label);
+    if (isAdmin) return [{ key: "-1", label: "Tümü" }, ...list];
+    return list;
+  }, [firmalar, isAdmin]);
+
+  const firmaLabel = useMemo(() => {
+    if (filterFirmaId == null || filterFirmaId < 0) return isAdmin ? "Tümü" : "Firma";
+    const found = firmaOptions.find((x) => Number(x.key) === filterFirmaId);
+    return found?.label ?? "Firma";
+  }, [filterFirmaId, firmaOptions, isAdmin]);
+
+  const resolveFirmaParam = (fid: number | null): number | null | undefined => {
+    if (isAdmin && (fid == null || fid < 0)) return null; // API: null/-1 → TÜMÜ
+    if (typeof fid === "number" && fid > 0) return fid;
+    return undefined;
+  };
+
+  const refresh = async (fid: number | null = filterFirmaId) => {
     setLoading(true);
     setError(null);
     try {
       const [listResp, tipResp] = await Promise.all([
-        ayarlarService.listCihazlar({ sadeceAktif: false }),
+        ayarlarService.listCihazlar({ sadeceAktif: false, firmaId: resolveFirmaParam(fid) }),
         ayarlarService.cihazTipleri(),
       ]);
       if (!listResp?.success) throw new Error(listResp?.message || "Liste alınamadı.");
@@ -123,7 +153,10 @@ export function CihazlarScreen(props: { user: any; abilities: any; onOpenMenu: (
     setError(null);
     try {
       const [listResp, tipResp] = await Promise.all([
-        ayarlarService.listCihazlar({ sadeceAktif: false }, { forceRefresh: true }),
+        ayarlarService.listCihazlar(
+          { sadeceAktif: false, firmaId: resolveFirmaParam(filterFirmaId) },
+          { forceRefresh: true }
+        ),
         ayarlarService.cihazTipleri({ forceRefresh: true }),
       ]);
       if (!listResp?.success) throw new Error(listResp?.message || "Liste alınamadı.");
@@ -138,8 +171,36 @@ export function CihazlarScreen(props: { user: any; abilities: any; onOpenMenu: (
   }
 
   useEffect(() => {
-    refresh();
+    (async () => {
+      try {
+        const lu = await personelService.lookupsForFirma();
+        const data = lu?.data ?? {};
+        const firm = data.Firmalar ?? data.firmalar ?? [];
+        const act = data.AktifFirma ?? data.aktifFirma ?? null;
+        setFirmalar(Array.isArray(firm) ? firm : []);
+        const afId = Number(pick<any>(act, "firmaId", "FirmaId"));
+        if (isAdmin) setFilterFirmaId(-1);
+        else if (Number.isFinite(afId) && afId > 0) setFilterFirmaId(afId);
+        else {
+          const first = Array.isArray(firm) ? firm[0] : null;
+          const firstId = Number(pick<any>(first, "firmaId", "FirmaId"));
+          setFilterFirmaId(Number.isFinite(firstId) && firstId > 0 ? firstId : null);
+        }
+      } catch {
+        if (isAdmin) setFilterFirmaId(-1);
+      } finally {
+        setFirmaReady(true);
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (!firmaReady) return;
+    if (filterFirmaId == null && !isAdmin) return;
+    refresh(filterFirmaId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filterFirmaId, firmaReady]);
 
   const rows = useMemo(() => {
     const qq = toTrLower(q).trim();
@@ -339,6 +400,16 @@ export function CihazlarScreen(props: { user: any; abilities: any; onOpenMenu: (
         <View className="mt-4 bg-white rounded-2xl border border-[#e2e8f0] overflow-hidden">
           <View className="px-4 py-3 border-b border-[#f1f5f9]">
             <Text className="text-[#0f172a] font-extrabold">Filtre</Text>
+            <TouchableOpacity
+              onPress={() => setFirmaModal(true)}
+              className="mt-2 px-4 py-3 rounded-xl bg-[#f8fafc] border border-[#e2e8f0] flex-row items-center justify-between"
+            >
+              <View>
+                <Text className="text-[#64748b] font-semibold text-[12px]">Firma</Text>
+                <Text className="text-[#0f172a] font-extrabold mt-0.5">{firmaLabel}</Text>
+              </View>
+              <MaterialCommunityIcons name="chevron-down" size={20} color="#64748b" />
+            </TouchableOpacity>
             <TextInput
               value={q}
               onChangeText={setQ}
@@ -480,6 +551,17 @@ export function CihazlarScreen(props: { user: any; abilities: any; onOpenMenu: (
           </TouchableOpacity>
         </Modal>
       ) : null}
+
+      <SelectModal
+        visible={firmaModal}
+        title="Firma"
+        items={firmaOptions}
+        onClose={() => setFirmaModal(false)}
+        onPick={(key) => {
+          const n = Number(key);
+          setFilterFirmaId(Number.isFinite(n) ? n : isAdmin ? -1 : filterFirmaId);
+        }}
+      />
 
       <SelectModal
         visible={tipModal}

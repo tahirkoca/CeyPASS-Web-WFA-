@@ -17,7 +17,7 @@ namespace CeyPASS.DataAccess.Repositories
         }
 
         /// <summary>List sorgularını getirir.</summary>
-        public List<CihazListDTO> GetList(bool sadeceAktif, int? firmaId = null)
+        public List<CihazListDTO> GetList(bool sadeceAktif, int? firmaId = null, bool sadeceYemekhane = false)
         {
             var query =
                 from c in _context.Cihazlar
@@ -26,6 +26,9 @@ namespace CeyPASS.DataAccess.Repositories
                 from t in ct.DefaultIfEmpty()
                 where (!sadeceAktif || c.AktifMi)
                       && (!firmaId.HasValue || c.FirmaId == firmaId.Value)
+                      && (!sadeceYemekhane
+                          || (t != null && t.TipAdi != null
+                              && (t.TipAdi.Contains("Yemekhane") || t.TipAdi.Contains("Yemek"))))
                 orderby f.FirmaAdi, c.CihazAdi
                 select new CihazListDTO
                 {

@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
 using CeyPASS.Business.Abstractions;
 using CeyPASS.Entities.Concrete;
+using CeyPASS.Infrastructure.Helpers;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace CeyPASS.Web.Controllers
@@ -13,38 +15,67 @@ namespace CeyPASS.Web.Controllers
         private readonly ISessionContext _sessionContext;
         private readonly IAuthorizationService _authorizationService;
         private readonly IKisiEkraniLookUpService _lookupService;
+        private readonly IFirmaService _firmaService;
+        private readonly IKullaniciFirmaIsyeriYetkiService _yetkiService;
         private const string PageName = "Vardiyalar";
 
         public CalismaSekliController(
             ICalismaSekliService calismaSekliService,
             ISessionContext sessionContext,
             IAuthorizationService authorizationService,
-            IKisiEkraniLookUpService lookupService)
+            IKisiEkraniLookUpService lookupService,
+            IFirmaService firmaService,
+            IKullaniciFirmaIsyeriYetkiService yetkiService)
         {
             _calismaSekliService = calismaSekliService;
             _sessionContext = sessionContext;
             _authorizationService = authorizationService;
             _lookupService = lookupService;
+            _firmaService = firmaService;
+            _yetkiService = yetkiService;
         }
 
         /// <summary>Liste veya ana ekran.</summary>
-        public IActionResult Index()
+        public IActionResult Index(int? firmaId = null)
         {
-            // Check authorization
             if (!_authorizationService.ViewAbility(PageName))
             {
                 TempData["Error"] = "Vardiyalar ekranını görüntüleme yetkiniz yok.";
                 return RedirectToAction("Index", "Home");
             }
 
-            int firmaId = (int)_sessionContext.AktifFirmaId;
-            var vardiyalar = _calismaSekliService.GetAll(firmaId, includeGlobal: true);
+            bool isAdmin = _sessionContext.IsAdmin();
+            var yetkiler = _sessionContext.AktifKullaniciId.HasValue
+                ? (_yetkiService.GetYetkiler((int)_sessionContext.AktifKullaniciId.Value) ?? new List<FirmaIsyeriYetkiDTO>())
+                : new List<FirmaIsyeriYetkiDTO>();
+            var firmalar = FirmaIsyeriYetkiHelper.FilterFirmalar(
+                _firmaService.GetAll() ?? new List<Firma>(), yetkiler, isAdmin);
 
+            int? filterFirmaId = ResolveFirmaFilter(firmaId, isAdmin, firmalar);
+            List<CalismaSekli> vardiyalar = !filterFirmaId.HasValue
+                ? (_calismaSekliService.GetAllForAdmin() ?? new List<CalismaSekli>())
+                : (_calismaSekliService.GetAll(filterFirmaId.Value, includeGlobal: true) ?? new List<CalismaSekli>());
+
+            ViewBag.Firmalar = firmalar;
+            ViewBag.IsAdmin = isAdmin;
+            ViewBag.SelectedFirmaId = filterFirmaId;
             ViewBag.CanCreate = _authorizationService.Can(PageName, YetkiTipleri.Create);
             ViewBag.CanUpdate = _authorizationService.Can(PageName, YetkiTipleri.Update);
             ViewBag.CanDelete = _authorizationService.Can(PageName, YetkiTipleri.Delete);
 
             return View(vardiyalar);
+        }
+
+        private int? ResolveFirmaFilter(int? requested, bool isAdmin, List<Firma> firmalar)
+        {
+            if (isAdmin && (!requested.HasValue || requested.Value < 0))
+                return null;
+            int fid = requested ?? _sessionContext.AktifFirmaId ?? 0;
+            if (fid <= 0)
+                return isAdmin ? null : (_sessionContext.AktifFirmaId);
+            if (!isAdmin && firmalar.All(f => f.FirmaId != fid))
+                return _sessionContext.AktifFirmaId;
+            return fid;
         }
 
         /// <summary>Yeni kayit formu ve kaydetme.</summary>

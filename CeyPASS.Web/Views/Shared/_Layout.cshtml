@@ -345,9 +345,9 @@
                 }
                 @if (isSuperAdmin)
                 {
-                <!-- Admin Panel -->
+                <!-- Güncelleme Bildirimi (süper admin) -->
                 <div class="nav-section accordion-section">
-                    <button type="button" class="nav-section-title accordion-toggle" data-bs-toggle="collapse" data-bs-target="#navSectionAdmin" aria-expanded="true" aria-controls="navSectionAdmin" title="Yönetici Paneli Menüsünü Aç/Kapat">
+                    <button type="button" class="nav-section-title accordion-toggle" data-bs-toggle="collapse" data-bs-target="#navSectionAdmin" aria-expanded="true" aria-controls="navSectionAdmin" title="Yönetici Menüsünü Aç/Kapat">
                         <span>Admin</span>
                         <i class="bi bi-chevron-down accordion-icon"></i>
                     </button>
@@ -355,9 +355,9 @@
                     <ul class="nav flex-column">
                         <li class="nav-item">
                             <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Admin" ? "active" : "")" 
-                               asp-controller="Admin" asp-action="Index" title="Sistem Yönetimi, Kullanıcı Eşleme ve Yetkilendirme">
-                                <i class="bi bi-shield-lock"></i>
-                                <span>Admin Panel</span>
+                               asp-controller="Admin" asp-action="Index" title="Güncelleme bildirimi e-postası gönder">
+                                <i class="bi bi-envelope-check"></i>
+                                <span>Güncelleme Bildirimi</span>
                             </a>
                         </li>
                     </ul>

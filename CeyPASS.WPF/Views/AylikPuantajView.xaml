@@ -67,27 +67,55 @@
                 </DockPanel>
             </Border>
 
-            <!-- Toolbar -->
+            <!-- Toolbar: sol butonlar tam görünür; sağda kalan alana tek satır özet (üst üste binmez) -->
             <Border Grid.Row="1" Style="{StaticResource Card}" Padding="10,8" Margin="0,0,0,10">
-                <WrapPanel>
-                    <Button Content="Onay" Style="{StaticResource SuccessBtn}"
-                            Command="{Binding OnayCommand}" Margin="0,0,8,6" Padding="14,8"
-                            Visibility="{Binding CanApprove, Converter={StaticResource BoolToVis}}"/>
-                    <Button Content="Ret" Style="{StaticResource DangerBtn}"
-                            Command="{Binding RetCommand}" Margin="0,0,8,6" Padding="14,8"
-                            Visibility="{Binding CanDelete, Converter={StaticResource BoolToVis}}"/>
-                    <Button Content="Düzenle" Style="{StaticResource EditBtn}"
-                            Command="{Binding DuzenleCommand}" Margin="0,0,8,6" Padding="14,8"
-                            Visibility="{Binding CanUpdate, Converter={StaticResource BoolToVis}}"/>
-                    <Button Content="Bugüne Kadar Onayla" Style="{StaticResource PrimaryBtn}"
-                            Command="{Binding BuguneKadarOnaylaCommand}" Margin="0,0,8,6" Padding="14,8"
-                            Visibility="{Binding CanApprove, Converter={StaticResource BoolToVis}}"/>
-                    <Button Content="Çoklu Sicile Aktar" Style="{StaticResource SecondaryBtn}"
-                            Command="{Binding CokluSicileAktarCommand}" Margin="0,0,8,6" Padding="14,8"/>
-                    <Button Content="Puantaj Yap" Style="{StaticResource PrimaryBtn}"
-                            Command="{Binding PuantajYapCommand}" Margin="0,0,8,6" Padding="14,8"
-                            Visibility="{Binding CanExport, Converter={StaticResource BoolToVis}}"/>
-                </WrapPanel>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*" MinWidth="0"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                        <Button Content="Onay" Style="{StaticResource SuccessBtn}"
+                                Command="{Binding OnayCommand}" Margin="0,0,8,0" Padding="14,8"
+                                Visibility="{Binding CanApprove, Converter={StaticResource BoolToVis}}"/>
+                        <Button Content="Ret" Style="{StaticResource DangerBtn}"
+                                Command="{Binding RetCommand}" Margin="0,0,8,0" Padding="14,8"
+                                Visibility="{Binding CanDelete, Converter={StaticResource BoolToVis}}"/>
+                        <Button Content="Düzenle" Style="{StaticResource EditBtn}"
+                                Command="{Binding DuzenleCommand}" Margin="0,0,8,0" Padding="14,8"
+                                Visibility="{Binding CanUpdate, Converter={StaticResource BoolToVis}}"/>
+                        <Button Content="Bugüne Kadar Onayla" Style="{StaticResource PrimaryBtn}"
+                                Command="{Binding BuguneKadarOnaylaCommand}" Margin="0,0,8,0" Padding="14,8"
+                                Visibility="{Binding CanApprove, Converter={StaticResource BoolToVis}}"/>
+                        <Button Content="Çoklu Sicile Aktar" Style="{StaticResource SecondaryBtn}"
+                                Command="{Binding CokluSicileAktarCommand}" Margin="0,0,8,0" Padding="14,8"/>
+                        <Button Content="Puantaj Yap" Style="{StaticResource PrimaryBtn}"
+                                Command="{Binding PuantajYapCommand}" Margin="0,0,8,0" Padding="14,8"
+                                Visibility="{Binding CanExport, Converter={StaticResource BoolToVis}}"/>
+                    </StackPanel>
+                    <TextBlock Grid.Column="1"
+                               Text="{Binding VeriDurumuText}"
+                               ToolTip="{Binding VeriDurumuText}"
+                               TextTrimming="CharacterEllipsis"
+                               TextWrapping="NoWrap"
+                               FontSize="11"
+                               Foreground="#334155"
+                               VerticalAlignment="Center"
+                               HorizontalAlignment="Stretch"
+                               TextAlignment="Left"
+                               Margin="12,0,0,0">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Visibility" Value="Visible"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding VeriDurumuText}" Value="">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                </Grid>
             </Border>
 
             <!-- Grid -->

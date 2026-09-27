@@ -15,7 +15,8 @@ namespace CeyPASS.Business.Services
             _repo = repo;
         }
         /// <inheritdoc />
-        public List<CihazListDTO> GetListe(bool sadeceAktif, int? firmaId = null) => _repo.GetList(sadeceAktif, firmaId);
+        public List<CihazListDTO> GetListe(bool sadeceAktif, int? firmaId = null, bool sadeceYemekhane = false)
+            => _repo.GetList(sadeceAktif, firmaId, sadeceYemekhane);
         /// <inheritdoc />
         public Cihaz Get(int id) => _repo.GetById(id);
         /// <inheritdoc />

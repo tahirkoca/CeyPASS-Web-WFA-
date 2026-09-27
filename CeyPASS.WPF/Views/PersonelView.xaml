@@ -201,27 +201,45 @@
                                             </Grid.RowDefinitions>
 
                                             <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,0,12">
-                                                <TextBlock Text="Ad Soyad" Style="{StaticResource FieldLabel}"/>
+                                                <StackPanel Orientation="Horizontal">
+                                                    <TextBlock Text="Ad Soyad" Style="{StaticResource FieldLabel}"/>
+                                                    <TextBlock Text=" *" Foreground="#dc2626" FontWeight="SemiBold" Margin="0,0,0,6"
+                                                               Visibility="{Binding AdSoyadRequired, Converter={StaticResource BoolToVis}}"/>
+                                                </StackPanel>
                                                 <TextBox Text="{Binding AdSoyad, UpdateSourceTrigger=PropertyChanged}"
                                                          Style="{StaticResource FieldBox}" IsReadOnly="{Binding FieldsReadOnly}"
                                                          wpf:FieldValidation.Error="{Binding Errors[AdSoyad]}"/>
                                             </StackPanel>
                                             <StackPanel Grid.Row="0" Grid.Column="2" Margin="0,0,0,12">
-                                                <TextBlock Text="Sicil No" Style="{StaticResource FieldLabel}"/>
+                                                <StackPanel Orientation="Horizontal">
+                                                    <TextBlock Text="Sicil No" Style="{StaticResource FieldLabel}"/>
+                                                    <TextBlock Text=" *" Foreground="#dc2626" FontWeight="SemiBold" Margin="0,0,0,6"
+                                                               Visibility="{Binding SicilNoRequired, Converter={StaticResource BoolToVis}}"/>
+                                                </StackPanel>
                                                 <TextBox Text="{Binding SicilNo, UpdateSourceTrigger=PropertyChanged}"
                                                          Style="{StaticResource FieldBox}" IsReadOnly="{Binding FieldsReadOnly}"
                                                          wpf:FieldValidation.Error="{Binding Errors[SicilNo]}"/>
                                             </StackPanel>
 
                                             <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,0,0,12">
-                                                <TextBlock Text="Kart No" Style="{StaticResource FieldLabel}"/>
+                                                <StackPanel Orientation="Horizontal">
+                                                    <TextBlock Text="Kart No" Style="{StaticResource FieldLabel}"/>
+                                                    <TextBlock Text=" *" Foreground="#dc2626" FontWeight="SemiBold" Margin="0,0,0,6"
+                                                               Visibility="{Binding KartNoRequired, Converter={StaticResource BoolToVis}}"/>
+                                                </StackPanel>
                                                 <TextBox Text="{Binding KartNo, UpdateSourceTrigger=PropertyChanged}"
-                                                         Style="{StaticResource FieldBox}" IsReadOnly="{Binding FieldsReadOnly}"/>
+                                                         Style="{StaticResource FieldBox}" IsReadOnly="{Binding FieldsReadOnly}"
+                                                         wpf:FieldValidation.Error="{Binding Errors[KartNo]}"/>
                                             </StackPanel>
                                             <StackPanel Grid.Row="1" Grid.Column="2" Margin="0,0,0,12">
-                                                <TextBlock Text="TC Kimlik No" Style="{StaticResource FieldLabel}"/>
+                                                <StackPanel Orientation="Horizontal">
+                                                    <TextBlock Text="TC Kimlik No" Style="{StaticResource FieldLabel}"/>
+                                                    <TextBlock Text=" *" Foreground="#dc2626" FontWeight="SemiBold" Margin="0,0,0,6"
+                                                               Visibility="{Binding TcKimlikRequired, Converter={StaticResource BoolToVis}}"/>
+                                                </StackPanel>
                                                 <TextBox Text="{Binding TcKimlikNo, UpdateSourceTrigger=PropertyChanged}"
-                                                         Style="{StaticResource FieldBox}" IsReadOnly="{Binding FieldsReadOnly}"/>
+                                                         Style="{StaticResource FieldBox}" IsReadOnly="{Binding FieldsReadOnly}"
+                                                         wpf:FieldValidation.Error="{Binding Errors[TcKimlikNo]}"/>
                                             </StackPanel>
 
                                             <StackPanel Grid.Row="2" Grid.Column="0" Margin="0,0,0,12">
@@ -230,7 +248,11 @@
                                                          Style="{StaticResource FieldBox}" IsEnabled="{Binding FirmaDisiEnabled}"/>
                                             </StackPanel>
                                             <StackPanel Grid.Row="2" Grid.Column="2" Margin="0,0,0,12">
-                                                <TextBlock Text="İşe Giriş" Style="{StaticResource FieldLabel}"/>
+                                                <StackPanel Orientation="Horizontal">
+                                                    <TextBlock Text="İşe Giriş" Style="{StaticResource FieldLabel}"/>
+                                                    <TextBlock Text=" *" Foreground="#dc2626" FontWeight="SemiBold" Margin="0,0,0,6"
+                                                               Visibility="{Binding IseGirisRequired, Converter={StaticResource BoolToVis}}"/>
+                                                </StackPanel>
                                                 <TextBox Text="{Binding IseGirisMissingText, Mode=OneWay}" IsReadOnly="True"
                                                          Style="{StaticResource FieldBox}"
                                                          Foreground="#64748b" FontStyle="Italic"
@@ -238,7 +260,8 @@
                                                 <DatePicker SelectedDate="{Binding IseGiris, UpdateSourceTrigger=PropertyChanged}"
                                                             Style="{StaticResource FieldDatePicker}"
                                                             Visibility="{Binding ShowIseGirisMissingText, Converter={StaticResource InvBoolToVis}}"
-                                                            IsEnabled="{Binding FieldsReadOnly, Converter={StaticResource InvBool}}"/>
+                                                            IsEnabled="{Binding FieldsReadOnly, Converter={StaticResource InvBool}}"
+                                                            wpf:FieldValidation.Error="{Binding Errors[IseGiris]}"/>
                                             </StackPanel>
 
                                             <StackPanel Grid.Row="3" Grid.Column="0" Margin="0,0,0,12">
@@ -269,7 +292,11 @@
                                                 </DatePicker>
                                             </StackPanel>
                                             <StackPanel Grid.Row="3" Grid.Column="2" Margin="0,0,0,12">
-                                                <TextBlock Text="İşyeri" Style="{StaticResource FieldLabel}"/>
+                                                <StackPanel Orientation="Horizontal">
+                                                    <TextBlock Text="İşyeri" Style="{StaticResource FieldLabel}"/>
+                                                    <TextBlock Text=" *" Foreground="#dc2626" FontWeight="SemiBold" Margin="0,0,0,6"
+                                                               Visibility="{Binding IsyeriRequired, Converter={StaticResource BoolToVis}}"/>
+                                                </StackPanel>
                                                 <ComboBox Style="{StaticResource FieldCombo}" ItemsSource="{Binding IsyerleriForm}"
                                                           DisplayMemberPath="Ad" SelectedItem="{Binding SelectedIsyeri}"
                                                           IsEnabled="{Binding FieldsReadOnly, Converter={StaticResource InvBool}}"
@@ -390,10 +417,15 @@
                                                           IsEnabled="{Binding FieldsReadOnly, Converter={StaticResource InvBool}}"/>
                                             </StackPanel>
                                             <StackPanel Grid.Row="2" Grid.Column="0" Margin="0,0,0,12">
-                                                <TextBlock Text="Yemek Adedi" Style="{StaticResource FieldLabel}"/>
+                                                <StackPanel Orientation="Horizontal">
+                                                    <TextBlock Text="Yemek Adedi" Style="{StaticResource FieldLabel}"/>
+                                                    <TextBlock Text=" *" Foreground="#dc2626" FontWeight="SemiBold" Margin="0,0,0,6"
+                                                               Visibility="{Binding YemekAdediRequired, Converter={StaticResource BoolToVis}}"/>
+                                                </StackPanel>
                                                 <TextBox Text="{Binding YemekAdediText, UpdateSourceTrigger=PropertyChanged}"
                                                          Style="{StaticResource FieldBox}" MaxWidth="120" HorizontalAlignment="Left"
-                                                         IsEnabled="{Binding YemekAdediEnabled}"/>
+                                                         IsEnabled="{Binding YemekAdediEnabled}"
+                                                         wpf:FieldValidation.Error="{Binding Errors[YemekAdedi]}"/>
                                             </StackPanel>
                                         </Grid>
 

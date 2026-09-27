@@ -4,6 +4,9 @@
     var canCreate = ViewBag.CanCreate as bool? ?? false;
     var canUpdate = ViewBag.CanUpdate as bool? ?? false;
     var canDelete = ViewBag.CanDelete as bool? ?? false;
+    var firmalar = ViewBag.Firmalar as List<CeyPASS.Entities.Concrete.Firma> ?? new List<CeyPASS.Entities.Concrete.Firma>();
+    var isAdmin = ViewBag.IsAdmin as bool? ?? false;
+    var selectedFirmaId = ViewBag.SelectedFirmaId as int?;
 }
 
 <div class="container-fluid">
@@ -28,6 +31,36 @@
             }
         </div>
     </div>
+
+    <form method="get" asp-action="Index" class="row g-2 align-items-end mb-3">
+        <div class="col-auto">
+            <label class="form-label mb-0" for="firmaId">Firma</label>
+            <select name="firmaId" id="firmaId" class="form-select" onchange="this.form.submit()">
+                @if (isAdmin)
+                {
+                    if (selectedFirmaId == null)
+                    {
+                        <option value="-1" selected>Tümü</option>
+                    }
+                    else
+                    {
+                        <option value="-1">Tümü</option>
+                    }
+                }
+                @foreach (var f in firmalar)
+                {
+                    if (selectedFirmaId == f.FirmaId)
+                    {
+                        <option value="@f.FirmaId" selected>@f.FirmaAdi</option>
+                    }
+                    else
+                    {
+                        <option value="@f.FirmaId">@f.FirmaAdi</option>
+                    }
+                }
+            </select>
+        </div>
+    </form>
 
     @if (canCreate)
     {

@@ -21,11 +21,14 @@ function tipsForPage(pageKey: string | null | undefined): TipItem[] {
           { icon: "filter-outline", title: "Filtreler", detail: "Firma, durum, kart tipi ve işyeri ile listeyi daraltın." },
           { icon: "refresh", title: "Yenile", detail: "Ara veya sayfa değiştirerek listeyi yenileyin." },
           { icon: "plus", title: "Yeni personel", detail: "Yetkiniz varsa sağ alttaki + ile ekleyin." },
+          { icon: "asterisk", title: "Zorunlu alanlar (*)", detail: "Sicil No, Ad, Soyad, İşe Giriş ve İşyeri her zaman zorunludur." },
+          { icon: "checkbox-marked-outline", title: "Koşullu zorunlular", detail: "Firma/Taşeron → TC; Ziyaretçi/Araç → Kart No; Yemek hakkı → Yemek adedi. İşaret kalkınca * da kalkar." },
         ];
       case "kisiHareketleri":
         return [
           { icon: "filter-outline", title: "Filtreler", detail: "Tarih ve personel filtreleriyle hareketleri daraltın." },
           { icon: "refresh", title: "Yenile", detail: "Listeyi yeniden yüklemek için Ara / Yenile kullanın." },
+          { icon: "palette-outline", title: "Satır renkleri", detail: "Gri = pasif; mavi/yeşil/pembe = Giriş/Yemekhane/Çıkış; sarı = elle eklenen veya güncellenen hareket." },
         ];
       case "izinler":
       case "izinTalepleri":

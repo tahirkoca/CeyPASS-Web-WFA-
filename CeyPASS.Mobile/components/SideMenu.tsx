@@ -97,7 +97,7 @@ function buildMenu(abilities: any, user: any, hasSicilNo: boolean) {
   if (rolId === 1) {
     sections.push({
       title: "Admin",
-      items: [{ key: "adminPanel", label: "Admin Panel", icon: "shield-lock" }],
+      items: [{ key: "guncellemeBildirimi", label: "Güncelleme Bildirimi", icon: "email-check" }],
     });
   }
 

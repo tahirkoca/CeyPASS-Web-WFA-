@@ -2,7 +2,9 @@ using CeyPASS.Business.Abstractions;
 using CeyPASS.Business.Services;
 using CeyPASS.DataAccess;
 using CeyPASS.DataAccess.Abstractions;
+using CeyPASS.DataAccess.Audit;
 using CeyPASS.DataAccess.Repositories;
+using CeyPASS.Infrastructure.Audit;
 using CeyPASS.Infrastructure.Configuration;
 using CeyPASS.Infrastructure.Helpers;
 using Microsoft.EntityFrameworkCore;
@@ -41,7 +43,7 @@ public static class ServiceRegistration
         }
 
         services.AddDbContext<CeyPASSDataConnectionCore>(options =>
-            options.UseSqlServer(connectionString), ServiceLifetime.Scoped);
+            options.UseSqlServer(connectionString).AddCeyPassAuditing(), ServiceLifetime.Scoped);
 
         // Repos
         services.AddScoped<IAuthorizationRepository, AuthorizationRepositoryCore>();
@@ -127,7 +129,6 @@ public static class ServiceRegistration
         services.AddTransient<Views.CihazView>();
         services.AddTransient<Views.ResmiTatilView>();
         services.AddTransient<Views.GuncellemeBildirimView>();
-        services.AddTransient<Views.AdminPanelView>();
         services.AddTransient<Views.RaporlarView>();
         services.AddTransient<Views.AylikPuantajView>();
         services.AddTransient<Views.PersonelView>();
@@ -135,7 +136,9 @@ public static class ServiceRegistration
         services.AddTransient<Views.CanliIzlemeLoginWindow>();
         services.AddTransient<Views.CanliIzlemeWindow>();
 
-        return services.BuildServiceProvider();
+        var sp = services.BuildServiceProvider();
+        CeyPassAudit.Configure(sp, "WPF");
+        return sp;
     }
 
     /// <summary>

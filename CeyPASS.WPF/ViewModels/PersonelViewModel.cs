@@ -352,9 +352,38 @@ public sealed class PersonelViewModel : ObservableObject
         }
     }
 
-    public bool Ziyaretci { get => _ziyaretci; set => SetProperty(ref _ziyaretci, value); }
-    public bool AracKarti { get => _aracKarti; set => SetProperty(ref _aracKarti, value); }
-    public bool Taseron { get => _taseron; set => SetProperty(ref _taseron, value); }
+    public bool Ziyaretci
+    {
+        get => _ziyaretci;
+        set
+        {
+            if (_ziyaretci == value) return;
+            SetProperty(ref _ziyaretci, value);
+            RaiseDependentUi();
+        }
+    }
+
+    public bool AracKarti
+    {
+        get => _aracKarti;
+        set
+        {
+            if (_aracKarti == value) return;
+            SetProperty(ref _aracKarti, value);
+            RaiseDependentUi();
+        }
+    }
+
+    public bool Taseron
+    {
+        get => _taseron;
+        set
+        {
+            if (_taseron == value) return;
+            SetProperty(ref _taseron, value);
+            RaiseDependentUi();
+        }
+    }
 
     public bool IsAnaSicil => _isAnaSicil;
 
@@ -544,6 +573,15 @@ public sealed class PersonelViewModel : ObservableObject
     public bool YemekAdediEnabled => YemekHakki && !FieldsReadOnly;
     public bool IstenCikisEnabled => _mode == ScreenMode.Exit;
     public bool VardiyaEditable => !FieldsReadOnly;
+
+    public bool EditingRequired => _mode is ScreenMode.Add or ScreenMode.Edit;
+    public bool SicilNoRequired => EditingRequired;
+    public bool AdSoyadRequired => EditingRequired;
+    public bool IseGirisRequired => EditingRequired;
+    public bool IsyeriRequired => EditingRequired;
+    public bool TcKimlikRequired => EditingRequired && (FirmaPersoneli || Taseron);
+    public bool KartNoRequired => EditingRequired && (Ziyaretci || AracKarti);
+    public bool YemekAdediRequired => EditingRequired && YemekHakki;
 
     public string? Status
     {
@@ -1450,10 +1488,7 @@ public sealed class PersonelViewModel : ObservableObject
         if (!validasyonSonuc.IsValid)
         {
             var msg = validasyonSonuc.Message ?? "Doğrulama başarısız.";
-            if (msg.IndexOf("İşyeri", StringComparison.OrdinalIgnoreCase) >= 0)
-                Errors.Set("Isyeri", msg);
-            else
-                Errors.Set("SicilNo", msg);
+            MapValidasyonError(msg);
             Error = Errors.FirstMessage;
             return;
         }
@@ -1598,8 +1633,33 @@ public sealed class PersonelViewModel : ObservableObject
         RaisePropertyChanged(nameof(IseGirisMissingText));
         RaisePropertyChanged(nameof(CalismaDurumuText));
         RaisePropertyChanged(nameof(IsIstenCikmis));
+        RaisePropertyChanged(nameof(EditingRequired));
+        RaisePropertyChanged(nameof(SicilNoRequired));
+        RaisePropertyChanged(nameof(AdSoyadRequired));
+        RaisePropertyChanged(nameof(IseGirisRequired));
+        RaisePropertyChanged(nameof(IsyeriRequired));
+        RaisePropertyChanged(nameof(TcKimlikRequired));
+        RaisePropertyChanged(nameof(KartNoRequired));
+        RaisePropertyChanged(nameof(YemekAdediRequired));
         RaiseCokluSicilUi();
     }
+
+    private void MapValidasyonError(string msg)
+    {
+        if (ContainsIgnoreCase(msg, "İşyeri"))
+            Errors.Set("Isyeri", msg);
+        else if (ContainsIgnoreCase(msg, "T.C.") || ContainsIgnoreCase(msg, "TC Kimlik") || ContainsIgnoreCase(msg, "Kimlik No"))
+            Errors.Set("TcKimlikNo", msg);
+        else if (ContainsIgnoreCase(msg, "Kart No"))
+            Errors.Set("KartNo", msg);
+        else if (ContainsIgnoreCase(msg, "Yemek"))
+            Errors.Set("YemekAdedi", msg);
+        else
+            Errors.Set("SicilNo", msg);
+    }
+
+    private static bool ContainsIgnoreCase(string haystack, string needle)
+        => haystack.IndexOf(needle, StringComparison.OrdinalIgnoreCase) >= 0;
 
     private void RefreshReadOnlyFieldDisplays()
     {

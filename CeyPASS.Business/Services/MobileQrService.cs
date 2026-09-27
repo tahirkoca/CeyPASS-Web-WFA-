@@ -81,8 +81,8 @@ namespace CeyPASS.Business.Services
 
                 // 5. KisiHareketler Tablosuna Logla
                 var insertHareket = @"
-                    INSERT INTO KisiHareketler (FirmaId, CihazId, PersonelId, Tarih, Tip, KayitZamani, AktifMi)
-                    VALUES (@p0, @p1, @p2, GETDATE(), @p3, GETDATE(), 1)"; 
+                    INSERT INTO KisiHareketler (FirmaId, CihazId, PersonelId, Tarih, Tip, KayitZamani, AktifMi, ManuelMi)
+                    VALUES (@p0, @p1, @p2, GETDATE(), @p3, GETDATE(), 1, 0)"; 
                 _context.Database.ExecuteSqlRaw(insertHareket, 
                     new SqlParameter("@p0", cihaz.FirmaId),
                     new SqlParameter("@p1", cihaz.CihazId),

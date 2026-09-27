@@ -361,14 +361,42 @@ namespace CeyPASS.Web.Controllers
             return RedirectToAction("Index", new { yil, ay, personelId });
         }
 
-        /// <summary>Çoklu sicil özet bilgisini JSON döner.</summary>
+        /// <summary>Çoklu sicil özet bilgisini JSON döner (aktif hedef listesi dahil).</summary>
         [HttpGet]
         public IActionResult GetCokluSicilOzet(int personelId)
         {
             if (!_authorizationService.ViewAbility(PageName)) return Forbid();
-            if (personelId <= 0) return Json(new { isAnaSicil = false, aktifHedefSayisi = 0 });
+            if (personelId <= 0)
+                return Json(new { isAnaSicil = false, aktifHedefSayisi = 0, hedefler = Array.Empty<object>() });
+
             var ozet = _cokluSicilService.GetOzet(personelId);
-            return Json(new { isAnaSicil = ozet.IsAnaSicil, aktifHedefSayisi = ozet.AktifHedefSayisi });
+            var hedefler = (_cokluSicilService.GetByAnaPersonelId(personelId, yalnizcaAktif: true)
+                            ?? new List<CokluSicilBaglantiDTO>())
+                .OrderBy(x => x.HedefAdSoyad)
+                .ThenBy(x => x.HedefPersonelId)
+                .Select(h => new
+                {
+                    hedefPersonelId = h.HedefPersonelId,
+                    hedefAdSoyad = h.HedefAdSoyad,
+                    aktarimGunSayisi = h.AktarimGunSayisi
+                })
+                .ToList();
+
+            return Json(new
+            {
+                isAnaSicil = ozet.IsAnaSicil,
+                aktifHedefSayisi = ozet.AktifHedefSayisi,
+                hedefler
+            });
+        }
+
+        /// <summary>Firma/işyeri/ay veri durumu özeti (JSON).</summary>
+        [HttpGet]
+        public IActionResult GetVeriDurumu(int firmaId, int? isyeriId, int yil, int ay, int? personelId = null)
+        {
+            if (!_authorizationService.ViewAbility(PageName)) return Forbid();
+            var dto = _puantajService.GetVeriDurumu(firmaId, isyeriId, yil, ay, personelId);
+            return Json(dto);
         }
 
         /// <summary>Yetkili işyeri listesi (cascade dropdown).</summary>

@@ -982,9 +982,11 @@ export function KisiHareketleriScreen(props: { user: any; abilities: any; onOpen
           {!error &&
             items.map((row, idx) => {
               const aktif = !!(pick<any>(row, "aktifMi", "AktifMi"));
+              const manuel = !!(pick<any>(row, "manuelMi", "ManuelMi"));
               const tip = tipLabel(pick<any>(row, "tip", "Tip"));
+              const rowBg = !aktif ? "bg-[#f1f5f9]" : manuel ? "bg-[#fff9c4]" : "bg-white";
               return (
-                <View key={`${String(pick<any>(row, "id", "Id") ?? idx)}_${idx}`} className={`px-4 ${listRowPadClass} border-b border-[#f1f5f9] ${!aktif ? "bg-[#f1f5f9]" : "bg-white"}`}>
+                <View key={`${String(pick<any>(row, "id", "Id") ?? idx)}_${idx}`} className={`px-4 ${listRowPadClass} border-b border-[#f1f5f9] ${rowBg}`}>
                   <Text className="text-[#0f172a] font-extrabold" numberOfLines={1}>
                     {(pick<any>(row, "adSoyad", "AdSoyad") ?? "-").toString()} • {(pick<any>(row, "sicilNo", "SicilNo") ?? "-").toString()}
                   </Text>

@@ -221,6 +221,7 @@
                             </dxg:GridColumn.EditSettings>
                         </dxg:GridColumn>
                         <dxg:GridColumn FieldName="AktifMi" Visible="False"/>
+                        <dxg:GridColumn FieldName="ManuelMi" Visible="False"/>
                         <dxg:GridColumn FieldName="Id" Visible="False"/>
                         <dxg:GridColumn FieldName="CihazId" Visible="False"/>
                         <dxg:GridColumn FieldName="PersonelId" Visible="False"/>
@@ -234,24 +235,24 @@
                                         <dx:Format Background="#E6E6E6" Foreground="#0F172A"/>
                                     </dxg:FormatCondition.Format>
                                 </dxg:FormatCondition>
-                                <dxg:FormatCondition Expression="[AktifMi] And [Tip] = 'Giriş'" ApplyToRow="True">
+                                <dxg:FormatCondition Expression="[AktifMi] And [ManuelMi]" ApplyToRow="True">
+                                    <dxg:FormatCondition.Format>
+                                        <dx:Format Background="#FFF9C4" Foreground="#0F172A"/>
+                                    </dxg:FormatCondition.Format>
+                                </dxg:FormatCondition>
+                                <dxg:FormatCondition Expression="[AktifMi] And Not [ManuelMi] And [Tip] = 'Giriş'" ApplyToRow="True">
                                     <dxg:FormatCondition.Format>
                                         <dx:Format Background="#BBDEFB" Foreground="#0F172A"/>
                                     </dxg:FormatCondition.Format>
                                 </dxg:FormatCondition>
-                                <dxg:FormatCondition Expression="[AktifMi] And [Tip] = 'Yemekhane'" ApplyToRow="True">
+                                <dxg:FormatCondition Expression="[AktifMi] And Not [ManuelMi] And [Tip] = 'Yemekhane'" ApplyToRow="True">
                                     <dxg:FormatCondition.Format>
                                         <dx:Format Background="#C8E6C9" Foreground="#0F172A"/>
                                     </dxg:FormatCondition.Format>
                                 </dxg:FormatCondition>
-                                <dxg:FormatCondition Expression="[AktifMi] And ([Tip] = 'Çıkış' Or [Tip] = 'Cikis')" ApplyToRow="True">
+                                <dxg:FormatCondition Expression="[AktifMi] And Not [ManuelMi] And ([Tip] = 'Çıkış' Or [Tip] = 'Cikis')" ApplyToRow="True">
                                     <dxg:FormatCondition.Format>
                                         <dx:Format Background="#FFCDD2" Foreground="#0F172A"/>
-                                    </dxg:FormatCondition.Format>
-                                </dxg:FormatCondition>
-                                <dxg:FormatCondition Expression="[AktifMi] And [Tip] &lt;&gt; 'Giriş' And [Tip] &lt;&gt; 'Yemekhane' And [Tip] &lt;&gt; 'Çıkış' And [Tip] &lt;&gt; 'Cikis'" ApplyToRow="True">
-                                    <dxg:FormatCondition.Format>
-                                        <dx:Format Background="#FFF9C4" Foreground="#0F172A"/>
                                     </dxg:FormatCondition.Format>
                                 </dxg:FormatCondition>
                             </dxg:TableView.FormatConditions>

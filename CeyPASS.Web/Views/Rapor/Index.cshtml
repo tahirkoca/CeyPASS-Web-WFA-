@@ -223,7 +223,7 @@
                             else if (multiKind == CeyPASS.Infrastructure.Helpers.RaporParametreHelper.MultiSelectKind.Cihaz && cihazlar.Count > 0)
                             {
                                 <div class="col-12">
-                                    <label class="form-label">Cihazlar <small class="text-muted">(hiç seçilmezse firmanın tüm aktif cihazları)</small></label>
+                                    <label class="form-label">Cihazlar <small class="text-muted">@(ViewBag.YemekhaneCihazFiltresi == true ? "(hiç seçilmezse firmanın tüm aktif yemekhane cihazları)" : "(hiç seçilmezse firmanın tüm aktif cihazları)")</small></label>
                                     <div class="d-flex flex-wrap gap-3 border rounded p-2 bg-light">
                                         @foreach (var c in cihazlar)
                                         {

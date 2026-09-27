@@ -434,7 +434,7 @@ namespace CeyPASS.WFA.Forms
         }
         private void btnAdminPanel_Click(object sender, EventArgs e)
         {
-            OpenTUserControl<CeyPASS.WFA.UserControls.Admin.ucAdminPanel>(islemEkraniPanel, "Admin");
+            OpenTUserControl<ucGuncellemeMailEkrani>(islemEkraniPanel, "Guncelleme");
         }
 
         private void btnSidebarLogout_Click(object sender, EventArgs e)

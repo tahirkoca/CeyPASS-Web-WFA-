@@ -14,6 +14,12 @@ namespace CeyPASS.Infrastructure.Helpers
         /// </summary>
         public const int IsyeriFilterTumuId = -1;
 
+        /// <summary>
+        /// Firma filtre combosunda "Tümü" satırı Id'si (admin).
+        /// Gerçek FirmaId değerleriyle çakışmaması için negatiftir.
+        /// </summary>
+        public const int FirmaFilterTumuId = -1;
+
         /// <summary>RolId 1 veya 2 sistem yöneticisi sayılır.</summary>
         public static bool IsAdmin(int? rolId) => rolId == 1 || rolId == 2;
 
@@ -21,9 +27,17 @@ namespace CeyPASS.Infrastructure.Helpers
         public static LookupItem CreateIsyeriFilterTumuItem(string ad = "Tümü")
             => new LookupItem { Id = IsyeriFilterTumuId, Ad = ad };
 
+        /// <summary>Firma filtre combosu için "Tümü" satırı üretir (admin).</summary>
+        public static LookupItem CreateFirmaFilterTumuItem(string ad = "Tümü")
+            => new LookupItem { Id = FirmaFilterTumuId, Ad = ad };
+
         /// <summary>Seçim Tümü mü (null veya negatif sentinel).</summary>
         public static bool IsIsyeriFilterTumu(int? isyeriId)
             => !isyeriId.HasValue || isyeriId.Value < 0;
+
+        /// <summary>Firma filtre seçimi Tümü mü.</summary>
+        public static bool IsFirmaFilterTumu(int? firmaId)
+            => !firmaId.HasValue || firmaId.Value < 0;
 
         /// <summary>
         /// Combo/prefs seçimini sorgu filtresine çevirir.

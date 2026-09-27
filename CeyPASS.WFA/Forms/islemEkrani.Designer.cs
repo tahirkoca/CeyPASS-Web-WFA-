@@ -467,7 +467,7 @@ namespace CeyPASS.WFA.Forms
             this.btnAdminPanel.Padding = new System.Windows.Forms.Padding(15, 0, 0, 0);
             this.btnAdminPanel.Size = new System.Drawing.Size(250, 45);
             this.btnAdminPanel.TabIndex = 25;
-            this.btnAdminPanel.Text = "  Admin Panel";
+            this.btnAdminPanel.Text = "  Güncelleme Bildirimi";
             this.btnAdminPanel.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             this.btnAdminPanel.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageBeforeText;
             this.btnAdminPanel.UseVisualStyleBackColor = true;

@@ -21,7 +21,22 @@ internal static class ShortcutCatalog
         var list = new List<ShortcutItem>(Global);
         list.AddRange(pageKey?.Trim() switch
         {
-            "Raporlar" or "Izinler" or "KisiHareketler" or "AylikPuantaj" or "Personeller"
+            "Personeller" =>
+            [
+                new("Ctrl+F", "Tabloda ara"),
+                new("Ctrl+P", "Yazdır / dışa aktar önizleme"),
+                new("* Zorunlu", "Sicil, Ad Soyad, İşe Giriş, İşyeri her zaman zorunlu"),
+                new("* Koşullu", "Firma/Taşeron→TC; Ziyaretçi/Araç→Kart; Yemek→Adedi")
+            ],
+            "KisiHareketler" =>
+            [
+                new("Ctrl+F", "Tabloda ara"),
+                new("Ctrl+P", "Yazdır / dışa aktar önizleme"),
+                new("Renk: gri", "Pasif hareket"),
+                new("Renk: mavi/yeşil/pembe", "Giriş / Yemekhane / Çıkış (cihaz)"),
+                new("Renk: sarı", "Elle eklenen veya güncellenen hareket")
+            ],
+            "Raporlar" or "Izinler" or "AylikPuantaj"
                 or "Dashboard" =>
             [
                 new("Ctrl+F", "Tabloda ara"),

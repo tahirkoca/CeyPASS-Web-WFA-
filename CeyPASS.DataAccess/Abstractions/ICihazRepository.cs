@@ -7,7 +7,7 @@ namespace CeyPASS.DataAccess.Abstractions
     public interface ICihazRepository
     {
         /// <summary>List sorgularını getirir.</summary>
-        List<CihazListDTO> GetList(bool sadeceAktif, int? firmaId = null);
+        List<CihazListDTO> GetList(bool sadeceAktif, int? firmaId = null, bool sadeceYemekhane = false);
         /// <summary>Kimliğe göre kaydı getirir.</summary>
         Cihaz GetById(int id);
         /// <summary>Yeni kayıt ekler.</summary>

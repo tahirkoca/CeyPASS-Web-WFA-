@@ -338,7 +338,8 @@ public sealed class RaporlarViewModel : ObservableObject
         {
             using var scope = _scopes.CreateScope();
             var cihazSvc = scope.ServiceProvider.GetRequiredService<ICihazService>();
-            var list = cihazSvc.GetListe(true, firmaId) ?? new List<CihazListDTO>();
+            bool sadeceYemekhane = RaporParametreHelper.RequiresYemekhaneCihazFilter(SelectedRapor?.ProcedureAdi);
+            var list = cihazSvc.GetListe(true, firmaId, sadeceYemekhane) ?? new List<CihazListDTO>();
             MultiSelectItems.Clear();
             foreach (var c in list)
             {
@@ -349,7 +350,9 @@ public sealed class RaporlarViewModel : ObservableObject
                     Tag = c
                 });
             }
-            MultiSelectTitle = "Cihazlar (işaretlenmezse firmanın tüm aktif cihazları)";
+            MultiSelectTitle = sadeceYemekhane
+                ? "Cihazlar (işaretlenmezse firmanın tüm aktif yemekhane cihazları)"
+                : "Cihazlar (işaretlenmezse firmanın tüm aktif cihazları)";
             ShowMultiSelect = MultiSelectItems.Count > 0;
             _loadedMultiFirmaId = firmaId;
             _loadedMultiKind = RaporParametreHelper.MultiSelectKind.Cihaz;

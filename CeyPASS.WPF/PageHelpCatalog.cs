@@ -33,6 +33,8 @@ public static class PageHelpCatalog
             [
                 "Ekle: formu doldurun → Kaydet. Vazgeç ile iptal edin.",
                 "Güncelle: soldan kişi seçin → Güncelle → düzenleyin → Kaydet.",
+                "Zorunlu alanlar (*) ekleme/güncellemede görünür: Sicil No, Ad Soyad, İşe Giriş, İşyeri her zaman zorunludur.",
+                "Koşullu zorunlular: Firma Personeli veya Taşeron → TC Kimlik No; Ziyaretçi veya Araç Kartı → Kart No; Yemek Hakkı → Yemek Adedi. İşaret kalkınca * da kalkar.",
                 "İşten Çıkar: seçili aktif personeli çıkış tarihi ile pasife alır (puantaj bayrağı korunur).",
                 "Aktif Et: işten çıkanlar listesinde seçili kişiyi tekrar aktif eder.",
                 "Çoklu Sicil: kayıtlı personelde Puantaj Yapılır ve TC doluysa hedef sicil eşleştirmelerini açar; bağlantı ekleyin/düzenleyin, gerekirse modalde Tümünü pasifleştir kullanın.",
@@ -109,6 +111,7 @@ public static class PageHelpCatalog
                 "Durum (Aktif / İşten Çıkanlar), firma, kişi ve tarih aralığı seçerek hareketleri getirin.",
                 "İşten çıkanlarda Kart Tipi filtresi uygulanmaz; çıkan personelin geçmiş hareketlerine bakabilirsiniz.",
                 "Pasif Hareketler işaretliyken Sil yerine Aktif Et görünür; pasif kaydı tekrar aktif edebilirsiniz.",
+                "Satır renkleri: gri = pasif; mavi = Giriş; yeşil = Yemekhane; pembe = Çıkış; sarı = elle eklenen veya güncellenen hareket (Turnike/CihazId korunur).",
                 "Grid’de sıralama / filtre / arama (Ctrl+F) kullanabilirsiniz.",
                 "Yazdır / Excel / PDF için grid menüsünü veya yazdırmayı kullanın."
             ]
@@ -131,14 +134,24 @@ public static class PageHelpCatalog
             ],
             PulseTargetNames = ["AtamaGrid", "CmbAtamaTip", "BtnKartDurumToplu"]
         },
-        ["AdminPanel"] = new PageHelpTopic
+        ["Guncelleme"] = new PageHelpTopic
         {
-            Title = "Admin Panel — rehber",
+            Title = "Güncelleme Bildirimi — rehber",
             Steps =
             [
                 "Yalnızca süper yönetici erişir.",
-                "Sekmelerden kullanıcı, yetki ve sistem ayarlarını yönetin.",
-                "Değişikliklerden sonra ilgili ekranları Yenile ile doğrulayın."
+                "Sürüm notlarını doldurun; Önizleme ile e-posta içeriğini kontrol edin.",
+                "Gönder ile bildirim e-postasını ilgili alıcı gruplarına iletin."
+            ]
+        },
+        ["AdminPanel"] = new PageHelpTopic
+        {
+            Title = "Güncelleme Bildirimi — rehber",
+            Steps =
+            [
+                "Yalnızca süper yönetici erişir.",
+                "Sürüm notlarını doldurun; Önizleme ile e-posta içeriğini kontrol edin.",
+                "Gönder ile bildirim e-postasını ilgili alıcı gruplarına iletin."
             ]
         }
     };

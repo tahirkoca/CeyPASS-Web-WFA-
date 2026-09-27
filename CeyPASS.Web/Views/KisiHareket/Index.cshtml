@@ -31,6 +31,15 @@
     <div class="row mb-3">
         <div class="col-12">
             <h2>Kişi Hareketleri</h2>
+
+            <div class="alert alert-info small mb-3">
+                <strong>Satır renkleri:</strong>
+                gri = pasif;
+                mavi ton = Giriş;
+                yeşil ton = Yemekhane;
+                pembe ton = Çıkış;
+                sarı = elle eklenen veya güncellenen hareket (Turnike bilgisi korunur).
+            </div>
             
             @if (TempData["Success"] != null)
             {
@@ -287,7 +296,7 @@
                                 <tbody>
                                     @foreach (var hareket in Model)
                                     {
-                                        <tr class="@(!hareket.AktifMi ? "table-secondary" : "")">
+                                        <tr class="@(!hareket.AktifMi ? "table-secondary" : hareket.ManuelMi ? "table-warning" : "")">
                                             <td>@hareket.Tarih.ToString("dd.MM.yyyy HH:mm:ss")</td>
                                             <td>@hareket.SicilNo</td>
                                             <td>@hareket.AdSoyad</td>

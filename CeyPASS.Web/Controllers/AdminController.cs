@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Hosting;
 using CeyPASS.Business.Abstractions;
-using CeyPASS.DataAccess.Abstractions;
 using CeyPASS.Entities.Concrete;
 using CeyPASS.Web.Models.Admin;
 using System;
@@ -12,125 +11,36 @@ using System.Threading.Tasks;
 
 namespace CeyPASS.Web.Controllers
 {
-    /// <summary>
-    /// Admin paneli - sadece RolId 1 (süper admin) kullanıcılar erişebilir.
-    /// Sekmeli yapıda tüm verilerin tam listesi ve CRUD işlemleri (mevcut sayfa akışları değişmez).
-    /// </summary>
-    /// <summary>Sistem yonetim paneli ve kullanici islemleri.</summary>
+    /// <summary>Süper admin (RolId=1) için güncelleme bildirimi mail ekranı.</summary>
     public class AdminController : Controller
     {
         private readonly ISessionContext _sessionContext;
-        private readonly IFirmaService _firmaService;
-        private readonly IIsyeriService _isyeriService;
-        private readonly ICihazService _cihazService;
-        private readonly IPozisyonService _pozisyonService;
-        private readonly IResmiTatilService _resmiTatilService;
-        private readonly ICalismaStatuService _calismaStatuService;
-        private readonly ICalismaSekliService _calismaSekliService;
         private readonly INotificationService _notificationService;
-        private readonly IAdminKullaniciRepository _adminKullaniciRepo;
-        private readonly IKisiRepository _kisiRepo;
-        private readonly IUstYetkiliRepository _ustYetkiliRepo;
         private readonly IWebHostEnvironment _env;
 
         public AdminController(
             ISessionContext sessionContext,
-            IFirmaService firmaService,
-            IIsyeriService isyeriService,
-            ICihazService cihazService,
-            IPozisyonService pozisyonService,
-            IResmiTatilService resmiTatilService,
-            ICalismaStatuService calismaStatuService,
-            ICalismaSekliService calismaSekliService,
             INotificationService notificationService,
-            IAdminKullaniciRepository adminKullaniciRepo,
-            IKisiRepository kisiRepo,
-            IUstYetkiliRepository ustYetkiliRepo,
             IWebHostEnvironment env)
         {
             _sessionContext = sessionContext;
-            _firmaService = firmaService;
-            _isyeriService = isyeriService;
-            _cihazService = cihazService;
-            _pozisyonService = pozisyonService;
-            _resmiTatilService = resmiTatilService;
-            _calismaStatuService = calismaStatuService;
-            _calismaSekliService = calismaSekliService;
             _notificationService = notificationService;
-            _adminKullaniciRepo = adminKullaniciRepo;
-            _kisiRepo = kisiRepo;
-            _ustYetkiliRepo = ustYetkiliRepo;
             _env = env;
         }
 
-        /// <summary>Liste veya ana ekran.</summary>
-        public IActionResult Index(string tab)
+        /// <summary>Güncelleme bildirimi formu.</summary>
+        public IActionResult Index()
         {
             if (_sessionContext.CurrentUser == null)
                 return RedirectToAction("Login", "Account");
 
             if (!IsAdmin())
             {
-                TempData["Error"] = "Admin paneline erişim yetkiniz yok.";
+                TempData["Error"] = "Güncelleme Bildirimi ekranına erişim yetkiniz yok.";
                 return RedirectToAction("Index", "Home");
             }
 
-            var model = new AdminPanelViewModel
-            {
-                Firmalar = (_firmaService.GetAll() ?? new List<Firma>()).OrderBy(x => x.FirmaAdi).ToList(),
-                Isyeriler = _isyeriService.GetListForAdmin() ?? new List<IsyeriItem>(),
-                Cihazlar = _cihazService.GetListe(sadeceAktif: false, firmaId: null) ?? new List<CihazListDTO>(),
-                Pozisyonlar = _pozisyonService.GetListForAdmin() ?? new List<PozisyonListDTO>(),
-                ResmiTatiller = (_resmiTatilService.GetList(yil: null) ?? new List<ResmiTatilDTO>()).OrderBy(x => x.Tarih).ToList(),
-                CalismaStatuleri = _calismaStatuService.GetAll() ?? new List<LookupItem>(),
-                CalismaSekilleri = _calismaSekliService.GetAllForAdmin() ?? new List<CalismaSekli>(),
-                Kullanicilar = _adminKullaniciRepo.GetAll() ?? new List<KullaniciAdminRow>(),
-                Personeller = _kisiRepo.GetAktifPersonellerIdAd() ?? new List<PersonelAdSoyad>(),
-                UstYetkililer = _ustYetkiliRepo.GetAll() ?? new List<UstYetkili>(),
-                AktifTab = string.IsNullOrWhiteSpace(tab) ? "firma" : tab.ToLowerInvariant()
-            };
-
-            return View(model);
-        }
-
-        /// <summary>KullaniciPersonelGuncelle islemi.</summary>
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public IActionResult KullaniciPersonelGuncelle(int kullaniciId, int? personelId)
-        {
-            if (_sessionContext.CurrentUser == null || !IsAdmin())
-                return RedirectToAction("Login", "Account");
-
-            bool ok = _adminKullaniciRepo.SetPersonelId(kullaniciId, personelId);
-            TempData[ok ? "Success" : "Error"] = ok ? "Kullanıcı-personel bağlantısı güncellendi." : "Güncelleme başarısız.";
-            return RedirectToAction("Index", new { tab = "kullanicilar" });
-        }
-
-        /// <summary>UstYetkiliGuncelle islemi.</summary>
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public IActionResult UstYetkiliGuncelle(string personelId, string? ustYetkiliPersonelId)
-        {
-            if (_sessionContext.CurrentUser == null || !IsAdmin())
-                return RedirectToAction("Login", "Account");
-
-            personelId = (personelId ?? "").Trim();
-            ustYetkiliPersonelId = (ustYetkiliPersonelId ?? "").Trim();
-
-            if (string.IsNullOrWhiteSpace(personelId))
-            {
-                TempData["Error"] = "PersonelId boş olamaz.";
-                return RedirectToAction("Index", new { tab = "ustyetkili" });
-            }
-
-            bool ok;
-            if (string.IsNullOrWhiteSpace(ustYetkiliPersonelId))
-                ok = _ustYetkiliRepo.Sil(personelId);
-            else
-                ok = _ustYetkiliRepo.EkleVeyaGuncelle(personelId, ustYetkiliPersonelId);
-
-            TempData[ok ? "Success" : "Error"] = ok ? "Üst yetkili kaydı güncellendi." : "İşlem başarısız.";
-            return RedirectToAction("Index", new { tab = "ustyetkili" });
+            return View(new GuncellemeMailViewModel());
         }
 
         /// <summary>Güncelleme bildirimi mail önizlemesi (HTML döner, yeni sekmede açılabilir).</summary>
@@ -145,7 +55,7 @@ namespace CeyPASS.Web.Controllers
             if (!GuncellemeDogrula(dto, out string hata))
             {
                 TempData["Error"] = hata;
-                return RedirectToAction("Index", new { tab = "guncellememail" });
+                return RedirectToAction("Index");
             }
 
             string logoBase64 = GetLogoBase64FromWwwRoot();
@@ -165,7 +75,7 @@ namespace CeyPASS.Web.Controllers
             if (!GuncellemeDogrula(dto, out string hata))
             {
                 TempData["Error"] = hata;
-                return RedirectToAction("Index", new { tab = "guncellememail" });
+                return RedirectToAction("Index");
             }
 
             try
@@ -182,7 +92,7 @@ namespace CeyPASS.Web.Controllers
                 TempData["Error"] = "Hata: " + ex.Message;
             }
 
-            return RedirectToAction("Index", new { tab = "guncellememail" });
+            return RedirectToAction("Index");
         }
 
         private static GuncellemeNotifikasyonDTO ViewModelToDto(GuncellemeMailViewModel m)
@@ -225,7 +135,7 @@ namespace CeyPASS.Web.Controllers
             return _sessionContext.RolId == 1;
         }
 
-        /// <summary>wwwroot/images/logo.png veya wwwroot/logo.png dosyasını base64 olarak okur (güncelleme maili başlığı için).</summary>
+        /// <summary>wwwroot/images/logo.png veya wwwroot/logo.png dosyasını base64 olarak okur.</summary>
         private string GetLogoBase64FromWwwRoot()
         {
             try

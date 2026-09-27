@@ -273,10 +273,10 @@
                                       Visibility="Collapsed">
                                 <StackPanel>
                                     <Button x:Name="BtnAdmin" Style="{StaticResource SidebarButton}"
-                                            Tag="Admin" Click="Menu_OnClick">
+                                            Tag="Guncelleme" Click="Menu_OnClick">
                                         <StackPanel Orientation="Horizontal">
                                             <Image Source="pack://application:,,,/Assets/icons8-windows-update-25.png" Width="25" Height="25" Margin="0,0,10,0"/>
-                                            <TextBlock Text="Admin Panel" VerticalAlignment="Center"/>
+                                            <TextBlock Text="Güncelleme Bildirimi" VerticalAlignment="Center"/>
                                         </StackPanel>
                                     </Button>
                                 </StackPanel>

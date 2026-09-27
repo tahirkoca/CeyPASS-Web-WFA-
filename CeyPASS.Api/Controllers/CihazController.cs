@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using CeyPASS.Business.Abstractions;
 using IAuthorizationService = CeyPASS.Business.Abstractions.IAuthorizationService;
 using CeyPASS.Entities.Concrete;
+using CeyPASS.Infrastructure.Helpers;
 using CeyPASS.Models;
 
 namespace CeyPASS.Api.Controllers
@@ -16,26 +17,48 @@ namespace CeyPASS.Api.Controllers
         private readonly ICihazService _cihazService;
         private readonly ISessionContext _sessionContext;
         private readonly IAuthorizationService _authorizationService;
+        private readonly IKullaniciFirmaIsyeriYetkiService _yetkiService;
         private const string PageName = "Cihazlar";
 
         public CihazController(
             ICihazService cihazService,
             ISessionContext sessionContext,
-            IAuthorizationService authorizationService)
+            IAuthorizationService authorizationService,
+            IKullaniciFirmaIsyeriYetkiService yetkiService)
         {
             _cihazService = cihazService;
             _sessionContext = sessionContext;
             _authorizationService = authorizationService;
+            _yetkiService = yetkiService;
         }
 
-        /// <summary>Cihaz listesi; admin tüm firmalar.</summary>
+        /// <summary>Cihaz listesi; admin TÜMÜ veya firmaId ile daraltma.</summary>
         [HttpGet]
-        public ActionResult<ApiResult<List<CihazListDTO>>> Get([FromQuery] bool sadeceAktif = false)
+        public ActionResult<ApiResult<List<CihazListDTO>>> Get([FromQuery] bool sadeceAktif = false, [FromQuery] int? firmaId = null)
         {
             if (!_authorizationService.ViewAbility(PageName)) return Forbid();
 
-            int? firmaId = _sessionContext.IsAdmin() ? null : _sessionContext.AktifFirmaId;
-            var list = _cihazService.GetListe(sadeceAktif, firmaId);
+            bool isAdmin = _sessionContext.IsAdmin();
+            int? resolved;
+            if (isAdmin)
+            {
+                if (!firmaId.HasValue || firmaId.Value < 0)
+                    resolved = null;
+                else
+                    resolved = firmaId;
+            }
+            else
+            {
+                int fid = firmaId ?? _sessionContext.AktifFirmaId ?? 0;
+                var yetkiler = _sessionContext.AktifKullaniciId.HasValue
+                    ? (_yetkiService.GetYetkiler(_sessionContext.AktifKullaniciId.Value) ?? new List<FirmaIsyeriYetkiDTO>())
+                    : new List<FirmaIsyeriYetkiDTO>();
+                if (fid <= 0 || !FirmaIsyeriYetkiHelper.IsFirmaAuthorized(fid, yetkiler, false))
+                    fid = _sessionContext.AktifFirmaId ?? 0;
+                resolved = fid > 0 ? fid : _sessionContext.AktifFirmaId;
+            }
+
+            var list = _cihazService.GetListe(sadeceAktif, resolved);
             return Ok(ApiResult<List<CihazListDTO>>.Ok(list));
         }
 

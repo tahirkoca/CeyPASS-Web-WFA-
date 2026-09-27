@@ -2,7 +2,9 @@ using CeyPASS.Business.Abstractions;
 using CeyPASS.Business.Services;
 using CeyPASS.DataAccess.Abstractions;
 using CeyPASS.DataAccess;
+using CeyPASS.DataAccess.Audit;
 using CeyPASS.DataAccess.Repositories;
+using CeyPASS.Infrastructure.Audit;
 using CeyPASS.Infrastructure.Helpers;
 using CeyPASS.Infrastructure.Pdf;
 using Microsoft.EntityFrameworkCore;
@@ -49,7 +51,7 @@ if (string.IsNullOrWhiteSpace(connectionString) || DatabaseHelperCore.LooksLikeP
 }
 
 builder.Services.AddDbContext<CeyPASSDataConnectionCore>(options =>
-    options.UseSqlServer(connectionString));
+    options.UseSqlServer(connectionString).AddCeyPassAuditing());
 
 // HttpContextAccessor - SessionContext için gerekli
 builder.Services.AddHttpContextAccessor();
@@ -138,6 +140,7 @@ builder.Services.AddTransient<IAvansService, AvansService>();
 builder.Services.AddTransient<IPushNotificationService, FcmPushService>();
 
 var app = builder.Build();
+CeyPassAudit.Configure(app.Services, "Web");
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())

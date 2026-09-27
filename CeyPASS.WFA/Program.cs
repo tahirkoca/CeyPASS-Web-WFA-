@@ -3,7 +3,9 @@ using CeyPASS.Business.Abstractions;
 using CeyPASS.Business.Services;
 using CeyPASS.DataAccess;
 using CeyPASS.DataAccess.Abstractions;
+using CeyPASS.DataAccess.Audit;
 using CeyPASS.DataAccess.Repositories;
+using CeyPASS.Infrastructure.Audit;
 using CeyPASS.Infrastructure.Helpers;
 using CeyPASS.WFA.Forms;
 using CeyPASS.WFA.UserControls;
@@ -111,7 +113,7 @@ namespace CeyPASS.WFA
 
                 // Faz 4.2: DbContext ve veri katmanı Scoped (form bazlı unit of work)
                 services.AddDbContext<CeyPASSDataConnectionCore>(options =>
-                    options.UseSqlServer(connectionString), ServiceLifetime.Scoped);
+                    options.UseSqlServer(connectionString).AddCeyPassAuditing(), ServiceLifetime.Scoped);
 
                 // DataAccess (EF Core *RepositoryCore) — Faz 4.2: Scoped
                 services.AddScoped<IAuthorizationRepository, AuthorizationRepositoryCore>();
@@ -213,11 +215,11 @@ namespace CeyPASS.WFA
                 services.AddScoped<ucCalismaSekilleri>();
                 services.AddScoped<ucCalismaStatuleri>();
                 services.AddScoped<ucGuncellemeMailEkrani>();
-                services.AddScoped<CeyPASS.WFA.UserControls.Admin.ucAdminPanel>();
 
                 var sp = services.BuildServiceProvider();
 
                 var session = sp.GetRequiredService<ISessionContext>();
+                CeyPassAudit.Configure(sp, "WFA");
 
                 // Faz 4.2: Giriş ekranı Scoped; bir scope açıp girisEkrani bu scope'tan alınır
                 var girisScope = sp.CreateScope();

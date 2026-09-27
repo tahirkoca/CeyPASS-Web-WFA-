@@ -294,6 +294,27 @@ namespace CeyPASS.Api.Controllers
             }
         }
 
+        /// <summary>Firma/işyeri/ay için beklenen-girilen-eksik özeti.</summary>
+        [HttpGet("veri-durumu")]
+        public ActionResult<ApiResult<PuantajVeriDurumuDTO>> GetVeriDurumu(
+            [FromQuery] int firmaId,
+            [FromQuery] int? isyeriId,
+            [FromQuery] int yil,
+            [FromQuery] int ay,
+            [FromQuery] int? personelId = null)
+        {
+            if (!_authorizationService.ViewAbility(PageName)) return Forbid();
+            try
+            {
+                var dto = _puantajService.GetVeriDurumu(firmaId, isyeriId, yil, ay, personelId);
+                return Ok(ApiResult<PuantajVeriDurumuDTO>.Ok(dto));
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ApiResult<PuantajVeriDurumuDTO>.Failure(ex.Message));
+            }
+        }
+
         /// <summary>Ek kayıt gün limitini günceller.</summary>
         [HttpPost("ek-kayit-gun")]
         public ActionResult<ApiResult> SetEkKayitGun([FromBody] PuantajEkKayitGunRequest request)

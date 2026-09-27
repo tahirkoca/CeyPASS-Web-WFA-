@@ -58,10 +58,18 @@ export type ResmiTatilDTO = {
 /** CalismaSekli, CalismaStatu, Cihaz, ResmiTatil API’leri. */
 export const ayarlarService = {
   // Vardiyalar (CalismaSekli)
-  async listVardiyalar(opts?: { forceRefresh?: boolean }): Promise<ApiResult<CalismaSekli[]>> {
+  async listVardiyalar(opts?: { forceRefresh?: boolean; firmaId?: number | null }): Promise<ApiResult<CalismaSekli[]>> {
+    const firmaId = opts?.firmaId;
+    const params =
+      firmaId === null || firmaId === undefined
+        ? undefined
+        : firmaId < 0
+          ? { firmaId: -1 }
+          : { firmaId };
     return await cachedGet<ApiResult<CalismaSekli[]>>("/CalismaSekli", {
+      params,
       timeout: 15000,
-      keyPrefix: "/CalismaSekli",
+      keyPrefix: `/CalismaSekli|f=${firmaId === null || firmaId === undefined ? "aktif" : firmaId}`,
       softTtlMs: 5 * 60 * 1000,
       hardTtlMs: 24 * 60 * 60 * 1000,
       forceRefresh: !!opts?.forceRefresh,
@@ -110,12 +118,19 @@ export const ayarlarService = {
   },
 
   // Cihazlar
-  async listCihazlar(params?: { sadeceAktif?: boolean }, opts?: { forceRefresh?: boolean }): Promise<ApiResult<CihazListDTO[]>> {
-    // consider this a "lookup-ish" list; keep TTL shorter since it's operational
+  async listCihazlar(params?: { sadeceAktif?: boolean; firmaId?: number | null }, opts?: { forceRefresh?: boolean }): Promise<ApiResult<CihazListDTO[]>> {
+    const q: Record<string, any> = {};
+    if (params?.sadeceAktif != null) q.sadeceAktif = params.sadeceAktif;
+    if (params?.firmaId === null) {
+      // omit → API admin default all; send -1 for explicit Tümü
+      q.firmaId = -1;
+    } else if (typeof params?.firmaId === "number") {
+      q.firmaId = params.firmaId;
+    }
     return await cachedGet<ApiResult<CihazListDTO[]>>("/Cihaz", {
-      params,
+      params: q,
       timeout: 15000,
-      keyPrefix: "/Cihaz",
+      keyPrefix: `/Cihaz|f=${params?.firmaId === null ? "all" : params?.firmaId ?? "aktif"}`,
       softTtlMs: 60 * 1000,
       hardTtlMs: 10 * 60 * 1000,
       forceRefresh: !!opts?.forceRefresh,

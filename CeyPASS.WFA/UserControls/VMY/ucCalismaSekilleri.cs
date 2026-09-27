@@ -45,11 +45,9 @@ namespace CeyPASS.WFA.UserControls.VMY
         private Button btnYemekGuncelle;
         private Button btnYemekSil;
         private Button btnYemekTemizle;
-
-        /// <summary>
-        /// Admin Panel'den açıldığında true; tüm firmaların tüm vardiyaları listelenir.
-        /// </summary>
-        public bool AdminPanelMode { get; set; }
+        private ComboBox cmbFirmaFilter;
+        private bool _suppressFirmaFilter;
+        private readonly IFirmaService _firmaSvc;
 
         /// <summary>Yemek penceresi alt panelini ve yetkileri kurar.</summary>
         public ucCalismaSekilleri(
@@ -59,7 +57,8 @@ namespace CeyPASS.WFA.UserControls.VMY
             IKullaniciFirmaIsyeriYetkiService yetkiSvc,
             IPersonelVardiyaYemekYetkiService yemekYetkiSvc,
             IKisiEkraniLookUpService lookupSvc,
-            ICihazService cihazSvc)
+            ICihazService cihazSvc,
+            IFirmaService firmaSvc)
         {
             InitializeComponent();
             _fieldErrors = new WinFormsFieldErrors(this);
@@ -70,6 +69,7 @@ namespace CeyPASS.WFA.UserControls.VMY
             _yemekYetkiSvc = yemekYetkiSvc;
             _lookupSvc = lookupSvc;
             _cihazSvc = cihazSvc;
+            _firmaSvc = firmaSvc;
             authHelp = new AuthorizationHelper(_session, _auth);
             var cid = Guid.NewGuid().ToString("N");
             AppTheme.ApplyToControl(this);
@@ -88,13 +88,105 @@ namespace CeyPASS.WFA.UserControls.VMY
             btnKaydet.Tag = YetkiTipleri.Create;
 
             BuildYemekPencerePanel();
+            BuildFirmaFilterUi();
             InitTimePickers();
             WireEventsOnce();
             EnterListMode();
+            LoadFirmalarFilter();
             LoadList();
             InitSaatPenceresiPanel();
             BeautifyList(chkVardiyalar);
 
+            WinFormsAuthHelper.ApplyPageAuthorization(_auth, _session, PageName, this);
+        }
+
+        private void BuildFirmaFilterUi()
+        {
+            pnlLeftHeader.Height = 90;
+            lblListHeader.Dock = DockStyle.Top;
+            lblListHeader.Height = 40;
+            cmbFirmaFilter = new ComboBox
+            {
+                Name = "cmbFirmaFilter",
+                DropDownStyle = ComboBoxStyle.DropDownList,
+                Dock = DockStyle.Bottom,
+                Font = new Font("Segoe UI", 9.5f),
+                Margin = new Padding(8)
+            };
+            cmbFirmaFilter.SelectedIndexChanged += (s, e) =>
+            {
+                if (_suppressFirmaFilter) return;
+                if (_mode == ScreenMode.List) LoadList();
+            };
+            pnlLeftHeader.Controls.Add(cmbFirmaFilter);
+        }
+
+        private void LoadFirmalarFilter()
+        {
+            bool isAdmin = FirmaIsyeriYetkiHelper.IsAdmin(_session.RolId);
+            var yetkiler = _session.AktifKullaniciId.HasValue
+                ? (_yetkiSvc.GetYetkiler((int)_session.AktifKullaniciId.Value) ?? new List<FirmaIsyeriYetkiDTO>())
+                : new List<FirmaIsyeriYetkiDTO>();
+            var liste = FirmaIsyeriYetkiHelper.FilterFirmalar(_firmaSvc.GetAll() ?? new List<Firma>(), yetkiler, isAdmin);
+            var items = new List<LookupItem>();
+            if (isAdmin)
+                items.Add(FirmaIsyeriYetkiHelper.CreateFirmaFilterTumuItem());
+            foreach (var f in liste)
+                items.Add(new LookupItem { Id = f.FirmaId, Ad = f.FirmaAdi ?? ("Firma " + f.FirmaId) });
+
+            _suppressFirmaFilter = true;
+            cmbFirmaFilter.DisplayMember = nameof(LookupItem.Ad);
+            cmbFirmaFilter.ValueMember = nameof(LookupItem.Id);
+            cmbFirmaFilter.DataSource = items;
+            int prefer = _session.AktifFirmaId ?? 0;
+            var match = items.FirstOrDefault(x => x.Id == prefer);
+            cmbFirmaFilter.SelectedItem = match ?? items.FirstOrDefault();
+            _suppressFirmaFilter = false;
+        }
+
+        private int? ResolveFilterFirmaId()
+        {
+            if (cmbFirmaFilter?.SelectedItem is LookupItem li)
+            {
+                if (FirmaIsyeriYetkiHelper.IsFirmaFilterTumu(li.Id)) return null;
+                if (li.Id > 0) return li.Id;
+            }
+            return _session.AktifFirmaId;
+        }
+
+        private void LoadList()
+        {
+            var firmaId = ResolveFilterFirmaId();
+            bool isAdmin = FirmaIsyeriYetkiHelper.IsAdmin(_session.RolId);
+            if (!firmaId.HasValue && !isAdmin)
+            {
+                chkVardiyalar.Items.Clear();
+                return;
+            }
+
+            if (firmaId.HasValue && _session.AktifKullaniciId.HasValue
+                && !FirmaIsyeriYetkiHelper.IsFirmaAuthorized(firmaId.Value, _yetkiSvc.GetYetkiler((int)_session.AktifKullaniciId.Value), isAdmin))
+            {
+                chkVardiyalar.Items.Clear();
+                return;
+            }
+
+            var list = !firmaId.HasValue
+                ? _vsvc.GetAllForAdmin()
+                : _vsvc.GetAll(firmaId.Value);
+
+            chkVardiyalar.BeginUpdate();
+            try
+            {
+                chkVardiyalar.Items.Clear();
+                foreach (var it in list) chkVardiyalar.Items.Add(it);
+                chkVardiyalar.DisplayMember = nameof(CalismaSekli.Ad);
+                chkVardiyalar.ValueMember = nameof(CalismaSekli.Id);
+                if (chkVardiyalar.Items.Count > 0) chkVardiyalar.SelectedIndex = 0;
+            }
+            finally { chkVardiyalar.EndUpdate(); }
+
+            FillInputsFromSelection();
             WinFormsAuthHelper.ApplyPageAuthorization(_auth, _session, PageName, this);
         }
 
@@ -882,33 +974,11 @@ namespace CeyPASS.WFA.UserControls.VMY
             btnKaydet.Tag = YetkiTipleri.Update;
             WinFormsAuthHelper.ApplyPageAuthorization(_auth, _session, PageName, this);
         }
-        private void LoadList()
-        {
-            var list = AdminPanelMode
-                ? _vsvc.GetAllForAdmin()
-                : _vsvc.GetAll((int)_session.AktifFirmaId);
 
-            chkVardiyalar.BeginUpdate();
-            try
-            {
-                chkVardiyalar.Items.Clear();
-                foreach (var it in list) chkVardiyalar.Items.Add(it);
-                chkVardiyalar.DisplayMember = nameof(CalismaSekli.Ad);
-                chkVardiyalar.ValueMember = nameof(CalismaSekli.Id);
-                if (chkVardiyalar.Items.Count > 0) chkVardiyalar.SelectedIndex = 0;
-            }
-            finally { chkVardiyalar.EndUpdate(); }
-
-            FillInputsFromSelection();
-            WinFormsAuthHelper.ApplyPageAuthorization(_auth, _session, PageName, this);
-        }
-
-        /// <summary>
-        /// Admin Panel'de AdminPanelMode set edildikten sonra listeyi filtresiz yeniden yüklemek için.
-        /// </summary>
-        /// <summary>AdminPanelMode ve firmaya göre vardiya grid'ini yeniden yükler.</summary>
+        /// <summary>Firma filtresine göre vardiya grid'ini yeniden yükler.</summary>
         public void RefreshList()
         {
+            LoadFirmalarFilter();
             LoadList();
             InitSaatPenceresiPanel();
         }

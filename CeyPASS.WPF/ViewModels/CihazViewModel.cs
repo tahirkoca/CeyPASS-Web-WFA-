@@ -16,7 +16,6 @@ public sealed class CihazViewModel : ObservableObject
 
     private readonly IServiceScopeFactory _scopes;
     private readonly ISessionContext _session;
-    private readonly bool _adminPanelMode;
     private ScreenMode _mode = ScreenMode.List;
     private CihazListDTO? _selected;
     private bool _suppressSelection;
@@ -40,14 +39,16 @@ public sealed class CihazViewModel : ObservableObject
     private bool _canEdit;
     private bool _canDelete;
     private bool _listEnabled = true;
+    private bool _suppressFirmaFilter;
+    private LookupItem? _selectedFirmaFilter;
 
-    public CihazViewModel(IServiceProvider root, bool adminPanelMode = false)
+    public CihazViewModel(IServiceProvider root)
     {
         _scopes = root.GetRequiredService<IServiceScopeFactory>();
         _session = root.GetRequiredService<ISessionContext>();
-        _adminPanelMode = adminPanelMode;
         Items = new ObservableCollection<CihazListDTO>();
         Tipler = new ObservableCollection<CihazTip>();
+        FilterFirmalar = new ObservableCollection<LookupItem>();
 
         AddCommand = new RelayCommand(EnterAddMode, () => CanAdd);
         EditCommand = new RelayCommand(EnterEditMode, () => CanEdit);
@@ -57,11 +58,32 @@ public sealed class CihazViewModel : ObservableObject
         RefreshCommand = new RelayCommand(LoadList);
 
         LoadTypes();
+        LoadFirmalarFilter();
         LoadList();
     }
 
     public ObservableCollection<CihazListDTO> Items { get; }
     public ObservableCollection<CihazTip> Tipler { get; }
+    public ObservableCollection<LookupItem> FilterFirmalar { get; }
+
+    public LookupItem? SelectedFirmaFilter
+    {
+        get => _selectedFirmaFilter;
+        set
+        {
+            if (ReferenceEquals(_selectedFirmaFilter, value)) return;
+            if (_selectedFirmaFilter is not null && value is not null && _selectedFirmaFilter.Id == value.Id)
+            {
+                SetProperty(ref _selectedFirmaFilter, value);
+                return;
+            }
+
+            SetProperty(ref _selectedFirmaFilter, value);
+            if (_suppressFirmaFilter) return;
+            if (_mode == ScreenMode.List)
+                LoadList();
+        }
+    }
 
     public CihazListDTO? SelectedItem
     {
@@ -232,6 +254,61 @@ public sealed class CihazViewModel : ObservableObject
         }
     }
 
+    private void LoadFirmalarFilter()
+    {
+        try
+        {
+            using var scope = _scopes.CreateScope();
+            bool isAdmin = FirmaIsyeriYetkiHelper.IsAdmin(_session.RolId);
+            var firmaSvc = scope.ServiceProvider.GetRequiredService<IFirmaService>();
+            IReadOnlyList<FirmaIsyeriYetkiDTO> yetkiler = Array.Empty<FirmaIsyeriYetkiDTO>();
+            if (_session.AktifKullaniciId.HasValue)
+            {
+                var yetkiSvc = scope.ServiceProvider.GetRequiredService<IKullaniciFirmaIsyeriYetkiService>();
+                yetkiler = yetkiSvc.GetYetkiler((int)_session.AktifKullaniciId.Value)
+                           ?? new List<FirmaIsyeriYetkiDTO>();
+            }
+
+            var liste = FirmaIsyeriYetkiHelper.FilterFirmalar(firmaSvc.GetAll() ?? new List<Firma>(), yetkiler, isAdmin);
+            _suppressFirmaFilter = true;
+            FilterFirmalar.Clear();
+            if (isAdmin)
+                FilterFirmalar.Add(FirmaIsyeriYetkiHelper.CreateFirmaFilterTumuItem());
+            foreach (var f in liste)
+                FilterFirmalar.Add(new LookupItem { Id = f.FirmaId, Ad = f.FirmaAdi ?? ("Firma " + f.FirmaId) });
+
+            int? prefer = _session.AktifFirmaId;
+            LookupItem? next = null;
+            if (prefer.HasValue && prefer.Value > 0)
+                next = FilterFirmalar.FirstOrDefault(x => x.Id == prefer.Value);
+            next ??= FilterFirmalar.FirstOrDefault();
+            _selectedFirmaFilter = next;
+            RaisePropertyChanged(nameof(SelectedFirmaFilter));
+            _suppressFirmaFilter = false;
+        }
+        catch
+        {
+            _suppressFirmaFilter = false;
+        }
+    }
+
+    private int? ResolveFilterFirmaId()
+    {
+        var sel = SelectedFirmaFilter;
+        if (sel is not null && FirmaIsyeriYetkiHelper.IsFirmaFilterTumu(sel.Id))
+            return null;
+        if (sel is not null && sel.Id > 0)
+            return sel.Id;
+        return _session.AktifFirmaId;
+    }
+
+    private List<CihazListDTO> QueryCihazList(ICihazService svc)
+    {
+        var firmaId = ResolveFilterFirmaId();
+        bool sadeceAktif = firmaId.HasValue;
+        return svc.GetListe(sadeceAktif: sadeceAktif, firmaId: firmaId) ?? new List<CihazListDTO>();
+    }
+
     private void LoadList()
     {
         Error = null;
@@ -248,37 +325,32 @@ public sealed class CihazViewModel : ObservableObject
                 return;
             }
 
-            var svc = scope.ServiceProvider.GetRequiredService<ICihazService>();
-            List<CihazListDTO> list;
-            if (_adminPanelMode)
+            var firmaId = ResolveFilterFirmaId();
+            bool isAdmin = FirmaIsyeriYetkiHelper.IsAdmin(_session.RolId);
+            if (!firmaId.HasValue && !isAdmin)
             {
-                list = svc.GetListe(sadeceAktif: false, firmaId: null) ?? new List<CihazListDTO>();
+                Error = "Aktif firma seçili değil.";
+                Items.Clear();
+                ClearInputs();
+                RefreshToolbar(auth);
+                return;
             }
-            else
-            {
-                if (!_session.AktifFirmaId.HasValue || !_session.AktifKullaniciId.HasValue)
-                {
-                    Error = "Aktif firma seçili değil.";
-                    Items.Clear();
-                    ClearInputs();
-                    RefreshToolbar(auth);
-                    return;
-                }
 
-                int firmaId = (int)_session.AktifFirmaId.Value;
-                bool isAdmin = FirmaIsyeriYetkiHelper.IsAdmin(_session.RolId);
+            if (firmaId.HasValue && _session.AktifKullaniciId.HasValue)
+            {
                 var yetkiSvc = scope.ServiceProvider.GetRequiredService<IKullaniciFirmaIsyeriYetkiService>();
                 var yetkiler = yetkiSvc.GetYetkiler((int)_session.AktifKullaniciId.Value);
-                if (!FirmaIsyeriYetkiHelper.IsFirmaAuthorized(firmaId, yetkiler, isAdmin))
+                if (!FirmaIsyeriYetkiHelper.IsFirmaAuthorized(firmaId.Value, yetkiler, isAdmin))
                 {
                     Items.Clear();
                     ClearInputs();
                     RefreshToolbar(auth);
                     return;
                 }
-
-                list = svc.GetListe(sadeceAktif: true, firmaId: firmaId) ?? new List<CihazListDTO>();
             }
+
+            var svc = scope.ServiceProvider.GetRequiredService<ICihazService>();
+            var list = QueryCihazList(svc);
             var keepId = SelectedItem?.CihazId;
 
             _suppressSelection = true;
@@ -477,17 +549,7 @@ public sealed class CihazViewModel : ObservableObject
             using var scope = _scopes.CreateScope();
             var auth = scope.ServiceProvider.GetRequiredService<IAuthorizationService>();
             var svc = scope.ServiceProvider.GetRequiredService<ICihazService>();
-            List<CihazListDTO> list;
-            if (_adminPanelMode)
-            {
-                list = svc.GetListe(sadeceAktif: false, firmaId: null) ?? new List<CihazListDTO>();
-            }
-            else
-            {
-                if (!_session.AktifFirmaId.HasValue) return;
-                list = svc.GetListe(sadeceAktif: true, firmaId: (int)_session.AktifFirmaId.Value)
-                       ?? new List<CihazListDTO>();
-            }
+            var list = QueryCihazList(svc);
 
             _suppressSelection = true;
             Items.Clear();

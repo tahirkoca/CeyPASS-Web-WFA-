@@ -525,6 +525,7 @@ namespace CeyPASS.WFA.UserControls.EO
                     Hide("CihazId");
                     Hide("PersonelId");
                     Hide("FirmaId");
+                    Hide("ManuelMi");
 
                     void Hide(string n) { var c = dgKisiHareketler.Columns[n]; if (c != null) c.Visible = false; }
 
@@ -574,12 +575,22 @@ namespace CeyPASS.WFA.UserControls.EO
             var aktifObj = row.Cells["AktifMi"].Value;
 
             string tip = tipObj == DBNull.Value ? null : Convert.ToString(tipObj);
-            bool aktif = aktifObj != DBNull.Value && Convert.ToInt32(aktifObj) == 1;
+            bool aktif = aktifObj != DBNull.Value && Convert.ToBoolean(aktifObj);
+            bool manuel = false;
+            if (dgKisiHareketler.Columns.Contains("ManuelMi"))
+            {
+                var manuelObj = row.Cells["ManuelMi"].Value;
+                manuel = manuelObj != null && manuelObj != DBNull.Value && Convert.ToBoolean(manuelObj);
+            }
 
             Color back;
             if (!aktif)
             {
                 back = Color.FromArgb(230, 230, 230);
+            }
+            else if (manuel)
+            {
+                back = Color.FromArgb(255, 249, 196);
             }
             else if (string.Equals(tip, "Giriş", StringComparison.OrdinalIgnoreCase))
             {

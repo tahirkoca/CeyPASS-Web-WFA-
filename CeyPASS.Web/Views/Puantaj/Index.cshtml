@@ -317,6 +317,13 @@
         </div>
     </div>
 
+    <!-- Veri Durumu özeti (kutusuz, tek satır) -->
+    <div class="row mb-2" id="veriDurumuRow" style="display:none;">
+        <div class="col-12">
+            <div id="veriDurumuText" class="text-secondary text-truncate" style="font-size:0.75rem;" title=""></div>
+        </div>
+    </div>
+
     <!-- Puantaj Tablosu -->
     @if (Model != null && Model.Any())
     {
@@ -568,7 +575,8 @@
                     </div>
                     <div class="modal-body">
                         <p id="cokluSicilMesaj"></p>
-                        <p class="text-muted small">Seçili personelin bağlı tüm sicillerine ayın son gününe <strong>NG 7,5</strong> yazılacak; ana personelin ayın son günündeki kayıtları kaldırılacaktır.</p>
+                        <ul id="cokluSicilHedefListesi" class="list-group list-group-flush mb-3" style="display:none;"></ul>
+                        <p class="text-muted small mb-0">Her hedef sicile yukarıdaki gün sayısı kadar <strong>NG 7,5</strong> yazılacak; ana personel sicilindeki ayın son günündeki kayıtları kaldırılacaktır.</p>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
@@ -651,6 +659,63 @@
             });
         }
 
+        function formatVeriDurumu(dto) {
+            if (!dto) return '';
+            var toplamPersonel = dto.toplamPersonel ?? dto.ToplamPersonel ?? 0;
+            var mesaj = dto.mesaj ?? dto.Mesaj;
+            if (mesaj && toplamPersonel <= 0) return mesaj;
+
+            var s = 'Personel: ' + toplamPersonel
+                + ' · Beklenen: ' + (dto.toplamBeklenen ?? dto.ToplamBeklenen ?? 0)
+                + ' · Girilen: ' + (dto.toplamGirilen ?? dto.ToplamGirilen ?? 0)
+                + ' · Eksik: ' + (dto.toplamEksik ?? dto.ToplamEksik ?? 0);
+
+            var secilenId = dto.secilenPersonelId ?? dto.SecilenPersonelId;
+            var kisiBeklenen = dto.kisiBeklenen ?? dto.KisiBeklenen;
+            if (secilenId && kisiBeklenen != null) {
+                s += '  |  ' + ((dto.secilenAdSoyad ?? dto.SecilenAdSoyad) || '').toString().trim()
+                    + ': Beklenen ' + kisiBeklenen
+                    + ' · Girilen ' + (dto.kisiGirilen ?? dto.KisiGirilen ?? 0)
+                    + ' · Eksik ' + (dto.kisiEksik ?? dto.KisiEksik ?? 0);
+            }
+            return s;
+        }
+
+        function refreshVeriDurumu() {
+            var firmaId = parseInt($('#firmaId').val(), 10) || 0;
+            var isyeriId = parseInt($('#isyeriId').val(), 10) || 0;
+            var yil = parseInt($('#yil').val(), 10) || 0;
+            var ay = parseInt($('#ay').val(), 10) || 0;
+            var personelRaw = $('#personelId').val();
+            var personelId = personelRaw ? (parseInt(personelRaw, 10) || null) : null;
+
+            if (!firmaId || !isyeriId || !yil || !ay) {
+                $('#veriDurumuRow').hide();
+                $('#veriDurumuText').text('').attr('title', '');
+                return;
+            }
+
+            $.get('@Url.Action("GetVeriDurumu")', {
+                firmaId: firmaId,
+                isyeriId: isyeriId,
+                yil: yil,
+                ay: ay,
+                personelId: personelId
+            }).done(function(dto) {
+                var text = formatVeriDurumu(dto);
+                if (!text) {
+                    $('#veriDurumuRow').hide();
+                    $('#veriDurumuText').text('').attr('title', '');
+                    return;
+                }
+                $('#veriDurumuText').text(text).attr('title', text);
+                $('#veriDurumuRow').show();
+            }).fail(function() {
+                $('#veriDurumuText').text('Veri durumu alınamadı.').attr('title', '');
+                $('#veriDurumuRow').show();
+            });
+        }
+
         // Firma değiştiğinde İşyeri ve Personel listelerini güncelle
         $('#firmaId').change(function() {
             var firmaId = $(this).val();
@@ -661,14 +726,23 @@
                         $('#isyeriId').append($('<option>', { value: item.id, text: item.ad }));
                     });
                     personelListesiniYukle();
+                    refreshVeriDurumu();
                 });
             } else {
                 $('#isyeriId').empty().append('<option value="">-- Önce Firma Seçiniz --</option>');
                 $('#personelId').empty().append('<option value="">-- Önce Firma Seçiniz --</option>');
+                refreshVeriDurumu();
             }
         });
 
-        $('#isyeriId, #yil, #ay').change(function() { personelListesiniYukle(); });
+        $('#isyeriId, #yil, #ay').change(function() {
+            personelListesiniYukle();
+            refreshVeriDurumu();
+        });
+        $('#personelId').change(function() { refreshVeriDurumu(); });
+
+        // İlk yüklemede özet
+        refreshVeriDurumu();
 
         // Satır butonları: inline onclick yerine data-* ile handler
         $(document).on('click', '.js-onayla', function() {
@@ -860,7 +934,24 @@
                 $('#cokluSicilPersonelId').val(personelId);
                 $('#cokluSicilYil').val(yil);
                 $('#cokluSicilAy').val(ay);
-                $('#cokluSicilMesaj').text(yil + ' ' + ayAdi + ' ayı için ' + hedefSayisi + ' hedef sicile Aktarım Gün Sayısı kadar NG 7,5 aktarılacak. Onaylıyor musunuz?');
+                $('#cokluSicilMesaj').text(yil + ' ' + ayAdi + ' ayı için ' + hedefSayisi + ' hedef sicile NG 7,5 aktarılacak. Onaylıyor musunuz?');
+
+                var $list = $('#cokluSicilHedefListesi').empty();
+                var hedefler = ozet.hedefler || [];
+                if (hedefler.length) {
+                    hedefler.forEach(function(h) {
+                        var id = h.hedefPersonelId ?? h.HedefPersonelId ?? '';
+                        var ad = (h.hedefAdSoyad ?? h.HedefAdSoyad ?? '(Adsız)').toString().trim() || '(Adsız)';
+                        var gun = h.aktarimGunSayisi ?? h.AktarimGunSayisi ?? 0;
+                        $list.append($('<li class="list-group-item d-flex justify-content-between align-items-center"></li>')
+                            .append($('<span></span>').text(id + ' - ' + ad))
+                            .append($('<span class="badge bg-info rounded-pill"></span>').text(gun + ' gün')));
+                    });
+                    $list.show();
+                } else {
+                    $list.hide();
+                }
+
                 var modal = new bootstrap.Modal(document.getElementById('cokluSicilModal'));
                 modal.show();
             }).fail(function() {

@@ -45,7 +45,7 @@ import { VardiyalarScreen } from './components/ayarlar/VardiyalarScreen';
 import { CalismaStatuleriScreen } from './components/ayarlar/CalismaStatuleriScreen';
 import { CihazlarScreen } from './components/ayarlar/CihazlarScreen';
 import { ResmiTatillerScreen } from './components/ayarlar/ResmiTatillerScreen';
-import { AdminPanelScreen } from './components/admin/AdminPanelScreen';
+import { GuncellemeBildirimiScreen } from './components/admin/GuncellemeBildirimiScreen';
 import { IzinTalepleriScreen } from './components/talepler/IzinTalepleriScreen';
 import { AvansTalepleriScreen } from './components/talepler/AvansTalepleriScreen';
 import { TipsSheet } from './components/TipsSheet';
@@ -82,7 +82,7 @@ const PAGE_TITLES: Record<string, string> = {
   calismaStatuleri: "Çalışma Statüleri",
   cihazlar: "Cihazlar",
   resmiTatiller: "Resmi Tatiller",
-  adminPanel: "Admin Panel",
+  guncellemeBildirimi: "Güncelleme Bildirimi",
   qrGiris: "QR Giriş",
 };
 
@@ -126,7 +126,7 @@ function LoggedInShell(props: {
     if (key === "resmiTatiller") return !!canView("ResmiTatiller");
     if (key === "izinTalepleri") return !!canView("IzinTalepleri");
     if (key === "avansTalepleri") return !!canView("Avans");
-    if (key === "adminPanel") return (abilities?.rolId ?? abilities?.RolId) === 1;
+    if (key === "guncellemeBildirimi" || key === "adminPanel") return (abilities?.rolId ?? abilities?.RolId) === 1;
     if (key === "qrGiris") return !!canView("Profil") && hasSicil;
     return false;
   };
@@ -197,13 +197,8 @@ function LoggedInShell(props: {
             <CihazlarScreen user={userData} abilities={abilities} onOpenMenu={() => setMenuVisible(true)} />
           ) : safePage === "resmiTatiller" ? (
             <ResmiTatillerScreen user={userData} abilities={abilities} onOpenMenu={() => setMenuVisible(true)} />
-          ) : safePage === "adminPanel" ? (
-            <AdminPanelScreen
-              user={userData}
-              abilities={abilities}
-              onOpenMenu={() => setMenuVisible(true)}
-              onNavigate={(k) => navigateTo(k)}
-            />
+          ) : safePage === "guncellemeBildirimi" || safePage === "adminPanel" ? (
+            <GuncellemeBildirimiScreen user={userData} abilities={abilities} onOpenMenu={() => setMenuVisible(true)} />
           ) : safePage === "qrGiris" ? (
             <View className="flex-1">
               <QrGirisScreen
@@ -292,6 +287,7 @@ export default function App() {
     | "calismaStatuleri"
     | "cihazlar"
     | "resmiTatiller"
+    | "guncellemeBildirimi"
     | "adminPanel"
     | "qrGiris"
     | "placeholder"

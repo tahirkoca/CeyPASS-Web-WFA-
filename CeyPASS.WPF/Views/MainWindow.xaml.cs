@@ -167,9 +167,9 @@ public partial class MainWindow : CeypassThemedWindow
             return;
         }
 
-        if (tag == "Admin")
+        if (tag == "Guncelleme" || tag == "Admin")
         {
-            NavigateToAdminPanel();
+            NavigateToGuncellemeBildirimi();
             return;
         }
 
@@ -300,16 +300,16 @@ public partial class MainWindow : CeypassThemedWindow
         AfterNavigate();
     }
 
-    private void NavigateToAdminPanel()
+    private void NavigateToGuncellemeBildirimi()
     {
         if (_session.RolId != 1)
         {
-            UiDialog.Warning("Admin Panel yalnızca süper yönetici için açıktır.", "Admin Panel");
+            UiDialog.Warning("Güncelleme Bildirimi yalnızca süper yönetici için açıktır.", "Güncelleme Bildirimi");
             return;
         }
 
-        SetPageHeader("Admin Panel", BtnAdmin, "Admin");
-        ContentHost.Content = App.Services.GetRequiredService<AdminPanelView>();
+        SetPageHeader("Güncelleme Bildirimi", BtnAdmin, "Guncelleme");
+        ContentHost.Content = App.Services.GetRequiredService<GuncellemeBildirimView>();
         SetActive(BtnAdmin);
         AfterNavigate();
     }

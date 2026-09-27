@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using CeyPASS.Business.Abstractions;
 using IAuthorizationService = CeyPASS.Business.Abstractions.IAuthorizationService;
 using CeyPASS.Entities.Concrete;
+using CeyPASS.Infrastructure.Helpers;
 using CeyPASS.Models;
 
 namespace CeyPASS.Api.Controllers
@@ -16,27 +17,49 @@ namespace CeyPASS.Api.Controllers
         private readonly ICalismaSekliService _calismaSekliService;
         private readonly ISessionContext _sessionContext;
         private readonly IAuthorizationService _authorizationService;
+        private readonly IKullaniciFirmaIsyeriYetkiService _yetkiService;
         private const string PageName = "Vardiyalar";
 
         public CalismaSekliController(
             ICalismaSekliService calismaSekliService,
             ISessionContext sessionContext,
-            IAuthorizationService authorizationService)
+            IAuthorizationService authorizationService,
+            IKullaniciFirmaIsyeriYetkiService yetkiService)
         {
             _calismaSekliService = calismaSekliService;
             _sessionContext = sessionContext;
             _authorizationService = authorizationService;
+            _yetkiService = yetkiService;
         }
 
         
-        /// <summary>Firmaya göre vardiya listesi.</summary>
+        /// <summary>Firmaya göre vardiya listesi; admin firmaId=-1/null ile TÜMÜ.</summary>
         [HttpGet]
-        public ActionResult<ApiResult<List<CalismaSekli>>> Get()
+        public ActionResult<ApiResult<List<CalismaSekli>>> Get([FromQuery] int? firmaId = null)
         {
             if (!_authorizationService.ViewAbility(PageName)) return Forbid();
-            
-            int firmaId = _sessionContext.AktifFirmaId ?? 0;
-            var list = _calismaSekliService.GetAll(firmaId, true);
+
+            bool isAdmin = _sessionContext.IsAdmin();
+            if (isAdmin && (!firmaId.HasValue || firmaId.Value < 0))
+            {
+                var all = _calismaSekliService.GetAllForAdmin();
+                return Ok(ApiResult<List<CalismaSekli>>.Ok(all));
+            }
+
+            int fid = firmaId ?? _sessionContext.AktifFirmaId ?? 0;
+            if (!isAdmin)
+            {
+                var yetkiler = _sessionContext.AktifKullaniciId.HasValue
+                    ? (_yetkiService.GetYetkiler(_sessionContext.AktifKullaniciId.Value) ?? new List<FirmaIsyeriYetkiDTO>())
+                    : new List<FirmaIsyeriYetkiDTO>();
+                if (fid <= 0 || !FirmaIsyeriYetkiHelper.IsFirmaAuthorized(fid, yetkiler, false))
+                    fid = _sessionContext.AktifFirmaId ?? 0;
+            }
+
+            if (fid <= 0)
+                return BadRequest(ApiResult<List<CalismaSekli>>.Failure("Firma seçili değil."));
+
+            var list = _calismaSekliService.GetAll(fid, true);
             return Ok(ApiResult<List<CalismaSekli>>.Ok(list));
         }
 

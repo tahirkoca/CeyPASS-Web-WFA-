@@ -15,5 +15,7 @@ namespace CeyPASS.Entities.Concrete
         public string Tip { get; set; }
         public DateTime KayitZamani { get; set; }
         public bool AktifMi { get; set; }
+        /// <summary>Elle eklenen veya güncellenen hareket (listede sarı).</summary>
+        public bool ManuelMi { get; set; }
     }
 }

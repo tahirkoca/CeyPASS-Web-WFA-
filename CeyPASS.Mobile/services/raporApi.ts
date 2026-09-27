@@ -66,11 +66,18 @@ export const raporService = {
     return response.data;
   },
 
-  async cihazlar(firmaId?: number | null): Promise<ApiResult<{ id?: number; Id?: number; ad?: string; Ad?: string }[]>> {
+  async cihazlar(
+    firmaId?: number | null,
+    procedureAdi?: string | null
+  ): Promise<ApiResult<{ id?: number; Id?: number; ad?: string; Ad?: string }[]>> {
+    const params: Record<string, any> = {};
+    if (firmaId != null) params.firmaId = firmaId;
+    if (procedureAdi) params.procedureAdi = procedureAdi;
+    const yemekKey = procedureAdi && /yemekhane/i.test(procedureAdi) ? "yemek" : "all";
     return await cachedGet<ApiResult<any>>("/Rapor/cihazlar", {
       timeout: 15000,
-      params: firmaId != null ? { firmaId } : undefined,
-      keyPrefix: `/Rapor/cihazlar:${firmaId ?? "session"}`,
+      params: Object.keys(params).length ? params : undefined,
+      keyPrefix: `/Rapor/cihazlar:${firmaId ?? "session"}:${yemekKey}`,
       softTtlMs: 5 * 60 * 1000,
       hardTtlMs: 60 * 60 * 1000,
     });

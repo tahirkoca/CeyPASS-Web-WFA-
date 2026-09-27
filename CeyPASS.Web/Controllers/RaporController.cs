@@ -197,8 +197,12 @@ namespace CeyPASS.Web.Controllers
                 ? GetYetkiliIsyeriLookups(selectedFirmaId, yetkiler, isAdmin)
                 : new List<LookupItem>();
             ViewBag.Cihazlar = selectedFirmaId > 0 && multiKind == RaporParametreHelper.MultiSelectKind.Cihaz
-                ? (_cihazService.GetListe(true, selectedFirmaId) ?? new List<CihazListDTO>())
+                ? (_cihazService.GetListe(true, selectedFirmaId,
+                    RaporParametreHelper.RequiresYemekhaneCihazFilter(selectedRapor?.ProcedureAdi))
+                   ?? new List<CihazListDTO>())
                 : new List<CihazListDTO>();
+            ViewBag.YemekhaneCihazFiltresi = multiKind == RaporParametreHelper.MultiSelectKind.Cihaz
+                && RaporParametreHelper.RequiresYemekhaneCihazFilter(selectedRapor?.ProcedureAdi);
             ViewBag.CanExport = _authorizationService.Can(PageName, YetkiTipleri.Export);
             ViewBag.Page = page;
             ViewBag.PageSize = pageSize;

@@ -1391,6 +1391,7 @@ namespace CeyPASS.WFA.UserControls
             bool firma = chkFirmaPersoneliMi.Checked;
             bool puantaj = chkPuantajYapilirMi.Checked;
             bool yemek = chkYemekHakkiVarMi.Checked;
+            bool editing = _isYeniKayit || _guncelleModu;
 
             bool kuralIzinVeriyor = (!firma) || (firma && !puantaj);
             bool alanAktif = kuralIzinVeriyor || _guncelleModu;
@@ -1403,9 +1404,28 @@ namespace CeyPASS.WFA.UserControls
 
             dtpIstenCikis.Enabled = _istenCikisModu;
 
+            SetRequiredLabel(lblSicil, "Sicil No", editing);
+            SetRequiredLabel(lblAdSoyad, "Adı Soyadı", editing);
+            SetRequiredLabel(lblIseGiris, "İşe Giriş Tarihi", editing);
+            SetRequiredLabel(lblIsyeri, "İşyeri", editing);
+            SetRequiredLabel(lblTc, "TC Kimlik No", editing && (firma || chkTaseronCalisanMi.Checked));
+            SetRequiredLabel(lblKartNo, "Personel Kart No", editing && (chkZiyaretciMi.Checked || chkAracKartiMi.Checked));
+            SetRequiredLabel(lblYemek, "Yemek Adedi", editing && yemek);
+
             UpdateCokluSicilUi();
             WinFormsAuthHelper.ApplyPageAuthorization(_auth, _session, PageName, this);
         }
+
+        private static void SetRequiredLabel(Label? lbl, string baseText, bool required)
+        {
+            if (lbl == null) return;
+            lbl.Text = required ? baseText + " *" : baseText;
+            var tip = required ? "Zorunlu alan" : "";
+            // ToolTip tek örnek üzerinden; null text kaldırır
+            RequiredFieldToolTip.SetToolTip(lbl, tip);
+        }
+
+        private static readonly ToolTip RequiredFieldToolTip = new();
         private void ApplyCheckboxRules() => UpdateUIState();
 
         private void BtnKisiAra_Click(object sender, EventArgs e)

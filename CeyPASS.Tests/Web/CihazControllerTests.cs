@@ -19,11 +19,20 @@ namespace CeyPASS.Tests.Web
         private readonly Mock<ICihazService> _cihazMock = new();
         private readonly Mock<ISessionContext> _sessionMock = new();
         private readonly Mock<IAuthorizationService> _authMock = new();
+        private readonly Mock<IFirmaService> _firmaMock = new();
+        private readonly Mock<IKullaniciFirmaIsyeriYetkiService> _yetkiMock = new();
         private readonly CihazController _sut;
 
         public CihazControllerTests()
         {
-            _sut = new CihazController(_cihazMock.Object, _sessionMock.Object, _authMock.Object);
+            _firmaMock.Setup(f => f.GetAll()).Returns(new List<Firma>());
+            _yetkiMock.Setup(y => y.GetYetkiler(It.IsAny<int>())).Returns(new List<FirmaIsyeriYetkiDTO>());
+            _sut = new CihazController(
+                _cihazMock.Object,
+                _sessionMock.Object,
+                _authMock.Object,
+                _firmaMock.Object,
+                _yetkiMock.Object);
 
             var httpContext = new DefaultHttpContext();
             _sut.ControllerContext = new ControllerContext { HttpContext = httpContext };

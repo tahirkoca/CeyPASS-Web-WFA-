@@ -72,5 +72,8 @@ namespace CeyPASS.Business.Abstractions
 
         /// <summary>Yetkilere göre ay için puantaj veri girişlerini döner.</summary>
         DataTable GetVeriGirisleri(int yil, int ay, List<FirmaIsyeriYetkiDTO> yetkiler);
+
+        /// <summary>Seçili firma/işyeri/ay için beklenen-girilen-eksik özetini döner.</summary>
+        PuantajVeriDurumuDTO GetVeriDurumu(int firmaId, int? isyeriId, int yil, int ay, int? personelId = null);
     }
 }

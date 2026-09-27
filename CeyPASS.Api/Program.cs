@@ -6,7 +6,9 @@ using CeyPASS.Business.Abstractions;
 using CeyPASS.Business.Services;
 using CeyPASS.DataAccess;
 using CeyPASS.DataAccess.Abstractions;
+using CeyPASS.DataAccess.Audit;
 using CeyPASS.DataAccess.Repositories;
+using CeyPASS.Infrastructure.Audit;
 using CeyPASS.Infrastructure.Helpers;
 using CeyPASS.Infrastructure.Pdf;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -76,7 +78,7 @@ if (string.IsNullOrWhiteSpace(connectionString) || DatabaseHelperCore.LooksLikeP
 }
 
 builder.Services.AddDbContext<CeyPASSDataConnectionCore>(options =>
-    options.UseSqlServer(connectionString));
+    options.UseSqlServer(connectionString).AddCeyPassAuditing());
 
 // HttpContextAccessor for ApiSessionContext
 builder.Services.AddHttpContextAccessor();
@@ -124,6 +126,7 @@ builder.Services.AddCors(options =>
 });
 
 var app = builder.Build();
+CeyPassAudit.Configure(app.Services, "Api");
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

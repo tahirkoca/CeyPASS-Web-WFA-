@@ -16,7 +16,6 @@ public sealed class VardiyaViewModel : ObservableObject
 
     private readonly IServiceScopeFactory _scopes;
     private readonly ISessionContext _session;
-    private readonly bool _adminPanelMode;
     private ScreenMode _mode = ScreenMode.List;
     private CalismaSekli? _selected;
     private bool _suppressSelection;
@@ -34,13 +33,15 @@ public sealed class VardiyaViewModel : ObservableObject
     private bool _canDelete;
     private bool _listEnabled = true;
     private bool _canOpenYemekSaatleri;
+    private bool _suppressFirmaFilter;
+    private LookupItem? _selectedFirmaFilter;
 
-    public VardiyaViewModel(IServiceProvider root, bool adminPanelMode = false)
+    public VardiyaViewModel(IServiceProvider root)
     {
         _scopes = root.GetRequiredService<IServiceScopeFactory>();
         _session = root.GetRequiredService<ISessionContext>();
-        _adminPanelMode = adminPanelMode;
         Items = new ObservableCollection<CalismaSekli>();
+        FilterFirmalar = new ObservableCollection<LookupItem>();
 
         AddCommand = new RelayCommand(EnterAddMode, () => CanAdd);
         EditCommand = new RelayCommand(EnterEditMode, () => CanEdit);
@@ -50,10 +51,31 @@ public sealed class VardiyaViewModel : ObservableObject
         RefreshCommand = new RelayCommand(LoadList);
         YemekSaatleriCommand = new RelayCommand(OpenYemekSaatleri, () => CanOpenYemekSaatleri);
 
+        LoadFirmalarFilter();
         LoadList();
     }
 
     public ObservableCollection<CalismaSekli> Items { get; }
+    public ObservableCollection<LookupItem> FilterFirmalar { get; }
+
+    public LookupItem? SelectedFirmaFilter
+    {
+        get => _selectedFirmaFilter;
+        set
+        {
+            if (ReferenceEquals(_selectedFirmaFilter, value)) return;
+            if (_selectedFirmaFilter is not null && value is not null && _selectedFirmaFilter.Id == value.Id)
+            {
+                SetProperty(ref _selectedFirmaFilter, value);
+                return;
+            }
+
+            SetProperty(ref _selectedFirmaFilter, value);
+            if (_suppressFirmaFilter) return;
+            if (_mode == ScreenMode.List)
+                LoadList();
+        }
+    }
 
     public CalismaSekli? SelectedItem
     {
@@ -171,6 +193,63 @@ public sealed class VardiyaViewModel : ObservableObject
     public ICommand RefreshCommand { get; }
     public ICommand YemekSaatleriCommand { get; }
 
+    private void LoadFirmalarFilter()
+    {
+        try
+        {
+            using var scope = _scopes.CreateScope();
+            bool isAdmin = FirmaIsyeriYetkiHelper.IsAdmin(_session.RolId);
+            var firmaSvc = scope.ServiceProvider.GetRequiredService<IFirmaService>();
+            IReadOnlyList<FirmaIsyeriYetkiDTO> yetkiler = Array.Empty<FirmaIsyeriYetkiDTO>();
+            if (_session.AktifKullaniciId.HasValue)
+            {
+                var yetkiSvc = scope.ServiceProvider.GetRequiredService<IKullaniciFirmaIsyeriYetkiService>();
+                yetkiler = yetkiSvc.GetYetkiler((int)_session.AktifKullaniciId.Value)
+                           ?? new List<FirmaIsyeriYetkiDTO>();
+            }
+
+            var liste = FirmaIsyeriYetkiHelper.FilterFirmalar(firmaSvc.GetAll() ?? new List<Firma>(), yetkiler, isAdmin);
+            _suppressFirmaFilter = true;
+            FilterFirmalar.Clear();
+            if (isAdmin)
+                FilterFirmalar.Add(FirmaIsyeriYetkiHelper.CreateFirmaFilterTumuItem());
+            foreach (var f in liste)
+                FilterFirmalar.Add(new LookupItem { Id = f.FirmaId, Ad = f.FirmaAdi ?? ("Firma " + f.FirmaId) });
+
+            int? prefer = _session.AktifFirmaId;
+            LookupItem? next = null;
+            if (prefer.HasValue && prefer.Value > 0)
+                next = FilterFirmalar.FirstOrDefault(x => x.Id == prefer.Value);
+            next ??= FilterFirmalar.FirstOrDefault();
+            _selectedFirmaFilter = next;
+            RaisePropertyChanged(nameof(SelectedFirmaFilter));
+            _suppressFirmaFilter = false;
+        }
+        catch
+        {
+            _suppressFirmaFilter = false;
+        }
+    }
+
+    /// <summary>null = admin TÜMÜ; aksi halde seçili/aktif firma Id.</summary>
+    private int? ResolveFilterFirmaId()
+    {
+        var sel = SelectedFirmaFilter;
+        if (sel is not null && FirmaIsyeriYetkiHelper.IsFirmaFilterTumu(sel.Id))
+            return null;
+        if (sel is not null && sel.Id > 0)
+            return sel.Id;
+        return _session.AktifFirmaId;
+    }
+
+    private List<CalismaSekli> QueryVardiyaList(ICalismaSekliService svc)
+    {
+        var firmaId = ResolveFilterFirmaId();
+        if (!firmaId.HasValue)
+            return svc.GetAllForAdmin() ?? new List<CalismaSekli>();
+        return svc.GetAll(firmaId.Value) ?? new List<CalismaSekli>();
+    }
+
     private void LoadList()
     {
         Error = null;
@@ -187,7 +266,9 @@ public sealed class VardiyaViewModel : ObservableObject
                 return;
             }
 
-            if (!_adminPanelMode && !_session.AktifFirmaId.HasValue)
+            var firmaId = ResolveFilterFirmaId();
+            bool isAdmin = FirmaIsyeriYetkiHelper.IsAdmin(_session.RolId);
+            if (!firmaId.HasValue && !isAdmin)
             {
                 Error = "Aktif firma seçili değil.";
                 Items.Clear();
@@ -196,10 +277,21 @@ public sealed class VardiyaViewModel : ObservableObject
                 return;
             }
 
+            if (firmaId.HasValue && _session.AktifKullaniciId.HasValue)
+            {
+                var yetkiSvc = scope.ServiceProvider.GetRequiredService<IKullaniciFirmaIsyeriYetkiService>();
+                var yetkiler = yetkiSvc.GetYetkiler((int)_session.AktifKullaniciId.Value);
+                if (!FirmaIsyeriYetkiHelper.IsFirmaAuthorized(firmaId.Value, yetkiler, isAdmin))
+                {
+                    Items.Clear();
+                    ClearFields();
+                    RefreshToolbar(auth);
+                    return;
+                }
+            }
+
             var svc = scope.ServiceProvider.GetRequiredService<ICalismaSekliService>();
-            var list = _adminPanelMode
-                ? (svc.GetAllForAdmin() ?? new List<CalismaSekli>())
-                : (svc.GetAll((int)_session.AktifFirmaId!.Value) ?? new List<CalismaSekli>());
+            var list = QueryVardiyaList(svc);
             var keepId = SelectedItem?.Id;
 
             _suppressSelection = true;
@@ -426,16 +518,7 @@ public sealed class VardiyaViewModel : ObservableObject
             using var scope = _scopes.CreateScope();
             var auth = scope.ServiceProvider.GetRequiredService<IAuthorizationService>();
             var svc = scope.ServiceProvider.GetRequiredService<ICalismaSekliService>();
-            List<CalismaSekli> list;
-            if (_adminPanelMode)
-            {
-                list = svc.GetAllForAdmin() ?? new List<CalismaSekli>();
-            }
-            else
-            {
-                if (!_session.AktifFirmaId.HasValue) return;
-                list = svc.GetAll((int)_session.AktifFirmaId.Value) ?? new List<CalismaSekli>();
-            }
+            var list = QueryVardiyaList(svc);
 
             _suppressSelection = true;
             Items.Clear();
@@ -470,7 +553,8 @@ public sealed class VardiyaViewModel : ObservableObject
 
         var it = SelectedItem;
         if (it is null) return;
-        if (!_adminPanelMode && !_session.AktifFirmaId.HasValue) return;
+        var filterFirma = ResolveFilterFirmaId();
+        if (!filterFirma.HasValue && !_session.AktifFirmaId.HasValue) return;
 
         if (!UiDialog.Confirm($"“{it.Ad}” silinsin mi?", "Onay", yesText: "Sil", noText: "Vazgeç"))
             return;
@@ -478,9 +562,9 @@ public sealed class VardiyaViewModel : ObservableObject
         try
         {
             var svc = scope.ServiceProvider.GetRequiredService<ICalismaSekliService>();
-            int firmaId = _adminPanelMode
+            int firmaId = it.FirmaId > 0
                 ? it.FirmaId
-                : (int)_session.AktifFirmaId!.Value;
+                : (filterFirma ?? (int)_session.AktifFirmaId!.Value);
             if (!svc.Delete(it.Id, firmaId))
             {
                 Error = "Silme işlemi başarısız. Kayıt başka tablolarca kullanılıyor olabilir.";

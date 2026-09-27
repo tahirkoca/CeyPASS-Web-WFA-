@@ -26,7 +26,7 @@ internal static class UiPageTitles
             "AylikPuantaj" => "Aylık Puantaj",
             "Raporlar" => "Raporlar",
             "Guncelleme" => "Güncelleme Bildirimi",
-            "Admin" or "AdminPanel" => "Admin Panel",
+            "Admin" or "AdminPanel" => "Güncelleme Bildirimi",
             "Dashboard" => "Ana Sayfa",
             _ => title
         };

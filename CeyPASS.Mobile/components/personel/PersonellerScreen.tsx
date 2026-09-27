@@ -386,6 +386,9 @@ function PersonelFormModal(props: {
   const personelIdNum = asInt(kisi?.PersonelId, 0);
   const canOpenCokluSicil = puantajYapilabilir && !isHedefSicilOnly && personelIdNum > 0 && tcKimlikNo.trim().length > 0;
   const cokluSicilDurumText = buildCokluSicilDurumText(isAnaSicil, cokluSicilHedefSayisi, isHedefSicilOnly, hedefSicilBilgi);
+  const tcRequired = firmaPersoneli || taseronCalisanMi;
+  const kartRequired = ziyaretciMi || aracKartiMi;
+  const yemekRequired = yemekHakkiVar;
 
   async function openCokluSicilModal() {
     const pid = asInt(kisi?.PersonelId, 0);
@@ -553,6 +556,13 @@ function PersonelFormModal(props: {
             </View>
           ) : null}
 
+          <View className="bg-[#eff6ff] rounded-3xl border border-[#bfdbfe] p-4 mb-4">
+            <Text className="text-[#1e40af] font-extrabold mb-1">Zorunlu alanlar (*)</Text>
+            <Text className="text-[#1e40af] text-[12px] font-semibold">
+              Sicil, Ad, Soyad, İşe Giriş, İşyeri her zaman. Firma/Taşeron → TC; Ziyaretçi/Araç → Kart No; Yemek hakkı → Yemek adedi.
+            </Text>
+          </View>
+
           <View className="bg-white rounded-3xl border border-[#f1f5f9] p-5 mb-4">
             <Text className="text-[#1e293b] font-extrabold mb-4">Fotoğraf</Text>
             <View className="items-center">
@@ -602,9 +612,9 @@ function PersonelFormModal(props: {
               }}
             />
             {fieldErrors.Soyad ? <Text className="text-[#dc2626] font-semibold text-[12px] mb-3">{fieldErrors.Soyad}</Text> : null}
-            <Text className="text-[#64748b] font-semibold mb-2">TC Kimlik No</Text>
+            <Text className="text-[#64748b] font-semibold mb-2">TC Kimlik No{tcRequired ? " *" : ""}</Text>
             <TextInput className="bg-[#f8fafc] border border-[#e2e8f0] rounded-2xl px-4 py-3 mb-3" keyboardType="numeric" value={s(kisi?.TcKimlikNo)} onChangeText={(t) => setKisi((p: any) => ({ ...p, TcKimlikNo: t }))} />
-            <Text className="text-[#64748b] font-semibold mb-2">Kart No</Text>
+            <Text className="text-[#64748b] font-semibold mb-2">Kart No{kartRequired ? " *" : ""}</Text>
             <TextInput className="bg-[#f8fafc] border border-[#e2e8f0] rounded-2xl px-4 py-3 mb-3" value={s(kisi?.KartNo)} onChangeText={(t) => setKisi((p: any) => ({ ...p, KartNo: t }))} />
 
             <Text className="text-[#64748b] font-semibold mb-2">Doğum Tarihi</Text>
@@ -647,7 +657,7 @@ function PersonelFormModal(props: {
               </>
             ) : null}
             {[
-              ["isyeri", "İşyeri"],
+              ["isyeri", "İşyeri *"],
               ["pozisyon", "Pozisyon"],
               ["bolum", "Bölüm"],
               ["statu", "Çalışma Statüsü"],
@@ -693,7 +703,7 @@ function PersonelFormModal(props: {
                 <Switch value={val as boolean} onValueChange={fn as any} />
               </View>
             ))}
-            <Text className="text-[#64748b] font-semibold mt-3 mb-2">Günlük Yemek Adedi/Limiti</Text>
+            <Text className="text-[#64748b] font-semibold mt-3 mb-2">Günlük Yemek Adedi/Limiti{yemekRequired ? " *" : ""}</Text>
             <TextInput className="bg-[#f8fafc] border border-[#e2e8f0] rounded-2xl px-4 py-3" keyboardType="numeric" value={gunlukYemek} onChangeText={setGunlukYemek} />
             <Text className="text-[#64748b] font-semibold mt-3 mb-2">Firma Dışı Kart No</Text>
             <TextInput className="bg-[#f8fafc] border border-[#e2e8f0] rounded-2xl px-4 py-3" value={firmaDisiKartNo} onChangeText={setFirmaDisiKartNo} />

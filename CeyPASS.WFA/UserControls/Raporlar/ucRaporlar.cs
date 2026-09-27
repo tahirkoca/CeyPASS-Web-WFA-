@@ -472,13 +472,17 @@ namespace CeyPASS.WFA.UserControls.Raporlar
         {
             try
             {
-                var list = _cihazSvc.GetListe(true, firmaId) ?? new List<CihazListDTO>();
+                string procedureAdi = cmbRaporTurleri.SelectedValue?.ToString();
+                bool sadeceYemekhane = RaporParametreHelper.RequiresYemekhaneCihazFilter(procedureAdi);
+                var list = _cihazSvc.GetListe(true, firmaId, sadeceYemekhane) ?? new List<CihazListDTO>();
                 chkRaporIsyerleri.BeginUpdate();
                 chkRaporIsyerleri.Items.Clear();
                 foreach (var c in list)
                     chkRaporIsyerleri.Items.Add(c, false);
                 chkRaporIsyerleri.DisplayMember = nameof(CihazListDTO.CihazAdi);
-                lblIsyerleri.Text = "Cihazlar (işaretlenmezse firmanın tüm aktif cihazları)";
+                lblIsyerleri.Text = sadeceYemekhane
+                    ? "Cihazlar (işaretlenmezse firmanın tüm aktif yemekhane cihazları)"
+                    : "Cihazlar (işaretlenmezse firmanın tüm aktif cihazları)";
                 pnlIsyeriFilters.Visible = chkRaporIsyerleri.Items.Count > 0;
                 chkRaporIsyerleri.EndUpdate();
                 _loadedMultiFirmaId = firmaId;

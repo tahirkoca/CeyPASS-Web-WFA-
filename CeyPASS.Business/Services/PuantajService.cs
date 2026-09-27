@@ -610,6 +610,103 @@ namespace CeyPASS.Business.Services
         }
 
         /// <inheritdoc />
+        public PuantajVeriDurumuDTO GetVeriDurumu(int firmaId, int? isyeriId, int yil, int ay, int? personelId = null)
+        {
+            var result = new PuantajVeriDurumuDTO();
+            if (firmaId <= 0 || yil < 2000 || ay < 1 || ay > 12)
+            {
+                result.Mesaj = "Firma ve dönem seçiniz.";
+                return result;
+            }
+
+            var yetkiler = new List<FirmaIsyeriYetkiDTO>
+            {
+                new FirmaIsyeriYetkiDTO { FirmaId = firmaId, IsyeriId = isyeriId }
+            };
+
+            DateTime ayBas = new DateTime(yil, ay, 1);
+            DateTime aySon = ayBas.AddMonths(1).AddDays(-1);
+
+            var siciller = _repo.GetSicillerAyIcin(yil, ay, yetkiler) ?? new DataTable();
+            var beklenenMap = new Dictionary<int, int>();
+            var adMap = new Dictionary<int, string>();
+
+            foreach (DataRow row in siciller.Rows)
+            {
+                int sicilNo = Convert.ToInt32(row["SicilNo"]);
+                if (!row.IsNull("Firma") && Convert.ToInt32(row["Firma"]) != firmaId)
+                    continue;
+                if (isyeriId.HasValue && isyeriId.Value > 0)
+                {
+                    if (row.IsNull("Isyeri") || Convert.ToInt32(row["Isyeri"]) != isyeriId.Value)
+                        continue;
+                }
+
+                if (row.IsNull("IseGirisTarihi"))
+                    continue;
+
+                DateTime iseGiris = Convert.ToDateTime(row["IseGirisTarihi"]).Date;
+                DateTime? istenCikis = row.IsNull("IstenCikisTarihi")
+                    ? (DateTime?)null
+                    : Convert.ToDateTime(row["IstenCikisTarihi"]).Date;
+
+                DateTime baslangic = iseGiris > ayBas ? iseGiris : ayBas;
+                DateTime bitis = (istenCikis.HasValue && istenCikis.Value < aySon) ? istenCikis.Value : aySon;
+                if (bitis < baslangic)
+                    continue;
+
+                int gunSayisi = (bitis - baslangic).Days + 1;
+                beklenenMap[sicilNo] = gunSayisi;
+                string ad = Convert.ToString(row["Ad"]) ?? "";
+                string soyad = Convert.ToString(row["Soyad"]) ?? "";
+                adMap[sicilNo] = (ad + " " + soyad).Trim();
+            }
+
+            if (beklenenMap.Count == 0)
+            {
+                result.Mesaj = "Bu ayda işe başlamış personel bulunamadı.";
+                return result;
+            }
+
+            var veriler = _repo.GetVeriGirisleriAyIcin(yil, ay, yetkiler) ?? new DataTable();
+            var girilenMap = new Dictionary<int, HashSet<DateTime>>();
+            foreach (DataRow row in veriler.Rows)
+            {
+                int sicilNo = Convert.ToInt32(row["SicilNo"]);
+                if (!beklenenMap.ContainsKey(sicilNo))
+                    continue;
+                DateTime tarih = Convert.ToDateTime(row["Tarih"]).Date;
+                if (!girilenMap.TryGetValue(sicilNo, out var set))
+                {
+                    set = new HashSet<DateTime>();
+                    girilenMap[sicilNo] = set;
+                }
+                set.Add(tarih);
+            }
+
+            int toplamBeklenen = beklenenMap.Values.Sum();
+            int toplamGirilen = beklenenMap.Keys.Sum(id => girilenMap.TryGetValue(id, out var s) ? s.Count : 0);
+            int toplamEksik = Math.Max(0, toplamBeklenen - toplamGirilen);
+
+            result.ToplamPersonel = beklenenMap.Count;
+            result.ToplamBeklenen = toplamBeklenen;
+            result.ToplamGirilen = toplamGirilen;
+            result.ToplamEksik = toplamEksik;
+
+            if (personelId.HasValue && personelId.Value > 0 && beklenenMap.TryGetValue(personelId.Value, out int kisiBek))
+            {
+                int kisiGir = girilenMap.TryGetValue(personelId.Value, out var set) ? set.Count : 0;
+                result.SecilenPersonelId = personelId.Value;
+                result.SecilenAdSoyad = adMap.TryGetValue(personelId.Value, out var adSoyad) ? adSoyad : null;
+                result.KisiBeklenen = kisiBek;
+                result.KisiGirilen = kisiGir;
+                result.KisiEksik = Math.Max(0, kisiBek - kisiGir);
+            }
+
+            return result;
+        }
+
+        /// <inheritdoc />
         public List<PuantajExportDTO> PrepareMonthlyExport(PuantajExportRequest request)
         {
             var result = new List<PuantajExportDTO>();

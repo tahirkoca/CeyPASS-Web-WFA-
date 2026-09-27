@@ -22,5 +22,6 @@ namespace CeyPASS.DataAccess
         public string Tip { get; set; }
         public System.DateTime KayitZamani { get; set; }
         public bool AktifMi { get; set; }
+        public bool ManuelMi { get; set; }
     }
 }

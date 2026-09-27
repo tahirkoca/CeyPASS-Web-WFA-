@@ -69,6 +69,75 @@ namespace CeyPASS.WFA.UserControls.EO
             // WFA: "Bugüne kadar (dün dahil) toplu onayla" butonu
             // Grid seçimi gerektirmeden, ekrandaki seçili kişi + seçili ay üzerinden çalışır.
             CreateBuguneKadarOnaylaButton();
+            CreateVeriDurumuPanel();
+        }
+
+        private Label _lblVeriDurumu;
+
+        private void CreateVeriDurumuPanel()
+        {
+            // Filtre topbar'ını bozmadan: ince, kutusuz tek satır özet (mavi panel yok)
+            var pnl = new Panel
+            {
+                Name = "pnlVeriDurumu",
+                Dock = DockStyle.Top,
+                Height = 28,
+                BackColor = Color.FromArgb(240, 242, 245),
+                Padding = new Padding(12, 2, 12, 2),
+                Margin = new Padding(0, 0, 0, 4)
+            };
+            _lblVeriDurumu = new Label
+            {
+                Name = "lblVeriDurumu",
+                Dock = DockStyle.Fill,
+                Font = new Font("Segoe UI", 8.25F, FontStyle.Regular),
+                ForeColor = Color.FromArgb(51, 65, 85),
+                TextAlign = ContentAlignment.MiddleLeft,
+                AutoEllipsis = true
+            };
+            pnl.Controls.Add(_lblVeriDurumu);
+            pnlMain.Controls.Add(pnl);
+            pnlMain.Controls.SetChildIndex(pnl, 1);
+        }
+
+        private void VeriDurumuGoster()
+        {
+            if (_lblVeriDurumu == null) return;
+            try
+            {
+                int firmaId = 0;
+                int isyeriId = 0;
+                if (cmbFirmaSecimi.SelectedValue != null)
+                    int.TryParse(cmbFirmaSecimi.SelectedValue.ToString(), out firmaId);
+                if (cmbIsyeriSecimi.SelectedValue != null)
+                    int.TryParse(cmbIsyeriSecimi.SelectedValue.ToString(), out isyeriId);
+
+                if (firmaId <= 0 || isyeriId <= 0 || _seciliYil <= 0 || _seciliAy <= 0)
+                {
+                    _lblVeriDurumu.Text = "";
+                    return;
+                }
+
+                int? personelId = null;
+                if (!string.IsNullOrEmpty(_seciliPersonelIdStr) && int.TryParse(_seciliPersonelIdStr, out var pid) && pid > 0)
+                    personelId = pid;
+
+                var dto = _psvc.GetVeriDurumu(firmaId, isyeriId, _seciliYil, _seciliAy, personelId);
+                if (!string.IsNullOrWhiteSpace(dto.Mesaj) && dto.ToplamPersonel <= 0)
+                {
+                    _lblVeriDurumu.Text = dto.Mesaj;
+                    return;
+                }
+
+                var s = $"Personel: {dto.ToplamPersonel} · Beklenen: {dto.ToplamBeklenen} · Girilen: {dto.ToplamGirilen} · Eksik: {dto.ToplamEksik}";
+                if (dto.SecilenPersonelId.HasValue && dto.KisiBeklenen.HasValue)
+                    s += $"  |  {(dto.SecilenAdSoyad ?? "").Trim()}: Beklenen {dto.KisiBeklenen} · Girilen {dto.KisiGirilen} · Eksik {dto.KisiEksik}";
+                _lblVeriDurumu.Text = s;
+            }
+            catch
+            {
+                _lblVeriDurumu.Text = "Veri durumu alınamadı.";
+            }
         }
 
         private void CreateBuguneKadarOnaylaButton()
@@ -330,11 +399,13 @@ namespace CeyPASS.WFA.UserControls.EO
             {
                 IsyerleriniYukle();
                 PersistFilters();
+                VeriDurumuGoster();
             };
             cmbIsyeriSecimi.SelectedValueChanged += (s, e) =>
             {
                 PersonelleriYukle();
                 PersistFilters();
+                VeriDurumuGoster();
             };
             cmbAdSoyad.SelectedValueChanged += cmbAdSoyad_SelectedValueChanged;
         }
@@ -361,6 +432,7 @@ namespace CeyPASS.WFA.UserControls.EO
             }
             RefreshCokluSicilButton(personelId);
             PersistFilters();
+            VeriDurumuGoster();
         }
 
         private void RefreshCokluSicilButton(int personelId)
@@ -512,6 +584,7 @@ namespace CeyPASS.WFA.UserControls.EO
                 _seciliPersonelId = 0;
 
             GridYukle();
+            VeriDurumuGoster();
         }
         private void cmbAySecimi_SelectedIndexChanged(object sender, EventArgs e)
         {
@@ -530,6 +603,7 @@ namespace CeyPASS.WFA.UserControls.EO
 
             ApplyLocksAndGreyRows(_ekKayitGun);
             PersistFilters();
+            VeriDurumuGoster();
         }
         private void btnCokluSicileAktar_Click(object sender, EventArgs e)
         {
@@ -549,10 +623,26 @@ namespace CeyPASS.WFA.UserControls.EO
             int yil = _seciliYil;
             int ay = _seciliAy;
 
-            var onay = UiConfirm.Confirm(this,
-                $"Seçili kişinin {_cokluSicilHedefSayisi} hedef siciline {yil}-{ay:D2} ayı için Aktarım Gün Sayısı kadar 'NG 7,5' yazılacak.\n" +
-                "Ayrıca ana personelin ayın SON GÜNÜNDEKİ kayıtları kaldırılacaktır. Onaylıyor musunuz?",
-                "Onay", "Onayla", "Vazgeç");
+            var hedefler = _cokluSicilSvc.GetByAnaPersonelId(anaPersonelId, yalnizcaAktif: true)
+                           ?? new List<CokluSicilBaglantiDTO>();
+            if (hedefler.Count == 0)
+            {
+                MessageBox.Show("Seçili personel ana sicil değil veya aktif hedef bağlantısı yok.", "Uyarı", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            var sb = new System.Text.StringBuilder();
+            sb.AppendLine($"Seçili kişinin {hedefler.Count} hedef siciline {yil}-{ay:D2} ayı için 'NG 7,5' yazılacak:");
+            sb.AppendLine();
+            foreach (var h in hedefler.OrderBy(x => x.HedefAdSoyad).ThenBy(x => x.HedefPersonelId))
+            {
+                string ad = string.IsNullOrWhiteSpace(h.HedefAdSoyad) ? "(Adsız)" : h.HedefAdSoyad.Trim();
+                sb.AppendLine($"• {h.HedefPersonelId} - {ad} → {h.AktarimGunSayisi} gün");
+            }
+            sb.AppendLine();
+            sb.Append("Ayrıca ana personel sicilindeki ayın SON GÜNÜNDEKİ kayıtları kaldırılacaktır. Onaylıyor musunuz?");
+
+            var onay = UiConfirm.Confirm(this, sb.ToString(), "Onay", "Onayla", "Vazgeç");
 
             if (!onay) return;
 
@@ -738,6 +828,7 @@ namespace CeyPASS.WFA.UserControls.EO
                 {
                     ExcelHelper.ExceleDonustur(exportData, saveFileDialog.FileName);
                     LogHelper.Info("AylikPuantaj", "ExportDone", "Puantaj Excel export tamamlandı", detayJson: $"{{\"Dosya\":\"{saveFileDialog.FileName.Replace("\\", "\\\\")}\",\"Satir\":{exportData.Count}}}", cid: cid);
+                    VeriDurumuGoster();
                 }
                 else
                 {

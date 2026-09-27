@@ -6,8 +6,8 @@ namespace CeyPASS.Business.Abstractions
     /// <summary>Geçiş cihazı tanım ve durum yönetimi.</summary>
     public interface ICihazService
     {
-        /// <summary>Cihaz listesi; isteğe bağlı firma filtresi.</summary>
-        List<CihazListDTO> GetListe(bool sadeceAktif, int? firmaId = null);
+        /// <summary>Cihaz listesi; isteğe bağlı firma ve yemekhane tipi filtresi.</summary>
+        List<CihazListDTO> GetListe(bool sadeceAktif, int? firmaId = null, bool sadeceYemekhane = false);
 
         /// <summary>Tek cihaz kaydı.</summary>
         Cihaz Get(int id);

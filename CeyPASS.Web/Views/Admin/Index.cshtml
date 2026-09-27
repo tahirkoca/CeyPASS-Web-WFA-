@@ -1,590 +1,113 @@
-@model CeyPASS.Web.Models.Admin.AdminPanelViewModel
-@using System.Linq
+@model CeyPASS.Web.Models.Admin.GuncellemeMailViewModel
 @{
-    ViewData["Title"] = "Admin Panel";
-    var adminReturn = Url.Action("Index", "Admin");
-}
-<div class="page-header mb-3">
-    <div>
-        <h1 class="page-title">Admin Panel</h1>
-        <p class="page-subtitle">Sekmelerde tüm verilerin tam listesi; ekleme, düzenleme ve silme işlemleri ilgili sekmeden yapılabilir.</p>
-    </div>
-</div>
-
-@if (TempData["Error"] != null)
-{
-    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-        @TempData["Error"]
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
-}
-@if (TempData["Success"] != null)
-{
-    <div class="alert alert-success alert-dismissible fade show" role="alert">
-        @TempData["Success"]
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
+    ViewData["Title"] = "Güncelleme Bildirimi";
 }
 
-<ul class="nav nav-tabs mb-3" id="adminTabs" role="tablist">
-    <li class="nav-item" role="presentation">
-        <button class="nav-link @(Model.AktifTab == "firma" ? "active" : "")" id="tab-firma" data-bs-toggle="tab" data-bs-target="#panel-firma" type="button" role="tab">Firma (@Model.Firmalar.Count)</button>
-    </li>
-    <li class="nav-item" role="presentation">
-        <button class="nav-link @(Model.AktifTab == "isyeri" ? "active" : "")" id="tab-isyeri" data-bs-toggle="tab" data-bs-target="#panel-isyeri" type="button" role="tab">İşyeri (@Model.Isyeriler.Count)</button>
-    </li>
-    <li class="nav-item" role="presentation">
-        <button class="nav-link @(Model.AktifTab == "cihaz" ? "active" : "")" id="tab-cihaz" data-bs-toggle="tab" data-bs-target="#panel-cihaz" type="button" role="tab">Cihaz (@Model.Cihazlar.Count)</button>
-    </li>
-    <li class="nav-item" role="presentation">
-        <button class="nav-link @(Model.AktifTab == "pozisyon" ? "active" : "")" id="tab-pozisyon" data-bs-toggle="tab" data-bs-target="#panel-pozisyon" type="button" role="tab">Pozisyon (@Model.Pozisyonlar.Count)</button>
-    </li>
-    <li class="nav-item" role="presentation">
-        <button class="nav-link @(Model.AktifTab == "resmitatil" ? "active" : "")" id="tab-resmitatil" data-bs-toggle="tab" data-bs-target="#panel-resmitatil" type="button" role="tab">Resmi Tatil (@Model.ResmiTatiller.Count)</button>
-    </li>
-    <li class="nav-item" role="presentation">
-        <button class="nav-link @(Model.AktifTab == "calismastatu" ? "active" : "")" id="tab-calismastatu" data-bs-toggle="tab" data-bs-target="#panel-calismastatu" type="button" role="tab">Çalışma Statüsü (@Model.CalismaStatuleri.Count)</button>
-    </li>
-    <li class="nav-item" role="presentation">
-        <button class="nav-link @(Model.AktifTab == "vardiya" ? "active" : "")" id="tab-vardiya" data-bs-toggle="tab" data-bs-target="#panel-vardiya" type="button" role="tab">Vardiya (@Model.CalismaSekilleri.Count)</button>
-    </li>
-    <li class="nav-item" role="presentation">
-        <button class="nav-link @(Model.AktifTab == "guncellememail" ? "active" : "")" id="tab-guncellememail" data-bs-toggle="tab" data-bs-target="#panel-guncellememail" type="button" role="tab">Güncelleme Bildirimi</button>
-    </li>
-    <li class="nav-item" role="presentation">
-        <button class="nav-link @(Model.AktifTab == "kullanicilar" ? "active" : "")" id="tab-kullanicilar" data-bs-toggle="tab" data-bs-target="#panel-kullanicilar" type="button" role="tab">Kullanıcı-Personel (@Model.Kullanicilar.Count)</button>
-    </li>
-    <li class="nav-item" role="presentation">
-        <button class="nav-link @(Model.AktifTab == "ustyetkili" ? "active" : "")" id="tab-ustyetkili" data-bs-toggle="tab" data-bs-target="#panel-ustyetkili" type="button" role="tab">Üst Yetkili (@Model.UstYetkililer.Count)</button>
-    </li>
-</ul>
+<div class="container-fluid">
+    <div class="row mb-3">
+        <div class="col-12">
+            <h2><i class="bi bi-envelope-check me-2"></i>Güncelleme Bildirimi</h2>
+            <p class="text-muted mb-0">Yeni bir güncelleme yapıldığında duyuru mailini buradan oluşturup gönderebilirsiniz.</p>
 
-<div class="tab-content" id="adminTabContent">
-    <!-- Firma -->
-    <div class="tab-pane fade @(Model.AktifTab == "firma" ? "show active" : "")" id="panel-firma" role="tabpanel">
-        <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">Firma listesi</h5>
-                <a class="btn btn-sm btn-success" href="@Url.Action("Create", "Firma", new { returnUrl = adminReturn + "?tab=firma" })" title="Yeni bir firma tanımı oluştur">Yeni Firma</a>
-            </div>
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-striped table-hover mb-0 js-datatable">
-                        <thead><tr><th>FirmaId</th><th>Firma Adı</th><th>IT Mail</th><th class="text-center">İşlemler</th></tr></thead>
-                        <tbody>
-                            @foreach (var f in Model.Firmalar)
-                            {
-                                <tr>
-                                    <td>@f.FirmaId</td>
-                                    <td>@f.FirmaAdi</td>
-                                    <td>@(string.IsNullOrWhiteSpace(f.ITBirimMail) ? "-" : f.ITBirimMail)</td>
-                                    <td class="text-center">
-                                        <div class="d-flex gap-1 justify-content-center">
-                                            <a class="btn btn-sm btn-warning" href="@Url.Action("Edit", "Firma", new { id = f.FirmaId, returnUrl = adminReturn + "?tab=firma" })" title="Düzenle">
-                                                <i class="bi bi-pencil"></i>
-                                            </a>
-                                            <form method="post" action="@Url.Action("Delete", "Firma", new { id = f.FirmaId })" class="d-inline">
-                                                @Html.AntiForgeryToken()
-                                                <input type="hidden" name="returnUrl" value="@(adminReturn + "?tab=firma")" />
-                                                <button type="button" class="btn btn-sm btn-danger btn-sil-onay" data-msg="Firmayı silmek istiyor musunuz?" title="Sil">
-                                                    <i class="bi bi-trash"></i>
-                                                </button>
-                                            </form>
-                                        </div>
-                                    </td>
-                                </tr>
-                            }
-                            @if (!Model.Firmalar.Any()) { <tr><td colspan="4" class="text-muted">Kayıt yok.</td></tr> }
-                        </tbody>
-                    </table>
+            @if (TempData["Success"] != null)
+            {
+                <div class="alert alert-success alert-dismissible fade show mt-3" role="alert">
+                    @TempData["Success"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 </div>
-            </div>
+            }
+            @if (TempData["Error"] != null)
+            {
+                <div class="alert alert-danger alert-dismissible fade show mt-3" role="alert">
+                    @TempData["Error"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
         </div>
     </div>
 
-    <!-- İşyeri -->
-    <div class="tab-pane fade @(Model.AktifTab == "isyeri" ? "show active" : "")" id="panel-isyeri" role="tabpanel">
-        <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">İşyeri listesi</h5>
-                <a class="btn btn-sm btn-success" href="@Url.Action("Create", "Isyeri", new { returnUrl = adminReturn + "?tab=isyeri" })" title="Yeni bir işyeri tanımı oluştur">Yeni İşyeri</a>
-            </div>
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-striped table-hover mb-0 js-datatable">
-                        <thead><tr><th>FirmaId</th><th>İşyeriId</th><th>İşyeri Adı</th><th class="text-center">İşlemler</th></tr></thead>
-                        <tbody>
-                            @foreach (var x in Model.Isyeriler)
-                            {
-                                <tr>
-                                    <td>@x.FirmaId</td>
-                                    <td>@x.IsyeriId</td>
-                                    <td>@x.Ad</td>
-                                    <td class="text-center">
-                                        <div class="d-flex gap-1 justify-content-center">
-                                            <a class="btn btn-sm btn-warning" href="@Url.Action("Edit", "Isyeri", new { firmaId = x.FirmaId, isyeriId = x.IsyeriId, returnUrl = adminReturn + "?tab=isyeri" })" title="Düzenle">
-                                                <i class="bi bi-pencil"></i>
-                                            </a>
-                                            <form method="post" action="@Url.Action("Delete", "Isyeri")" class="d-inline">
-                                                @Html.AntiForgeryToken()
-                                                <input type="hidden" name="firmaId" value="@x.FirmaId" />
-                                                <input type="hidden" name="isyeriId" value="@x.IsyeriId" />
-                                                <input type="hidden" name="returnUrl" value="@(adminReturn + "?tab=isyeri")" />
-                                                <button type="button" class="btn btn-sm btn-danger btn-sil-onay" data-msg="İşyerini silmek istiyor musunuz?" title="Sil">
-                                                    <i class="bi bi-trash"></i>
-                                                </button>
-                                            </form>
-                                        </div>
-                                    </td>
-                                </tr>
-                            }
-                            @if (!Model.Isyeriler.Any()) { <tr><td colspan="4" class="text-muted">Kayıt yok.</td></tr> }
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Cihaz -->
-    <div class="tab-pane fade @(Model.AktifTab == "cihaz" ? "show active" : "")" id="panel-cihaz" role="tabpanel">
-        <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">Cihaz listesi</h5>
-                <a class="btn btn-sm btn-success" href="@Url.Action("Create", "Cihaz", new { returnUrl = adminReturn + "?tab=cihaz" })" title="Yeni bir cihaz/turnike tanımı oluştur">Yeni Cihaz</a>
-            </div>
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-striped table-hover mb-0 js-datatable">
-                        <thead><tr><th>CihazId</th><th>Firma</th><th>Cihaz Adı</th><th>IP:Port</th><th>Aktif</th><th class="text-center">İşlemler</th></tr></thead>
-                        <tbody>
-                            @foreach (var c in Model.Cihazlar)
-                            {
-                                <tr>
-                                    <td>@c.CihazId</td>
-                                    <td>@c.FirmaAdi</td>
-                                    <td>@c.CihazAdi</td>
-                                    <td>@c.IPAdres:@c.Port</td>
-                                    <td>@(c.AktifMi ? "Evet" : "Hayır")</td>
-                                    <td class="text-center">
-                                        <div class="d-flex gap-1 justify-content-center">
-                                            <a class="btn btn-sm btn-warning" href="@Url.Action("Edit", "Cihaz", new { id = c.CihazId, returnUrl = adminReturn + "?tab=cihaz" })" title="Düzenle">
-                                                <i class="bi bi-pencil"></i>
-                                            </a>
-                                        </div>
-                                    </td>
-                                </tr>
-                            }
-                            @if (!Model.Cihazlar.Any()) { <tr><td colspan="6" class="text-muted">Kayıt yok.</td></tr> }
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Pozisyon -->
-    <div class="tab-pane fade @(Model.AktifTab == "pozisyon" ? "show active" : "")" id="panel-pozisyon" role="tabpanel">
-        <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">Pozisyon listesi</h5>
-                <a class="btn btn-sm btn-success" href="@Url.Action("Create", "Pozisyon", new { returnUrl = adminReturn + "?tab=pozisyon" })" title="Yeni bir pozisyon/unvan tanımı oluştur">Yeni Pozisyon</a>
-            </div>
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-striped table-hover mb-0 js-datatable">
-                        <thead><tr><th>Id</th><th>Ad</th><th>Açıklama</th><th class="text-center">İşlemler</th></tr></thead>
-                        <tbody>
-                            @foreach (var p in Model.Pozisyonlar)
-                            {
-                                <tr>
-                                    <td>@p.Id</td>
-                                    <td>@p.Ad</td>
-                                    <td>@(p.Aciklama ?? "-")</td>
-                                    <td class="text-center">
-                                        <div class="d-flex gap-1 justify-content-center">
-                                            <a class="btn btn-sm btn-warning" href="@Url.Action("Edit", "Pozisyon", new { id = p.Id, returnUrl = adminReturn + "?tab=pozisyon" })" title="Düzenle">
-                                                <i class="bi bi-pencil"></i>
-                                            </a>
-                                            <form method="post" action="@Url.Action("Delete", "Pozisyon", new { id = p.Id })" class="d-inline">
-                                                @Html.AntiForgeryToken()
-                                                <input type="hidden" name="returnUrl" value="@(adminReturn + "?tab=pozisyon")" />
-                                                <button type="button" class="btn btn-sm btn-danger btn-sil-onay" data-msg="Pozisyonu silmek istiyor musunuz?" title="Sil">
-                                                    <i class="bi bi-trash"></i>
-                                                </button>
-                                            </form>
-                                        </div>
-                                    </td>
-                                </tr>
-                            }
-                            @if (!Model.Pozisyonlar.Any()) { <tr><td colspan="4" class="text-muted">Kayıt yok.</td></tr> }
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Resmi Tatil -->
-    <div class="tab-pane fade @(Model.AktifTab == "resmitatil" ? "show active" : "")" id="panel-resmitatil" role="tabpanel">
-        <div class="card">
-            <div class="card-header"><h5 class="mb-0">Resmi tatil listesi</h5></div>
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-striped table-hover mb-0 js-datatable">
-                        <thead><tr><th>Tarih</th><th>Ad</th><th>Çalışma Saati</th></tr></thead>
-                        <tbody>
-                            @foreach (var r in Model.ResmiTatiller)
-                            {
-                                <tr>
-                                    <td>@r.Tarih.ToString("dd.MM.yyyy")</td>
-                                    <td>@r.Ad</td>
-                                    <td>@(r.CalismaSaati?.ToString("0.##") ?? "-")</td>
-                                </tr>
-                            }
-                            @if (!Model.ResmiTatiller.Any()) { <tr><td colspan="3" class="text-muted">Kayıt yok.</td></tr> }
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-            <div class="card-footer small text-muted">Ekleme/düzenleme için <a href="@Url.Action("Index", "ResmiTatil")" title="Resmi Tatiller yönetim sayfasına git">Resmi Tatiller sayfasına</a> gidin.</div>
-        </div>
-    </div>
-
-    <!-- Çalışma Statüsü -->
-    <div class="tab-pane fade @(Model.AktifTab == "calismastatu" ? "show active" : "")" id="panel-calismastatu" role="tabpanel">
-        <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">Çalışma statüsü listesi</h5>
-                <a class="btn btn-sm btn-success" href="@Url.Action("Index", "CalismaStatu")" title="Çalışma Statüleri yönetim sayfasına git">Yeni eklemek için sayfaya git</a>
-            </div>
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-striped table-hover mb-0 js-datatable">
-                        <thead><tr><th>Id</th><th>Ad</th><th class="text-center">İşlemler</th></tr></thead>
-                        <tbody>
-                            @foreach (var s in Model.CalismaStatuleri)
-                            {
-                                <tr>
-                                    <td>@s.Id</td>
-                                    <td>@s.Ad</td>
-                                    <td class="text-center">
-                                        <div class="d-flex gap-1 justify-content-center">
-                                            <a class="btn btn-sm btn-warning" href="@Url.Action("Index", "CalismaStatu")#edit-@s.Id" title="Düzenle">
-                                                <i class="bi bi-pencil"></i>
-                                            </a>
-                                            <form method="post" action="@Url.Action("Delete", "CalismaStatu", new { id = s.Id })" class="d-inline">
-                                                @Html.AntiForgeryToken()
-                                                <input type="hidden" name="returnUrl" value="@(adminReturn + "?tab=calismastatu")" />
-                                                <button type="button" class="btn btn-sm btn-danger btn-sil-onay" data-msg="Bu çalışma statüsünü silmek istiyor musunuz?" title="Sil">
-                                                    <i class="bi bi-trash"></i>
-                                                </button>
-                                            </form>
-                                        </div>
-                                    </td>
-                                </tr>
-                            }
-                            @if (!Model.CalismaStatuleri.Any()) { <tr><td colspan="3" class="text-muted">Kayıt yok.</td></tr> }
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Vardiya (Çalışma Şekli) -->
-    <div class="tab-pane fade @(Model.AktifTab == "vardiya" ? "show active" : "")" id="panel-vardiya" role="tabpanel">
-        <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">Vardiya listesi</h5>
-                <a class="btn btn-sm btn-success" href="@Url.Action("Index", "CalismaSekli")" title="Vardiya/Çalışma Şekli yönetim sayfasına git">Yeni eklemek için sayfaya git</a>
-            </div>
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-striped table-hover mb-0 js-datatable">
-                        <thead><tr><th>Id</th><th>FirmaId</th><th>Ad</th><th>Başlangıç</th><th>Bitiş</th></tr></thead>
-                        <tbody>
-                            @foreach (var v in Model.CalismaSekilleri)
-                            {
-                                <tr>
-                                    <td>@v.Id</td>
-                                    <td>@v.FirmaId</td>
-                                    <td>@v.Ad</td>
-                                    <td>@v.Baslangic.ToString(@"hh\:mm")</td>
-                                    <td>@v.Bitis.ToString(@"hh\:mm")</td>
-                                </tr>
-                            }
-                            @if (!Model.CalismaSekilleri.Any()) { <tr><td colspan="5" class="text-muted">Kayıt yok.</td></tr> }
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-            <div class="card-footer small text-muted">Ekleme/düzenleme için <a href="@Url.Action("Index", "CalismaSekli")" title="Vardiya/Çalışma Şekli yönetim sayfasına git">Vardiyalar sayfasına</a> gidin.</div>
-        </div>
-    </div>
-
-    <!-- Güncelleme Bildirimi (Mail) -->
-    <div class="tab-pane fade @(Model.AktifTab == "guncellememail" ? "show active" : "")" id="panel-guncellememail" role="tabpanel">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0"><i class="bi bi-envelope-check me-2"></i>Güncelleme Bildirimi</h5>
-                <p class="mb-0 small text-muted mt-1">Yeni bir güncelleme yapıldığında duyuru mailini buradan oluşturup gönderebilirsiniz.</p>
-            </div>
-            <div class="card-body">
-                <form id="guncellemeMailForm" method="post" asp-action="GuncellemeMailGonder" asp-controller="Admin">
-                    @Html.AntiForgeryToken()
-                    <div class="row mb-3">
-                        <div class="col-md-4">
-                            <label class="form-label">Versiyon No <span class="text-danger">*</span></label>
-                            <input type="text" name="VersiyonNumarasi" class="form-control" value="1.0.0" required />
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label">Yayın Tarihi <span class="text-danger">*</span></label>
-                            <input type="date" name="YayinTarihi" class="form-control" value="@DateTime.Today.ToString("yyyy-MM-dd")" required />
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label">Güncelleme Tipi <span class="text-danger">*</span></label>
-                            <select name="GuncellemeTipi" class="form-select" required>
-                                <option value="Major">Major</option>
-                                <option value="Minor" selected>Minor</option>
-                                <option value="Bugfix">Bugfix</option>
-                            </select>
-                        </div>
+    <div class="card">
+        <div class="card-body">
+            <form id="guncellemeMailForm" method="post" asp-action="GuncellemeMailGonder" asp-controller="Admin">
+                @Html.AntiForgeryToken()
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <label class="form-label">Versiyon No <span class="text-danger">*</span></label>
+                        <input type="text" name="VersiyonNumarasi" class="form-control" value="@(Model.VersiyonNumarasi ?? "1.0.0")" required />
                     </div>
-                    <div class="row mb-3">
-                        <div class="col-12">
-                            <label class="form-label">✨ Yeni Özellikler <small class="text-muted">(her satır bir madde)</small></label>
-                            <textarea name="YeniOzelliklerMetni" class="form-control font-monospace" rows="3" placeholder="Özellik 1&#10;Özellik 2"></textarea>
-                        </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Yayın Tarihi <span class="text-danger">*</span></label>
+                        <input type="date" name="YayinTarihi" class="form-control" value="@Model.YayinTarihi.ToString("yyyy-MM-dd")" required />
                     </div>
-                    <div class="row mb-3">
-                        <div class="col-12">
-                            <label class="form-label">⚡ İyileştirmeler <small class="text-muted">(her satır bir madde)</small></label>
-                            <textarea name="IyilestirmelerMetni" class="form-control font-monospace" rows="3" placeholder="İyileştirme 1&#10;İyileştirme 2"></textarea>
-                        </div>
-                    </div>
-                    <div class="row mb-3">
-                        <div class="col-12">
-                            <label class="form-label">🔧 Hata Düzeltmeleri <small class="text-muted">(her satır bir madde)</small></label>
-                            <textarea name="HataDuzeltmeleriMetni" class="form-control font-monospace" rows="3" placeholder="Düzeltme 1&#10;Düzeltme 2"></textarea>
-                        </div>
-                    </div>
-                    <div class="row mb-3">
-                        <div class="col-12">
-                            <label class="form-label">⚠️ Kritik Değişiklikler <small class="text-muted">(her satır bir madde)</small></label>
-                            <textarea name="KritikDegisikliklerMetni" class="form-control font-monospace" rows="3" placeholder="Kritik değişiklik 1"></textarea>
-                        </div>
-                    </div>
-                    <div class="row mb-4">
-                        <div class="col-12">
-                            <label class="form-label">📝 Ek Notlar</label>
-                            <textarea name="EkNotlar" class="form-control" rows="2">Bu güncelleme yapıldıktan sonra uygulamanın yeniden başlatılması gerekmektedir.</textarea>
-                        </div>
-                    </div>
-                    <div class="d-flex gap-2 justify-content-end">
-                        <button type="submit" formaction="@Url.Action("GuncellemeMailOnizleme", "Admin")" formtarget="_blank" class="btn btn-outline-secondary" name="action" value="onizleme" title="Mail içeriğini tarayıcıda önizle">
-                            <i class="bi bi-eye me-1"></i>Önizleme
-                        </button>
-                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#guncellemeMailOnayModal" title="Güncelleme mailini tüm kullanıcılara gönder">
-                            <i class="bi bi-send me-1"></i>Gönder
-                        </button>
-                    </div>
-                </form>
-
-                <!-- Güncelleme maili gönder onay modal (formun dışında; Gönder tıklanınca #guncellemeMailForm submit edilir) -->
-                <div class="modal fade" id="guncellemeMailOnayModal" tabindex="-1" aria-labelledby="guncellemeMailOnayModalLabel" aria-hidden="true" data-bs-backdrop="static">
-                    <div class="modal-dialog modal-dialog-centered">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title" id="guncellemeMailOnayModalLabel"><i class="bi bi-envelope-check me-2"></i>Güncelleme Bildirimi Gönder</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
-                            </div>
-                            <div class="modal-body">
-                                Güncelleme bildirimi tüm ilgili kullanıcılara gönderilecek. Emin misiniz?
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
-                                <button type="button" class="btn btn-primary" id="guncellemeMailOnayGonderBtn">
-                                    <i class="bi bi-send me-1"></i>Gönder
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Kullanıcı - Personel eşlemesi -->
-    <div class="tab-pane fade @(Model.AktifTab == "kullanicilar" ? "show active" : "")" id="panel-kullanicilar" role="tabpanel">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0">Kullanıcı - Personel Eşlemesi</h5>
-                <p class="mb-0 small text-muted mt-1">`Kullanicilar.PersonelId` alanını buradan bağlayıp/boşaltabilirsiniz.</p>
-            </div>
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-striped table-hover mb-0 js-datatable">
-                        <thead>
-                            <tr>
-                                <th>KullanıcıId</th>
-                                <th>Kullanıcı Adı</th>
-                                <th>Rol</th>
-                                <th>PersonelId</th>
-                                <th class="text-center" style="min-width:200px;">Eşle</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var u in Model.Kullanicilar)
-                            {
-                                <tr>
-                                    <td>@u.KullaniciId</td>
-                                    <td>@u.KullaniciAdi</td>
-                                    <td>@(u.RolTanimi ?? (u.RolId?.ToString() ?? "-"))</td>
-                                    <td>@(u.PersonelId?.ToString() ?? "-")</td>
-                                    <td class="text-center">
-                                        <form method="post" action="@Url.Action("KullaniciPersonelGuncelle", "Admin")" class="d-flex gap-2 justify-content-center align-items-center">
-                                            @Html.AntiForgeryToken()
-                                            <input type="hidden" name="kullaniciId" value="@u.KullaniciId" />
-                                            <select class="form-select form-select-sm" name="personelId" style="max-width:200px;">
-                                                <option value="">(Boşalt)</option>
-                                                @foreach (var p in Model.Personeller)
-                                                {
-                                                    var selected = (u.PersonelId.HasValue && p.Id == u.PersonelId.Value) ? "selected" : "";
-                                                    <option value="@p.Id" selected="@selected">@p.Id - @p.AdSoyad</option>
-                                                }
-                                            </select>
-                                            <button type="submit" class="btn btn-sm btn-primary" title="Eşlemeyi sisteme kaydet">
-                                                <i class="bi bi-save"></i>
-                                            </button>
-                                        </form>
-                                    </td>
-                                </tr>
-                            }
-                            @if (!Model.Kullanicilar.Any()) { <tr><td colspan="5" class="text-muted">Kayıt yok.</td></tr> }
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Üst Yetkili yönetimi -->
-    <div class="tab-pane fade @(Model.AktifTab == "ustyetkili" ? "show active" : "")" id="panel-ustyetkili" role="tabpanel">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0">Üst Yetkili Yönetimi</h5>
-                <p class="mb-0 small text-muted mt-1">PersonelId → ÜstYetkiliPersonelId eşlemesi. Üst boş bırakılırsa kayıt silinir.</p>
-            </div>
-            <div class="card-body">
-                <form method="post" action="@Url.Action("UstYetkiliGuncelle", "Admin")" class="row g-2 align-items-end">
-                    @Html.AntiForgeryToken()
-                    <div class="col-md-5">
-                        <label class="form-label">Personel</label>
-                        <select class="form-select" name="personelId" required>
-                            <option value="">Seçiniz...</option>
-                            @foreach (var p in Model.Personeller.OrderBy(x => x.AdSoyad))
-                            {
-                                <option value="@p.Id">@p.Id - @p.AdSoyad</option>
-                            }
+                    <div class="col-md-4">
+                        <label class="form-label">Güncelleme Tipi <span class="text-danger">*</span></label>
+                        <select name="GuncellemeTipi" class="form-select" required>
+                            <option value="Major" selected="@(Model.GuncellemeTipi == "Major")">Major</option>
+                            <option value="Minor" selected="@(Model.GuncellemeTipi == "Minor" || string.IsNullOrEmpty(Model.GuncellemeTipi))">Minor</option>
+                            <option value="Bugfix" selected="@(Model.GuncellemeTipi == "Bugfix")">Bugfix</option>
                         </select>
                     </div>
-                    <div class="col-md-5">
-                        <label class="form-label">Atanacak Üst Yetkili</label>
-                        <select class="form-select" name="ustYetkiliPersonelId">
-                            <option value="">(Boşalt - Sil)</option>
-                            @foreach (var p in Model.Personeller.OrderBy(x => x.AdSoyad))
-                            {
-                                <option value="@p.Id">@p.Id - @p.AdSoyad</option>
-                            }
-                        </select>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-12">
+                        <label class="form-label">Yeni Özellikler <small class="text-muted">(her satır bir madde)</small></label>
+                        <textarea name="YeniOzelliklerMetni" class="form-control font-monospace" rows="3" placeholder="Özellik 1&#10;Özellik 2">@Model.YeniOzelliklerMetni</textarea>
                     </div>
-                    <div class="col-md-2 d-grid">
-                        <button type="submit" class="btn btn-primary" title="Üst yetkili atamasını kaydet">Kaydet</button>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-12">
+                        <label class="form-label">İyileştirmeler <small class="text-muted">(her satır bir madde)</small></label>
+                        <textarea name="IyilestirmelerMetni" class="form-control font-monospace" rows="3">@Model.IyilestirmelerMetni</textarea>
                     </div>
-                </form>
-            </div>
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-striped table-hover mb-0 js-datatable">
-                        <thead>
-                            <tr>
-                                <th>Personel (Alt)</th>
-                                <th>Üst Yetkili (Amir)</th>
-                                <th>Atama Tarihi</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var x in Model.UstYetkililer)
-                            {
-                                var personel = Model.Personeller.FirstOrDefault(p => p.Id.ToString() == x.PersonelId);
-                                var ustYetkili = Model.Personeller.FirstOrDefault(p => p.Id.ToString() == x.UstYetkiliPersonelId);
-                                <tr>
-                                    <td>
-                                        <div class="fw-bold">@x.PersonelId</div>
-                                        <div class="small text-muted">@(personel?.AdSoyad ?? "-")</div>
-                                    </td>
-                                    <td>
-                                        <div class="fw-bold">@x.UstYetkiliPersonelId</div>
-                                        <div class="small text-muted">@(ustYetkili?.AdSoyad ?? "-")</div>
-                                    </td>
-                                    <td>@(x.OlusturmaTarihi.ToString("dd.MM.yyyy HH:mm"))</td>
-                                </tr>
-                            }
-                            @if (!Model.UstYetkililer.Any()) { <tr><td colspan="3" class="text-muted">Kayıt yok.</td></tr> }
-                        </tbody>
-                    </table>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-12">
+                        <label class="form-label">Hata Düzeltmeleri <small class="text-muted">(her satır bir madde)</small></label>
+                        <textarea name="HataDuzeltmeleriMetni" class="form-control font-monospace" rows="3">@Model.HataDuzeltmeleriMetni</textarea>
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-12">
+                        <label class="form-label">Kritik Değişiklikler <small class="text-muted">(her satır bir madde)</small></label>
+                        <textarea name="KritikDegisikliklerMetni" class="form-control font-monospace" rows="3">@Model.KritikDegisikliklerMetni</textarea>
+                    </div>
+                </div>
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <label class="form-label">Ek Notlar</label>
+                        <textarea name="EkNotlar" class="form-control" rows="2">@(Model.EkNotlar ?? "Bu güncelleme yapıldıktan sonra uygulamanın yeniden başlatılması gerekmektedir.")</textarea>
+                    </div>
+                </div>
+                <div class="d-flex gap-2 justify-content-end">
+                    <button type="submit" formaction="@Url.Action("GuncellemeMailOnizleme", "Admin")" formtarget="_blank" class="btn btn-outline-secondary" name="action" value="onizleme" title="Mail içeriğini tarayıcıda önizle">
+                        <i class="bi bi-eye me-1"></i>Önizleme
+                    </button>
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#guncellemeMailOnayModal" title="Güncelleme mailini gönder">
+                        <i class="bi bi-send me-1"></i>Gönder
+                    </button>
+                </div>
+            </form>
+
+            <div class="modal fade" id="guncellemeMailOnayModal" tabindex="-1" aria-labelledby="guncellemeMailOnayModalLabel" aria-hidden="true" data-bs-backdrop="static">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="guncellemeMailOnayModalLabel"><i class="bi bi-envelope-check me-2"></i>Güncelleme Bildirimi Gönder</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+                        </div>
+                        <div class="modal-body">
+                            <p class="mb-0">Güncelleme bildirimi ilgili alıcılara gönderilecek. Devam etmek istiyor musunuz?</p>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Vazgeç</button>
+                            <button type="button" class="btn btn-primary" id="btnGuncellemeMailOnayla"
+                                    onclick="document.getElementById('guncellemeMailForm').submit();">
+                                <i class="bi bi-send me-1"></i>Gönder
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
-
-<!-- Silme onay modal (Firma, İşyeri, Pozisyon, Çalışma Statüsü) -->
-<div class="modal fade" id="silOnayModal" tabindex="-1" aria-labelledby="silOnayModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="silOnayModalLabel"><i class="bi bi-exclamation-triangle me-2"></i>Silme Onayı</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
-            </div>
-            <div class="modal-body" id="silOnayModalBody"></div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Vazgeç</button>
-                <button type="button" class="btn btn-danger" id="silOnayModalSilBtn"><i class="bi bi-trash me-1"></i>Sil</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<script>
-    (function () {
-        var hash = window.location.hash || '#tab-' + '@Model.AktifTab';
-        if (hash.indexOf('tab-') === 1) {
-            var tabId = hash.replace('#tab-', '');
-            var btn = document.getElementById('tab-' + tabId);
-            if (btn) { var b = new bootstrap.Tab(btn); b.show(); }
-        }
-
-        // Güncelleme maili gönder onay modal: Gönder'e basınca formu gönder
-        var onayModal = document.getElementById('guncellemeMailOnayModal');
-        var gonderBtn = document.getElementById('guncellemeMailOnayGonderBtn');
-        var guncellemeMailForm = document.getElementById('guncellemeMailForm');
-        if (onayModal && gonderBtn && guncellemeMailForm) {
-            gonderBtn.addEventListener('click', function (e) {
-                e.preventDefault();
-                var modalInstance = bootstrap.Modal.getInstance(onayModal);
-                if (modalInstance) modalInstance.hide();
-                // Formu kısa gecikmeyle gönder (modal kapanırken submit kaybolmasın)
-                setTimeout(function () { guncellemeMailForm.submit(); }, 100);
-            });
-        }
-
-        // Silme onay: CeyPASS.confirm (site.js)
-
-        // Redraw DataTables when a tab is shown (fixes column width issues in hidden tabs)
-        $('button[data-bs-toggle="tab"]').on('shown.bs.tab', function (e) {
-            $.fn.dataTable.tables({ visible: true, api: true }).columns.adjust();
-        });
-    })();
-</script>

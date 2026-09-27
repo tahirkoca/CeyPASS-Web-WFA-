@@ -153,6 +153,7 @@ public sealed class AylikPuantajViewModel : ObservableObject
     private bool _canEditEkKayit;
     private bool _canCokluSicileAktar;
     private int _cokluSicilHedefSayisi;
+    private string _veriDurumuText = "";
 
     /// <summary>Oturum, yetki ve filtre tercihleriyle ekranı başlatır.</summary>
     public AylikPuantajViewModel(IServiceProvider root)
@@ -256,6 +257,12 @@ public sealed class AylikPuantajViewModel : ObservableObject
     {
         get => _status;
         private set => SetProperty(ref _status, value);
+    }
+
+    public string VeriDurumuText
+    {
+        get => _veriDurumuText;
+        private set => SetProperty(ref _veriDurumuText, value);
     }
 
     public bool Busy
@@ -535,12 +542,50 @@ public sealed class AylikPuantajViewModel : ObservableObject
             Personeller.Add(k);
 
         SelectedPersonel = Personeller.FirstOrDefault();
+        if (SelectedPersonel is null)
+            RefreshVeriDurumu();
+    }
+
+    private void RefreshVeriDurumu()
+    {
+        VeriDurumuText = "";
+        if (SelectedFirma is null || SelectedIsyeri is null || SeciliYil <= 0 || SeciliAyNum <= 0)
+            return;
+
+        try
+        {
+            using var scope = _scopes.CreateScope();
+            var psvc = scope.ServiceProvider.GetRequiredService<IPuantajService>();
+            int? pid = SeciliPersonelId > 0 ? SeciliPersonelId : null;
+            var dto = psvc.GetVeriDurumu(SelectedFirma.FirmaId, SelectedIsyeri.IsyeriId, SeciliYil, SeciliAyNum, pid);
+            VeriDurumuText = FormatVeriDurumu(dto);
+        }
+        catch
+        {
+            VeriDurumuText = "Veri durumu alınamadı.";
+        }
+    }
+
+    private static string FormatVeriDurumu(PuantajVeriDurumuDTO dto)
+    {
+        if (dto == null) return "";
+        if (!string.IsNullOrWhiteSpace(dto.Mesaj) && dto.ToplamPersonel <= 0)
+            return dto.Mesaj!;
+
+        // Tek satır; dar alanda ellipsis + ToolTip ile tam metin
+        var s = $"Personel: {dto.ToplamPersonel} · Beklenen: {dto.ToplamBeklenen} · Girilen: {dto.ToplamGirilen} · Eksik: {dto.ToplamEksik}";
+        if (dto.SecilenPersonelId.HasValue && dto.KisiBeklenen.HasValue)
+        {
+            s += $"  |  {(dto.SecilenAdSoyad ?? "").Trim()}: Beklenen {dto.KisiBeklenen} · Girilen {dto.KisiGirilen} · Eksik {dto.KisiEksik}";
+        }
+        return s;
     }
 
     private void LoadGrid()
     {
         Rows.Clear();
         SelectedRow = null;
+        RefreshVeriDurumu();
 
         if (!_viewAllowed) return;
 
@@ -820,12 +865,33 @@ public sealed class AylikPuantajViewModel : ObservableObject
 
         int yil = SeciliYil;
         int ay = SeciliAyNum;
-        if (!UiDialog.Confirm(
-                $"Seçili kişinin {_cokluSicilHedefSayisi} hedef siciline {yil}-{ay:D2} ayı için Aktarım Gün Sayısı kadar 'NG 7,5' yazılacak.\n" +
-                "Ayrıca ana personelin ayın SON GÜNÜNDEKİ kayıtları kaldırılacaktır. Onaylıyor musunuz?",
-                "Onay",
-                yesText: "Aktar",
-                noText: "Vazgeç"))
+
+        List<CokluSicilBaglantiDTO> hedefler;
+        using (var scopeList = _scopes.CreateScope())
+        {
+            var cs = scopeList.ServiceProvider.GetRequiredService<ICokluSicilService>();
+            hedefler = cs.GetByAnaPersonelId(SeciliPersonelId, yalnizcaAktif: true)
+                       ?? new List<CokluSicilBaglantiDTO>();
+        }
+
+        if (hedefler.Count == 0)
+        {
+            UiDialog.Warning("Seçili personel ana sicil değil veya aktif hedef bağlantısı yok.", "Uyarı");
+            return;
+        }
+
+        var sb = new System.Text.StringBuilder();
+        sb.AppendLine($"Seçili kişinin {hedefler.Count} hedef siciline {yil}-{ay:D2} ayı için 'NG 7,5' yazılacak:");
+        sb.AppendLine();
+        foreach (var h in hedefler.OrderBy(x => x.HedefAdSoyad).ThenBy(x => x.HedefPersonelId))
+        {
+            string ad = string.IsNullOrWhiteSpace(h.HedefAdSoyad) ? "(Adsız)" : h.HedefAdSoyad.Trim();
+            sb.AppendLine($"• {h.HedefPersonelId} - {ad} → {h.AktarimGunSayisi} gün");
+        }
+        sb.AppendLine();
+        sb.Append("Ayrıca ana personel sicilindeki ayın SON GÜNÜNDEKİ kayıtları kaldırılacaktır. Onaylıyor musunuz?");
+
+        if (!UiDialog.Confirm(sb.ToString(), "Onay", yesText: "Aktar", noText: "Vazgeç"))
             return;
 
         try
@@ -882,6 +948,7 @@ public sealed class AylikPuantajViewModel : ObservableObject
                 ExcelHelper.ExceleDonustur(exportData, dlg.FileName);
                 UiDialog.Success("Excel kaydedildi.", "Bilgi");
                 Status = "Export tamamlandı.";
+                RefreshVeriDurumu();
             }
         }
         catch (Exception ex)

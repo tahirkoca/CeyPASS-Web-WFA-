@@ -13,7 +13,7 @@ import * as Sharing from "expo-sharing";
 import { Buffer } from "buffer";
 import { PdfPreviewModal } from "../PdfPreviewModal";
 import { BusyOverlay } from "../BusyOverlay";
-import { pageFilterPrefs, parsePrefDate } from "../../services/pageFilterPrefs";
+import { pageFilterPrefs, parsePrefDate } from "../../services/pageFilterPrefs";
 import { toTrLower } from "../../services/turkishText";
 
 function pick<T = any>(obj: any, a: string, b?: string): T | undefined {
@@ -251,7 +251,7 @@ export function RaporlarScreen(props: { user: any; abilities: any; onOpenMenu: (
     });
   }, [filtersHydrated, selectedFirmaId, tBas, tBit, procedureAdi]);
 
-  const loadMultiForFirma = async (firmaId: number | null) => {
+  const loadMultiForFirma = async (firmaId: number | null, proc?: string | null) => {
     if (firmaId == null || firmaId <= 0) {
       setIsyeriList([]);
       setCihazList([]);
@@ -259,8 +259,9 @@ export function RaporlarScreen(props: { user: any; abilities: any; onOpenMenu: (
       setSelectedCihazIds([]);
       return;
     }
+    const procName = proc ?? procedureAdi;
     try {
-      const [iy, cz] = await Promise.all([raporService.isyerleri(firmaId), raporService.cihazlar(firmaId)]);
+      const [iy, cz] = await Promise.all([raporService.isyerleri(firmaId), raporService.cihazlar(firmaId, procName || null)]);
       if (iy?.success) {
         const raw = iy.data ?? (iy as any).Data ?? [];
         setIsyeriList(
@@ -293,8 +294,9 @@ export function RaporlarScreen(props: { user: any; abilities: any; onOpenMenu: (
   };
 
   useEffect(() => {
-    loadMultiForFirma(selectedFirmaId).catch(() => {});
-  }, [selectedFirmaId]);
+    loadMultiForFirma(selectedFirmaId, procedureAdi).catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedFirmaId, procedureAdi]);
 
   useEffect(() => {
     if (!procedureAdi) {
@@ -354,13 +356,20 @@ export function RaporlarScreen(props: { user: any; abilities: any; onOpenMenu: (
     return names || "Seçili işyerler";
   }, [selectedIsyeriIds, isyeriList]);
 
+  const isYemekhaneCihazRaporu = useMemo(
+    () => !!procedureAdi && /yemekhane/i.test(procedureAdi),
+    [procedureAdi]
+  );
+
   const cihazLabel = useMemo(() => {
-    if (!selectedCihazIds.length) return "Tümü (aktif cihazlar)";
+    if (!selectedCihazIds.length) {
+      return isYemekhaneCihazRaporu ? "Tümü (aktif yemekhane cihazları)" : "Tümü (aktif cihazlar)";
+    }
     const names = selectedCihazIds
       .map((id) => cihazList.find((x) => x.id === id)?.ad ?? `#${id}`)
       .join(", ");
     return names || "Seçili cihazlar";
-  }, [selectedCihazIds, cihazList]);
+  }, [selectedCihazIds, cihazList, isYemekhaneCihazRaporu]);
 
   const runReport = async (forcePage?: number) => {
     if (!procedureAdi) {
@@ -883,7 +892,9 @@ export function RaporlarScreen(props: { user: any; abilities: any; onOpenMenu: (
                   <Text className="text-[#0f172a] font-extrabold text-[16px]">{multiKind === "cihaz" ? "Cihazlar" : "İşyerleri"}</Text>
                   <Text className="text-[#64748b] font-semibold text-[12px] mt-1">
                     {multiKind === "cihaz"
-                      ? "Hiç seçilmezse aktif tüm cihazlar dahil edilir."
+                      ? isYemekhaneCihazRaporu
+                        ? "Hiç seçilmezse aktif tüm yemekhane cihazları dahil edilir."
+                        : "Hiç seçilmezse aktif tüm cihazlar dahil edilir."
                       : "Hiç seçilmezse yetkili tüm işyerleri dahil edilir."}
                   </Text>
                 </View>
