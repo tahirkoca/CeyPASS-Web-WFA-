@@ -96,7 +96,7 @@ public static class MisafirKartAtamaDialog
             primaryText: "Kaydet",
             secondaryText: "İptal",
             width: 520,
-            validateOnPrimary: () => SaveGuncelle(svc, fields, owner));
+            validateOnPrimary: () => SaveGuncelle(session, svc, fields, owner));
     }
 
     private static void SelectKartByPersonelId(ComboBox cmb, List<KisiListItem> cards, string? personelId)
@@ -266,6 +266,7 @@ public static class MisafirKartAtamaDialog
     }
 
     private static bool SaveGuncelle(
+        ISessionContext session,
         IMisafirKartService svc,
         MisafirFormFields f,
         Window owner)
@@ -281,8 +282,8 @@ public static class MisafirKartAtamaDialog
             var giris = (DateTime)(f.DtpGiris.EditValue ?? DateTime.Now);
             DateTime? cikis = f.DtpCikis.IsEnabled ? (DateTime?)(f.DtpCikis.EditValue ?? DateTime.Now) : null;
 
-            svc.UpdateAssignment(a.AtamaId, f.TxtAd.Text, giris, cikis, f.TxtAciklama.Text, tc, kime ?? "", pasaport);
-            UiDialog.Success("Kayıt güncellendi.", "Bilgi", owner);
+            var kisitKaldirildi = svc.UpdateAssignment(a.AtamaId, f.TxtAd.Text, giris, cikis, f.TxtAciklama.Text, tc, kime ?? "", pasaport, session.AktifKullaniciId);
+            UiDialog.Success(KartAtamaMesajlari.Guncellendi(kisitKaldirildi), "Bilgi", owner);
             return true;
         }
         catch (Exception ex)

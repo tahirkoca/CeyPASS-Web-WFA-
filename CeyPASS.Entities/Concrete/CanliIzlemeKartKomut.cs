@@ -19,4 +19,10 @@ namespace CeyPASS.Entities.Concrete
         public const string Aktif = "AKTIF";
         public const string Pasif = "PASIF";
     }
+
+    public static class KartAtamaMesajlari
+    {
+        public static string Guncellendi(bool kisitKaldirildi) =>
+            kisitKaldirildi ? "Kayıt güncellendi. Kartın cihaz kısıtı da kaldırıldı." : "Kayıt güncellendi.";
+    }
 }

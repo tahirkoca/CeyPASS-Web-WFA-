@@ -565,6 +565,15 @@
             });
         }
 
+        var yemekHakkiBaslangic = $('#yemekHakkiVar').is(':checked');
+        $('#yemekHakkiVar').closest('form').on('submit', function(e) {
+            if (yemekHakkiBaslangic && !$('#yemekHakkiVar').is(':checked')
+                && !confirm(@Html.Raw(System.Text.Json.JsonSerializer.Serialize(CeyPASS.Business.Services.YemekhaneEtkiMesaji.KaldirmaOnayi)))) {
+                e.preventDefault();
+                e.stopImmediatePropagation();
+            }
+        });
+
         refreshCokluSicilUi();
         $('#puantajYapilabilir').change(refreshCokluSicilUi);
         $('#btnCokluSicil').click(function() {

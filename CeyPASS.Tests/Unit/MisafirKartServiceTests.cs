@@ -1,3 +1,4 @@
+using CeyPASS.Business.Abstractions;
 using CeyPASS.Business.Services;
 using CeyPASS.DataAccess.Abstractions;
 using CeyPASS.Entities.Concrete;
@@ -17,11 +18,12 @@ namespace CeyPASS.Tests.Unit
         private readonly Mock<IKisiRepository> _kisiRepoMock = new();
         private readonly Mock<IPuantajsizKartAtamaRepository> _atamaRepoMock = new();
         private readonly Mock<IKisiHareketRepository> _hareketRepoMock = new();
+        private readonly Mock<ICanliIzlemeKartKomutService> _kartKomutSvcMock = new();
         private readonly MisafirKartService _sut;
 
         public MisafirKartServiceTests()
         {
-            _sut = new MisafirKartService(_kisiRepoMock.Object, _atamaRepoMock.Object, _hareketRepoMock.Object);
+            _sut = new MisafirKartService(_kisiRepoMock.Object, _atamaRepoMock.Object, _hareketRepoMock.Object, _kartKomutSvcMock.Object);
         }
 
         // ─── GetCardsForNew ───────────────────────────────────────────────────
@@ -227,6 +229,72 @@ namespace CeyPASS.Tests.Unit
             Action act = () => _sut.UpdateAssignment(2, "   ", DateTime.Now, null, null, null, null, null);
 
             act.Should().Throw<ArgumentException>().WithMessage("*boş olamaz*");
+        }
+
+        /// <summary>
+        /// Açık atama çıkış saatiyle kapanınca kart kısıtı kaldırılır ve true döner.
+        /// </summary>
+        [Fact]
+        public void UpdateAssignment_AtamaKapaniyor_KisitKaldirilir()
+        {
+            var mevcut = new PuantajsizKartAtama { AtamaId = 3, KartId = "KART003", Bitis = null };
+            _atamaRepoMock.Setup(a => a.GetById(3)).Returns(mevcut);
+            _atamaRepoMock.Setup(a => a.GetCardFirmaId("KART003")).Returns(5);
+            _kartKomutSvcMock.Setup(k => k.KisitVarsaKaldir(5, "KART003", 77)).Returns(true);
+
+            var sonuc = _sut.UpdateAssignment(3, "Ali Veli", DateTime.Now.AddHours(-2), DateTime.Now,
+                null, null, null, "P123", kullaniciId: 77);
+
+            sonuc.Should().BeTrue();
+            _kartKomutSvcMock.Verify(k => k.KisitVarsaKaldir(5, "KART003", 77), Times.Once);
+        }
+
+        /// <summary>
+        /// Kapanan kart zaten serbestse false döner.
+        /// </summary>
+        [Fact]
+        public void UpdateAssignment_AtamaKapaniyor_KartSerbest_FalseDoner()
+        {
+            var mevcut = new PuantajsizKartAtama { AtamaId = 4, KartId = "KART004", Bitis = null };
+            _atamaRepoMock.Setup(a => a.GetById(4)).Returns(mevcut);
+            _atamaRepoMock.Setup(a => a.GetCardFirmaId("KART004")).Returns(5);
+            _kartKomutSvcMock.Setup(k => k.KisitVarsaKaldir(5, "KART004", null)).Returns(false);
+
+            var sonuc = _sut.UpdateAssignment(4, "Ali Veli", DateTime.Now.AddHours(-2), DateTime.Now,
+                null, null, null, "P123");
+
+            sonuc.Should().BeFalse();
+            _kartKomutSvcMock.Verify(k => k.KisitVarsaKaldir(5, "KART004", null), Times.Once);
+        }
+
+        /// <summary>
+        /// Çıkış saati verilmezse (atama açık kalır) kısıta dokunulmaz.
+        /// </summary>
+        [Fact]
+        public void UpdateAssignment_CikisSaatiYok_KisitaDokunulmaz()
+        {
+            var mevcut = new PuantajsizKartAtama { AtamaId = 5, KartId = "KART005", Bitis = null };
+            _atamaRepoMock.Setup(a => a.GetById(5)).Returns(mevcut);
+
+            var sonuc = _sut.UpdateAssignment(5, "Ali Veli", DateTime.Now, null, null, null, null, "P123");
+
+            sonuc.Should().BeFalse();
+            _kartKomutSvcMock.Verify(k => k.KisitVarsaKaldir(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<int?>()), Times.Never);
+        }
+
+        /// <summary>
+        /// Zaten kapalı atama yeniden kaydedilirse kısıt kaldırma tekrar tetiklenmez.
+        /// </summary>
+        [Fact]
+        public void UpdateAssignment_ZatenKapali_KisitaDokunulmaz()
+        {
+            var mevcut = new PuantajsizKartAtama { AtamaId = 6, KartId = "KART006", Bitis = DateTime.Now.AddHours(-1) };
+            _atamaRepoMock.Setup(a => a.GetById(6)).Returns(mevcut);
+
+            var sonuc = _sut.UpdateAssignment(6, "Ali Veli", DateTime.Now.AddHours(-3), DateTime.Now, null, null, null, "P123");
+
+            sonuc.Should().BeFalse();
+            _kartKomutSvcMock.Verify(k => k.KisitVarsaKaldir(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<int?>()), Times.Never);
         }
 
         // ─── GetMisafirBilgisiByTc ────────────────────────────────────────────

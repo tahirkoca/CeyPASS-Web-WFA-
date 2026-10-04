@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using CeyPASS.Entities.Concrete;
 using CeyPASS.Business.Abstractions;
+using CeyPASS.Business.Services;
 using IAuthorizationService = CeyPASS.Business.Abstractions.IAuthorizationService;
 using CeyPASS.Models;
 using CeyPASS.Infrastructure.Helpers;
@@ -278,7 +279,7 @@ namespace CeyPASS.Api.Controllers
                     puantajsizKartNo: (request.FirmaDisiKartNo ?? string.Empty).Trim(),
                     puantajsizKartAdi: ""
                 );
-                return Ok(ApiResult.Ok("Personel eklendi."));
+                return Ok(ApiResult.Ok("Personel eklendi. " + YemekhaneEtkiMesaji.YeniKayit(request.YemekHakkiVar)));
             }
             catch (Exception ex)
             {
@@ -340,18 +341,20 @@ namespace CeyPASS.Api.Controllers
 
             try
             {
+                int yemekAdedi = ResolveGunlukYemekAdedi(request.YemekHakkiVar, request.GunlukYemekAdedi, request.GunlukYemekLimiti, existing.GunlukYemekAdedi);
                 var ok = _kisiService.KisiGuncelle(
                     kisi,
                     original,
                     request.FirmaPersoneli,
                     request.PuantajYapilabilir,
                     request.YemekHakkiVar,
-                    ResolveGunlukYemekAdedi(request.YemekHakkiVar, request.GunlukYemekAdedi, request.GunlukYemekLimiti, existing.GunlukYemekAdedi),
+                    yemekAdedi,
                     (request.FirmaDisiKartNo ?? string.Empty).Trim(),
                     fotoDegisti
                 );
                 if (!ok) return BadRequest(ApiResult.Failure("Personel güncellenemedi."));
-                return Ok(ApiResult.Ok("Personel güncellendi."));
+                var yemekhaneEtki = YemekhaneEtkiMesaji.Guncelleme(existing.YemekHakkiVar, request.YemekHakkiVar && yemekAdedi > 0);
+                return Ok(ApiResult.Ok("Personel güncellendi." + (yemekhaneEtki == null ? "" : " " + yemekhaneEtki)));
             }
             catch (Exception ex)
             {

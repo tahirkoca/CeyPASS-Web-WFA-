@@ -100,6 +100,17 @@ namespace CeyPASS.DataAccess.Repositories
                 .Any(k => k.PersonelId == personelId && k.FirmaId == firmaId);
         }
 
+        /// <summary>Kartın Kisiler.FirmaId değeri; kart yoksa null.</summary>
+        public int? GetCardFirmaId(string personelId)
+        {
+            var pid = (personelId ?? "").Trim();
+            if (pid.Length == 0) return null;
+            return _context.Kisiler
+                .Where(k => k.PersonelId == pid)
+                .Select(k => k.FirmaId)
+                .FirstOrDefault();
+        }
+
         /// <summary>Exists Active For Card işlemini gerçekleştirir.</summary>
         public bool ExistsActiveForCard(string personelId)
         {

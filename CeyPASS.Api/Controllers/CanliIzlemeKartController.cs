@@ -171,7 +171,7 @@ namespace CeyPASS.Api.Controllers
             if (!EnsureCanliIzlemeAuth(out _, out var err)) return err!;
             try
             {
-                _misafirSvc.UpdateAssignment(
+                var kisitKaldirildi = _misafirSvc.UpdateAssignment(
                     id,
                     req.AdSoyad ?? "",
                     req.GirisSaati,
@@ -179,8 +179,9 @@ namespace CeyPASS.Api.Controllers
                     req.Aciklama ?? "",
                     req.TcKimlikNo ?? "",
                     req.ZiyaretEdilenKisi ?? "",
-                    req.PasaportNo);
-                return Ok(ApiResult<object>.Ok(new { }, "Kayıt güncellendi."));
+                    req.PasaportNo,
+                    _sessionContext.AktifKullaniciId);
+                return Ok(ApiResult<object>.Ok(new { kisitKaldirildi }, KartAtamaMesajlari.Guncellendi(kisitKaldirildi)));
             }
             catch (Exception ex)
             {
@@ -277,7 +278,7 @@ namespace CeyPASS.Api.Controllers
             if (!EnsureCanliIzlemeAuth(out _, out var err)) return err!;
             try
             {
-                _aracSvc.UpdateAssignment(
+                var kisitKaldirildi = _aracSvc.UpdateAssignment(
                     id,
                     req.AdSoyad ?? "",
                     req.GirisSaati,
@@ -286,8 +287,9 @@ namespace CeyPASS.Api.Controllers
                     req.TcKimlikNo ?? "",
                     req.ZiyaretEdilenKisi ?? "",
                     req.Plaka ?? "",
-                    req.PasaportNo);
-                return Ok(ApiResult<object>.Ok(new { }, "Kayıt güncellendi."));
+                    req.PasaportNo,
+                    _sessionContext.AktifKullaniciId);
+                return Ok(ApiResult<object>.Ok(new { kisitKaldirildi }, KartAtamaMesajlari.Guncellendi(kisitKaldirildi)));
             }
             catch (Exception ex)
             {

@@ -143,6 +143,7 @@ public sealed class AylikPuantajViewModel : ObservableObject
     private IsyeriItem? _selectedIsyeri;
     private Kisi? _selectedPersonel;
     private PuantajGunRowItem? _selectedRow;
+    private List<PuantajGunRowItem> _gridSelectedRows = new();
     private string _ekKayitGunText = "0";
     private string? _status;
     private bool _busy;
@@ -170,6 +171,8 @@ public sealed class AylikPuantajViewModel : ObservableObject
         OnayCommand = new RelayCommand(OnaylaSelected, () => CanApprove && SelectedRow is { IsLocked: false } && !Busy);
         RetCommand = new RelayCommand(ReddetSelected, () => CanDelete && SelectedRow is { IsLocked: false } && !Busy);
         DuzenleCommand = new RelayCommand(DuzenleSelected, () => CanUpdate && SelectedRow is { IsLocked: false } && !Busy);
+        TopluDuzenleCommand = new RelayCommand(TopluDuzenleSelected,
+            () => CanUpdate && !Busy && _gridSelectedRows.Count(r => !r.IsLocked) >= 2);
         BuguneKadarOnaylaCommand = new RelayCommand(BuguneKadarOnayla, () => CanApprove && !Busy);
         CokluSicileAktarCommand = new RelayCommand(CokluSicileAktar, () => CanCokluSicileAktar);
         PuantajYapCommand = new RelayCommand(PuantajYap, () => CanExport && !Busy);
@@ -247,6 +250,13 @@ public sealed class AylikPuantajViewModel : ObservableObject
         }
     }
 
+    /// <summary>Grid checkbox seçimini ViewModel’e yansıtır.</summary>
+    public void SetGridSelection(IReadOnlyList<PuantajGunRowItem> selected)
+    {
+        _gridSelectedRows = selected?.ToList() ?? new List<PuantajGunRowItem>();
+        CommandManager.InvalidateRequerySuggested();
+    }
+
     public string EkKayitGunText
     {
         get => _ekKayitGunText;
@@ -311,6 +321,7 @@ public sealed class AylikPuantajViewModel : ObservableObject
     public ICommand OnayCommand { get; }
     public ICommand RetCommand { get; }
     public ICommand DuzenleCommand { get; }
+    public ICommand TopluDuzenleCommand { get; }
     public ICommand BuguneKadarOnaylaCommand { get; }
     public ICommand CokluSicileAktarCommand { get; }
     /// <summary>Seçili ay için yetkili firmaların aylık puantaj Excel export'u.</summary>
@@ -585,6 +596,7 @@ public sealed class AylikPuantajViewModel : ObservableObject
     {
         Rows.Clear();
         SelectedRow = null;
+        _gridSelectedRows = new List<PuantajGunRowItem>();
         RefreshVeriDurumu();
 
         if (!_viewAllowed) return;
@@ -695,6 +707,7 @@ public sealed class AylikPuantajViewModel : ObservableObject
             SelectedRow.IsLocked = IsLockedRow(satir) || !psvc.IsRowEditable(satir.Tarih, _ekKayitGun);
             SelectedRow.RefreshFromDto();
             Status = "Satır onaylandı.";
+            RefreshVeriDurumu();
             UiDialog.Success("Satır onaylandı.", PageName);
             CommandManager.InvalidateRequerySuggested();
         }
@@ -725,6 +738,7 @@ public sealed class AylikPuantajViewModel : ObservableObject
             SelectedRow.IsLocked = IsLockedRow(SelectedRow.Dto) || !psvc.IsRowEditable(SelectedRow.Dto.Tarih, _ekKayitGun);
             SelectedRow.RefreshFromDto();
             Status = "Satır reddedildi.";
+            RefreshVeriDurumu();
             UiDialog.Success("Satır reddedildi.", PageName);
             CommandManager.InvalidateRequerySuggested();
         }
@@ -741,18 +755,99 @@ public sealed class AylikPuantajViewModel : ObservableObject
 
         var pid = SeciliPersonelId;
         if (pid <= 0) return;
+        if (SelectedFirma is null)
+        {
+            UiDialog.Warning("Firma seçili değil.", "Uyarı");
+            return;
+        }
 
         using var scope = _scopes.CreateScope();
         var psvc = scope.ServiceProvider.GetRequiredService<IPuantajService>();
+        var kh = scope.ServiceProvider.GetRequiredService<IKisiHareketService>();
+        var cihaz = scope.ServiceProvider.GetRequiredService<ICihazService>();
 
-        if (!PuantajSatirDuzenleDialog.Show(SelectedRow.Dto, pid, psvc, _session))
+        if (!PuantajSatirDuzenleDialog.Show(
+                SelectedRow.Dto, pid, SelectedFirma.FirmaId, psvc, kh, cihaz, _session))
             return;
 
-        SelectedRow.OnayDurumu = OnayDurumu.Düzeltildi;
+        // Grid İlk Giriş / Son Çıkış ve tip-saat için SP’den yeniden yükle
+        try
+        {
+            var liste = psvc.GetAy(pid, SeciliYil, SeciliAyNum) ?? new List<PuantajGunSatirDTO>();
+            var guncel = liste.FirstOrDefault(x => x.Tarih.Date == SelectedRow.Dto.Tarih.Date);
+            if (guncel != null)
+            {
+                SelectedRow.Dto.IlkGiris = guncel.IlkGiris;
+                SelectedRow.Dto.SonCikis = guncel.SonCikis;
+                SelectedRow.Dto.CalismaTipi = guncel.CalismaTipi;
+                SelectedRow.Dto.Saat = guncel.Saat;
+                SelectedRow.Dto.DuzenlenenFMDakika = guncel.DuzenlenenFMDakika;
+                SelectedRow.Dto.SistemFMDakika = guncel.SistemFMDakika;
+                SelectedRow.Dto.ErkenGirisDakika = guncel.ErkenGirisDakika;
+                SelectedRow.Dto.GecCikisDakika = guncel.GecCikisDakika;
+                SelectedRow.Dto.OnayDurumu = guncel.OnayDurumu;
+                SelectedRow.Dto.Aciklama = guncel.Aciklama;
+            }
+            else
+            {
+                SelectedRow.OnayDurumu = OnayDurumu.Düzeltildi;
+            }
+        }
+        catch
+        {
+            SelectedRow.OnayDurumu = OnayDurumu.Düzeltildi;
+        }
+
         SelectedRow.IsLocked = IsLockedRow(SelectedRow.Dto) || !psvc.IsRowEditable(SelectedRow.Dto.Tarih, _ekKayitGun);
         SelectedRow.RefreshFromDto();
         Status = "Satır güncellendi.";
+        RefreshVeriDurumu();
         UiDialog.Success("Satır güncellendi.", PageName);
+        CommandManager.InvalidateRequerySuggested();
+    }
+
+    private void TopluDuzenleSelected()
+    {
+        if (!EnsureAuth(YetkiTipleri.Update)) return;
+
+        var pid = SeciliPersonelId;
+        if (pid <= 0) return;
+        if (SelectedFirma is null)
+        {
+            UiDialog.Warning("Firma seçili değil.", "Uyarı");
+            return;
+        }
+
+        var selected = _gridSelectedRows.OrderBy(r => r.Tarih).ToList();
+        var editable = selected.Where(r => !r.IsLocked).ToList();
+        var skippedLocked = selected.Count - editable.Count;
+        if (editable.Count < 2)
+        {
+            UiDialog.Warning("Toplu düzenleme için en az iki kilitli olmayan gün seçin.", "Uyarı");
+            return;
+        }
+
+        using var scope = _scopes.CreateScope();
+        var psvc = scope.ServiceProvider.GetRequiredService<IPuantajService>();
+        var kh = scope.ServiceProvider.GetRequiredService<IKisiHareketService>();
+        var cihaz = scope.ServiceProvider.GetRequiredService<ICihazService>();
+
+        if (!PuantajTopluDuzenleDialog.Show(
+                editable.Select(r => r.Dto).ToList(),
+                pid,
+                SelectedFirma.FirmaId,
+                psvc,
+                kh,
+                cihaz,
+                _session,
+                out var updated,
+                out var skippedFail))
+            return;
+
+        var skipped = skippedLocked + skippedFail;
+        LoadGrid();
+        Status = $"{updated} gün güncellendi" + (skipped > 0 ? $", {skipped} atlandı." : ".");
+        UiDialog.Success(Status, PageName);
         CommandManager.InvalidateRequerySuggested();
     }
 
@@ -790,7 +885,6 @@ public sealed class AylikPuantajViewModel : ObservableObject
 
         try
         {
-            Busy = true;
             using var scope = _scopes.CreateScope();
             var psvc = scope.ServiceProvider.GetRequiredService<IPuantajService>();
             var gunler = psvc.GetAy(SeciliPersonelId, SeciliYil, SeciliAyNum);
@@ -816,18 +910,24 @@ public sealed class AylikPuantajViewModel : ObservableObject
             if (!UiDialog.Confirm(confirmMsg, "Onay", yesText: "Onayla", noText: "Vazgeç"))
                 return;
 
-            psvc.TopluOnaylaKadar(SeciliPersonelId, SeciliYil, SeciliAyNum, hedefGun, (int)_session.AktifKullaniciId!);
-            LoadGrid();
-            Status = "Toplu onay tamamlandı.";
+            Busy = true;
+            try
+            {
+                psvc.TopluOnaylaKadar(SeciliPersonelId, SeciliYil, SeciliAyNum, hedefGun, (int)_session.AktifKullaniciId!);
+                LoadGrid();
+                Status = "Toplu onay tamamlandı.";
+            }
+            finally
+            {
+                Busy = false;
+            }
+
             UiDialog.Success("Toplu onay tamamlandı.", PageName);
         }
         catch (Exception ex)
         {
-            UiDialog.Error("Toplu onay sırasında hata:\n" + ex.Message, "Hata");
-        }
-        finally
-        {
             Busy = false;
+            UiDialog.Error("Toplu onay sırasında hata:\n" + ex.Message, "Hata");
         }
     }
 

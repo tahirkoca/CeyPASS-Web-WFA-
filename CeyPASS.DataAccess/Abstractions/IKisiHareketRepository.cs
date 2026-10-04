@@ -23,9 +23,11 @@ namespace CeyPASS.DataAccess.Abstractions
         /// <param name="firmaId">Personel listesi için; personIds doluysa hareket sorgusunda FirmaId filtresi uygulanmaz (tüm firmalardaki hareketler).</param>
         List<KisiHareketListRow> GetByPersonsPaged(List<int> personIds, DateTime bas, DateTime bit, bool onlyAktif, bool onlyPasif, bool onlyYemekhane, int firmaId, int page, int pageSize, out int totalCount);
         /// <summary>Manuel giriş-çıkış hareketi ekler.</summary>
-        bool InsertManual(int firmaId, int personelId, DateTime tarih, string tip);
+        bool InsertManual(int firmaId, int personelId, DateTime tarih, string tip, int cihazId = 0);
         /// <summary>Manuel hareket kaydını günceller.</summary>
-        bool UpdateManual(int id, DateTime tarih, string tip);
+        bool UpdateManual(int id, DateTime tarih, string tip, int? cihazId = null);
+        /// <summary>Personelin günündeki aktif ilk Giriş ve son Çıkış uçlarını döner.</summary>
+        PuantajGunHareketUctanUcaDTO GetGunUctanUca(int personelId, DateTime tarih);
         /// <summary>Hareket kaydını pasifleştirir.</summary>
         bool PasifYap(int id);
         /// <summary>Pasif hareket kaydını tekrar aktifleştirir.</summary>

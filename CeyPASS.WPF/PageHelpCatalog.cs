@@ -129,6 +129,7 @@ public static class PageHelpCatalog
                 "ATANMIŞ / GİRİŞ / ÇIKIŞ satırına çift tık → atamayı güncelleyin (Kartı Kısıtla’dan bağımsızdır).",
                 "Satırın sağındaki Kartı Kısıtla / Kart Kısıtı Kaldır: cihaz kuyruğuna komut yazar; atamayı değiştirmez.",
                 "Kısıt kanıtı yoksa kart serbest sayılır. Atanmış+serbest → Kısıtla; kısıtlı → Kısıtı Kaldır; HAZIR+serbest → ikisi kapalı.",
+                "Kart teslim alınınca (çıkış verilince) kısıt otomatik kaldırılır; HAZIR kart kısıtlanamaz.",
                 "‘Kart durumları’ (? yanı): misafir+araç anlık serbest/kısıtlı listesi (içeride Tümü/Misafir/Araç filtresi); seçerek veya topluca yönetin.",
                 "Üstteki Misafir / Araç seçimi liste tipini değiştirir."
             ],

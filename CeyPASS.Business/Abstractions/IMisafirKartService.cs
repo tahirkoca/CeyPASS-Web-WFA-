@@ -19,8 +19,9 @@ namespace CeyPASS.Business.Abstractions
         /// <summary>Yeni misafir ataması.</summary>
         int CreateAssignment(int firmaId, string personelId, string misafirAdSoyad, DateTime girisSaati, string aciklama, string tcKimlikNo, string ziyaretEdilenKisi, string pasaportNo);
 
-        /// <summary>Mevcut atamayı günceller.</summary>
-        void UpdateAssignment(int atamaId, string misafirAdSoyad, DateTime girisSaati, DateTime? cikisSaati, string aciklama, string tcKimlikNo, string ziyaretEdilenKisi, string pasaportNo);
+        /// <summary>Mevcut atamayı günceller. Atama kapanırken kart cihazda kısıtlıysa kısıtı kaldırır.</summary>
+        /// <returns>Cihaz kısıtı kaldırıldıysa true.</returns>
+        bool UpdateAssignment(int atamaId, string misafirAdSoyad, DateTime girisSaati, DateTime? cikisSaati, string aciklama, string tcKimlikNo, string ziyaretEdilenKisi, string pasaportNo, int? kullaniciId = null);
 
         /// <summary>TC ile misafir/atama bilgisi.</summary>
         PuantajsizKartAtama GetMisafirBilgisiByTc(string tcKimlikNo);

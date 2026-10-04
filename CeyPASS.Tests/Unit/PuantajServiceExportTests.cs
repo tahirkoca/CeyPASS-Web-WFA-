@@ -246,5 +246,25 @@ namespace CeyPASS.Tests.Unit
             // AafSaat=8 ≥ 3.75, AafGun=2 → aafHesap = 8 − (2 × 3.75) = 0.5
             result[0].FazlaCalismaSaat.Should().Be(0.5m);
         }
+
+        /// <summary>
+        /// Aynı SicilNo iki satır gelse bile tcMap ToDictionary patlamaz; export tamamlanır.
+        /// </summary>
+        [Fact]
+        public void PrepareMonthlyExport_AyniSicilNoCiftSatir_ExceptionAtmaz()
+        {
+            var siciller = BuildSicillerTable(1451);
+            siciller.Rows.Add(1451, "Test", "Kişi", "Firma A", "IT", "Merkez", DBNull.Value, 0);
+
+            var calisma = BuildCalismaSaatleriTable(
+                (1451, "NG", new DateTime(2025, 3, 1), 7.5m));
+            SetupRepo(siciller, calisma);
+
+            var act = () => _sut.PrepareMonthlyExport(Req());
+            act.Should().NotThrow();
+            var result = act();
+            result.Should().NotBeEmpty();
+            result.Should().OnlyContain(r => r.SicilNo == "1451");
+        }
     }
 }

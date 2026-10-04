@@ -15,7 +15,11 @@ namespace CeyPASS.Business.Abstractions
         /// <summary>Cihazda kartı aktif etmek için komut kuyruğa alır.</summary>
         void EnqueueAktif(int firmaId, string personelId, int? olusturanKullaniciId = null);
 
-        /// <summary>Cihazda kartı pasif etmek için komut kuyruğa alır.</summary>
+        /// <summary>Cihazda kartı pasif etmek için komut kuyruğa alır. Açık ataması olmayan (HAZIR) kart kısıtlanamaz.</summary>
         void EnqueuePasif(int firmaId, string personelId, int? olusturanKullaniciId = null);
+
+        /// <summary>Kart cihazda kısıtlıysa AKTIF komutu yazar.</summary>
+        /// <returns>Komut yazıldıysa true.</returns>
+        bool KisitVarsaKaldir(int firmaId, string personelId, int? olusturanKullaniciId = null);
     }
 }

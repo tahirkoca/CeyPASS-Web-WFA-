@@ -14,12 +14,14 @@ namespace CeyPASS.Business.Services
         private readonly IKisiRepository _kisiRepo;
         private readonly IPuantajsizKartAtamaRepository _atamaRepo;
         private readonly IKisiHareketRepository _hareketRepo;
+        private readonly ICanliIzlemeKartKomutService _kartKomutSvc;
 
-        public MisafirKartService(IKisiRepository kisiRepo, IPuantajsizKartAtamaRepository atamaRepo, IKisiHareketRepository hareketRepo)
+        public MisafirKartService(IKisiRepository kisiRepo, IPuantajsizKartAtamaRepository atamaRepo, IKisiHareketRepository hareketRepo, ICanliIzlemeKartKomutService kartKomutSvc)
         {
             _kisiRepo = kisiRepo;
             _atamaRepo= atamaRepo;
             _hareketRepo = hareketRepo;
+            _kartKomutSvc = kartKomutSvc;
         }
 
         /// <inheritdoc />
@@ -78,7 +80,7 @@ namespace CeyPASS.Business.Services
             return id;
         }
         /// <inheritdoc />
-        public void UpdateAssignment(int atamaId, string misafirAdSoyad, DateTime girisSaati, DateTime? cikisSaati, string aciklama, string tcKimlikNo, string ziyaretEdilenKisi, string pasaportNo)
+        public bool UpdateAssignment(int atamaId, string misafirAdSoyad, DateTime girisSaati, DateTime? cikisSaati, string aciklama, string tcKimlikNo, string ziyaretEdilenKisi, string pasaportNo, int? kullaniciId = null)
         {
             var rec = _atamaRepo.GetById(atamaId);
             if (rec == null)
@@ -89,6 +91,7 @@ namespace CeyPASS.Business.Services
 
             var (tc, pasaport) = TcKimlikHelper.RequireTcOrPasaport(tcKimlikNo, pasaportNo);
 
+            var kapaniyor = rec.Bitis == null && cikisSaati.HasValue;
             rec.MisafirAdSoyad = misafirAdSoyad.Trim();
             rec.Baslangic = girisSaati;
             rec.Bitis = cikisSaati;
@@ -98,6 +101,20 @@ namespace CeyPASS.Business.Services
             rec.ZiyaretEdilenKisi = string.IsNullOrWhiteSpace(ziyaretEdilenKisi) ? null : ziyaretEdilenKisi.Trim();
 
             _atamaRepo.Update(rec);
+            return kapaniyor && KartKisitiniKaldir(_atamaRepo, _kartKomutSvc, rec.KartId, kullaniciId);
+        }
+
+        /// <summary>HAZIR'a düşen kart cihazda kısıtlı kalmamalı; kısıtlıysa AKTIF komutu yazar.</summary>
+        internal static bool KartKisitiniKaldir(
+            IPuantajsizKartAtamaRepository atamaRepo,
+            ICanliIzlemeKartKomutService kartKomutSvc,
+            string kartId,
+            int? kullaniciId)
+        {
+            if (string.IsNullOrWhiteSpace(kartId)) return false;
+            var firmaId = atamaRepo.GetCardFirmaId(kartId);
+            if (!firmaId.HasValue) return false;
+            return kartKomutSvc.KisitVarsaKaldir(firmaId.Value, kartId, kullaniciId);
         }
 
         /// <inheritdoc />

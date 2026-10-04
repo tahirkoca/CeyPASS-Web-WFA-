@@ -11,9 +11,9 @@ using CeyPASS.Entities.Concrete;
 namespace CeyPASS.WPF.Views;
 
 /// <summary>
-/// Aylık puantaj satır düzenleme: Mevcut/Hesaplanan tip-saat; açık uçlarda pasif+insert; manuel saatte yalnız Final.
+/// Seçili günlere aynı Giriş/Çıkış (cihaz + saat) değerlerini uygular; tip/saat her gün ayrı hesaplanır.
 /// </summary>
-public static class PuantajSatirDuzenleDialog
+public static class PuantajTopluDuzenleDialog
 {
     private const string KartBasimiYok = "Kart basımı yok";
     private const string ElleMudahaleAd = "Elle Müdahale";
@@ -32,14 +32,26 @@ public static class PuantajSatirDuzenleDialog
     };
 
     public static bool Show(
-        PuantajGunSatirDTO model,
+        IReadOnlyList<PuantajGunSatirDTO> gunler,
         int personelId,
         int firmaId,
         IPuantajService psvc,
         IKisiHareketService hareketSvc,
         ICihazService cihazSvc,
-        ISessionContext session)
+        ISessionContext session,
+        out int updated,
+        out int skippedFail)
     {
+        updated = 0;
+        skippedFail = 0;
+
+        if (gunler == null || gunler.Count == 0)
+            return false;
+
+        var ordered = gunler.OrderBy(g => g.Tarih).ToList();
+        var ornek = ordered[0];
+        var ornekGun = ornek.Tarih.Date;
+
         var tipler = psvc.GetPuantajTipleri() ?? new List<PuantajTipDTO>();
         var tumCihazlar = (cihazSvc.GetListe(sadeceAktif: true, firmaId: firmaId) ?? new List<CihazListDTO>())
             .Where(c => c.AnaGirisCikisMi)
@@ -57,19 +69,29 @@ public static class PuantajSatirDuzenleDialog
             cikisCihazlar.Insert(0, CreateElleMudahale(cihazTipi: 0));
         }
 
-        var uctan = hareketSvc.GetGunUctanUca(personelId, model.Tarih.Date);
-        var gun = model.Tarih.Date;
+        var uctan = hareketSvc.GetGunUctanUca(personelId, ornekGun);
 
         var root = new StackPanel();
 
-        root.Children.Add(UiFormDialog.CreateLabel("Tarih"));
+        root.Children.Add(UiFormDialog.CreateLabel("Seçili günler"));
+        var ozet = BuildTarihOzet(ordered);
         root.Children.Add(new TextBlock
         {
-            Text = gun.ToString("d MMMM yyyy dddd", Tr),
+            Text = ozet,
             FontSize = 15,
             FontWeight = FontWeights.SemiBold,
             Foreground = ThemeBrushes.Get("Brush.TextPrimary", Color.FromRgb(0x0F, 0x17, 0x2A)),
-            Margin = new Thickness(0, 0, 0, 14)
+            Margin = new Thickness(0, 0, 0, 4),
+            TextWrapping = TextWrapping.Wrap
+        });
+        root.Children.Add(new TextBlock
+        {
+            Text = "Önizleme ilk seçili güne göredir; Onayla’da her gün kendi saatine göre ayrı hesaplanır.",
+            FontSize = 12,
+            FontStyle = FontStyles.Italic,
+            Foreground = ThemeBrushes.Get("Brush.TextMuted", Color.FromRgb(0x64, 0x74, 0x8B)),
+            Margin = new Thickness(0, 0, 0, 14),
+            TextWrapping = TextWrapping.Wrap
         });
 
         var columns = new Grid { Margin = new Thickness(0, 0, 0, 12) };
@@ -80,8 +102,8 @@ public static class PuantajSatirDuzenleDialog
         var girisPanel = BuildSidePanel(
             "Giriş",
             girisCihazlar,
-            model.IlkGiris,
-            ResolveCihazId(uctan.GirisTarih, model.IlkGiris, uctan.GirisCihazId),
+            ornek.IlkGiris,
+            ResolveCihazId(uctan.GirisTarih, ornek.IlkGiris, uctan.GirisCihazId),
             out var tgGiris,
             out var cmbGirisCihaz,
             out var txtGirisSaat);
@@ -101,8 +123,8 @@ public static class PuantajSatirDuzenleDialog
         var cikisPanel = BuildSidePanel(
             "Çıkış",
             cikisCihazlar,
-            model.SonCikis,
-            ResolveCihazId(uctan.CikisTarih, model.SonCikis, uctan.CikisCihazId),
+            ornek.SonCikis,
+            ResolveCihazId(uctan.CikisTarih, ornek.SonCikis, uctan.CikisCihazId),
             out var tgCikis,
             out var cmbCikisCihaz,
             out var txtCikisSaat);
@@ -111,7 +133,6 @@ public static class PuantajSatirDuzenleDialog
 
         root.Children.Add(columns);
 
-        // Mevcut | Hesaplanan
         var tipSaatGrid = new Grid { Margin = new Thickness(0, 4, 0, 0) };
         tipSaatGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         tipSaatGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(16) });
@@ -121,7 +142,7 @@ public static class PuantajSatirDuzenleDialog
         mevcutPanel.Children.Add(UiFormDialog.CreateLabel("Mevcut Çalışma Tipi"));
         mevcutPanel.Children.Add(new TextBlock
         {
-            Text = FormatTipAd(tipler, model.CalismaTipi),
+            Text = FormatTipAd(tipler, ornek.CalismaTipi),
             FontSize = 14,
             FontWeight = FontWeights.SemiBold,
             Foreground = ThemeBrushes.Get("Brush.Text", Color.FromRgb(0x1E, 0x29, 0x3B)),
@@ -130,8 +151,8 @@ public static class PuantajSatirDuzenleDialog
         mevcutPanel.Children.Add(UiFormDialog.CreateLabel("Mevcut Çalışma Saati"));
         mevcutPanel.Children.Add(new TextBlock
         {
-            Text = model.Saat > 0
-                ? model.Saat.ToString("0.##", CultureInfo.InvariantCulture)
+            Text = ornek.Saat > 0
+                ? ornek.Saat.ToString("0.##", CultureInfo.InvariantCulture)
                 : "—",
             FontSize = 14,
             FontWeight = FontWeights.SemiBold,
@@ -160,7 +181,6 @@ public static class PuantajSatirDuzenleDialog
             Margin = new Thickness(0, 0, 0, 10)
         };
         hesapPanel.Children.Add(tipText);
-
         hesapPanel.Children.Add(UiFormDialog.CreateLabel("Hesaplanan Çalışma Saati"));
         var txtHesaplananSaat = UiFormDialog.CreateTextBox("");
         txtHesaplananSaat.Margin = new Thickness(0, 0, 0, 0);
@@ -174,7 +194,7 @@ public static class PuantajSatirDuzenleDialog
         root.Children.Add(UiFormDialog.CreateLabel("Açıklama"));
         const string aciklamaPlaceholder =
             "Hesaplanan çalışma saatini değiştiriyorsanız nedenini yazmanız önerilir.";
-        var txtAciklama = UiFormDialog.CreateTextBoxWithPlaceholder(model.Aciklama ?? "", aciklamaPlaceholder);
+        var txtAciklama = UiFormDialog.CreateTextBoxWithPlaceholder(ornek.Aciklama ?? "", aciklamaPlaceholder);
         txtAciklama.MaxLength = 400;
         txtAciklama.AcceptsReturn = true;
         txtAciklama.TextWrapping = TextWrapping.Wrap;
@@ -183,7 +203,7 @@ public static class PuantajSatirDuzenleDialog
         txtAciklama.Margin = new Thickness(0, 0, 0, 4);
         root.Children.Add(txtAciklama);
 
-        var mevcutTipKod = model.CalismaTipi ?? "";
+        var mevcutTipKod = ornek.CalismaTipi ?? "";
         var lastSpTipKod = mevcutTipKod;
         var manuelSaatModu = false;
         var suppressSaatChanged = false;
@@ -216,21 +236,21 @@ public static class PuantajSatirDuzenleDialog
                 DateTime? cOv = null;
 
                 if (tgGiris.IsChecked == true && TryParseTime(GetSaatText(txtGirisSaat), out var gTs))
-                    gOv = gun.Add(gTs);
+                    gOv = ornekGun.Add(gTs);
                 if (tgCikis.IsChecked == true && TryParseTime(GetSaatText(txtCikisSaat), out var cTs))
                 {
-                    cOv = gun.Add(cTs);
+                    cOv = ornekGun.Add(cTs);
                     if (gOv.HasValue && cOv <= gOv)
                         cOv = cOv.Value.AddDays(1);
                 }
 
-                var tipSaat = psvc.GetGunTipSaat(personelId, gun, gOv, cOv, girisAcik: true, cikisAcik: true);
+                var tipSaat = psvc.GetGunTipSaat(personelId, ornekGun, gOv, cOv, girisAcik: true, cikisAcik: true);
                 computedTip = tipSaat.CalismaTipi ?? "";
                 computedSaat = tipSaat.Saat;
             }
             catch (Exception ex)
             {
-                Debug.WriteLine("PuantajSatirDuzenleDialog.Recalc: " + ex);
+                Debug.WriteLine("PuantajTopluDuzenleDialog.Recalc: " + ex);
                 computedTip = "";
                 computedSaat = null;
             }
@@ -358,17 +378,22 @@ public static class PuantajSatirDuzenleDialog
 
         Recalc();
 
-        return UiFormDialog.Show(
-            title: "Puantaj Satır Düzenle",
-            subtitle: "Giriş/çıkış veya hesaplanan saati düzenleyin. Kayıt Onayla ile kaydedilir.",
+        var localUpdated = 0;
+        var localSkipped = 0;
+
+        var ok = UiFormDialog.Show(
+            title: "Toplu Puantaj Düzenle",
+            subtitle: "Seçtiğiniz giriş/çıkış veya hesaplanan saat tüm günlere uygulanır. Kayıt Onayla ile kaydedilir.",
             body: root,
             primaryText: "Onayla",
             secondaryText: "İptal",
             width: 560,
             validateOnPrimary: () =>
             {
-                PuantajGunHareketUcu? girisUc = null;
-                PuantajGunHareketUcu? cikisUc = null;
+                TimeSpan? girisTs = null;
+                TimeSpan? cikisTs = null;
+                int? girisCihazId = null;
+                int? cikisCihazId = null;
                 decimal? saatOverride = null;
                 string? tipOverride = null;
 
@@ -396,11 +421,8 @@ public static class PuantajSatirDuzenleDialog
                             UiDialog.Warning("Giriş saati HH:mm veya HH:mm:ss olmalıdır.", "Uyarı");
                             return false;
                         }
-                        girisUc = new PuantajGunHareketUcu
-                        {
-                            CihazId = gCihaz.CihazId,
-                            TarihSaat = gun.Add(gTs)
-                        };
+                        girisTs = gTs;
+                        girisCihazId = gCihaz.CihazId;
                     }
 
                     if (tgCikis.IsChecked == true)
@@ -415,55 +437,98 @@ public static class PuantajSatirDuzenleDialog
                             UiDialog.Warning("Çıkış saati HH:mm veya HH:mm:ss olmalıdır.", "Uyarı");
                             return false;
                         }
-
-                        var cikisDt = gun.Add(cTs);
-                        if (girisUc != null && cikisDt <= girisUc.TarihSaat)
-                            cikisDt = cikisDt.AddDays(1);
-
-                        cikisUc = new PuantajGunHareketUcu
-                        {
-                            CihazId = cCihaz.CihazId,
-                            TarihSaat = cikisDt
-                        };
+                        cikisTs = cTs;
+                        cikisCihazId = cCihaz.CihazId;
                     }
                 }
 
+                localUpdated = 0;
+                localSkipped = 0;
+
+                var aciklamaText = UiFormDialog.GetTextBoxValue(txtAciklama);
+                var aciklamaOverride = string.IsNullOrWhiteSpace(aciklamaText)
+                    ? null
+                    : aciklamaText;
+
                 try
                 {
-                    var aciklamaText = UiFormDialog.GetTextBoxValue(txtAciklama);
-                    var aciklama = string.IsNullOrWhiteSpace(aciklamaText) ? null : aciklamaText;
+                    foreach (var row in ordered)
+                    {
+                        var gun = row.Tarih.Date;
+                        try
+                        {
+                            PuantajGunHareketUcu? girisUc = null;
+                            PuantajGunHareketUcu? cikisUc = null;
 
-                    psvc.DuzenleGun(
-                        firmaId,
-                        personelId,
-                        gun,
-                        girisUc,
-                        cikisUc,
-                        aciklama,
-                        session.AktifKullaniciId,
-                        saatOverride,
-                        tipOverride);
+                            if (!manuelSaatModu)
+                            {
+                                if (girisTs.HasValue && girisCihazId.HasValue)
+                                {
+                                    girisUc = new PuantajGunHareketUcu
+                                    {
+                                        CihazId = girisCihazId.Value,
+                                        TarihSaat = gun.Add(girisTs.Value)
+                                    };
+                                }
 
-                    var tipSaat = psvc.GetGunTipSaat(personelId, gun);
-                    model.CalismaTipi = saatOverride.HasValue && !string.IsNullOrWhiteSpace(tipOverride)
-                        ? tipOverride!
-                        : tipSaat.CalismaTipi;
-                    model.Saat = saatOverride ?? tipSaat.Saat;
-                    model.DuzenlenenFMDakika = psvc.HesaplaFazlaMesaiDakika(model.CalismaTipi, model.Saat);
-                    model.Aciklama = aciklama;
-                    model.OnayDurumu = OnayDurumu.Düzeltildi;
-                    if (girisUc != null)
-                        model.IlkGiris = girisUc.TarihSaat.TimeOfDay;
-                    if (cikisUc != null)
-                        model.SonCikis = cikisUc.TarihSaat.TimeOfDay;
+                                if (cikisTs.HasValue && cikisCihazId.HasValue)
+                                {
+                                    var cikisDt = gun.Add(cikisTs.Value);
+                                    if (girisUc != null && cikisDt <= girisUc.TarihSaat)
+                                        cikisDt = cikisDt.AddDays(1);
+
+                                    cikisUc = new PuantajGunHareketUcu
+                                    {
+                                        CihazId = cikisCihazId.Value,
+                                        TarihSaat = cikisDt
+                                    };
+                                }
+                            }
+
+                            // Doluysa şablon; boşsa satırın mevcut açıklaması korunur
+                            var aciklama = aciklamaOverride ?? row.Aciklama;
+
+                            psvc.DuzenleGun(
+                                firmaId,
+                                personelId,
+                                gun,
+                                girisUc,
+                                cikisUc,
+                                aciklama,
+                                session.AktifKullaniciId,
+                                saatOverride,
+                                tipOverride);
+                            localUpdated++;
+                        }
+                        catch (Exception ex)
+                        {
+                            Debug.WriteLine($"PuantajTopluDuzenleDialog day {gun:yyyy-MM-dd}: {ex}");
+                            localSkipped++;
+                        }
+                    }
+
+                    if (localUpdated == 0)
+                    {
+                        UiDialog.Error(
+                            localSkipped > 0
+                                ? "Hiçbir gün güncellenemedi."
+                                : "Güncelleme yapılmadı.",
+                            "Hata");
+                        return false;
+                    }
+
                     return true;
                 }
                 catch (Exception ex)
                 {
-                    UiDialog.Error("Onaylama başarısız:\n" + ex.Message, "Hata");
+                    UiDialog.Error("Toplu onaylama başarısız:\n" + ex.Message, "Hata");
                     return false;
                 }
             });
+
+        updated = localUpdated;
+        skippedFail = localSkipped;
+        return ok;
     }
 
     private static string FormatTipAd(List<PuantajTipDTO> tipler, string? kod)
@@ -483,6 +548,23 @@ public static class PuantajSatirDuzenleDialog
                && saat >= 0 && saat <= 24;
     }
 
+    private static string BuildTarihOzet(IReadOnlyList<PuantajGunSatirDTO> gunler)
+    {
+        var n = gunler.Count;
+        if (n == 1)
+            return $"1 gün seçildi — {gunler[0].Tarih.ToString("d MMMM yyyy dddd", Tr)}";
+
+        var ilk = gunler[0].Tarih;
+        var son = gunler[n - 1].Tarih;
+        if (n <= 5)
+        {
+            var liste = string.Join(", ", gunler.Select(g => g.Tarih.ToString("d MMM", Tr)));
+            return $"{n} gün seçildi — {liste}";
+        }
+
+        return $"{n} gün seçildi — {ilk.ToString("d MMM", Tr)} … {son.ToString("d MMM yyyy", Tr)}";
+    }
+
     private static StackPanel BuildSidePanel(
         string title,
         List<CihazListDTO> cihazlar,
@@ -493,7 +575,6 @@ public static class PuantajSatirDuzenleDialog
         out TextBox txtSaat)
     {
         var panel = new StackPanel();
-        // Toggle/saat yalnızca grid (IlkGiris/SonCikis) ile tutarlı
         var hasData = gridSaat.HasValue;
 
         toggle = CreateSwitchToggle(hasData);
@@ -646,7 +727,6 @@ public static class PuantajSatirDuzenleDialog
         return template;
     }
 
-    /// <summary>Grid saati ile uctan hareket saati uyuşursa cihaz id; aksi halde 0 (Elle Müdahale).</summary>
     private static int ResolveCihazId(DateTime? hareketTarih, TimeSpan? gridSaat, int? cihazId)
     {
         if (!TimesMatch(hareketTarih, gridSaat))

@@ -19,7 +19,5 @@ namespace CeyPASS.DataAccess
         public string Sifre { get; set; }
         public Nullable<int> RolId { get; set; }
         public Nullable<int> PersonelId { get; set; }
-        public string SorumluFirmalari { get; set; }
-        public string SorumluIsyerleri { get; set; }
     }
 }

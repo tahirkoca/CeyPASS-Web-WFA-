@@ -37,5 +37,14 @@ namespace CeyPASS.DataAccess.Abstractions
         DataTable GetSicillerAyIcin(int yil, int ay, List<FirmaIsyeriYetkiDTO> yetkiler);
         /// <summary>Ay içindeki FinalPuantajVerisi satırlarını yetkiye göre filtreler. Sicilin firma/işyeri bilgisi Kisiler veya aktif CokluSicilBaglantilari üzerinden çözülür; kullanıcı yetkisi dışındaki kayıtlar listelenmez.</summary>
         DataTable GetVeriGirisleriAyIcin(int yil, int ay, List<FirmaIsyeriYetkiDTO> yetkiler);
+
+        /// <summary>sp_PuantajGunTipSaat — tek gün ÇalışmaTipi / Saat (override opsiyonel).</summary>
+        PuantajGunTipSaatDTO GetGunTipSaat(
+            int personelId,
+            DateTime tarih,
+            DateTime? girisSaat = null,
+            DateTime? cikisSaat = null,
+            bool girisAcik = true,
+            bool cikisAcik = true);
     }
 }

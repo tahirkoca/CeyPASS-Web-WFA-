@@ -11,10 +11,12 @@ namespace CeyPASS.Business.Services
     public class CanliIzlemeKartKomutService : ICanliIzlemeKartKomutService
     {
         private readonly ICanliIzlemeKartKomutRepository _repo;
+        private readonly IPuantajsizKartAtamaRepository _atamaRepo;
 
-        public CanliIzlemeKartKomutService(ICanliIzlemeKartKomutRepository repo)
+        public CanliIzlemeKartKomutService(ICanliIzlemeKartKomutRepository repo, IPuantajsizKartAtamaRepository atamaRepo)
         {
             _repo = repo;
+            _atamaRepo = atamaRepo;
         }
 
         /// <inheritdoc />
@@ -49,7 +51,22 @@ namespace CeyPASS.Business.Services
 
         /// <inheritdoc />
         public void EnqueuePasif(int firmaId, string personelId, int? olusturanKullaniciId = null)
-            => Enqueue(firmaId, personelId, CanliIzlemeKartKomutTurleri.Pasif, olusturanKullaniciId);
+        {
+            var pid = (personelId ?? "").Trim();
+            if (pid.Length > 0 && !_atamaRepo.ExistsActiveForCard(pid))
+                throw new InvalidOperationException("HAZIR durumdaki kart kısıtlanamaz.");
+            Enqueue(firmaId, pid, CanliIzlemeKartKomutTurleri.Pasif, olusturanKullaniciId);
+        }
+
+        /// <inheritdoc />
+        public bool KisitVarsaKaldir(int firmaId, string personelId, int? olusturanKullaniciId = null)
+        {
+            var pid = (personelId ?? "").Trim();
+            if (pid.Length == 0 || IsKartCihazdaAktif(firmaId, pid))
+                return false;
+            Enqueue(firmaId, pid, CanliIzlemeKartKomutTurleri.Aktif, olusturanKullaniciId);
+            return true;
+        }
 
         private void Enqueue(int firmaId, string personelId, string komut, int? olusturanKullaniciId)
         {

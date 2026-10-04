@@ -38,10 +38,20 @@ export function CanliIzlemeKartDurumModal({ visible, token, rows, onClose, onCha
       Alert.alert("Kart durumları", empty);
       return;
     }
+    let hazirAtlanan = 0;
+    if (pasif) {
+      hazirAtlanan = targets.filter((r) => r.durum === "Hazir").length;
+      targets = targets.filter((r) => r.durum !== "Hazir");
+      if (targets.length === 0) {
+        Alert.alert("Kart durumları", "HAZIR durumdaki kartlar kısıtlanamaz.");
+        return;
+      }
+    }
+    const atlananNotu = hazirAtlanan > 0 ? `\n${hazirAtlanan} HAZIR kart atlandı.` : "";
     const ok = await new Promise<boolean>((resolve) => {
       Alert.alert(
         pasif ? "Kartı Kısıtla" : "Kart Kısıtı Kaldır",
-        `${targets.length} kart için komut yazılsın mı?`,
+        `${targets.length} kart için komut yazılsın mı?${atlananNotu}`,
         [
           { text: "Vazgeç", style: "cancel", onPress: () => resolve(false) },
           { text: pasif ? "Kısıtla" : "Kısıtı kaldır", onPress: () => resolve(true) },
@@ -58,7 +68,7 @@ export function CanliIzlemeKartDurumModal({ visible, token, rows, onClose, onCha
         done++;
         setLocal((prev) => prev.map((x) => (x.personelId === r.personelId ? { ...x, cihazdaAktif: !pasif } : x)));
       }
-      Alert.alert("Kart durumları", `${done} komut kuyruğa alındı.`);
+      Alert.alert("Kart durumları", `${done} komut kuyruğa alındı.${atlananNotu}`);
       onChanged();
     } catch (e: any) {
       if (done > 0) onChanged();

@@ -10,6 +10,9 @@ namespace CeyPASS.Entities.Concrete
         public int Port { get; set; }
         public string FirmaAdi { get; set; }
         public bool AktifMi { get; set; }
+        public bool AnaGirisCikisMi { get; set; }
+        /// <summary>0 = Çıkış, 1 = Giriş (AnaGirisCikisMi cihazlarda).</summary>
+        public int CihazTipi { get; set; }
         public string Text { get; set; }
         public override string ToString() => $"{IPAdres ?? ""} {CihazAdi ?? ""}" + (string.IsNullOrWhiteSpace(FirmaAdi) ? "" : $" [{FirmaAdi}]");
     }

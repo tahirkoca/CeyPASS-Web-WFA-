@@ -65,27 +65,9 @@ namespace CeyPASS.DataAccess.Repositories
             var firmaIds = kisiler.Where(k => k.FirmaId.HasValue).Select(k => k.FirmaId!.Value).Distinct().ToList();
             var isyeriIds = kisiler.Where(k => k.IsyeriId.HasValue).Select(k => k.IsyeriId!.Value).Distinct().ToList();
             var bolumIds = kisiler.Where(k => k.BolumId.HasValue).Select(k => k.BolumId!.Value).Distinct().ToList();
-            var firmaMap = firmaIds.Count == 0
-                ? new Dictionary<int, string>()
-                : _context.Firmalar.AsNoTracking()
-                    .Where(f => firmaIds.Contains(f.FirmaId))
-                    .AsEnumerable()
-                    .GroupBy(f => f.FirmaId)
-                    .ToDictionary(g => g.Key, g => g.First().FirmaAdi);
-            var isyeriMap = isyeriIds.Count == 0
-                ? new Dictionary<int, string>()
-                : _context.Isyerler.AsNoTracking()
-                    .Where(i => i.IsyeriId.HasValue && isyeriIds.Contains(i.IsyeriId.Value))
-                    .AsEnumerable()
-                    .GroupBy(i => i.IsyeriId!.Value)
-                    .ToDictionary(g => g.Key, g => g.First().IsyeriAdi ?? "");
-            var bolumMap = bolumIds.Count == 0
-                ? new Dictionary<int, string>()
-                : _context.Bolumler.AsNoTracking()
-                    .Where(b => b.BolumId.HasValue && bolumIds.Contains(b.BolumId.Value))
-                    .AsEnumerable()
-                    .GroupBy(b => b.BolumId!.Value)
-                    .ToDictionary(g => g.Key, g => g.First().BolumAdi ?? "");
+            var firmaMap = BuildFirmaMap(firmaIds);
+            var isyeriMap = BuildIsyeriMap(firmaIds, isyeriIds);
+            var bolumMap = BuildBolumMap(firmaIds, bolumIds);
 
             var result = new List<CokluSicilHedefAdayDTO>();
             foreach (var k in kisiler)
@@ -110,11 +92,11 @@ namespace CeyPASS.DataAccess.Repositories
                     PersonelId = pid,
                     AdSoyad = $"{k.Ad} {k.Soyad}".Trim(),
                     FirmaId = k.FirmaId,
-                    FirmaAdi = k.FirmaId.HasValue && firmaMap.TryGetValue(k.FirmaId.Value, out var fa) ? fa : null,
+                    FirmaAdi = ResolveAd(firmaMap, k.FirmaId),
                     IsyeriId = k.IsyeriId,
-                    IsyeriAdi = k.IsyeriId.HasValue && isyeriMap.TryGetValue(k.IsyeriId.Value, out var ia) ? ia : null,
+                    IsyeriAdi = ResolveOrgAd(isyeriMap, k.FirmaId, k.IsyeriId),
                     BolumId = k.BolumId,
-                    BolumAdi = k.BolumId.HasValue && bolumMap.TryGetValue(k.BolumId.Value, out var ba) ? ba : null,
+                    BolumAdi = ResolveOrgAd(bolumMap, k.FirmaId, k.BolumId),
                     IseGirisTarihi = k.IseGirisTarihi,
                     IstenCikisTarihi = k.IstenCikisTarihi,
                     PuantajYapilirMi = k.PuantajYapilirMi == true,
@@ -290,28 +272,13 @@ namespace CeyPASS.DataAccess.Repositories
             var isyeriIds = rows.Where(r => r.SirketId.HasValue).Select(r => r.SirketId!.Value)
                 .Concat(kisiMap.Values.Where(k => k.IsyeriId.HasValue).Select(k => k.IsyeriId!.Value))
                 .Distinct().ToList();
-            var bolumIds = rows.Where(r => r.BolumId.HasValue).Select(r => r.BolumId!.Value).Distinct().ToList();
+            var bolumIds = rows.Where(r => r.BolumId.HasValue).Select(r => r.BolumId!.Value)
+                .Concat(kisiMap.Values.Where(k => k.BolumId.HasValue).Select(k => k.BolumId!.Value))
+                .Distinct().ToList();
 
-            var firmaMap = firmaIds.Count == 0
-                ? new Dictionary<int, string>()
-                : _context.Firmalar.AsNoTracking().Where(f => firmaIds.Contains(f.FirmaId))
-                    .AsEnumerable()
-                    .GroupBy(f => f.FirmaId)
-                    .ToDictionary(g => g.Key, g => g.First().FirmaAdi);
-            var isyeriMap = isyeriIds.Count == 0
-                ? new Dictionary<int, string>()
-                : _context.Isyerler.AsNoTracking()
-                    .Where(i => i.IsyeriId.HasValue && isyeriIds.Contains(i.IsyeriId.Value))
-                    .AsEnumerable()
-                    .GroupBy(i => i.IsyeriId!.Value)
-                    .ToDictionary(g => g.Key, g => g.First().IsyeriAdi ?? "");
-            var bolumMap = bolumIds.Count == 0
-                ? new Dictionary<int, string>()
-                : _context.Bolumler.AsNoTracking()
-                    .Where(b => b.BolumId.HasValue && bolumIds.Contains(b.BolumId.Value))
-                    .AsEnumerable()
-                    .GroupBy(b => b.BolumId!.Value)
-                    .ToDictionary(g => g.Key, g => g.First().BolumAdi ?? "");
+            var firmaMap = BuildFirmaMap(firmaIds);
+            var isyeriMap = BuildIsyeriMap(firmaIds, isyeriIds);
+            var bolumMap = BuildBolumMap(firmaIds, bolumIds);
 
             return rows.Select(r =>
             {
@@ -327,11 +294,11 @@ namespace CeyPASS.DataAccess.Repositories
                     HedefPersonelId = r.HedefPersonelId,
                     HedefAdSoyad = adSoyad,
                     FirmaId = firmaId,
-                    FirmaAdi = firmaId.HasValue && firmaMap.TryGetValue(firmaId.Value, out var fa) ? fa : null,
+                    FirmaAdi = ResolveAd(firmaMap, firmaId),
                     SirketId = isyeriId,
-                    IsyeriAdi = isyeriId.HasValue && isyeriMap.TryGetValue(isyeriId.Value, out var ia) ? ia : null,
+                    IsyeriAdi = ResolveOrgAd(isyeriMap, firmaId, isyeriId),
                     BolumId = bolumId,
-                    BolumAdi = bolumId.HasValue && bolumMap.TryGetValue(bolumId.Value, out var ba) ? ba : null,
+                    BolumAdi = ResolveOrgAd(bolumMap, firmaId, bolumId),
                     IseGirisTarihi = r.IseGirisTarihi,
                     IstenCikisTarihi = r.IstenCikisTarihi,
                     AktarimGunSayisi = r.AktarimGunSayisi,
@@ -344,5 +311,49 @@ namespace CeyPASS.DataAccess.Repositories
                 };
             }).OrderBy(x => x.HedefPersonelId).ToList();
         }
+
+        /// <summary>IsyeriId / BolumId firma içinde anlamlı; global Id ile map yanlış firmadan ad getirir.</summary>
+        private Dictionary<int, string> BuildFirmaMap(List<int> firmaIds)
+        {
+            if (firmaIds.Count == 0) return new Dictionary<int, string>();
+            return _context.Firmalar.AsNoTracking()
+                .Where(f => firmaIds.Contains(f.FirmaId))
+                .AsEnumerable()
+                .GroupBy(f => f.FirmaId)
+                .ToDictionary(g => g.Key, g => g.First().FirmaAdi);
+        }
+
+        private Dictionary<(int FirmaId, int Id), string> BuildIsyeriMap(List<int> firmaIds, List<int> isyeriIds)
+        {
+            if (firmaIds.Count == 0 || isyeriIds.Count == 0)
+                return new Dictionary<(int, int), string>();
+            return _context.Isyerler.AsNoTracking()
+                .Where(i => i.FirmaId.HasValue && i.IsyeriId.HasValue
+                    && firmaIds.Contains(i.FirmaId.Value) && isyeriIds.Contains(i.IsyeriId.Value))
+                .AsEnumerable()
+                .GroupBy(i => (FirmaId: i.FirmaId!.Value, Id: i.IsyeriId!.Value))
+                .ToDictionary(g => g.Key, g => g.First().IsyeriAdi ?? "");
+        }
+
+        private Dictionary<(int FirmaId, int Id), string> BuildBolumMap(List<int> firmaIds, List<int> bolumIds)
+        {
+            if (firmaIds.Count == 0 || bolumIds.Count == 0)
+                return new Dictionary<(int, int), string>();
+            return _context.Bolumler.AsNoTracking()
+                .Where(b => b.FirmaId.HasValue && b.BolumId.HasValue
+                    && firmaIds.Contains(b.FirmaId.Value) && bolumIds.Contains(b.BolumId.Value))
+                .AsEnumerable()
+                .GroupBy(b => (FirmaId: b.FirmaId!.Value, Id: b.BolumId!.Value))
+                .ToDictionary(g => g.Key, g => g.First().BolumAdi ?? "");
+        }
+
+        private static string? ResolveAd(Dictionary<int, string> map, int? id)
+            => id.HasValue && map.TryGetValue(id.Value, out var ad) ? ad : null;
+
+        private static string? ResolveOrgAd(Dictionary<(int FirmaId, int Id), string> map, int? firmaId, int? id)
+            => firmaId.HasValue && id.HasValue
+                && map.TryGetValue((firmaId.Value, id.Value), out var ad)
+                ? ad
+                : null;
     }
 }

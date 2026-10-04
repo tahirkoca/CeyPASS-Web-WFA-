@@ -142,7 +142,7 @@ namespace CeyPASS.WFA.UserControls.Canlı_İzleme
                     if (a == null)
                         throw new InvalidOperationException("Güncellenecek atamayı seçiniz.");
 
-                    _msvc.UpdateAssignment(
+                    var kisitKaldirildi = _msvc.UpdateAssignment(
                         atamaId: a.AtamaId,
                         misafirAdSoyad: txtMisafirAdSoyad.Text,
                         girisSaati: dtpGirisSaati.Value,
@@ -150,10 +150,11 @@ namespace CeyPASS.WFA.UserControls.Canlı_İzleme
                         aciklama: txtAciklama.Text,
                         tcKimlikNo: tc,
                         ziyaretEdilenKisi: kimeGeldigi,
-                        pasaportNo: pasaport
+                        pasaportNo: pasaport,
+                        kullaniciId: _session.AktifKullaniciId
                     );
 
-                    MessageBox.Show("Kayıt güncellendi.");
+                    MessageBox.Show(KartAtamaMesajlari.Guncellendi(kisitKaldirildi));
                     this.FindForm()?.Close();
                     return;
                 }

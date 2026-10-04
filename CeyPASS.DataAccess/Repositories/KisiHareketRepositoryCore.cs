@@ -346,7 +346,7 @@ SELECT
         }
 
         /// <summary>Insert Manual işlemini ekler.</summary>
-        public bool InsertManual(int firmaId, int personelId, DateTime tarih, string tip)
+        public bool InsertManual(int firmaId, int personelId, DateTime tarih, string tip, int cihazId = 0)
         {
             var entity = new CeyPASS.DataAccess.KisiHareketler
             {
@@ -356,7 +356,7 @@ SELECT
                 Tip = tip,
                 KayitZamani = DateTime.Now,
                 AktifMi = true,
-                CihazId = 0,
+                CihazId = cihazId,
                 ManuelMi = true
             };
 
@@ -365,7 +365,7 @@ SELECT
         }
 
         /// <summary>Update Manual işlemini günceller.</summary>
-        public bool UpdateManual(int id, DateTime tarih, string tip)
+        public bool UpdateManual(int id, DateTime tarih, string tip, int? cihazId = null)
         {
             var entity = _context.KisiHareketler
                 .SingleOrDefault(k => k.Id == id);
@@ -377,8 +377,52 @@ SELECT
             entity.Tip = tip;
             entity.ManuelMi = true;
             entity.KayitZamani = DateTime.Now;
+            if (cihazId.HasValue)
+                entity.CihazId = cihazId.Value;
 
             return _context.SaveChanges() > 0;
+        }
+
+        /// <inheritdoc />
+        public PuantajGunHareketUctanUcaDTO GetGunUctanUca(int personelId, DateTime tarih)
+        {
+            var gunBas = tarih.Date;
+            var gunBit = gunBas.AddDays(1);
+
+            // Gece vardiyası: çıkış ertesi gün 12:00'a kadar olabilir
+            var cikisBit = gunBas.AddDays(1).AddHours(12);
+
+            var aktif = _context.KisiHareketler
+                .Where(k => k.PersonelId == personelId
+                            && k.AktifMi
+                            && k.Tarih >= gunBas
+                            && k.Tarih < cikisBit)
+                .OrderBy(k => k.Tarih)
+                .Select(k => new { k.Id, k.CihazId, k.Tarih, k.Tip })
+                .ToList();
+
+            var giris = aktif
+                .Where(k => k.Tarih < gunBit
+                            && (string.Equals(k.Tip, "Giriş", StringComparison.OrdinalIgnoreCase)
+                                || string.Equals(k.Tip, "Giris", StringComparison.OrdinalIgnoreCase)))
+                .OrderBy(k => k.Tarih)
+                .FirstOrDefault();
+
+            var cikis = aktif
+                .Where(k => string.Equals(k.Tip, "Çıkış", StringComparison.OrdinalIgnoreCase)
+                            || string.Equals(k.Tip, "Cikis", StringComparison.OrdinalIgnoreCase))
+                .OrderByDescending(k => k.Tarih)
+                .FirstOrDefault();
+
+            return new PuantajGunHareketUctanUcaDTO
+            {
+                GirisHareketId = giris?.Id,
+                GirisCihazId = giris?.CihazId,
+                GirisTarih = giris?.Tarih,
+                CikisHareketId = cikis?.Id,
+                CikisCihazId = cikis?.CihazId,
+                CikisTarih = cikis?.Tarih
+            };
         }
 
         /// <summary>Pasif Yap işlemini gerçekleştirir.</summary>

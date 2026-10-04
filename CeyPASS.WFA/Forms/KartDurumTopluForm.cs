@@ -89,8 +89,23 @@ namespace CeyPASS.WFA.Forms
                         MessageBox.Show(f, empty, "Kart durumları", MessageBoxButtons.OK, MessageBoxIcon.Information);
                         return;
                     }
+                    var hazirAtlanan = 0;
+                    if (pasif)
+                    {
+                        var hazirIds = new HashSet<string>(
+                            all.Where(x => x.Durum == nameof(KartAtamaListeDurum.Hazir)).Select(x => x.PersonelId),
+                            StringComparer.OrdinalIgnoreCase);
+                        hazirAtlanan = ids.Count(hazirIds.Contains);
+                        ids = ids.Where(x => !hazirIds.Contains(x)).ToList();
+                        if (ids.Count == 0)
+                        {
+                            MessageBox.Show(f, "HAZIR durumdaki kartlar kısıtlanamaz.", "Kart durumları", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                            return;
+                        }
+                    }
+                    var atlananNotu = hazirAtlanan > 0 ? "\n" + hazirAtlanan + " HAZIR kart atlandı." : "";
                     var onay = pasif
-                        ? ids.Count + " kart cihazlarda kısıtlansın mı?"
+                        ? ids.Count + " kart cihazlarda kısıtlansın mı?" + atlananNotu
                         : ids.Count + " kartın kısıtı kaldırılsın mı?";
                     if (MessageBox.Show(f, onay, pasif ? "Kartı Kısıtla" : "Kart Kısıtı Kaldır", MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes)
                         return;
@@ -106,7 +121,7 @@ namespace CeyPASS.WFA.Forms
                             ok++;
                         }
                         changed = true;
-                        MessageBox.Show(f, (pasif ? "Kısıtlama" : "Kısıt kaldırma") + " komutu kuyruğa alındı: " + ok, "Kart durumları");
+                        MessageBox.Show(f, (pasif ? "Kısıtlama" : "Kısıt kaldırma") + " komutu kuyruğa alındı: " + ok + atlananNotu, "Kart durumları");
                     }
                     catch (Exception ex)
                     {

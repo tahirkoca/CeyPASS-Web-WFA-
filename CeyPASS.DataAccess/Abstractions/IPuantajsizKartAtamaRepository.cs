@@ -13,6 +13,8 @@ namespace CeyPASS.DataAccess.Abstractions
         List<PuantajsizKartAtama> GetOpenActive(int firmaId, bool? ziyaretciMi = null, bool? aracKartiMi = null);
         /// <summary>Card Belongs To Firma işlemini gerçekleştirir.</summary>
         bool CardBelongsToFirma(string personelId, int firmaId);
+        /// <summary>Kartın Kisiler.FirmaId değeri; kart yoksa null.</summary>
+        int? GetCardFirmaId(string personelId);
         /// <summary>Exists Active For Card işlemini gerçekleştirir.</summary>
         bool ExistsActiveForCard(string personelId);
         /// <summary>Yeni kayıt ekler.</summary>

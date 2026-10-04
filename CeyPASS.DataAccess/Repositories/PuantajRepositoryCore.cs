@@ -239,16 +239,26 @@ namespace CeyPASS.DataAccess.Repositories
         /// <summary>Onay ve final puantaj yazımını tek transaction içinde uygular.</summary>
         public void ApproveAndWriteFinal(int personelId, DateTime tarih, int onayDurumu, int duzenlenmisFm, string aciklama, string calismaTipi, decimal saat, int? kullaniciId)
         {
+            void Write()
+            {
+                Sp_OnayUpsert(null, personelId, tarih, onayDurumu,
+                              duzenlenmisFm, aciklama, kullaniciId);
+
+                Sp_FinalUpsert(null, personelId, tarih, calismaTipi,
+                               saat, kullaniciId);
+            }
+
+            if (_context.Database.CurrentTransaction != null)
+            {
+                Write();
+                return;
+            }
+
             using (var tx = _context.Database.BeginTransaction())
             {
                 try
                 {
-                    Sp_OnayUpsert(null, personelId, tarih, onayDurumu,
-                                  duzenlenmisFm, aciklama, kullaniciId);
-
-                    Sp_FinalUpsert(null, personelId, tarih, calismaTipi,
-                                   saat, kullaniciId);
-
+                    Write();
                     tx.Commit();
                 }
                 catch
@@ -367,7 +377,7 @@ INSERT INTO @Yetkiler (FirmaId, IsyeriId)
 VALUES {yetkilerValues};
 
 -- HedefMap: Çoklu sicil bağlantısındaki hedef siciller; puantaj satırı bağlantıdaki firma/işyeri ile listelenir
-;WITH HedefMap AS (
+;WITH HedefRaw AS (
     SELECT
         c.HedefPersonelId AS SicilNo,
         k.TcKimlikNo,
@@ -378,9 +388,13 @@ VALUES {yetkilerValues};
         c.BolumId AS Bolum,
         COALESCE(c.IseGirisTarihi, k.IseGirisTarihi) AS IseGirisTarihi,
         COALESCE(c.IstenCikisTarihi, k.IstenCikisTarihi) AS IstenCikisTarihi,
-        CASE WHEN k.CalismaStatusu = 3 THEN 1 ELSE 0 END AS DokPersoneliMi
+        CASE WHEN k.CalismaStatusu = 3 THEN 1 ELSE 0 END AS DokPersoneliMi,
+        ROW_NUMBER() OVER (
+            PARTITION BY c.HedefPersonelId
+            ORDER BY c.FirmaId, c.SirketId
+        ) AS rn
     FROM dbo.CokluSicilBaglantilari c
-    JOIN dbo.Kisiler k ON k.TcKimlikNo = c.TCKimlikNo
+    JOIN dbo.Kisiler k ON k.PersonelId = c.HedefPersonelId
     WHERE c.AktifMi = 1
       AND k.PuantajYapilirMi = 1  -- Puantajsız / izlenmeyecek personeli dışla
       AND COALESCE(c.IseGirisTarihi, k.IseGirisTarihi) <= @AySon
@@ -392,6 +406,13 @@ VALUES {yetkilerValues};
           WHERE y.FirmaId = c.FirmaId 
             AND (y.IsyeriId IS NULL OR y.IsyeriId = c.SirketId)
       )
+),
+HedefMap AS (
+    SELECT
+        SicilNo, TcKimlikNo, Ad, Soyad, Firma, Isyeri, Bolum,
+        IseGirisTarihi, IstenCikisTarihi, DokPersoneliMi
+    FROM HedefRaw
+    WHERE rn = 1
 ),
 -- BaseOnly: Aktif çoklu sicil hedefi olmayan normal siciller (hedefler HedefMap'te ayrı satır)
 BaseOnly AS (
@@ -544,6 +565,29 @@ ORDER BY SicilNo, Tarih";
             }
 
             return dt;
+        }
+
+        /// <inheritdoc />
+        public PuantajGunTipSaatDTO GetGunTipSaat(
+            int personelId,
+            DateTime tarih,
+            DateTime? girisSaat = null,
+            DateTime? cikisSaat = null,
+            bool girisAcik = true,
+            bool cikisAcik = true)
+        {
+            var sql = "EXEC dbo.sp_PuantajGunTipSaat @p0, @p1, @p2, @p3, @p4, @p5";
+            var rows = _context.Database
+                .SqlQueryRaw<PuantajGunTipSaatDTO>(sql,
+                    new SqlParameter("@p0", SqlDbType.Int) { Value = personelId },
+                    new SqlParameter("@p1", SqlDbType.Date) { Value = tarih.Date },
+                    new SqlParameter("@p2", SqlDbType.DateTime) { Value = girisSaat.HasValue ? girisSaat.Value : DBNull.Value },
+                    new SqlParameter("@p3", SqlDbType.DateTime) { Value = cikisSaat.HasValue ? cikisSaat.Value : DBNull.Value },
+                    new SqlParameter("@p4", SqlDbType.Bit) { Value = girisAcik },
+                    new SqlParameter("@p5", SqlDbType.Bit) { Value = cikisAcik })
+                .ToList();
+
+            return rows.FirstOrDefault() ?? new PuantajGunTipSaatDTO { CalismaTipi = "NG", Saat = 0 };
         }
     }
 }

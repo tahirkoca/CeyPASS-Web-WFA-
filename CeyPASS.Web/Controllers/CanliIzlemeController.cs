@@ -268,8 +268,8 @@ namespace CeyPASS.Web.Controllers
 
             try
             {
-                _msvc.UpdateAssignment(model.AtamaId, model.MisafirAdSoyad, model.GirisSaati, model.CikisSaati, model.Aciklama, model.TCKimlikNo, model.ZiyaretEdilenKisi, model.PasaportNo);
-                return Json(new { ok = true, message = "Kayıt güncellendi." });
+                var kisitKaldirildi = _msvc.UpdateAssignment(model.AtamaId, model.MisafirAdSoyad, model.GirisSaati, model.CikisSaati, model.Aciklama, model.TCKimlikNo, model.ZiyaretEdilenKisi, model.PasaportNo, user.KullaniciId);
+                return Json(new { ok = true, message = KartAtamaMesajlari.Guncellendi(kisitKaldirildi) });
             }
             catch (Exception ex)
             {
@@ -389,8 +389,8 @@ namespace CeyPASS.Web.Controllers
 
             try
             {
-                _aracSvc.UpdateAssignment(model.AtamaId, model.AdSoyad, model.GirisSaati, model.CikisSaati, model.Aciklama, model.TCKimlikNo, model.ZiyaretEdilenKisi, model.Plaka, model.PasaportNo);
-                return Json(new { ok = true, message = "Kayıt güncellendi." });
+                var kisitKaldirildi = _aracSvc.UpdateAssignment(model.AtamaId, model.AdSoyad, model.GirisSaati, model.CikisSaati, model.Aciklama, model.TCKimlikNo, model.ZiyaretEdilenKisi, model.Plaka, model.PasaportNo, user.KullaniciId);
+                return Json(new { ok = true, message = KartAtamaMesajlari.Guncellendi(kisitKaldirildi) });
             }
             catch (Exception ex)
             {

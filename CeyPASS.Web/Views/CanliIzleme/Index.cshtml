@@ -132,6 +132,7 @@
                     <p class="mb-1">ATANMIŞ / GİRİŞ / ÇIKIŞ satırına çift tık → atamayı güncelleyin (Kartı Kısıtla’dan bağımsızdır).</p>
                     <p class="mb-1">Satırın sağındaki Kartı Kısıtla / Kart Kısıtı Kaldır: cihaz kuyruğuna komut yazar; atamayı değiştirmez.</p>
                     <p class="mb-1">Kısıt kanıtı yoksa kart serbest sayılır. Atanmış+serbest → Kısıtla; kısıtlı → Kısıtı Kaldır; HAZIR+serbest → ikisi kapalı.</p>
+                    <p class="mb-1">Kart teslim alınınca (çıkış verilince) kısıt otomatik kaldırılır; HAZIR kart kısıtlanamaz.</p>
                     <p class="mb-1">Kart durumları: misafir+araç anlık serbest/kısıtlı listesi (Tümü/Misafir/Araç); seçerek veya topluca yönetin.</p>
                     <p class="mb-0">Üstteki Misafir / Araç seçimi liste tipini değiştirir.</p>
                 </div>
@@ -666,7 +667,7 @@
         }
         async function enqueueDurum(mode, pasif) {
             const pool = filteredDurum();
-            const targets = mode === 'selected'
+            let targets = mode === 'selected'
                 ? pool.filter(r => r.selected)
                 : mode === 'serbest'
                     ? pool.filter(r => r.cihazdaAktif)
@@ -675,7 +676,17 @@
                 alert(mode === 'selected' ? 'Önce kart seçin.' : (pasif ? 'Serbest kart yok.' : 'Kısıtlı kart yok.'));
                 return;
             }
-            if (!confirm(targets.length + ' kart için komut yazılsın mı?')) return;
+            let hazirAtlanan = 0;
+            if (pasif) {
+                hazirAtlanan = targets.filter(r => r.durum === 'Hazir').length;
+                targets = targets.filter(r => r.durum !== 'Hazir');
+                if (targets.length === 0) {
+                    alert('HAZIR durumdaki kartlar kısıtlanamaz.');
+                    return;
+                }
+            }
+            const atlananNotu = hazirAtlanan > 0 ? '\n' + hazirAtlanan + ' HAZIR kart atlandı.' : '';
+            if (!confirm(targets.length + ' kart için komut yazılsın mı?' + atlananNotu)) return;
             let ok = 0;
             try {
                 for (const r of targets) {
@@ -689,7 +700,7 @@
                     r.cihazdaAktif = !pasif;
                     ok++;
                 }
-                alert((pasif ? 'Kısıtlama' : 'Kısıt kaldırma') + ' komutu kuyruğa alındı: ' + ok);
+                alert((pasif ? 'Kısıtlama' : 'Kısıt kaldırma') + ' komutu kuyruğa alındı: ' + ok + atlananNotu);
             } catch (e) {
                 alert(ok > 0 ? (ok + ' kart yazıldı, sonra hata:\n' + e.message) : e.message);
             }

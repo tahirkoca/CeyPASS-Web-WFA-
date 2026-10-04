@@ -59,6 +59,83 @@ public static class UiFormDialog
         Margin = new Thickness(0, 0, 0, 14)
     };
 
+    /// <summary>
+    /// Boşken gri placeholder gösteren TextBox. Placeholder gerçek değer sayılmaz;
+    /// okumak için <see cref="GetTextBoxValue"/> kullanın.
+    /// </summary>
+    public static TextBox CreateTextBoxWithPlaceholder(string text, string placeholder)
+    {
+        var primary = ThemeBrushes.Get("Brush.TextPrimary", Color.FromRgb(0x0F, 0x17, 0x2A));
+        var muted = ThemeBrushes.Get("Brush.TextMuted", Color.FromRgb(0x94, 0xA3, 0xB8));
+        var state = new PlaceholderState(placeholder, Showing: string.IsNullOrWhiteSpace(text));
+
+        var tb = CreateTextBox(text ?? "");
+        tb.Tag = state;
+
+        void ShowPlaceholder()
+        {
+            state = state with { Showing = true };
+            tb.Tag = state;
+            tb.Text = placeholder;
+            tb.Foreground = muted;
+            tb.FontStyle = FontStyles.Italic;
+        }
+
+        void ClearPlaceholder()
+        {
+            if (!state.Showing) return;
+            state = state with { Showing = false };
+            tb.Tag = state;
+            tb.Text = "";
+            tb.Foreground = primary;
+            tb.FontStyle = FontStyles.Normal;
+        }
+
+        if (state.Showing)
+            ShowPlaceholder();
+
+        tb.GotKeyboardFocus += (_, _) => ClearPlaceholder();
+        tb.LostKeyboardFocus += (_, _) =>
+        {
+            if (string.IsNullOrWhiteSpace(tb.Text))
+                ShowPlaceholder();
+            else
+            {
+                state = state with { Showing = false };
+                tb.Tag = state;
+                tb.Foreground = primary;
+                tb.FontStyle = FontStyles.Normal;
+            }
+        };
+
+        return tb;
+    }
+
+    /// <summary>Placeholder gösteriliyorsa boş string; aksi halde Trim edilmiş metin.</summary>
+    public static string GetTextBoxValue(TextBox tb)
+    {
+        if (tb.Tag is PlaceholderState st)
+        {
+            if (st.Showing) return "";
+            if (string.Equals(tb.Text, st.Placeholder, StringComparison.Ordinal)) return "";
+        }
+        return string.IsNullOrWhiteSpace(tb.Text) ? "" : tb.Text.Trim();
+    }
+
+    /// <summary>Placeholder destekli TextBox’ı boşaltıp gri placeholder metnine döndürür.</summary>
+    public static void ResetTextBoxToPlaceholder(TextBox tb)
+    {
+        if (tb.Tag is not PlaceholderState st) return;
+
+        var muted = ThemeBrushes.Get("Brush.TextMuted", Color.FromRgb(0x94, 0xA3, 0xB8));
+        tb.Tag = st with { Showing = true };
+        tb.Text = st.Placeholder;
+        tb.Foreground = muted;
+        tb.FontStyle = FontStyles.Italic;
+    }
+
+    private sealed record PlaceholderState(string Placeholder, bool Showing);
+
     public static DatePicker CreateDatePicker(DateTime? selected) => new()
     {
         SelectedDate = selected,

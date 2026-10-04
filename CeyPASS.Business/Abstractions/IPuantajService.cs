@@ -34,6 +34,30 @@ namespace CeyPASS.Business.Abstractions
         /// <summary>Düzeltme ile birlikte onaylar ve nihai kayda yazar.</summary>
         void DuzenleOnayla(int personelId, DateTime tarih, int duzenlenmisFm, string aciklama, string calismaTipi, decimal saat, int? kullaniciId);
 
+        /// <summary>
+        /// Giriş/Çıkış için mevcut uç pasife alınır, yeni manuel hareket eklenir.
+        /// <paramref name="saatOverride"/> verilirse Final saati bundan yazılır; tip SP veya <paramref name="calismaTipiOverride"/>.
+        /// </summary>
+        void DuzenleGun(
+            int firmaId,
+            int personelId,
+            DateTime tarih,
+            PuantajGunHareketUcu? giris,
+            PuantajGunHareketUcu? cikis,
+            string? aciklama,
+            int? kullaniciId,
+            decimal? saatOverride = null,
+            string? calismaTipiOverride = null);
+
+        /// <summary>sp_PuantajGunTipSaat — tek gün ÇalışmaTipi / Saat.</summary>
+        PuantajGunTipSaatDTO GetGunTipSaat(
+            int personelId,
+            DateTime tarih,
+            DateTime? girisSaat = null,
+            DateTime? cikisSaat = null,
+            bool girisAcik = true,
+            bool cikisAcik = true);
+
         /// <summary>Ana sicilden bağlı sicillere aylık puantaj aktarımı yapar.</summary>
         void CokluSicileAktar(int anaPersonelId, int yil, int ay, int? kullaniciId);
 
@@ -49,7 +73,10 @@ namespace CeyPASS.Business.Abstractions
         /// <summary>Geçen ay ek kayıt günü ayarını günceller.</summary>
         void SetEkKayitGun(int gun, int uid);
 
-        /// <summary>FM tipi kodları için 7,5 saat üzeri fazla mesai dakikasını hesaplar.</summary>
+        /// <summary>
+        /// VarsayilanSaat NULL olan tiplerde (FM1, AAF, BBF, HTM…) taban üzeri fazla mesai dakikası;
+        /// VarsayilanSaat dolu tiplerde 0.
+        /// </summary>
         int HesaplaFazlaMesaiDakika(string calismaTipiKod, decimal saat);
 
         /// <summary>Logo Excel formatına uygun aylık puantaj satırlarını hesaplar ve denkleştirir.</summary>
@@ -63,6 +90,12 @@ namespace CeyPASS.Business.Abstractions
 
         /// <summary>FM1 satırı için toplam çalışma saati (7,5 + FM dakika).</summary>
         decimal HesaplaFM1CalismaSaati(int fazlaMesaiDakika);
+
+        /// <summary>
+        /// Elle saat düzenlemede tip: Mevcut (Aylık SP / Final) ailesini koruyup
+        /// AA↔AAF (3,75), BB↔BBF / NG↔FM1 (7,5), HT↔HTM eşiklerine göre türetir.
+        /// </summary>
+        string ResolveManuelCalismaTipi(string? mevcutTip, decimal saat);
 
         /// <summary>Kullanıcının firma/işyeri yetki listesini döner.</summary>
         List<FirmaIsyeriYetkiDTO> GetKullaniciFirmaIsyeriYetkileri(int kullaniciId);

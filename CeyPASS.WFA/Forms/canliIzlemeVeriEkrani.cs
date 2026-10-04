@@ -174,6 +174,7 @@ namespace CeyPASS.WFA.Forms
             "ATANMIŞ / GİRİŞ / ÇIKIŞ satırına çift tık → atamayı güncelleyin (Kartı Kısıtla’dan bağımsızdır).\n" +
             "Satırın sağındaki Kartı Kısıtla / Kart Kısıtı Kaldır: cihaz kuyruğuna komut yazar; atamayı değiştirmez.\n" +
             "Kısıt kanıtı yoksa kart serbest sayılır. Atanmış+serbest → Kısıtla; kısıtlı → Kısıtı Kaldır; HAZIR+serbest → ikisi kapalı.\n" +
+            "Kart teslim alınınca (çıkış verilince) kısıt otomatik kaldırılır; HAZIR kart kısıtlanamaz.\n" +
             "Kart durumları: misafir+araç anlık serbest/kısıtlı listesi (Tümü/Misafir/Araç); seçerek veya topluca yönetin.\n" +
             "Üstteki Misafir / Araç seçimi liste tipini değiştirir.";
 

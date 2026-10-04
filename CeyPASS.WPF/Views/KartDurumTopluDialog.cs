@@ -51,6 +51,7 @@ public static class KartDurumTopluDialog
                     KartAdi = x.KartAdi,
                     KisiPlaka = FormatKisiPlaka(x.MisafirAdSoyad, x.Plaka),
                     AtamaDurumText = x.DurumText,
+                    IsHazir = x.Durum == KartAtamaListeDurum.Hazir,
                     TipKey = tipKey,
                     TipLabel = tipLabel,
                     CihazdaAktif = true // map below
@@ -192,9 +193,22 @@ public static class KartDurumTopluDialog
                 return;
             }
 
+            var hazirAtlanan = 0;
+            if (pasif)
+            {
+                hazirAtlanan = targets.Count(r => r.IsHazir);
+                targets = targets.Where(r => !r.IsHazir).ToList();
+                if (targets.Count == 0)
+                {
+                    UiDialog.Warning("HAZIR durumdaki kartlar kısıtlanamaz.", DialogTitle, owner);
+                    return;
+                }
+            }
+            var atlananNotu = hazirAtlanan > 0 ? $"\n{hazirAtlanan} HAZIR kart atlandı." : "";
+
             var baslik = pasif ? "Kartı Kısıtla" : "Kart Kısıtı Kaldır";
             var onay = pasif
-                ? $"{targets.Count} kart cihazlarda kısıtlansın mı?"
+                ? $"{targets.Count} kart cihazlarda kısıtlansın mı?{atlananNotu}"
                 : $"{targets.Count} kartın kısıtı kaldırılsın mı?";
             if (!UiDialog.Confirm(onay, baslik, owner, yesText: pasif ? "Kısıtla" : "Kısıtı kaldır", noText: "Vazgeç"))
                 return;
@@ -215,7 +229,7 @@ public static class KartDurumTopluDialog
                 changed = true;
                 UiDialog.Success(
                     pasif
-                        ? $"{ok} kısıtlama komutu kuyruğa alındı."
+                        ? $"{ok} kısıtlama komutu kuyruğa alındı.{atlananNotu}"
                         : $"{ok} kısıt kaldırma komutu kuyruğa alındı.",
                     baslik,
                     owner);
@@ -478,6 +492,7 @@ public static class KartDurumTopluDialog
         public string KartAdi { get; init; } = "";
         public string KisiPlaka { get; init; } = "";
         public string AtamaDurumText { get; init; } = "";
+        public bool IsHazir { get; init; }
         public string TipKey { get; init; } = "";
         public string TipLabel { get; init; } = "";
 

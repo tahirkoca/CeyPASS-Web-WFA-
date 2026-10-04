@@ -5,6 +5,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using CeyPASS.Business.Abstractions;
+using CeyPASS.Business.Services;
 using CeyPASS.Entities.Concrete;
 using CeyPASS.Entities.Helpers;
 using CeyPASS.Infrastructure.Helpers;
@@ -94,6 +95,7 @@ public sealed class PersonelViewModel : ObservableObject
     private bool _isHedefSicilOnly;
     private bool _isApplyingDetay;
     private int? _yemekAdedi;
+    private bool _loadedYemekHakki;
 
     private bool _fieldsReadOnly = true;
     private bool _listEnabled = true;
@@ -932,6 +934,7 @@ public sealed class PersonelViewModel : ObservableObject
             VardiyalariIsaretle(d.CalismaSekliCsv ?? "");
 
             YemekHakki = d.YemekHakkiVar;
+            _loadedYemekHakki = d.YemekHakkiVar;
             _yemekAdedi = d.GunlukYemekAdedi;
             RaisePropertyChanged(nameof(YemekAdediText));
             FirmaPersoneli = d.FirmaPersoneli;
@@ -1432,6 +1435,12 @@ public sealed class PersonelViewModel : ObservableObject
         AdSoyadAyir(AdSoyad, out string ad, out string soyad);
         var kisi = BuildKisi(ad, soyad);
 
+        bool oncekiYemekHakki = _loadedYemekHakki;
+        bool yeniYemekHakki = YemekHakki && YemekAdediForSave > 0;
+        if (YemekhaneEtkiMesaji.KaldirmaOnayiGerekir(oncekiYemekHakki, yeniYemekHakki)
+            && !UiDialog.Confirm(YemekhaneEtkiMesaji.KaldirmaOnayi, "Yemek hakkı", yesText: "Kaldır", noText: "Vazgeç"))
+            return;
+
         var ok = kisiSvc.KisiGuncelle(
             kisi,
             originalPersonelId: _originalPersonelId ?? kisi.PersonelId,
@@ -1449,7 +1458,10 @@ public sealed class PersonelViewModel : ObservableObject
         }
 
         _originalPersonelId = kisi.PersonelId.Trim();
-        UiDialog.Success("Kayıt güncellendi.", PageName);
+        _loadedYemekHakki = yeniYemekHakki;
+        UiDialog.Success(
+            YemekhaneEtkiMesaji.Ekle("Kayıt güncellendi.", YemekhaneEtkiMesaji.Guncelleme(oncekiYemekHakki, yeniYemekHakki)),
+            PageName);
         LoadList();
         EnterViewMode();
     }
@@ -1513,7 +1525,8 @@ public sealed class PersonelViewModel : ObservableObject
             kartAdi);
 
         _originalPersonelId = yeniKisi.PersonelId.Trim();
-        UiDialog.Success("Kayıt tamamlandı.", PageName);
+        _loadedYemekHakki = YemekHakki;
+        UiDialog.Success(YemekhaneEtkiMesaji.Ekle("Kayıt tamamlandı.", YemekhaneEtkiMesaji.YeniKayit(YemekHakki)), PageName);
         LoadList();
         EnterViewMode();
     }
@@ -1578,6 +1591,7 @@ public sealed class PersonelViewModel : ObservableObject
         AracKarti = false;
         Taseron = false;
         _yemekAdedi = null;
+        _loadedYemekHakki = false;
         RaisePropertyChanged(nameof(YemekAdediText));
         SetFoto(null, dirty: false);
         _isAnaSicil = false;

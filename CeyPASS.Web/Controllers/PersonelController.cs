@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
 using CeyPASS.Business.Abstractions;
+using CeyPASS.Business.Services;
 using CeyPASS.DataAccess.Abstractions;
 using CeyPASS.Entities.Concrete;
 using CeyPASS.Entities.Helpers;
@@ -221,7 +222,7 @@ namespace CeyPASS.Web.Controllers
                 }
 
                 _kisiService.YeniKisiEkle(kisi, firmaPersoneli, puantajYapilabilir, yemekHakkiVar, gunlukYemekLimiti, puantajsizKartId, puantajsizKartNo, puantajsizKartAdi);
-                TempData["Success"] = "Personel başarıyla eklendi.";
+                TempData["Success"] = "Personel başarıyla eklendi. " + YemekhaneEtkiMesaji.YeniKayit(yemekHakkiVar);
                 BumpPersonelCacheVersion(kisi.FirmaId);
                 return RedirectToAction("Index");
             }
@@ -340,10 +341,12 @@ namespace CeyPASS.Web.Controllers
                     }
                 }
 
-                bool success = _kisiService.KisiGuncelle(kisi, originalPersonelId, firmaPersoneli, puantajYapilabilir, yemekHakkiVar, ResolveGunlukYemekAdedi(yemekHakkiVar, gunlukYemekAdedi, existing.GunlukYemekAdedi), firmaDisiKartNo, fotoDegisti);
+                int yemekAdedi = ResolveGunlukYemekAdedi(yemekHakkiVar, gunlukYemekAdedi, existing.GunlukYemekAdedi);
+                bool success = _kisiService.KisiGuncelle(kisi, originalPersonelId, firmaPersoneli, puantajYapilabilir, yemekHakkiVar, yemekAdedi, firmaDisiKartNo, fotoDegisti);
                 if (success)
                 {
-                    TempData["Success"] = "Personel başarıyla güncellendi.";
+                    var yemekhaneEtki = YemekhaneEtkiMesaji.Guncelleme(existing.YemekHakkiVar, yemekHakkiVar && yemekAdedi > 0);
+                    TempData["Success"] = "Personel başarıyla güncellendi." + (yemekhaneEtki == null ? "" : " " + yemekhaneEtki);
                     BumpPersonelCacheVersion(kisi.FirmaId);
                     return RedirectToAction("Index", new { kartTipi, firmaId, page, pageSize, search, isyeriId });
                 }

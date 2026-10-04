@@ -1,4 +1,5 @@
 using CeyPASS.Business.Abstractions;
+using CeyPASS.Business.Services;
 using CeyPASS.DataAccess.Abstractions;
 using CeyPASS.Entities.Concrete;
 using CeyPASS.Infrastructure.Helpers;
@@ -37,6 +38,7 @@ namespace CeyPASS.WFA.UserControls
         private bool _hasIstenCikisTarihi;
         private bool _isYeniKayit = false;
         private int? _loadedGunlukYemekAdedi;
+        private bool _loadedYemekHakki;
         private bool _guncelleModu = false;
         private bool _fotoDirty = false;
         private KisiListItem _sonSecilen = null;
@@ -665,6 +667,7 @@ namespace CeyPASS.WFA.UserControls
                 txtFirmaDisiKartNo.Text = d.TaseronKartNo ?? "";
 
                 chkYemekHakkiVarMi.Checked = d.YemekHakkiVar;
+                _loadedYemekHakki = d.YemekHakkiVar;
                 _loadedGunlukYemekAdedi = d.GunlukYemekAdedi;
                 nudYemekAdedi.Value = d.GunlukYemekAdedi.HasValue ? d.GunlukYemekAdedi.Value : 0;
 
@@ -851,6 +854,7 @@ namespace CeyPASS.WFA.UserControls
             chkTaseronCalisanMi.Checked = false;
             nudYemekAdedi.Value = 0;
             _loadedGunlukYemekAdedi = null;
+            _loadedYemekHakki = false;
 
             IslemButonlariniGoster(false);
             RefreshCokluSicilState(0, null);
@@ -1143,6 +1147,14 @@ namespace CeyPASS.WFA.UserControls
                     bool firma = chkFirmaPersoneliMi.Checked;
                     bool puantaj = chkPuantajYapilirMi.Checked;
                     bool yemek = chkYemekHakkiVarMi.Checked;
+                    int yemekAdedi = ResolveGunlukYemekAdedi(yemek, (int)nudYemekAdedi.Value);
+                    bool yeniYemekHakki = yemek && yemekAdedi > 0;
+                    bool oncekiYemekHakki = _loadedYemekHakki;
+
+                    if (YemekhaneEtkiMesaji.KaldirmaOnayiGerekir(oncekiYemekHakki, yeniYemekHakki)
+                        && MessageBox.Show(YemekhaneEtkiMesaji.KaldirmaOnayi, "Yemek hakkı",
+                            MessageBoxButtons.YesNo, MessageBoxIcon.Warning) != DialogResult.Yes)
+                        return;
 
                     var ok = _kisiSvc.KisiGuncelle(
                         kisi,
@@ -1150,7 +1162,7 @@ namespace CeyPASS.WFA.UserControls
                         firma,
                         puantaj,
                         yemek,
-                        ResolveGunlukYemekAdedi(yemek, (int)nudYemekAdedi.Value),
+                        yemekAdedi,
                         txtFirmaDisiKartNo.Text.Trim(),
                         fotoDegisti: _fotoDirty
                     );
@@ -1169,7 +1181,9 @@ namespace CeyPASS.WFA.UserControls
                     }
                     catch { /* Eğer yükleme başarısız olursa yine kullanıcıya güncelleme mesajı gösterilecek */ }
 
-                    MessageBox.Show("Kayıt güncellendi.", "Bilgi", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    MessageBox.Show(
+                        YemekhaneEtkiMesaji.Ekle("Kayıt güncellendi.", YemekhaneEtkiMesaji.Guncelleme(oncekiYemekHakki, yeniYemekHakki)),
+                        "Bilgi", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     _originalPersonelId = kisi.PersonelId.Trim();
                     LogHelper.Info(PageName, "Guncelle", $"Kişi güncellendi. PersonelId={kisi.PersonelId}", null, cid);
 
@@ -1269,7 +1283,9 @@ namespace CeyPASS.WFA.UserControls
                 );
 
                 LogHelper.Info(PageName, "Ekle", $"Yeni kişi eklendi. PersonelId={yeniKisi.PersonelId}", null, cid);
-                MessageBox.Show("Kayıt tamamlandı.", "Bilgi", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show(
+                    YemekhaneEtkiMesaji.Ekle("Kayıt tamamlandı.", YemekhaneEtkiMesaji.YeniKayit(y)),
+                    "Bilgi", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
                 KisileriYukle(GetSeciliFirmaId());
                 IslemButonlariniGoster(false);

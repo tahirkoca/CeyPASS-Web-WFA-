@@ -17,44 +17,62 @@ namespace CeyPASS.DataAccess.Repositories
         /// <summary>Insert Limit işlemini ekler.</summary>
         public void InsertLimit(string personelId, int gunlukLimit)
         {
-            var sql1 = @"
+            // Listener aktif limiti olmayan kişiyi yemekhane cihazında pasif eder; iki adım arasında limitsiz an kalmamalı
+            var sql = @"
 UPDATE dbo.YemekhaneGirisLimitler
    SET AktifMi = 0
- WHERE PersonelId = @p0 AND AktifMi = 1";
+ WHERE PersonelId = @p0 AND AktifMi = 1;
 
-            _context.Database.ExecuteSqlRaw(sql1,
-                new Microsoft.Data.SqlClient.SqlParameter("@p0", personelId));
-
-            var sql2 = @"
 INSERT INTO dbo.YemekhaneGirisLimitler(PersonelId, GunlukLimit, KayitTarihi, AktifMi)
-VALUES (@p0, @p1, GETDATE(), 1)";
+VALUES (@p0, @p1, GETDATE(), 1);";
 
-            _context.Database.ExecuteSqlRaw(sql2,
+            TekTransactionda(() => _context.Database.ExecuteSqlRaw(sql,
                 new Microsoft.Data.SqlClient.SqlParameter("@p0", personelId),
-                new Microsoft.Data.SqlClient.SqlParameter("@p1", gunlukLimit));
+                new Microsoft.Data.SqlClient.SqlParameter("@p1", gunlukLimit)));
         }
 
         /// <summary>Upsert Limit işlemini yazar veya günceller.</summary>
         public void UpsertLimit(string personelId, int gunlukLimit)
         {
+            // Eşzamanlı iki kayıtta çift satır oluşmasın diye satır kilitlenerek güncellenir, yoksa eklenir
             var sql = @"
-IF EXISTS (SELECT 1 FROM dbo.YemekhaneGirisLimitler WHERE PersonelId = @p0)
-BEGIN
-    UPDATE dbo.YemekhaneGirisLimitler
-       SET GunlukLimit = @p1,
-           KayitTarihi = GETDATE(),
-           AktifMi     = 1
-     WHERE PersonelId = @p0;
-END
-ELSE
-BEGIN
-    INSERT INTO dbo.YemekhaneGirisLimitler(PersonelId, GunlukLimit, KayitTarihi, AktifMi)
-    VALUES (@p0, @p1, GETDATE(), 1);
-END";
+UPDATE dbo.YemekhaneGirisLimitler WITH (UPDLOCK, HOLDLOCK)
+   SET GunlukLimit = @p1,
+       KayitTarihi = GETDATE(),
+       AktifMi     = 1
+ WHERE PersonelId = @p0;
 
-            _context.Database.ExecuteSqlRaw(sql,
+IF @@ROWCOUNT = 0
+    INSERT INTO dbo.YemekhaneGirisLimitler(PersonelId, GunlukLimit, KayitTarihi, AktifMi)
+    VALUES (@p0, @p1, GETDATE(), 1);";
+
+            TekTransactionda(() => _context.Database.ExecuteSqlRaw(sql,
                 new Microsoft.Data.SqlClient.SqlParameter("@p0", personelId),
-                new Microsoft.Data.SqlClient.SqlParameter("@p1", gunlukLimit));
+                new Microsoft.Data.SqlClient.SqlParameter("@p1", gunlukLimit)));
+        }
+
+        /// <summary>Açık transaction varsa ona katılır; yoksa yeni transaction açıp hata olursa geri alır.</summary>
+        private void TekTransactionda(System.Action yaz)
+        {
+            if (_context.Database.CurrentTransaction != null)
+            {
+                yaz();
+                return;
+            }
+
+            using (var tx = _context.Database.BeginTransaction())
+            {
+                try
+                {
+                    yaz();
+                    tx.Commit();
+                }
+                catch
+                {
+                    tx.Rollback();
+                    throw;
+                }
+            }
         }
 
         /// <summary>Pasif Et By Personel işlemini gerçekleştirir.</summary>

@@ -581,6 +581,43 @@ UPDATE dbo.Kisiler
                         _context.Database.ExecuteSqlRaw(sql1,
                             new Microsoft.Data.SqlClient.SqlParameter("@p0", oldId),
                             new Microsoft.Data.SqlClient.SqlParameter("@p1", newId));
+
+                        // Cihaz yetkileri yeni sicile taşınır; yeni sicilde aynı cihaz zaten varsa aktifliği birleştirilir, eski satır silinir.
+                        // Listener'ın yemekhane akışlarının baktığı açık satırlar (engel, kart kısıtı, röle bekleme, saat penceresi,
+                        // dün/bugün geçişleri) da taşınır; aksi halde eski sicil cihaza geri eklenir ve günlük sayaç sıfırlanır.
+                        // Listener SicilDegisiklikleri satırını okuyup kullanıcıyı cihazlarda yeni sicile taşır (tablo yoksa kayıt atlanır).
+                        var sql2 = @"
+UPDATE z SET AktifMi = 1
+  FROM dbo.KisiCihazYetkileri z
+ WHERE z.PersonelId = @p1 AND z.AktifMi = 0
+   AND EXISTS (SELECT 1 FROM dbo.KisiCihazYetkileri y WHERE y.PersonelId = @p0 AND y.CihazId = z.CihazId AND y.AktifMi = 1);
+
+UPDATE y SET PersonelId = @p1
+  FROM dbo.KisiCihazYetkileri y
+ WHERE y.PersonelId = @p0
+   AND NOT EXISTS (SELECT 1 FROM dbo.KisiCihazYetkileri z WHERE z.PersonelId = @p1 AND z.CihazId = y.CihazId);
+
+DELETE FROM dbo.KisiCihazYetkileri WHERE PersonelId = @p0;
+
+UPDATE dbo.YemekhaneEngellenenKullanicilar SET PersonelId = @p1 WHERE PersonelId = @p0 AND TekrarEklendiMi = 0;
+UPDATE dbo.CanliIzlemeKartKomutKuyrugu SET PersonelId = @p1 WHERE PersonelId = @p0;
+
+DECLARE @eskiInt int = TRY_CONVERT(int, @p0), @yeniInt int = TRY_CONVERT(int, @p1);
+IF @eskiInt IS NOT NULL AND @yeniInt IS NOT NULL
+BEGIN
+    UPDATE dbo.YemekhaneRoleCooldown SET PersonelId = @yeniInt WHERE PersonelId = @eskiInt AND TamamlandiMi = 0;
+    UPDATE dbo.YemekhaneCihazZamanlama SET PersonelId = @yeniInt WHERE PersonelId = @eskiInt AND SilindiMi = 0;
+    UPDATE dbo.YemekhaneGecisHareketler SET PersonelId = @yeniInt
+     WHERE PersonelId = @eskiInt AND AktifMi = 1 AND Tarih >= DATEADD(DAY, -1, CAST(GETDATE() AS date));
+END
+
+IF OBJECT_ID('dbo.SicilDegisiklikleri', 'U') IS NOT NULL
+    INSERT INTO dbo.SicilDegisiklikleri (EskiPersonelId, YeniPersonelId, KartNo, ChangedAt, Status)
+    VALUES (@p0, @p1, @p2, SYSUTCDATETIME(), 0);";
+                        _context.Database.ExecuteSqlRaw(sql2,
+                            new Microsoft.Data.SqlClient.SqlParameter("@p0", SqlDbType.NVarChar) { Value = oldId },
+                            new Microsoft.Data.SqlClient.SqlParameter("@p1", SqlDbType.NVarChar) { Value = newId },
+                            new Microsoft.Data.SqlClient.SqlParameter("@p2", SqlDbType.NVarChar) { Value = string.IsNullOrWhiteSpace(k.KartNo) ? (object)DBNull.Value : k.KartNo.Trim() });
                     }
 
                     if (firmaDisiKartNo != null && int.TryParse(newId, out var pidInt))

@@ -1,4 +1,5 @@
 ﻿using CeyPASS.Business.Abstractions;
+using CeyPASS.DataAccess;
 using CeyPASS.DataAccess.Abstractions;
 using CeyPASS.Entities.Concrete;
 using System;
@@ -15,11 +16,24 @@ namespace CeyPASS.Business.Services
     public class PuantajService : IPuantajService
     {
         private readonly IPuantajRepository _repo;
+        private readonly IKisiHareketRepository? _hareket;
+        private readonly CeyPASSDataConnectionCore? _db;
 
-        /// <summary>Depo katmanı enjekte edilir.</summary>
+        /// <summary>Yalnızca puantaj deposu (birim test / eski kayıt).</summary>
         public PuantajService(IPuantajRepository repo)
+            : this(repo, null, null)
+        {
+        }
+
+        /// <summary>Depo + hareket + DbContext (DuzenleGun transaction).</summary>
+        public PuantajService(
+            IPuantajRepository repo,
+            IKisiHareketRepository? hareket,
+            CeyPASSDataConnectionCore? db)
         {
             _repo = repo;
+            _hareket = hareket;
+            _db = db;
         }
 
         /// <summary>FM dakikalarını 30'ar dakikaya yuvarlar (Logo/WFA uyumu).</summary>
@@ -126,6 +140,79 @@ namespace CeyPASS.Business.Services
         }
 
         /// <inheritdoc />
+        public void DuzenleGun(
+            int firmaId,
+            int personelId,
+            DateTime tarih,
+            PuantajGunHareketUcu? giris,
+            PuantajGunHareketUcu? cikis,
+            string? aciklama,
+            int? kullaniciId,
+            decimal? saatOverride = null,
+            string? calismaTipiOverride = null)
+        {
+            if (_hareket == null || _db == null)
+                throw new InvalidOperationException("DuzenleGun için hareket deposu ve DbContext gerekir.");
+
+            var gun = tarih.Date;
+            var uctan = _hareket.GetGunUctanUca(personelId, gun);
+
+            using var tx = _db.Database.BeginTransaction();
+            try
+            {
+                ApplyHareketUcu(firmaId, personelId, giris, tip: "Giriş", mevcutId: uctan.GirisHareketId);
+                ApplyHareketUcu(firmaId, personelId, cikis, tip: "Çıkış", mevcutId: uctan.CikisHareketId);
+
+                var tipSaat = _repo.GetGunTipSaat(personelId, gun);
+                var tip = !string.IsNullOrWhiteSpace(calismaTipiOverride)
+                    ? calismaTipiOverride!
+                    : (tipSaat.CalismaTipi ?? "");
+                var saat = saatOverride ?? tipSaat.Saat;
+                var fm = HesaplaFazlaMesaiDakika(tip, saat);
+
+                _repo.ApproveAndWriteFinal(
+                    personelId, gun, (int)OnayDurumu.Düzeltildi, fm, aciklama,
+                    tip, saat, kullaniciId);
+
+                tx.Commit();
+            }
+            catch
+            {
+                tx.Rollback();
+                throw;
+            }
+        }
+
+        /// <inheritdoc />
+        public PuantajGunTipSaatDTO GetGunTipSaat(
+            int personelId,
+            DateTime tarih,
+            DateTime? girisSaat = null,
+            DateTime? cikisSaat = null,
+            bool girisAcik = true,
+            bool cikisAcik = true)
+            => _repo.GetGunTipSaat(personelId, tarih, girisSaat, cikisSaat, girisAcik, cikisAcik);
+
+        private void ApplyHareketUcu(int firmaId, int personelId, PuantajGunHareketUcu? uc, string tip, int? mevcutId)
+        {
+            if (_hareket == null) return;
+
+            if (uc == null)
+            {
+                // Kapalı taraf: mevcut harekete dokunulmaz.
+                return;
+            }
+
+            // Orijinal kart satırına Update yok: varsa pasife al, yeni manuel hareket bas.
+            var pasifId = mevcutId is > 0 ? mevcutId
+                : (uc.HareketId is > 0 ? uc.HareketId : null);
+            if (pasifId.HasValue)
+                _hareket.PasifYap(pasifId.Value);
+
+            _hareket.InsertManual(firmaId, personelId, uc.TarihSaat, tip, uc.CihazId);
+        }
+
+        /// <inheritdoc />
         public void CokluSicileAktar(int anaPersonelId, int yil, int ay, int? kullaniciId) => _repo.CokluSicileAktar(anaPersonelId, yil, ay, kullaniciId);
 
         /// <inheritdoc />
@@ -143,15 +230,98 @@ namespace CeyPASS.Business.Services
         /// <inheritdoc />
         public int HesaplaFazlaMesaiDakika(string calismaTipiKod, decimal saat)
         {
-            const decimal NormalGunSaati = 7.5m;
+            const decimal ArifeTaban = 3.75m;
+            const decimal NormalGun = 7.5m;
 
-            if (string.IsNullOrWhiteSpace(calismaTipiKod) ||
-                !calismaTipiKod.StartsWith("FM", StringComparison.OrdinalIgnoreCase))
+            if (string.IsNullOrWhiteSpace(calismaTipiKod))
                 return 0;
 
-            // FM tiplerinde günlük 7,5 saat üzeri kısım fazla mesai dakikasıdır
-            var fazlaSaat = Math.Max(0m, saat - NormalGunSaati);
+            var kod = calismaTipiKod.Trim();
+            var tipler = _repo.GetPuantajTipleri() ?? new List<PuantajTipDTO>();
+            var tip = tipler.FirstOrDefault(t =>
+                string.Equals(t.Kod, kod, StringComparison.OrdinalIgnoreCase));
+
+            // Katalogda VarsayilanSaat doluysa taban gün — Düzeltilmiş FM yazılmaz
+            if (tip != null && tip.VarsayilanSaat.HasValue)
+                return 0;
+
+            decimal taban;
+            if (tip != null)
+            {
+                // VarsayilanSaat NULL: ailedeki dolu varsayılan veya sabit eşik
+                taban = ResolveFazlaMesaiTabanSaati(kod, tipler, ArifeTaban, NormalGun);
+            }
+            else if (kod.StartsWith("FM", StringComparison.OrdinalIgnoreCase))
+            {
+                // Katalogda yoksa eski FM* davranışı
+                taban = NormalGun;
+            }
+            else
+            {
+                return 0;
+            }
+
+            var fazlaSaat = Math.Max(0m, saat - taban);
             return (int)Math.Round(fazlaSaat * 60m);
+        }
+
+        /// <summary>NULL VarsayilanSaat tipinin fazla mesai taban saati (AA→3,75; diğer→7,5 veya aile varsayılanı).</summary>
+        private static decimal ResolveFazlaMesaiTabanSaati(
+            string kod,
+            List<PuantajTipDTO> tipler,
+            decimal arifeTaban,
+            decimal normalGun)
+        {
+            static decimal? Varsayilan(List<PuantajTipDTO> list, string aileKod) =>
+                list.FirstOrDefault(t => string.Equals(t.Kod, aileKod, StringComparison.OrdinalIgnoreCase))
+                    ?.VarsayilanSaat;
+
+            if (kod.Equals("AAF", StringComparison.OrdinalIgnoreCase)
+                || kod.Equals("AA", StringComparison.OrdinalIgnoreCase))
+                return Varsayilan(tipler, "AA") ?? arifeTaban;
+
+            if (kod.Equals("BBF", StringComparison.OrdinalIgnoreCase)
+                || kod.Equals("BB", StringComparison.OrdinalIgnoreCase))
+                return Varsayilan(tipler, "BB") ?? normalGun;
+
+            if (kod.Equals("HTM", StringComparison.OrdinalIgnoreCase)
+                || kod.Equals("HT", StringComparison.OrdinalIgnoreCase))
+                return Varsayilan(tipler, "HT") ?? normalGun;
+
+            if (kod.StartsWith("FM", StringComparison.OrdinalIgnoreCase))
+                return Varsayilan(tipler, "NG") ?? normalGun;
+
+            return normalGun;
+        }
+
+        /// <inheritdoc />
+        public string ResolveManuelCalismaTipi(string? mevcutTip, decimal saat)
+        {
+            const decimal ArifeTaban = 3.75m;
+            const decimal NormalGun = 7.5m;
+
+            var tip = (mevcutTip ?? "").Trim();
+            if (tip.Length == 0
+                || tip.Equals("EKSİK VERİ", StringComparison.OrdinalIgnoreCase)
+                || tip.Equals("TANIMLANMAMIŞ VARDİYA", StringComparison.OrdinalIgnoreCase)
+                || tip.Equals("NG", StringComparison.OrdinalIgnoreCase)
+                || tip.Equals("FM1", StringComparison.OrdinalIgnoreCase))
+                return saat > NormalGun ? "FM1" : "NG";
+
+            if (tip.Equals("AA", StringComparison.OrdinalIgnoreCase)
+                || tip.Equals("AAF", StringComparison.OrdinalIgnoreCase))
+                return saat > ArifeTaban ? "AAF" : "AA";
+
+            if (tip.Equals("BB", StringComparison.OrdinalIgnoreCase)
+                || tip.Equals("BBF", StringComparison.OrdinalIgnoreCase))
+                return saat > NormalGun ? "BBF" : "BB";
+
+            if (tip.Equals("HT", StringComparison.OrdinalIgnoreCase)
+                || tip.Equals("HTM", StringComparison.OrdinalIgnoreCase))
+                return saat > 0m ? "HTM" : "HT";
+
+            // RT, izin kodları ve diğer katalog tipleri elle saatte sabit kalır
+            return tip;
         }
 
         /// <summary>Veri girişindeki saat alanını ondalık saate çevirir (Excel/100 formatı dahil).</summary>
@@ -715,8 +885,12 @@ namespace CeyPASS.Business.Services
             var calismaSaatleriTablosu = GetVeriGirisleri(request.Yil, request.Ay, request.Yetkiler);
 
             var tcMap = sicillerTablosu.AsEnumerable()
-                .ToDictionary(r => Convert.ToInt32(r["SicilNo"]),
-                              r => r["TcKimlikNo"] == DBNull.Value ? null : r["TcKimlikNo"].ToString());
+                .GroupBy(r => Convert.ToInt32(r["SicilNo"]))
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.First()["TcKimlikNo"] == DBNull.Value
+                        ? null
+                        : g.First()["TcKimlikNo"].ToString());
 
             var toplamSaatler = calismaSaatleriTablosu.AsEnumerable()
                 .GroupBy(x => new

@@ -39,6 +39,8 @@ namespace CeyPASS.DataAccess.Repositories
                     Port = c.Port,
                     FirmaAdi = f.FirmaAdi,
                     AktifMi = c.AktifMi,
+                    AnaGirisCikisMi = c.AnaGirisCikisMi,
+                    CihazTipi = c.CihazTipi,
                     Text = c.IPAdres + " " + c.CihazAdi + " [" + f.FirmaAdi + "]"
                 };
             return query.ToList();

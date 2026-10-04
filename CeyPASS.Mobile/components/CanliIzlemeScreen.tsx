@@ -521,6 +521,7 @@ export function CanliIzlemeScreen({ onClose }: Props) {
                           "ATANMIŞ / GİRİŞ / ÇIKIŞ satırına dokunun → atamayı güncelleyin (Kartı Kısıtla’dan bağımsızdır).\n" +
                           "Kartı Kısıtla / Kart Kısıtı Kaldır: cihaz kuyruğuna komut yazar; atamayı değiştirmez.\n" +
                           "Kısıt kanıtı yoksa kart serbest sayılır. Atanmış+serbest → Kısıtla; kısıtlı → Kısıtı Kaldır; HAZIR+serbest → ikisi kapalı.\n" +
+                          "Kart teslim alınınca (çıkış verilince) kısıt otomatik kaldırılır; HAZIR kart kısıtlanamaz.\n" +
                           "Kart durumları: misafir+araç anlık serbest/kısıtlı listesi (Tümü/Misafir/Araç); seçerek veya topluca yönetin.\n" +
                           "Misafir / Araç seçimi liste tipini değiştirir."
                       )

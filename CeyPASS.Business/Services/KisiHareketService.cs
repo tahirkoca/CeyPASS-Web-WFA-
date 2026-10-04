@@ -37,9 +37,14 @@ namespace CeyPASS.Business.Services
         public List<KisiHareketListRow> GetByPersonsPaged(List<int> personIds, DateTime bas, DateTime bit, bool onlyAktif, bool onlyPasif, bool onlyYemekhane, int firmaId, int page, int pageSize, out int totalCount)
             => _repo.GetByPersonsPaged(personIds, bas, bit, onlyAktif, onlyPasif, onlyYemekhane, firmaId, page, pageSize, out totalCount);
         /// <inheritdoc />
-        public bool InsertManual(int firmaId, int personelId, DateTime tarih, string tip) => _repo.InsertManual(firmaId, personelId, tarih, tip);
+        public bool InsertManual(int firmaId, int personelId, DateTime tarih, string tip, int cihazId = 0)
+            => _repo.InsertManual(firmaId, personelId, tarih, tip, cihazId);
         /// <inheritdoc />
-        public bool UpdateManual(int id, DateTime tarih, string tip) => _repo.UpdateManual(id, tarih, tip);
+        public bool UpdateManual(int id, DateTime tarih, string tip, int? cihazId = null)
+            => _repo.UpdateManual(id, tarih, tip, cihazId);
+        /// <inheritdoc />
+        public PuantajGunHareketUctanUcaDTO GetGunUctanUca(int personelId, DateTime tarih)
+            => _repo.GetGunUctanUca(personelId, tarih);
         /// <inheritdoc />
         public bool PasifYap(int id) => _repo.PasifYap(id);
         /// <inheritdoc />

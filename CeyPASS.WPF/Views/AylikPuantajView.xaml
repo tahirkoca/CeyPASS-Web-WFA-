@@ -67,62 +67,40 @@
                 </DockPanel>
             </Border>
 
-            <!-- Toolbar: sol butonlar tam görünür; sağda kalan alana tek satır özet (üst üste binmez) -->
+            <!-- Toolbar -->
             <Border Grid.Row="1" Style="{StaticResource Card}" Padding="10,8" Margin="0,0,0,10">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="*" MinWidth="0"/>
-                    </Grid.ColumnDefinitions>
-                    <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                        <Button Content="Onay" Style="{StaticResource SuccessBtn}"
-                                Command="{Binding OnayCommand}" Margin="0,0,8,0" Padding="14,8"
-                                Visibility="{Binding CanApprove, Converter={StaticResource BoolToVis}}"/>
-                        <Button Content="Ret" Style="{StaticResource DangerBtn}"
-                                Command="{Binding RetCommand}" Margin="0,0,8,0" Padding="14,8"
-                                Visibility="{Binding CanDelete, Converter={StaticResource BoolToVis}}"/>
-                        <Button Content="Düzenle" Style="{StaticResource EditBtn}"
-                                Command="{Binding DuzenleCommand}" Margin="0,0,8,0" Padding="14,8"
-                                Visibility="{Binding CanUpdate, Converter={StaticResource BoolToVis}}"/>
-                        <Button Content="Bugüne Kadar Onayla" Style="{StaticResource PrimaryBtn}"
-                                Command="{Binding BuguneKadarOnaylaCommand}" Margin="0,0,8,0" Padding="14,8"
-                                Visibility="{Binding CanApprove, Converter={StaticResource BoolToVis}}"/>
-                        <Button Content="Çoklu Sicile Aktar" Style="{StaticResource SecondaryBtn}"
-                                Command="{Binding CokluSicileAktarCommand}" Margin="0,0,8,0" Padding="14,8"/>
-                        <Button Content="Puantaj Yap" Style="{StaticResource PrimaryBtn}"
-                                Command="{Binding PuantajYapCommand}" Margin="0,0,8,0" Padding="14,8"
-                                Visibility="{Binding CanExport, Converter={StaticResource BoolToVis}}"/>
-                    </StackPanel>
-                    <TextBlock Grid.Column="1"
-                               Text="{Binding VeriDurumuText}"
-                               ToolTip="{Binding VeriDurumuText}"
-                               TextTrimming="CharacterEllipsis"
-                               TextWrapping="NoWrap"
-                               FontSize="11"
-                               Foreground="#334155"
-                               VerticalAlignment="Center"
-                               HorizontalAlignment="Stretch"
-                               TextAlignment="Left"
-                               Margin="12,0,0,0">
-                        <TextBlock.Style>
-                            <Style TargetType="TextBlock">
-                                <Setter Property="Visibility" Value="Visible"/>
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding VeriDurumuText}" Value="">
-                                        <Setter Property="Visibility" Value="Collapsed"/>
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </TextBlock.Style>
-                    </TextBlock>
-                </Grid>
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button Content="Onay" Style="{StaticResource SuccessBtn}"
+                            Command="{Binding OnayCommand}" Margin="0,0,8,0" Padding="14,8"
+                            Visibility="{Binding CanApprove, Converter={StaticResource BoolToVis}}"/>
+                    <Button Content="Ret" Style="{StaticResource DangerBtn}"
+                            Command="{Binding RetCommand}" Margin="0,0,8,0" Padding="14,8"
+                            Visibility="{Binding CanDelete, Converter={StaticResource BoolToVis}}"/>
+                    <Button Content="Düzenle" Style="{StaticResource EditBtn}"
+                            Command="{Binding DuzenleCommand}" Margin="0,0,8,0" Padding="14,8"
+                            Visibility="{Binding CanUpdate, Converter={StaticResource BoolToVis}}"/>
+                    <Button Content="Toplu Düzenle" Style="{StaticResource EditBtn}"
+                            Command="{Binding TopluDuzenleCommand}" Margin="0,0,8,0" Padding="14,8"
+                            Visibility="{Binding CanUpdate, Converter={StaticResource BoolToVis}}"/>
+                    <Button Content="Bugüne Kadar Onayla" Style="{StaticResource PrimaryBtn}"
+                            Command="{Binding BuguneKadarOnaylaCommand}" Margin="0,0,8,0" Padding="14,8"
+                            Visibility="{Binding CanApprove, Converter={StaticResource BoolToVis}}"/>
+                    <Button Content="Çoklu Sicile Aktar" Style="{StaticResource SecondaryBtn}"
+                            Command="{Binding CokluSicileAktarCommand}" Margin="0,0,8,0" Padding="14,8"/>
+                    <Button Content="Puantaj Yap" Style="{StaticResource PrimaryBtn}"
+                            Command="{Binding PuantajYapCommand}" Margin="0,0,8,0" Padding="14,8"
+                            Visibility="{Binding CanExport, Converter={StaticResource BoolToVis}}"/>
+                </StackPanel>
             </Border>
 
             <!-- Grid -->
             <Border Grid.Row="2" Style="{StaticResource Card}" Padding="4">
                 <Grid>
-                <dxg:GridControl ItemsSource="{Binding Rows}"
+                <dxg:GridControl x:Name="GridPuantaj"
+                                 ItemsSource="{Binding Rows}"
                                  SelectedItem="{Binding SelectedRow, Mode=TwoWay}"
+                                 SelectionMode="Row"
+                                 SelectionChanged="GridPuantaj_OnSelectionChanged"
                                  AutoGenerateColumns="None">
                     <dxg:GridControl.Columns>
                         <dxg:GridColumn FieldName="TarihText" Header="Tarih" Width="160"/>
@@ -148,7 +126,9 @@
                         <dxg:GridColumn FieldName="OnayDurumu" Header="" Visible="False"/>
                     </dxg:GridControl.Columns>
                     <dxg:GridControl.View>
-                        <dxg:TableView Style="{StaticResource CeypassTableView}">
+                        <dxg:TableView Style="{StaticResource CeypassTableView}"
+                                       ShowCheckBoxSelectorColumn="True"
+                                       NavigationStyle="Row">
                             <dxg:TableView.FormatConditions>
                                 <dxg:FormatCondition Expression="[IsLocked] = True" ApplyToRow="True">
                                     <dxg:FormatCondition.Format>
@@ -180,7 +160,52 @@
                 </Grid>
             </Border>
 
-            <TextBlock Grid.Row="3" Text="{Binding Status}" Margin="0,8,0,0" Foreground="#475569"/>
+            <Grid Grid.Row="3" Margin="0,8,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*" MinWidth="0"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0"
+                           Text="{Binding Status}"
+                           Foreground="#475569"
+                           VerticalAlignment="Center"/>
+                <Border Grid.Column="1"
+                        Width="1"
+                        Margin="10,2"
+                        Background="#CBD5E1"
+                        VerticalAlignment="Stretch">
+                    <Border.Style>
+                        <Style TargetType="Border">
+                            <Setter Property="Visibility" Value="Visible"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding VeriDurumuText}" Value="">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
+                </Border>
+                <TextBlock Grid.Column="2"
+                           Text="{Binding VeriDurumuText}"
+                           ToolTip="{Binding VeriDurumuText}"
+                           TextTrimming="CharacterEllipsis"
+                           TextWrapping="NoWrap"
+                           FontSize="12"
+                           Foreground="#334155"
+                           VerticalAlignment="Center">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Visibility" Value="Visible"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding VeriDurumuText}" Value="">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+            </Grid>
 
             <controls:CeypassBusyOverlay Grid.Row="0" Grid.RowSpan="4"
                                          IsBusy="{Binding Busy}"

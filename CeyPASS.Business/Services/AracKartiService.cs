@@ -14,12 +14,14 @@ namespace CeyPASS.Business.Services
         private readonly IKisiRepository _kisiRepo;
         private readonly IPuantajsizKartAtamaRepository _atamaRepo;
         private readonly IKisiHareketRepository _hareketRepo;
+        private readonly ICanliIzlemeKartKomutService _kartKomutSvc;
 
-        public AracKartiService(IKisiRepository kisiRepo, IPuantajsizKartAtamaRepository atamaRepo, IKisiHareketRepository hareketRepo)
+        public AracKartiService(IKisiRepository kisiRepo, IPuantajsizKartAtamaRepository atamaRepo, IKisiHareketRepository hareketRepo, ICanliIzlemeKartKomutService kartKomutSvc)
         {
             _kisiRepo = kisiRepo;
             _atamaRepo = atamaRepo;
             _hareketRepo = hareketRepo;
+            _kartKomutSvc = kartKomutSvc;
         }
 
         /// <inheritdoc />
@@ -81,7 +83,7 @@ namespace CeyPASS.Business.Services
         }
 
         /// <inheritdoc />
-        public void UpdateAssignment(int atamaId, string adSoyad, DateTime girisSaati, DateTime? cikisSaati, string aciklama, string tcKimlikNo, string ziyaretEdilenKisi, string plaka, string pasaportNo)
+        public bool UpdateAssignment(int atamaId, string adSoyad, DateTime girisSaati, DateTime? cikisSaati, string aciklama, string tcKimlikNo, string ziyaretEdilenKisi, string plaka, string pasaportNo, int? kullaniciId = null)
         {
             var rec = _atamaRepo.GetById(atamaId);
             if (rec == null)
@@ -95,6 +97,7 @@ namespace CeyPASS.Business.Services
 
             var (tc, pasaport) = TcKimlikHelper.RequireTcOrPasaport(tcKimlikNo, pasaportNo);
 
+            var kapaniyor = rec.Bitis == null && cikisSaati.HasValue;
             rec.MisafirAdSoyad = adSoyad.Trim();
             rec.Baslangic = girisSaati;
             rec.Bitis = cikisSaati;
@@ -105,6 +108,7 @@ namespace CeyPASS.Business.Services
             rec.Plaka = plaka.Trim().ToUpperInvariant();
 
             _atamaRepo.Update(rec);
+            return kapaniyor && MisafirKartService.KartKisitiniKaldir(_atamaRepo, _kartKomutSvc, rec.KartId, kullaniciId);
         }
 
         /// <inheritdoc />

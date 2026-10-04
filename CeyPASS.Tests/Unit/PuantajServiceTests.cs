@@ -5,6 +5,7 @@ using FluentAssertions;
 using Moq;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Xunit;
 
 namespace CeyPASS.Tests.Unit
@@ -24,8 +25,19 @@ namespace CeyPASS.Tests.Unit
 
         // ─── HesaplaFazlaMesaiDakika ──────────────────────────────────────────
 
+        private void SeedPuantajTipleri(params (string Kod, decimal? VarsayilanSaat)[] rows)
+        {
+            _repoMock.Setup(r => r.GetPuantajTipleri()).Returns(
+                rows.Select(r => new PuantajTipDTO
+                {
+                    Kod = r.Kod,
+                    Ad = r.Kod,
+                    VarsayilanSaat = r.VarsayilanSaat
+                }).ToList());
+        }
+
         /// <summary>
-        /// FM1/FM2 dışındaki çalışma kodlarında fazla mesai dakikası hesaplanmaz (0).
+        /// Katalogda yoksa / FM dışı kodlarda fazla mesai dakikası hesaplanmaz (0).
         /// </summary>
         [Theory]
         [InlineData("N")]
@@ -74,6 +86,38 @@ namespace CeyPASS.Tests.Unit
         {
             // (8.25 - 7.5) * 60 = 45
             _sut.HesaplaFazlaMesaiDakika("FM1", 8.25m).Should().Be(45);
+        }
+
+        /// <summary>VarsayilanSaat dolu tipte (AA) Düzeltilmiş FM yazılmaz.</summary>
+        [Fact]
+        public void HesaplaFazlaMesaiDakika_VarsayilanDolu_SifirDoner()
+        {
+            SeedPuantajTipleri(("AA", 3.75m), ("AAF", null));
+            _sut.HesaplaFazlaMesaiDakika("AA", 5.0m).Should().Be(0);
+        }
+
+        /// <summary>AAF (NULL varsayılan): (4 − 3,75) × 60 = 15.</summary>
+        [Fact]
+        public void HesaplaFazlaMesaiDakika_AAF_ArifeTabaniIleHesaplar()
+        {
+            SeedPuantajTipleri(("AA", 3.75m), ("AAF", null));
+            _sut.HesaplaFazlaMesaiDakika("AAF", 4.0m).Should().Be(15);
+        }
+
+        /// <summary>BBF (NULL varsayılan): (10 − 7,5) × 60 = 150.</summary>
+        [Fact]
+        public void HesaplaFazlaMesaiDakika_BBF_10Saat_150Dakika()
+        {
+            SeedPuantajTipleri(("BB", null), ("BBF", null));
+            _sut.HesaplaFazlaMesaiDakika("BBF", 10.0m).Should().Be(150);
+        }
+
+        /// <summary>BB NULL ama ≤7,5 → FM 0.</summary>
+        [Fact]
+        public void HesaplaFazlaMesaiDakika_BB_5Saat_SifirDoner()
+        {
+            SeedPuantajTipleri(("BB", null), ("BBF", null));
+            _sut.HesaplaFazlaMesaiDakika("BB", 5.0m).Should().Be(0);
         }
 
         // ─── HesaplaRaporGunleri ──────────────────────────────────────────────
@@ -227,6 +271,64 @@ namespace CeyPASS.Tests.Unit
             var gecenAy = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1).AddMonths(-1);
             // ekKayitGun=0 → deadline = prevMonthEnd, today > prevMonthEnd → false
             _sut.IsRowEditable(gecenAy, 0).Should().BeFalse();
+        }
+
+        // ─── ResolveManuelCalismaTipi ─────────────────────────────────────────
+
+        /// <summary>AA ailesi: 3,75 üzeri AAF, aksi AA.</summary>
+        [Theory]
+        [InlineData("AA", 3.75, "AA")]
+        [InlineData("AA", 3.76, "AAF")]
+        [InlineData("AAF", 3.0, "AA")]
+        [InlineData("AAF", 4.0, "AAF")]
+        public void ResolveManuelCalismaTipi_AAAilesi_Esik3_75(string mevcut, decimal saat, string beklenen)
+        {
+            _sut.ResolveManuelCalismaTipi(mevcut, saat).Should().Be(beklenen);
+        }
+
+        /// <summary>BB ailesi: 7,5 üzeri BBF, aksi BB.</summary>
+        [Theory]
+        [InlineData("BB", 7.5, "BB")]
+        [InlineData("BB", 7.51, "BBF")]
+        [InlineData("BBF", 7.0, "BB")]
+        [InlineData("BBF", 8.0, "BBF")]
+        public void ResolveManuelCalismaTipi_BBAilesi_Esik7_5(string mevcut, decimal saat, string beklenen)
+        {
+            _sut.ResolveManuelCalismaTipi(mevcut, saat).Should().Be(beklenen);
+        }
+
+        /// <summary>NG/FM1/EKSİK/boş: 7,5 üzeri FM1, aksi NG.</summary>
+        [Theory]
+        [InlineData("NG", 7.5, "NG")]
+        [InlineData("NG", 8.0, "FM1")]
+        [InlineData("FM1", 7.0, "NG")]
+        [InlineData("EKSİK VERİ", 7.5, "NG")]
+        [InlineData("EKSİK VERİ", 9.0, "FM1")]
+        [InlineData("", 7.5, "NG")]
+        [InlineData(null, 8.0, "FM1")]
+        public void ResolveManuelCalismaTipi_NGAilesi_Esik7_5(string? mevcut, decimal saat, string beklenen)
+        {
+            _sut.ResolveManuelCalismaTipi(mevcut, saat).Should().Be(beklenen);
+        }
+
+        /// <summary>HT/HTM: saat &gt; 0 → HTM, aksi HT.</summary>
+        [Theory]
+        [InlineData("HT", 0, "HT")]
+        [InlineData("HT", 7.5, "HTM")]
+        [InlineData("HTM", 0, "HT")]
+        public void ResolveManuelCalismaTipi_HTAilesi(string mevcut, decimal saat, string beklenen)
+        {
+            _sut.ResolveManuelCalismaTipi(mevcut, saat).Should().Be(beklenen);
+        }
+
+        /// <summary>RT ve izin kodları elle saatte değişmez.</summary>
+        [Theory]
+        [InlineData("RT", 10.0)]
+        [InlineData("YILLIK", 3.0)]
+        [InlineData("R", 8.0)]
+        public void ResolveManuelCalismaTipi_RTVeIzin_SabitKalir(string mevcut, decimal saat)
+        {
+            _sut.ResolveManuelCalismaTipi(mevcut, saat).Should().Be(mevcut);
         }
 
         // ─── HesaplaFM1CalismaSaati ───────────────────────────────────────────

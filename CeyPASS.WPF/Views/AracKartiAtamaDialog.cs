@@ -95,7 +95,7 @@ public static class AracKartiAtamaDialog
             primaryText: "Kaydet",
             secondaryText: "İptal",
             width: 520,
-            validateOnPrimary: () => SaveGuncelle(svc, fields, owner));
+            validateOnPrimary: () => SaveGuncelle(session, svc, fields, owner));
     }
 
     private static void SelectKartByPersonelId(ComboBox cmb, List<KisiListItem> cards, string? personelId)
@@ -275,6 +275,7 @@ public static class AracKartiAtamaDialog
     }
 
     private static bool SaveGuncelle(
+        ISessionContext session,
         IAracKartiService svc,
         AracFormFields f,
         Window owner)
@@ -294,8 +295,8 @@ public static class AracKartiAtamaDialog
             var giris = (DateTime)(f.DtpGiris.EditValue ?? DateTime.Now);
             DateTime? cikis = f.DtpCikis.IsEnabled ? (DateTime?)(f.DtpCikis.EditValue ?? DateTime.Now) : null;
 
-            svc.UpdateAssignment(a.AtamaId, f.TxtAd.Text, giris, cikis, f.TxtAciklama.Text, tc, kime ?? "", plaka, pasaport);
-            UiDialog.Success("Kayıt güncellendi.", "Bilgi", owner);
+            var kisitKaldirildi = svc.UpdateAssignment(a.AtamaId, f.TxtAd.Text, giris, cikis, f.TxtAciklama.Text, tc, kime ?? "", plaka, pasaport, session.AktifKullaniciId);
+            UiDialog.Success(KartAtamaMesajlari.Guncellendi(kisitKaldirildi), "Bilgi", owner);
             return true;
         }
         catch (Exception ex)
